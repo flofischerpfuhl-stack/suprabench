@@ -1,0 +1,101 @@
+name: Auto-Merge Approved PRs
+
+on:
+  pull_request_review:
+    types: [submitted]
+  schedule:
+    - cron: '0 */6 * * *'  # Check every 6 hours
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check and auto-merge eligible PRs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const MIN_AGE_HOURS = 48;
+            const MIN_APPROVALS = 2;
+            const PROTECTED_PATHS = ['.github/'];
+
+            // Get open PRs
+            const { data: prs } = await github.rest.pulls.list({
+              owner, repo, state: 'open', sort: 'created', direction: 'asc'
+            });
+
+            for (const pr of prs) {
+              const createdAt = new Date(pr.created_at);
+              const ageHours = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
+
+              if (ageHours < MIN_AGE_HOURS) {
+                console.log(`PR #${pr.number}: too young (${ageHours.toFixed(1)}h < ${MIN_AGE_HOURS}h)`);
+                continue;
+              }
+
+              // Check if PR touches protected paths
+              const { data: files } = await github.rest.pulls.listFiles({
+                owner, repo, pull_number: pr.number
+              });
+              const touchesProtected = files.some(f =>
+                PROTECTED_PATHS.some(p => f.filename.startsWith(p))
+              );
+              if (touchesProtected) {
+                console.log(`PR #${pr.number}: touches protected paths, requires manual approval`);
+                continue;
+              }
+
+              // Count approvals from trusted contributors (those with merged PRs)
+              const { data: reviews } = await github.rest.pulls.listReviews({
+                owner, repo, pull_number: pr.number
+              });
+
+              let approvalCount = 0;
+              const approvers = new Set();
+              for (const review of reviews) {
+                if (review.state !== 'APPROVED') continue;
+                if (approvers.has(review.user.login)) continue;
+
+                // Check if approver has a previously merged PR
+                const { data: userPRs } = await github.rest.pulls.list({
+                  owner, repo, state: 'closed', sort: 'updated', direction: 'desc',
+                  per_page: 5
+                });
+                const hasMerged = userPRs.some(p =>
+                  p.user.login === review.user.login && p.merged_at
+                );
+                if (hasMerged) {
+                  approvers.add(review.user.login);
+                  approvalCount++;
+                }
+              }
+
+              if (approvalCount < MIN_APPROVALS) {
+                console.log(`PR #${pr.number}: ${approvalCount}/${MIN_APPROVALS} trusted approvals`);
+                continue;
+              }
+
+              // All checks passed — merge
+              console.log(`PR #${pr.number}: auto-merging (${ageHours.toFixed(1)}h old, ${approvalCount} trusted approvals)`);
+              try {
+                await github.rest.pulls.merge({
+                  owner, repo, pull_number: pr.number,
+                  merge_method: 'squash',
+                  commit_title: `${pr.title} (#${pr.number})`,
+                  commit_message: `Auto-merged after ${MIN_AGE_HOURS}h with ${approvalCount} trusted approvals.`
+                });
+                console.log(`PR #${pr.number}: merged successfully`);
+              } catch (e) {
+                console.error(`PR #${pr.number}: merge failed:`, e.message);
+              }
+            }

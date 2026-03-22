@@ -1,0 +1,156 @@
+name: Deploy SupraBench
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate data/generated.json from benchmarks/*.md
+        run: |
+          cat > build.py << 'PYTHON'
+          import os, json, re, sys
+
+          def parse_frontmatter(text):
+              """Parse YAML-ish frontmatter (simple key: value pairs + arrays)."""
+              if not text.startswith('---'):
+                  return {}, text
+              parts = text.split('---', 2)
+              if len(parts) < 3:
+                  return {}, text
+              meta = {}
+              for line in parts[1].strip().split('\n'):
+                  line = line.strip()
+                  if ':' not in line:
+                      continue
+                  key, val = line.split(':', 1)
+                  key = key.strip()
+                  val = val.strip()
+                  # Remove quotes
+                  if val.startswith('"') and val.endswith('"'):
+                      val = val[1:-1]
+                  # Parse arrays
+                  elif val.startswith('[') and val.endswith(']'):
+                      items = val[1:-1].split(',')
+                      val = [i.strip().strip('"').strip("'") for i in items if i.strip()]
+                  # Parse numbers
+                  else:
+                      try:
+                          val = int(val)
+                      except ValueError:
+                          try:
+                              val = float(val)
+                          except ValueError:
+                              pass
+                  meta[key] = val
+              body = parts[2].strip()
+              return meta, body
+
+          def parse_scores(body):
+              """Extract model scores from markdown table."""
+              scores = {}
+              in_table = False
+              for line in body.split('\n'):
+                  line = line.strip()
+                  if line.startswith('|') and 'Model' in line and 'Score' in line:
+                      in_table = True
+                      continue
+                  if in_table and line.startswith('|---'):
+                      continue
+                  if in_table and line.startswith('|'):
+                      cols = [c.strip() for c in line.split('|')[1:-1]]
+                      if len(cols) >= 2:
+                          try:
+                              scores[cols[0]] = float(cols[1])
+                          except ValueError:
+                              scores[cols[0]] = cols[1]
+                  elif in_table and not line.startswith('|'):
+                      in_table = False
+              return scores
+
+          def extract_section(body, header):
+              """Extract section content after ## header."""
+              pattern = rf'## {re.escape(header)}\s*\n(.*?)(?=\n## |\Z)'
+              match = re.search(pattern, body, re.DOTALL)
+              return match.group(1).strip() if match else ''
+
+          benchmarks = []
+          bench_dir = 'benchmarks'
+          if os.path.isdir(bench_dir):
+              for fname in sorted(os.listdir(bench_dir)):
+                  if not fname.endswith('.md'):
+                      continue
+                  with open(os.path.join(bench_dir, fname), 'r') as f:
+                      content = f.read()
+                  meta, body = parse_frontmatter(content)
+                  slug = fname.replace('.md', '')
+                  tags = list(set(
+                      (meta.get('capability_tags') or []) +
+                      (meta.get('use_case_tags') or [])
+                  ))
+                  description = extract_section(body, meta.get('name', slug))
+                  if not description:
+                      # Fallback: first paragraph after frontmatter
+                      paragraphs = [p.strip() for p in body.split('\n\n') if p.strip() and not p.strip().startswith('#')]
+                      description = paragraphs[0] if paragraphs else ''
+
+                  benchmarks.append({
+                      'slug': slug,
+                      'name': meta.get('name', slug),
+                      'subtitle': meta.get('subtitle', ''),
+                      'year': meta.get('year'),
+                      'trust': meta.get('trust', 3.0),
+                      'gamingRisk': meta.get('gaming_risk', 50),
+                      'tags': tags,
+                      'paperUrl': meta.get('paper_url', ''),
+                      'repoUrl': meta.get('repo_url', ''),
+                      'description': description,
+                      'communityVerdict': extract_section(body, 'Community Verdict'),
+                      'scores': parse_scores(body)
+                  })
+
+          # Collect model names
+          model_set = set()
+          for b in benchmarks:
+              model_set.update(b.get('scores', {}).keys())
+
+          data = {'benchmarks': benchmarks, 'models': sorted(model_set)}
+          os.makedirs('data', exist_ok=True)
+          with open('data/generated.json', 'w') as f:
+              json.dump(data, f, indent=2)
+          print(f"Generated data/generated.json with {len(benchmarks)} benchmarks and {len(model_set)} models")
+          PYTHON
+          python3 build.py
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
