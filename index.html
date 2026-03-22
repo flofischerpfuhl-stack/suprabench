@@ -137,7 +137,7 @@
             </template>
             <h2 class="section-header">Model Scores</h2>
             <table>
-                <tr><th>Model</th><th>Score</th><th>Proof</th></tr>
+                <tr><th>Model</th><th>Score</th><th>Proof</th><th></th></tr>
                 <template x-for="(data,model) in currentBenchmark.scores" :key="model">
                     <tr class="model-row">
                         <td x-text="model"></td>
@@ -149,6 +149,9 @@
                             <template x-if="!data || typeof data !== 'object' || !data.proof">
                                 <span style="color:var(--text3);font-size:.85rem">—</span>
                             </template>
+                        </td>
+                        <td style="text-align:right">
+                            <span style="font-size:.85rem;color:var(--accent);cursor:pointer;font-family:var(--hd)" @click="selectedDiscussionModel=model; document.getElementById('discussion-section').scrollIntoView({behavior:'smooth', block:'start'})">Discuss ↓</span>
                         </td>
                     </tr>
                 </template>
@@ -211,10 +214,15 @@
                 </div>
             </template>
 
-            <h2 class="section-header">Discussion</h2>
-            <div class="giscus-placeholder">
-                <p>💬 Giscus discussion thread</p>
-                <p style="font-size:.85rem">Connect Giscus to your repo's Discussions to enable community comments here.</p>
+            <h2 class="section-header" id="discussion-section">Discussion</h2>
+            
+            <div x-show="selectedDiscussionModel" style="margin-bottom:1rem">
+                <button class="btn btn-sm btn-outline" @click="selectedDiscussionModel = null">← Back to General Benchmark Discussion</button>
+            </div>
+            
+            <div class="giscus-placeholder" style="margin-top:0">
+                <p x-text="'💬 ' + (selectedDiscussionModel ? `Score Discussion: ${selectedDiscussionModel} on ${currentBenchmark?.name}` : `Main Benchmark Discussion: ${currentBenchmark?.name}`)"></p>
+                <p style="font-size:.85rem; color:var(--text2)">When Giscus is connected, this container dynamically loads the GitHub discussion thread for ID: <br><span style="font-family:monospace; color:var(--accent); font-size:1rem" x-text="selectedDiscussionModel ? (currentBenchmark?.slug + '-' + selectedDiscussionModel.toLowerCase().replace(/[^a-z0-9]+/g, '-')) : currentBenchmark?.slug"></span></p>
             </div>
         </div>
     </template>

@@ -277,6 +277,7 @@ function supraBench() {
         currentBenchmark: null,
         currentBenchmarkPRs: [],
         currentModel: null,
+        selectedDiscussionModel: null,
 
         // Submit state
         submitStep: 1,
@@ -341,6 +342,7 @@ function supraBench() {
         openDetail(slug) {
             this.currentBenchmark = this.benchmarks.find(b => b.slug === slug);
             this.currentBenchmarkPRs = [];
+            this.selectedDiscussionModel = null;
             
             GitHubAPI.getOpenPRsForBenchmark(slug).then(prs => {
                 this.currentBenchmarkPRs = prs;
