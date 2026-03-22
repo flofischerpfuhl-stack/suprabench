@@ -20,10 +20,10 @@ The closest thing to a "real world" benchmark, but susceptible to style over sub
 
 ## Model Scores
 
-| Model | Score |
-|-------|-------|
-| DeepSeek R1 | 1358 |
-| Claude 3.5 Sonnet | 1271 |
-| GPT-4o | 1290 |
-| Gemini 1.5 Pro | 1267 |
-| Llama 3.3 70B | 1183 |
+| Model | Score | Proof |
+|-------|-------|-------|
+| DeepSeek R1 | 1358 | |
+| Claude 3.5 Sonnet | 1271 | |
+| GPT-4o | 1290 | |
+| Gemini 1.5 Pro | 1267 | |
+| Llama 3.3 70B | 1183 | |

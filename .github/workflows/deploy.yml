@@ -75,9 +75,18 @@ jobs:
                       cols = [c.strip() for c in line.split('|')[1:-1]]
                       if len(cols) >= 2:
                           try:
-                              scores[cols[0]] = float(cols[1])
+                              val = float(cols[1])
                           except ValueError:
-                              scores[cols[0]] = cols[1]
+                              val = cols[1]
+                          proof = ''
+                          if len(cols) >= 3:
+                              proof_text = cols[2]
+                              m = re.search(r'\[.*?\]\((.*?)\)', proof_text)
+                              if m:
+                                  proof = m.group(1)
+                              else:
+                                  proof = proof_text
+                          scores[cols[0]] = {'score': val, 'proof': proof}
                   elif in_table and not line.startswith('|'):
                       in_table = False
               return scores

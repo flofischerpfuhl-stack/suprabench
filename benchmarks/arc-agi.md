@@ -20,10 +20,10 @@ Gold standard for measuring genuine reasoning vs pattern matching. Extremely har
 
 ## Model Scores
 
-| Model | Score |
-|-------|-------|
-| DeepSeek R1 | 6.0 |
-| Claude 3.5 Sonnet | 21.0 |
-| GPT-4o | 5.0 |
-| Gemini 1.5 Pro | 8.0 |
-| Llama 3.3 70B | 2.0 |
+| Model | Score | Proof |
+|-------|-------|-------|
+| DeepSeek R1 | 6.0 | |
+| Claude 3.5 Sonnet | 21.0 | |
+| GPT-4o | 5.0 | |
+| Gemini 1.5 Pro | 8.0 | |
+| Llama 3.3 70B | 2.0 | |

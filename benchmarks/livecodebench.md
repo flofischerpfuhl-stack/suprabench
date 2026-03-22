@@ -20,10 +20,10 @@ Clever approach to contamination. The rolling time window is its biggest strengt
 
 ## Model Scores
 
-| Model | Score |
-|-------|-------|
-| DeepSeek R1 | 65.9 |
-| Claude 3.5 Sonnet | 51.3 |
-| GPT-4o | 45.2 |
-| Gemini 1.5 Pro | 43.8 |
-| Llama 3.3 70B | 33.1 |
+| Model | Score | Proof |
+|-------|-------|-------|
+| DeepSeek R1 | 65.9 | |
+| Claude 3.5 Sonnet | 51.3 | |
+| GPT-4o | 45.2 | |
+| Gemini 1.5 Pro | 43.8 | |
+| Llama 3.3 70B | 33.1 | |

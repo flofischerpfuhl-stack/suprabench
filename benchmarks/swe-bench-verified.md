@@ -20,10 +20,10 @@ Important real-world benchmark but high gaming risk due to training data contami
 
 ## Model Scores
 
-| Model | Score |
-|-------|-------|
-| DeepSeek R1 | 49.2 |
-| Claude 3.5 Sonnet | 50.8 |
-| GPT-4o | 38.8 |
-| Gemini 1.5 Pro | 36.2 |
-| Llama 3.3 70B | 26.5 |
+| Model | Score | Proof |
+|-------|-------|-------|
+| DeepSeek R1 | 49.2 | |
+| Claude 3.5 Sonnet | 50.8 | |
+| GPT-4o | 38.8 | |
+| Gemini 1.5 Pro | 36.2 | |
+| Llama 3.3 70B | 26.5 | |

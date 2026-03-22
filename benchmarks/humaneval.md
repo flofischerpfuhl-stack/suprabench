@@ -20,10 +20,10 @@ Essentially useless as a benchmark in 2024+. Completely saturated, thoroughly co
 
 ## Model Scores
 
-| Model | Score |
-|-------|-------|
-| DeepSeek R1 | 96.3 |
-| Claude 3.5 Sonnet | 93.7 |
-| GPT-4o | 90.2 |
-| Gemini 1.5 Pro | 91.5 |
-| Llama 3.3 70B | 88.4 |
+| Model | Score | Proof |
+|-------|-------|-------|
+| DeepSeek R1 | 96.3 | |
+| Claude 3.5 Sonnet | 93.7 | |
+| GPT-4o | 90.2 | |
+| Gemini 1.5 Pro | 91.5 | |
+| Llama 3.3 70B | 88.4 | |

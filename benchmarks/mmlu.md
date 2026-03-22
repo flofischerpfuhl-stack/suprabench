@@ -20,10 +20,10 @@ Once the standard benchmark, now considered deeply compromised. Massive contamin
 
 ## Model Scores
 
-| Model | Score |
-|-------|-------|
-| DeepSeek R1 | 90.8 |
-| Claude 3.5 Sonnet | 88.7 |
-| GPT-4o | 88.7 |
-| Gemini 1.5 Pro | 85.9 |
-| Llama 3.3 70B | 86.0 |
+| Model | Score | Proof |
+|-------|-------|-------|
+| DeepSeek R1 | 90.8 | |
+| Claude 3.5 Sonnet | 88.7 | |
+| GPT-4o | 88.7 | |
+| Gemini 1.5 Pro | 85.9 | |
+| Llama 3.3 70B | 86.0 | |

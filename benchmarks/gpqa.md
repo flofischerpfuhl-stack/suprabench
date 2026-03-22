@@ -20,10 +20,10 @@ Strong benchmark with genuine difficulty. The "Google-proof" design makes contam
 
 ## Model Scores
 
-| Model | Score |
-|-------|-------|
-| DeepSeek R1 | 71.5 |
-| Claude 3.5 Sonnet | 65.0 |
-| GPT-4o | 53.6 |
-| Gemini 1.5 Pro | 59.1 |
-| Llama 3.3 70B | 46.7 |
+| Model | Score | Proof |
+|-------|-------|-------|
+| DeepSeek R1 | 71.5 | |
+| Claude 3.5 Sonnet | 65.0 | |
+| GPT-4o | 53.6 | |
+| Gemini 1.5 Pro | 59.1 | |
+| Llama 3.3 70B | 46.7 | |

@@ -118,11 +118,44 @@
             </template>
             <h2 class="section-header">Model Scores</h2>
             <table>
-                <tr><th>Model</th><th>Score</th></tr>
-                <template x-for="(score,model) in currentBenchmark.scores" :key="model">
-                    <tr class="model-row"><td x-text="model"></td><td class="score-cell" x-text="score"></td></tr>
+                <tr><th>Model</th><th>Score</th><th>Proof</th></tr>
+                <template x-for="(data,model) in currentBenchmark.scores" :key="model">
+                    <tr class="model-row">
+                        <td x-text="model"></td>
+                        <td class="score-cell" x-text="typeof data === 'object' ? data.score : data"></td>
+                        <td>
+                            <template x-if="typeof data === 'object' && data.proof">
+                                <a :href="data.proof" target="_blank" style="font-size:.85rem;color:var(--text2)">Link ↗</a>
+                            </template>
+                            <template x-if="!data || typeof data !== 'object' || !data.proof">
+                                <span style="color:var(--text3);font-size:.85rem">—</span>
+                            </template>
+                        </td>
+                    </tr>
                 </template>
             </table>
+
+            <template x-if="currentBenchmarkPRs.length > 0">
+                <div style="margin-bottom:3rem">
+                    <h2 class="section-header">Pending Submissions & Discussions</h2>
+                    <div style="display:flex; flex-direction:column; gap:1rem">
+                        <template x-for="pr in currentBenchmarkPRs" :key="pr.id">
+                            <a :href="pr.url" target="_blank" style="display:flex; gap:1rem; align-items:center; padding:1rem; border:1px solid var(--border); border-radius:8px; text-decoration:none; transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                                <img :src="pr.avatar" style="width:40px;height:40px;border-radius:50%">
+                                <div style="flex:1">
+                                    <div style="font-family:var(--hd);font-weight:600;color:var(--text);font-size:1.1rem" x-text="pr.title"></div>
+                                    <div style="color:var(--text3);font-size:.85rem;margin-top:.2rem">
+                                        by <span style="color:var(--text2)" x-text="pr.user"></span>
+                                        • <span x-text="new Date(pr.created_at).toLocaleDateString()"></span>
+                                    </div>
+                                </div>
+                                <div style="color:var(--accent);font-family:var(--hd);font-weight:600">Review ↗</div>
+                            </a>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
             <h2 class="section-header">Discussion</h2>
             <div class="giscus-placeholder">
                 <p>💬 Giscus discussion thread</p>
@@ -162,8 +195,13 @@
             <span style="color:var(--text3);font-size:.75rem;margin-left:.5rem;cursor:pointer" @click="githubLogout()">logout</span>
         </div>
 
-        <h2 class="section-header">New Benchmark</h2>
-        <form @submit.prevent="submitBenchmark()">
+        <div style="display:flex;gap:1rem;margin-bottom:3rem">
+            <button class="btn" :class="formType!=='new' ? 'btn-outline' : ''" @click="formType='new'">New Benchmark</button>
+            <button class="btn" :class="formType!=='score' ? 'btn-outline' : ''" @click="formType='score'">Submit Score</button>
+        </div>
+
+        <form x-show="formType==='new'" @submit.prevent="submitBenchmark()">
+            <h2 class="section-header" style="margin-top:0">New Benchmark</h2>
             <div class="form-group">
                 <label>Name *</label>
                 <input type="text" x-model="form.name" placeholder="e.g. GPQA Diamond" required>
@@ -217,16 +255,55 @@
 
             <h2 class="section-header">Model Scores</h2>
             <template x-for="(ms,i) in form.modelScores" :key="i">
-                <div class="model-score-entry">
-                    <div class="form-group" style="margin-bottom:0"><label x-show="i===0">Model</label><input type="text" x-model="ms.model" placeholder="Model name"></div>
-                    <div class="form-group" style="margin-bottom:0;max-width:120px"><label x-show="i===0">Score</label><input type="number" x-model="ms.score" placeholder="0-100" min="0" max="100" step="0.1"></div>
-                    <button type="button" class="btn btn-sm btn-outline" @click="form.modelScores.splice(i,1)" style="color:var(--danger);border-color:var(--danger)">×</button>
+                <div class="model-score-entry" style="flex-wrap:wrap; align-items:flex-end">
+                    <div class="form-group" style="margin-bottom:0;flex:1;min-width:150px"><label x-show="i===0">Model</label><input type="text" x-model="ms.model" placeholder="Model name"></div>
+                    <div class="form-group" style="margin-bottom:0;max-width:100px"><label x-show="i===0">Score</label><input type="number" x-model="ms.score" placeholder="0-100" step="0.1"></div>
+                    <div class="form-group" style="margin-bottom:0;flex:2;min-width:200px"><label x-show="i===0">Proof URL</label><input type="url" x-model="ms.proof" placeholder="https://..."></div>
+                    <button type="button" class="btn btn-sm btn-outline" @click="form.modelScores.splice(i,1)" style="color:var(--danger);border-color:var(--danger);margin-top:.25rem">×</button>
                 </div>
             </template>
-            <button type="button" class="btn btn-sm btn-outline" @click="form.modelScores.push({model:'',score:''})">+ Add Model Score</button>
+            <button type="button" class="btn btn-sm btn-outline" @click="form.modelScores.push({model:'',score:'',proof:''})">+ Add Model Score</button>
 
             <div style="margin-top:3rem">
                 <button type="submit" class="btn" :disabled="submitting">
+                    <span x-show="!submitting">Create Pull Request →</span>
+                    <span x-show="submitting">Submitting...</span>
+                </button>
+                <p x-show="submitError" style="color:var(--danger);margin-top:1rem" x-text="submitError"></p>
+            </div>
+        </form>
+
+        <!-- Form for submitting a score -->
+        <form x-show="formType==='score'" @submit.prevent="submitScore()">
+            <h2 class="section-header" style="margin-top:0">Submit Model Score</h2>
+            <div class="form-group">
+                <label>Select Benchmark *</label>
+                <select x-model="scoreForm.benchmarkSlug" required>
+                    <option value="" disabled selected>Choose a benchmark...</option>
+                    <template x-for="b in benchmarks" :key="b.slug">
+                        <option :value="b.slug" x-text="b.name"></option>
+                    </template>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Model Name *</label>
+                <input type="text" x-model="scoreForm.model" placeholder="e.g. GPT-4o" required>
+            </div>
+            <div class="form-group">
+                <label>Score *</label>
+                <input type="number" x-model="scoreForm.score" placeholder="0-100" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label>Proof URL</label>
+                <input type="url" x-model="scoreForm.proof" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>PR Note / Comment</label>
+                <textarea x-model="scoreForm.note" placeholder="Provide context or instructions for the reviewers."></textarea>
+            </div>
+
+            <div style="margin-top:3rem">
+                <button type="submit" class="btn" :disabled="submitting || !scoreForm.benchmarkSlug">
                     <span x-show="!submitting">Create Pull Request →</span>
                     <span x-show="submitting">Submitting...</span>
                 </button>
