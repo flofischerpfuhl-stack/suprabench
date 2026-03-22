@@ -10,11 +10,10 @@ const FALLBACK_DATA = {
       "name": "ARC-AGI",
       "subtitle": "Abstraction & Reasoning Corpus",
       "year": 2019,
-      "trust": 4.4,
-      "gamingRisk": 9,
+      "score": 10,
       "tags": [
-        "novel-problems",
-        "abstract-reasoning"
+        "abstract-reasoning",
+        "novel-problems"
       ],
       "paperUrl": "https://arxiv.org/abs/1911.01547",
       "repoUrl": "https://github.com/fchollet/ARC-AGI",
@@ -48,8 +47,7 @@ const FALLBACK_DATA = {
       "name": "Chatbot Arena",
       "subtitle": "Human Preference ELO Ratings",
       "year": 2023,
-      "trust": 3.6,
-      "gamingRisk": 42,
+      "score": 10,
       "tags": [
         "general-helpfulness"
       ],
@@ -85,8 +83,7 @@ const FALLBACK_DATA = {
       "name": "GPQA",
       "subtitle": "Graduate-Level Google-Proof Q&A",
       "year": 2023,
-      "trust": 4.1,
-      "gamingRisk": 18,
+      "score": 10,
       "tags": [
         "scientific-reasoning",
         "research"
@@ -123,8 +120,7 @@ const FALLBACK_DATA = {
       "name": "HumanEval",
       "subtitle": "Python Code Generation",
       "year": 2021,
-      "trust": 1.2,
-      "gamingRisk": 96,
+      "score": 10,
       "tags": [
         "coding"
       ],
@@ -160,11 +156,10 @@ const FALLBACK_DATA = {
       "name": "LiveCodeBench",
       "subtitle": "Contamination-Free Coding Eval",
       "year": 2024,
-      "trust": 3.8,
-      "gamingRisk": 31,
+      "score": 10,
       "tags": [
-        "coding",
-        "algorithms"
+        "algorithms",
+        "coding"
       ],
       "paperUrl": "https://arxiv.org/abs/2403.07974",
       "repoUrl": "https://github.com/LiveCodeBench/LiveCodeBench",
@@ -198,8 +193,7 @@ const FALLBACK_DATA = {
       "name": "MMLU",
       "subtitle": "Massive Multitask Language Understanding",
       "year": 2020,
-      "trust": 1.8,
-      "gamingRisk": 91,
+      "score": 10,
       "tags": [
         "knowledge-breadth"
       ],
@@ -235,11 +229,10 @@ const FALLBACK_DATA = {
       "name": "SWE-bench Verified",
       "subtitle": "Real-World Software Engineering",
       "year": 2023,
-      "trust": 3.2,
-      "gamingRisk": 54,
+      "score": 10,
       "tags": [
-        "debugging",
-        "coding"
+        "coding",
+        "debugging"
       ],
       "paperUrl": "https://arxiv.org/abs/2310.06770",
       "repoUrl": "https://github.com/princeton-nlp/SWE-bench",
@@ -269,26 +262,21 @@ const FALLBACK_DATA = {
       }
     }
   ],
-  "models": [
-    "Claude 3.5 Sonnet",
-    "DeepSeek R1",
-    "GPT-4o",
-    "Gemini 1.5 Pro",
-    "Llama 3.3 70B"
-  ]
+  "models": ['DeepSeek R1', 'Claude 3.5 Sonnet', 'GPT-4o', 'Gemini 1.5 Pro', 'Llama 3.3 70B']
 };
 
 /* ── Alpine.js App ── */
 function supraBench() {
     return {
-        view: 'explorer',
-        previousView: 'explorer',
+        view: 'models',
+        previousView: 'models',
         benchmarks: [],
         activeTags: [],
         allTags: [],
-        indexSort: { key: 'trust', dir: -1 },
+        indexSort: { key: 'score', dir: -1 },
         currentBenchmark: null,
         currentBenchmarkPRs: [],
+        currentModel: null,
 
         // Submit state
         submitStep: 1,
@@ -363,6 +351,13 @@ function supraBench() {
             window.scrollTo(0, 0);
         },
 
+        openModel(name) {
+            this.currentModel = name;
+            this.previousView = this.view;
+            this.view = 'modelDetail';
+            window.scrollTo(0, 0);
+        },
+
         /* ── Tag filtering ── */
         toggleTag(t) {
             const i = this.activeTags.indexOf(t);
@@ -377,27 +372,46 @@ function supraBench() {
             );
         },
 
-        /* ── Reality Score: trust-weighted model ranking ── */
+        /* ── Reality Score: score-weighted model ranking ── */
         get rankedModels() {
+            const allB = this.benchmarks;
             const fb = this.filteredBenchmarks;
-            if (!fb.length) return [];
+            if (!allB.length) return [];
             const modelNames = new Set();
-            fb.forEach(b => Object.keys(b.scores || {}).forEach(m => modelNames.add(m)));
+            allB.forEach(b => Object.keys(b.scores || {}).forEach(m => modelNames.add(m)));
             return [...modelNames].map(name => {
-                let weightedSum = 0, weightTotal = 0;
-                fb.forEach(b => {
+                let gSum = 0, gTotal = 0;
+                allB.forEach(b => {
                     if (b.scores?.[name] !== undefined) {
-                        const w = b.trust;
+                        const w = Math.max(1, b.score);
                         let raw = b.scores[name];
                         let score = typeof raw === "object" ? raw.score : raw;
-                        // Normalize ELO-based benchmarks to ~0-100 scale
                         if (b.slug === 'chatbot-arena') score = (score - 1000) / 5;
-                        weightedSum += score * w;
-                        weightTotal += w;
+                        gSum += score * w;
+                        gTotal += w;
                     }
                 });
-                return { name, realityScore: weightTotal ? weightedSum / weightTotal : 0 };
-            }).sort((a, b) => b.realityScore - a.realityScore);
+                const realityScore = gTotal ? gSum / gTotal : 0;
+
+                let fSum = 0, fTotal = 0;
+                fb.forEach(b => {
+                    if (b.scores?.[name] !== undefined) {
+                        const w = Math.max(1, b.score);
+                        let raw = b.scores[name];
+                        let score = typeof raw === "object" ? raw.score : raw;
+                        if (b.slug === 'chatbot-arena') score = (score - 1000) / 5;
+                        fSum += score * w;
+                        fTotal += w;
+                    }
+                });
+                const filteredScore = fTotal ? fSum / fTotal : null;
+
+                return { name, realityScore, filteredScore };
+            }).sort((a, b) => {
+                const valA = this.activeTags.length && a.filteredScore !== null ? a.filteredScore : a.realityScore;
+                const valB = this.activeTags.length && b.filteredScore !== null ? b.filteredScore : b.realityScore;
+                return valB - valA;
+            });
         },
 
         /* ── Index sorting ── */
@@ -412,21 +426,15 @@ function supraBench() {
 
         sortIndex(key) {
             if (this.indexSort.key === key) this.indexSort.dir *= -1;
-            else { this.indexSort.key = key; this.indexSort.dir = key === 'trust' ? -1 : 1; }
+            else { this.indexSort.key = key; this.indexSort.dir = key === 'score' ? -1 : 1; }
         },
 
         /* ── Helpers ── */
-        trustColor(t) {
-            if (t >= 4) return '#44ff88';
-            if (t >= 3) return '#E5FE40';
-            if (t >= 2) return '#ffaa44';
+        scoreColor(s) {
+            if (s >= 50) return '#44ff88';
+            if (s >= 20) return '#E5FE40';
+            if (s >= 0)  return '#ffaa44';
             return '#ff4444';
-        },
-
-        riskClass(r) {
-            if (r <= 25) return 'risk-low';
-            if (r <= 60) return 'risk-med';
-            return 'risk-high';
         },
 
         addTag(field, input) {
@@ -479,7 +487,6 @@ function supraBench() {
                 name: '', subtitle: '', year: '', paperUrl: '', repoUrl: '',
                 description: '', communityVerdict: '',
                 capabilityTags: [], useCaseTags: [],
-                gamingRisk: 50,
                 modelScores: [{ model: '', score: '', proof: '' }]
             };
             this.scoreForm = { benchmarkSlug: '', model: '', score: '', proof: '', note: '' };

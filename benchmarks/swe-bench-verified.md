@@ -2,8 +2,7 @@
 name: "SWE-bench Verified"
 subtitle: "Real-World Software Engineering"
 year: 2023
-trust: 3.2
-gaming_risk: 54
+score: 10
 paper_url: "https://arxiv.org/abs/2310.06770"
 repo_url: "https://github.com/princeton-nlp/SWE-bench"
 capability_tags: ["coding", "debugging"]

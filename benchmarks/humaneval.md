@@ -2,8 +2,7 @@
 name: "HumanEval"
 subtitle: "Python Code Generation"
 year: 2021
-trust: 1.2
-gaming_risk: 96
+score: 10
 paper_url: "https://arxiv.org/abs/2107.03374"
 repo_url: "https://github.com/openai/human-eval"
 capability_tags: ["coding"]

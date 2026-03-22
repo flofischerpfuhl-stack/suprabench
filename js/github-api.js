@@ -112,8 +112,7 @@ const GitHubAPI = {
             `name: "${benchmark.name}"`,
             benchmark.subtitle ? `subtitle: "${benchmark.subtitle}"` : '',
             benchmark.year ? `year: ${benchmark.year}` : '',
-            `trust: ${benchmark.trust || 3.0}`,
-            `gaming_risk: ${benchmark.gamingRisk}`,
+            `score: 0`,
             benchmark.paperUrl ? `paper_url: "${benchmark.paperUrl}"` : '',
             benchmark.repoUrl ? `repo_url: "${benchmark.repoUrl}"` : '',
             `capability_tags: [${(benchmark.capabilityTags || []).map(t => '"' + t + '"').join(', ')}]`,
@@ -151,7 +150,6 @@ const GitHubAPI = {
                     '## New Benchmark Submission',
                     '',
                     `**Name:** ${benchmark.name}`,
-                    `**Gaming Risk:** ${benchmark.gamingRisk}%`,
                     `**Tags:** ${[...(benchmark.capabilityTags || []), ...(benchmark.useCaseTags || [])].join(', ')}`,
                     '',
                     benchmark.description || ''

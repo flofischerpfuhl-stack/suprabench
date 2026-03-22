@@ -2,8 +2,7 @@
 name: "ARC-AGI"
 subtitle: "Abstraction & Reasoning Corpus"
 year: 2019
-trust: 4.4
-gaming_risk: 9
+score: 10
 paper_url: "https://arxiv.org/abs/1911.01547"
 repo_url: "https://github.com/fchollet/ARC-AGI"
 capability_tags: ["abstract-reasoning", "novel-problems"]

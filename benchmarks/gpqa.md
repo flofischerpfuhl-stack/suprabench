@@ -2,8 +2,7 @@
 name: "GPQA"
 subtitle: "Graduate-Level Google-Proof Q&A"
 year: 2023
-trust: 4.1
-gaming_risk: 18
+score: 10
 paper_url: "https://arxiv.org/abs/2311.12022"
 repo_url: "https://github.com/idavidrein/gpqa"
 capability_tags: ["scientific-reasoning", "research"]

@@ -14,10 +14,10 @@
 <body x-data="supraBench()" x-init="init()">
 
     <div class="sidebar">
-        <div class="logo" @click="navigate('explorer')">Supra<span>Bench</span>.</div>
+        <div class="logo" @click="navigate('models')">Supra<span>Bench</span>.</div>
         <ul class="nav">
-            <li class="nav-item" :class="{'active':view==='explorer'}" @click="navigate('explorer')">Explorer</li>
-            <li class="nav-item" :class="{'active':view==='index'}" @click="navigate('index')">Index</li>
+            <li class="nav-item" :class="{'active':view==='models'}" @click="navigate('models')">Models</li>
+            <li class="nav-item" :class="{'active':view==='benchmarks'}" @click="navigate('benchmarks')">Benchmarks</li>
             <li class="nav-item" :class="{'active':view==='submit'}" @click="navigate('submit')">Contribute</li>
         </ul>
         <div class="sidebar-footer">Community-driven.<br>No corporate influence.<br>BSL 1.1 Licensed.</div>
@@ -25,10 +25,10 @@
 
     <div class="main">
 
-<!-- ═══════════ EXPLORER ═══════════ -->
-<div x-show="view==='explorer'" x-transition.opacity>
+<!-- ═══════════ MODELS ═══════════ -->
+<div x-show="view==='models'" x-transition.opacity>
     <h1 class="page-title" style="transform:scaleY(1.1);transform-origin:top">Discover.<br>Verify.</h1>
-    <p class="page-desc">An editorial, community-driven encyclopedia of AI benchmarks. Filter by capability — see which models actually perform when trust-weighted.</p>
+    <p class="page-desc">An editorial, community-driven encyclopedia of AI benchmarks. Filter by capability to see which models actually perform.</p>
 
     <div class="tags-container">
         <template x-for="t in allTags" :key="t">
@@ -36,47 +36,67 @@
         </template>
     </div>
 
-    <h2 class="section-header">Filtered Benchmarks</h2>
-    <template x-if="filteredBenchmarks.length===0">
-        <div class="empty-state">No benchmarks match selected tags</div>
-    </template>
-    <table x-show="filteredBenchmarks.length>0">
-        <tr><th>Benchmark</th><th>Trust</th><th>Gaming Risk</th><th>Tags</th></tr>
-        <template x-for="b in filteredBenchmarks" :key="b.slug">
-            <tr @click="openDetail(b.slug)" style="cursor:pointer">
-                <td><a href="#" @click.prevent x-text="b.name"></a></td>
-                <td><span class="score-cell" :style="'color:'+trustColor(b.trust)" x-text="b.trust.toFixed(1)"></span> <span style="color:var(--text3)">/5</span></td>
-                <td><span class="risk-badge" :class="riskClass(b.gamingRisk)" x-text="b.gamingRisk+'%'"></span></td>
-                <td><template x-for="tg in b.tags"><span class="tag-sm" x-text="tg"></span></template></td>
-            </tr>
-        </template>
-    </table>
-
     <h2 class="section-header">Model Reality Ranking</h2>
-    <p style="color:var(--text3);margin-bottom:2rem;font-size:.9rem">Scores weighted by benchmark trust. Trust 5.0 counts 5× more than trust 1.0.</p>
+    <p style="color:var(--text3);margin-bottom:2rem;font-size:.9rem">Scores weighted by the community score of the benchmarks.</p>
     <table>
-        <tr><th>#</th><th>Model</th><th>Reality Score</th></tr>
+        <tr>
+            <th>#</th>
+            <th>Model</th>
+            <th>Reality Score</th>
+            <th x-show="activeTags.length > 0">Filtered Score <span style="font-size:.7rem;font-weight:normal;color:var(--text3)">(based on tags)</span></th>
+        </tr>
         <template x-for="(m,i) in rankedModels" :key="m.name">
-            <tr class="model-row">
+            <tr class="model-row" @click="openModel(m.name)" style="cursor:pointer">
                 <td><span class="rank-num" x-text="i+1"></span></td>
-                <td x-text="m.name"></td>
+                <td><a href="#" @click.prevent x-text="m.name"></a></td>
                 <td><span class="score-cell" x-text="m.realityScore.toFixed(1)"></span></td>
+                <td x-show="activeTags.length > 0">
+                    <span class="score-cell" style="color:var(--accent)" x-text="m.filteredScore !== null ? m.filteredScore.toFixed(1) : '—'"></span>
+                </td>
             </tr>
         </template>
     </table>
 </div>
 
-<!-- ═══════════ INDEX ═══════════ -->
-<div x-show="view==='index'" x-transition.opacity>
+<!-- ═══════════ MODEL DETAIL ═══════════ -->
+<div x-show="view==='modelDetail'" x-transition.opacity>
+    <template x-if="currentModel">
+        <div>
+            <span class="back-link" @click="navigate('models')">← Back to Models</span>
+            <h1 class="page-title" style="font-size:4.5rem;text-transform:none" x-text="currentModel"></h1>
+            
+            <h2 class="section-header">Benchmark Performance</h2>
+            <table>
+                <tr><th>Benchmark</th><th>Community Score</th><th>Model Score</th><th>Proof</th></tr>
+                <template x-for="b in benchmarks.filter(bench => bench.scores && bench.scores[currentModel] !== undefined)" :key="b.slug">
+                    <tr @click="openDetail(b.slug)" style="cursor:pointer">
+                        <td><a href="#" @click.prevent x-text="b.name"></a></td>
+                        <td><span class="score-cell" :style="'color:'+scoreColor(b.score)" x-text="b.score >= 0 ? '+'+b.score.toFixed(1) : b.score.toFixed(1)"></span></td>
+                        <td>
+                            <span class="score-cell" x-text="typeof b.scores[currentModel] === 'object' ? b.scores[currentModel].score : b.scores[currentModel]"></span>
+                        </td>
+                        <td>
+                            <template x-if="typeof b.scores[currentModel] === 'object' && b.scores[currentModel].proof">
+                                <a :href="b.scores[currentModel].proof" target="_blank" style="font-size:.85rem;color:var(--text2)">Link ↗</a>
+                            </template>
+                        </td>
+                    </tr>
+                </template>
+            </table>
+        </div>
+    </template>
+</div>
+
+<!-- ═══════════ BENCHMARKS ═══════════ -->
+<div x-show="view==='benchmarks'" x-transition.opacity>
     <h1 class="page-title">The Index.</h1>
-    <p class="page-desc">Complete registry of all evaluated benchmarks with community trust scores and gaming risk assessments.</p>
+    <p class="page-desc">Complete registry of all evaluated benchmarks with community upvotes and tags.</p>
 
     <h2 class="section-header">Benchmark Registry</h2>
     <table>
         <tr>
             <th class="sort-btn" @click="sortIndex('name')">Name</th>
-            <th class="sort-btn" @click="sortIndex('trust')">Trust</th>
-            <th class="sort-btn" @click="sortIndex('gamingRisk')">Gaming Risk</th>
+            <th class="sort-btn" @click="sortIndex('score')">Community Score</th>
             <th>Year</th>
             <th>Tags</th>
         </tr>
@@ -84,10 +104,8 @@
             <tr @click="openDetail(b.slug)" style="cursor:pointer">
                 <td><a href="#" @click.prevent><span x-text="b.name"></span></a><br><span style="color:var(--text3);font-size:.85rem" x-text="b.subtitle"></span></td>
                 <td>
-                    <span class="score-cell" :style="'color:'+trustColor(b.trust)" x-text="b.trust.toFixed(1)"></span>
-                    <div class="trust-bar" style="margin-top:.3rem"><div class="trust-bar-fill" :style="'width:'+(b.trust/5*100)+'%;background:'+trustColor(b.trust)"></div></div>
+                    <span class="score-cell" :style="'color:'+scoreColor(b.score)" x-text="b.score >= 0 ? '+'+b.score.toFixed(1) : b.score.toFixed(1)"></span>
                 </td>
-                <td><span class="risk-badge" :class="riskClass(b.gamingRisk)" x-text="b.gamingRisk+'%'"></span></td>
                 <td x-text="b.year||'—'" style="color:var(--text2)"></td>
                 <td><template x-for="tg in b.tags"><span class="tag-sm" x-text="tg"></span></template></td>
             </tr>
@@ -99,8 +117,9 @@
 <div x-show="view==='detail'" x-transition.opacity>
     <template x-if="currentBenchmark">
         <div>
-            <span class="back-link" @click="navigate(previousView||'index')">← Back</span>
-            <div class="meta-line" x-text="'Trust: '+currentBenchmark.trust.toFixed(1)+'/5  •  Gaming Risk: '+currentBenchmark.gamingRisk+'%'"></div>
+            <span class="back-link" @click="navigate(previousView||'benchmarks')">← Back</span>
+            <div class="meta-line" x-text="'Community Score: ' + (currentBenchmark.score >= 0 ? '+' : '') + currentBenchmark.score"></div>
+            <p style="font-size:0.85rem; color:var(--text3); margin-top:0.2rem">React with 👍/👎 in the discussion thread to vote on this benchmark.</p>
             <h1 class="page-title" style="font-size:4.5rem" x-text="currentBenchmark.name+'.'"></h1>
             <p class="page-desc" style="font-size:1.1rem;color:var(--text);margin-top:1rem" x-text="currentBenchmark.description"></p>
             <div style="margin:1rem 0"><template x-for="tg in currentBenchmark.tags"><span class="tag-sm" x-text="tg"></span></template></div>
@@ -134,6 +153,42 @@
                     </tr>
                 </template>
             </table>
+
+            <div style="margin-top:1.5rem" x-show="ghUser">
+                <button class="btn btn-sm btn-outline" @click="formType = formType === 'score' ? '' : 'score'; scoreForm.benchmarkSlug = currentBenchmark.slug">
+                    <span x-text="formType === 'score' ? 'Cancel' : '+ Submit New Score'"></span>
+                </button>
+            </div>
+            <div style="margin-top:1.5rem" x-show="!ghUser">
+                <button class="btn btn-sm btn-outline" @click="navigate('submit')">Login to Submit Score</button>
+            </div>
+
+            <form x-show="formType==='score' && ghUser" @submit.prevent="submitScore()" style="margin-top:2rem; padding:1.5rem; background:var(--bg); border-radius:8px; border:1px solid var(--border)">
+                <h3 style="margin-top:0; font-family:var(--hd); font-size:1.2rem; margin-bottom:1.5rem">Submit Model Score</h3>
+                <div class="form-group">
+                    <label>Model Name *</label>
+                    <input type="text" x-model="scoreForm.model" placeholder="e.g. GPT-4o" required>
+                </div>
+                <div class="form-group">
+                    <label>Score *</label>
+                    <input type="number" x-model="scoreForm.score" placeholder="0-100" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>Proof URL</label>
+                    <input type="url" x-model="scoreForm.proof" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>PR Note / Comment</label>
+                    <textarea x-model="scoreForm.note" placeholder="Provide context or instructions for the reviewers."></textarea>
+                </div>
+                <div style="margin-top:2rem">
+                    <button type="submit" class="btn" :disabled="submitting || !scoreForm.benchmarkSlug">
+                        <span x-show="!submitting">Create Pull Request →</span>
+                        <span x-show="submitting">Submitting...</span>
+                    </button>
+                    <p x-show="submitError" style="color:var(--danger);margin-top:1rem" x-text="submitError"></p>
+                </div>
+            </form>
 
             <template x-if="currentBenchmarkPRs.length > 0">
                 <div style="margin-bottom:3rem">
@@ -195,13 +250,8 @@
             <span style="color:var(--text3);font-size:.75rem;margin-left:.5rem;cursor:pointer" @click="githubLogout()">logout</span>
         </div>
 
-        <div style="display:flex;gap:1rem;margin-bottom:3rem">
-            <button class="btn" :class="formType!=='new' ? 'btn-outline' : ''" @click="formType='new'">New Benchmark</button>
-            <button class="btn" :class="formType!=='score' ? 'btn-outline' : ''" @click="formType='score'">Submit Score</button>
-        </div>
-
-        <form x-show="formType==='new'" @submit.prevent="submitBenchmark()">
-            <h2 class="section-header" style="margin-top:0">New Benchmark</h2>
+        <h2 class="section-header" style="margin-top:2rem">New Benchmark</h2>
+        <form @submit.prevent="submitBenchmark()">
             <div class="form-group">
                 <label>Name *</label>
                 <input type="text" x-model="form.name" placeholder="e.g. GPQA Diamond" required>
@@ -248,9 +298,6 @@
                     <input type="text" style="flex:1;min-width:120px;border-bottom:1px solid var(--border)" x-ref="ucTagInput" @keydown.enter.prevent="addTag('useCaseTags',$refs.ucTagInput)" @keydown.comma.prevent="addTag('useCaseTags',$refs.ucTagInput)" placeholder="Add tag...">
                 </div>
             </div>
-            <div class="form-group">
-                <label>Gaming Risk Estimate: <span x-text="form.gamingRisk+'%'" style="color:var(--accent)"></span></label>
-                <input type="range" x-model="form.gamingRisk" min="0" max="100">
             </div>
 
             <h2 class="section-header">Model Scores</h2>
@@ -273,40 +320,6 @@
             </div>
         </form>
 
-        <!-- Form for submitting a score -->
-        <form x-show="formType==='score'" @submit.prevent="submitScore()">
-            <h2 class="section-header" style="margin-top:0">Submit Model Score</h2>
-            <div class="form-group">
-                <label>Select Benchmark *</label>
-                <select x-model="scoreForm.benchmarkSlug" required>
-                    <option value="" disabled selected>Choose a benchmark...</option>
-                    <template x-for="b in benchmarks" :key="b.slug">
-                        <option :value="b.slug" x-text="b.name"></option>
-                    </template>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Model Name *</label>
-                <input type="text" x-model="scoreForm.model" placeholder="e.g. GPT-4o" required>
-            </div>
-            <div class="form-group">
-                <label>Score *</label>
-                <input type="number" x-model="scoreForm.score" placeholder="0-100" step="0.1" required>
-            </div>
-            <div class="form-group">
-                <label>Proof URL</label>
-                <input type="url" x-model="scoreForm.proof" placeholder="https://...">
-            </div>
-            <div class="form-group">
-                <label>PR Note / Comment</label>
-                <textarea x-model="scoreForm.note" placeholder="Provide context or instructions for the reviewers."></textarea>
-            </div>
-
-            <div style="margin-top:3rem">
-                <button type="submit" class="btn" :disabled="submitting || !scoreForm.benchmarkSlug">
-                    <span x-show="!submitting">Create Pull Request →</span>
-                    <span x-show="submitting">Submitting...</span>
-                </button>
                 <p x-show="submitError" style="color:var(--danger);margin-top:1rem" x-text="submitError"></p>
             </div>
         </form>

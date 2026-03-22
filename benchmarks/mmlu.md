@@ -2,8 +2,7 @@
 name: "MMLU"
 subtitle: "Massive Multitask Language Understanding"
 year: 2020
-trust: 1.8
-gaming_risk: 91
+score: 10
 paper_url: "https://arxiv.org/abs/2009.03300"
 repo_url: "https://github.com/hendrycks/test"
 capability_tags: ["knowledge-breadth"]

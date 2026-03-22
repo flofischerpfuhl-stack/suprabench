@@ -2,8 +2,7 @@
 name: "Chatbot Arena"
 subtitle: "Human Preference ELO Ratings"
 year: 2023
-trust: 3.6
-gaming_risk: 42
+score: 10
 paper_url: "https://arxiv.org/abs/2403.04132"
 repo_url: "https://github.com/lm-sys/FastChat"
 capability_tags: ["general-helpfulness"]

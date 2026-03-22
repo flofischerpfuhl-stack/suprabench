@@ -5,11 +5,10 @@
       "name": "ARC-AGI",
       "subtitle": "Abstraction & Reasoning Corpus",
       "year": 2019,
-      "trust": 4.4,
-      "gamingRisk": 9,
+      "score": 10,
       "tags": [
-        "novel-problems",
-        "abstract-reasoning"
+        "abstract-reasoning",
+        "novel-problems"
       ],
       "paperUrl": "https://arxiv.org/abs/1911.01547",
       "repoUrl": "https://github.com/fchollet/ARC-AGI",
@@ -43,8 +42,7 @@
       "name": "Chatbot Arena",
       "subtitle": "Human Preference ELO Ratings",
       "year": 2023,
-      "trust": 3.6,
-      "gamingRisk": 42,
+      "score": 10,
       "tags": [
         "general-helpfulness"
       ],
@@ -80,8 +78,7 @@
       "name": "GPQA",
       "subtitle": "Graduate-Level Google-Proof Q&A",
       "year": 2023,
-      "trust": 4.1,
-      "gamingRisk": 18,
+      "score": 10,
       "tags": [
         "scientific-reasoning",
         "research"
@@ -118,8 +115,7 @@
       "name": "HumanEval",
       "subtitle": "Python Code Generation",
       "year": 2021,
-      "trust": 1.2,
-      "gamingRisk": 96,
+      "score": 10,
       "tags": [
         "coding"
       ],
@@ -155,11 +151,10 @@
       "name": "LiveCodeBench",
       "subtitle": "Contamination-Free Coding Eval",
       "year": 2024,
-      "trust": 3.8,
-      "gamingRisk": 31,
+      "score": 10,
       "tags": [
-        "coding",
-        "algorithms"
+        "algorithms",
+        "coding"
       ],
       "paperUrl": "https://arxiv.org/abs/2403.07974",
       "repoUrl": "https://github.com/LiveCodeBench/LiveCodeBench",
@@ -193,8 +188,7 @@
       "name": "MMLU",
       "subtitle": "Massive Multitask Language Understanding",
       "year": 2020,
-      "trust": 1.8,
-      "gamingRisk": 91,
+      "score": 10,
       "tags": [
         "knowledge-breadth"
       ],
@@ -230,11 +224,10 @@
       "name": "SWE-bench Verified",
       "subtitle": "Real-World Software Engineering",
       "year": 2023,
-      "trust": 3.2,
-      "gamingRisk": 54,
+      "score": 10,
       "tags": [
-        "debugging",
-        "coding"
+        "coding",
+        "debugging"
       ],
       "paperUrl": "https://arxiv.org/abs/2310.06770",
       "repoUrl": "https://github.com/princeton-nlp/SWE-bench",

@@ -2,8 +2,7 @@
 name: "LiveCodeBench"
 subtitle: "Contamination-Free Coding Eval"
 year: 2024
-trust: 3.8
-gaming_risk: 31
+score: 10
 paper_url: "https://arxiv.org/abs/2403.07974"
 repo_url: "https://github.com/LiveCodeBench/LiveCodeBench"
 capability_tags: ["coding", "algorithms"]
