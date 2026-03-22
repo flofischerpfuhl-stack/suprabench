@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════ */
 
 const CONFIG = {
-    owner: 'OWNER',               // ← GitHub username
+    owner: 'flofischerpfuhl-stack',               // ← GitHub username
     repo: 'suprabench',
     clientId: 'YOUR_GITHUB_CLIENT_ID', // ← from GitHub OAuth App settings
     redirectUri: window.location.origin + window.location.pathname,
