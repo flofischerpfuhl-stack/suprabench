@@ -218,7 +218,7 @@ function supraBench() {
     // ═══ AUTH ═══
     async login() {
       try {
-        await window.sbConvex.signIn("github");
+        await window.sbConvex.signIn("google");
       } catch (e) {
         console.error("Login failed:", e);
       }
