@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupraBench — Community-Driven AI Model Rankings</title>
+    <meta name="description" content="A community-driven platform for ranking AI models based on benchmark trustworthiness. Not all benchmarks are equal.">
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/convex@1.17.4/dist/browser.bundle.js"></script>
+    <script src="js/convex.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="js/app.js"></script>
+</head>
+<body x-data="supraBench()" x-init="init()" x-cloak>
+
+<div class="app-layout">
+
+<!-- ═══════════════════════════════════════
+     SIDEBAR
+     ═══════════════════════════════════════ -->
+<nav class="sidebar">
+    <div class="logo" @click="navigate('models')">Supra<span>Bench</span>.</div>
+    <ul class="nav">
+        <li class="nav-item" :class="{'active': view==='models'}" @click="navigate('models')">Models</li>
+        <li class="nav-item" :class="{'active': view==='benchmarks'}" @click="navigate('benches')">Benchmarks</li>
+        <li class="nav-item" :class="{'active': view==='submit'}" @click="navigate('submit')">Contribute</li>
+    </ul>
+    <div class="sidebar-footer">
+        Community-driven.<br>No corporate influence.<br>BSL 1.1 Licensed.
+    </div>
+</nav>
+
+<main class="main">
+
+<!-- ═══════════════════════════════════════
+     VIEW: MODELS (default)
+     ═══════════════════════════════════════ -->
+<div x-show="view==='models'" x-transition.opacity>
+
+    <h1 class="page-title">Discover.<br>Verify.</h1>
+    <p class="page-desc">An editorial, community-driven ranking of AI models. Scores weighted by benchmark trustworthiness.</p>
+
+    <!-- Tag Filter Bar -->
+    <div class="tags-container" x-show="allTags.length > 0">
+        <template x-for="t in allTags" :key="t">
+            <span class="tag" :class="{'active': activeTags.includes(t)}" @click="toggleTag(t)" x-text="t"></span>
+        </template>
+    </div>
+
+    <h2 class="section-header">Model Reality Ranking</h2>
+    <p style="color:var(--text3);margin-bottom:1.5rem;font-size:.85rem">Scores weighted by the community quality score of each benchmark.</p>
+
+    <!-- Models Table -->
+    <table x-show="rankedModels.length > 0">
+        <thead>
+            <tr>
+                <th style="width:50px">#</th>
+                <th>Model</th>
+                <th>Provider</th>
+                <th>SupraScore</th>
+                <th x-show="activeTags.length > 0">Filtered Score</th>
+                <th>Coverage</th>
+            </tr>
+        </thead>
+        <tbody>
+            <template x-for="(m, i) in rankedModels" :key="m._id">
+                <tr class="clickable-row" @click="navigate('model', {slug: m.slug})">
+                    <td><span class="rank-num" x-text="i+1"></span></td>
+                    <td>
+                        <a href="#" @click.prevent x-text="m.name" style="font-weight:500"></a>
+                        <template x-if="m.familyTag">
+                            <span class="tag-sm" x-text="m.familyTag" style="margin-left:0.5rem"></span>
+                        </template>
+                    </td>
+                    <td style="color:var(--text2)" x-text="m.provider"></td>
+                    <td><span class="score-cell" x-text="m.supraScore.toFixed(1)"></span></td>
+                    <td x-show="activeTags.length > 0">
+                        <span class="score-cell score-accent" x-text="m.filteredScore !== null && m.filteredScore !== undefined ? m.filteredScore.toFixed(1) : '—'"></span>
+                    </td>
+                    <td style="color:var(--text3);font-size:.85rem" x-text="m.benchCount + ' benches'"></td>
+                </tr>
+            </template>
+        </tbody>
+    </table>
+
+    <div class="empty-state" x-show="rankedModels.length === 0">
+        No models yet — be the first to contribute.
+    </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     VIEW: MODEL DETAIL
+     ═══════════════════════════════════════ -->
+<div x-show="view==='modelDetail'" x-transition.opacity>
+
+    <template x-if="currentModel">
+        <div>
+            <span class="back-link" @click="navigate('models')">← Models</span>
+
+            <div class="detail-provider" x-text="currentModel.provider"></div>
+            <h1 class="detail-title" x-text="currentModel.name"></h1>
+
+            <template x-if="currentModel.familyTag">
+                <span class="tag-sm" x-text="currentModel.familyTag" style="margin-bottom:1rem;display:inline-block"></span>
+            </template>
+
+            <div class="supra-score-display">
+                <span class="supra-score-value" x-text="currentModel.supraScore.toFixed(1)"></span>
+                <span class="supra-score-label">SupraScore</span>
+            </div>
+
+            <!-- Benchmark Performance Table -->
+            <h2 class="section-header">Benchmark Performance</h2>
+            <table x-show="currentModel.benchPerformance && currentModel.benchPerformance.length > 0">
+                <thead>
+                    <tr>
+                        <th>Benchmark</th>
+                        <th>Bench Quality</th>
+                        <th>Effective Score</th>
+                        <th>Submissions</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="bp in currentModel.benchPerformance" :key="bp.benchId">
+                        <tr>
+                            <td>
+                                <a href="#" @click.prevent="navigate('bench', {slug: bp.benchSlug})" x-text="bp.benchName"></a>
+                            </td>
+                            <td>
+                                <div class="quality-bar-container">
+                                    <div class="quality-bar">
+                                        <div class="quality-bar-fill" :style="'width:'+bp.benchQuality+'%;background:'+qualityColor(bp.benchQuality)"></div>
+                                    </div>
+                                    <span style="font-size:.8rem;color:var(--text2)" x-text="bp.benchQuality.toFixed(0)"></span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="score-cell" x-text="bp.effectiveScore !== null ? bp.effectiveScore.toFixed(1) : '—'"></span>
+                            </td>
+                            <td style="color:var(--text3);font-size:.85rem" x-text="bp.validCount + ' / ' + bp.totalCount"></td>
+                            <td>
+                                <a href="#" class="link-arrow" @click.prevent="navigate('bench', {slug: bp.benchSlug})">View →</a>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+
+            <div class="empty-state" x-show="!currentModel.benchPerformance || currentModel.benchPerformance.length === 0">
+                No benchmark scores submitted yet.
+            </div>
+
+            <!-- Individual Submissions -->
+            <template x-if="currentModel.benchPerformance && currentModel.benchPerformance.length > 0">
+                <div>
+                    <h2 class="section-header" style="cursor:pointer" @click="showAllSubmissions = !showAllSubmissions">
+                        All Submissions
+                        <span class="expand-icon" :class="{'open': showAllSubmissions}" style="font-size:.8rem;margin-left:.5rem">▼</span>
+                    </h2>
+
+                    <div x-show="showAllSubmissions" x-transition>
+                        <template x-for="bp in currentModel.benchPerformance" :key="bp.benchId + '-subs'">
+                            <div style="margin-bottom:1.5rem">
+                                <h3 style="font-family:var(--hd);font-size:0.9rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2);margin-bottom:0.75rem" x-text="bp.benchName"></h3>
+                                <template x-for="sub in bp.submissions" :key="sub._id">
+                                    <div class="submission-card">
+                                        <div class="submission-card-scores">
+                                            <span class="score-cell" x-text="sub.normalizedScore.toFixed(1) + ' / 100'"></span>
+                                            <span style="font-size:.8rem;color:var(--text3)" x-text="'(raw: ' + sub.rawScore + ')'"></span>
+                                            <template x-if="!sub.isValid">
+                                                <span class="badge badge-disputed" style="margin-left:auto">Disputed</span>
+                                            </template>
+                                        </div>
+                                        <div class="submission-card-footer">
+                                            <a :href="sub.sourceUrl" target="_blank" style="color:var(--text2)" x-text="truncateUrl(sub.sourceUrl)">↗</a>
+                                            <span style="margin-left:auto" x-text="formatDate(sub.createdAt)"></span>
+                                            <template x-if="user">
+                                                <div style="display:flex;gap:.5rem">
+                                                    <button class="vote-btn" :class="{'active-up': sub.upvotes > 0}" @click.stop="castVote(sub._id, 1)">▲ <span x-text="sub.upvotes"></span></button>
+                                                    <button class="vote-btn" :class="{'active-down': sub.downvotes > 0}" @click.stop="castVote(sub._id, -1)">▼ <span x-text="sub.downvotes"></span></button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <div class="empty-state" x-show="!currentModel">
+        Loading model...
+    </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     VIEW: BENCHMARKS
+     ═══════════════════════════════════════ -->
+<div x-show="view==='benchmarks'" x-transition.opacity>
+
+    <h1 class="page-title">The Index.</h1>
+    <p class="page-desc">Complete registry of all benchmarks with community quality ratings.</p>
+
+    <h2 class="section-header">Benchmark Quality Ranking</h2>
+
+    <table x-show="rankedBenches.length > 0">
+        <thead>
+            <tr>
+                <th style="width:50px">#</th>
+                <th class="sort-btn" @click="toggleBenchSort('name')">Benchmark</th>
+                <th>Type</th>
+                <th class="sort-btn" @click="toggleBenchSort('quality')">Quality Score</th>
+                <th>Dimensions</th>
+                <th>Tags</th>
+                <th>Models</th>
+            </tr>
+        </thead>
+        <tbody>
+            <template x-for="(b, i) in sortedBenches" :key="b._id">
+                <tr class="clickable-row" @click="navigate('bench', {slug: b.slug})">
+                    <td><span class="rank-num" x-text="i+1"></span></td>
+                    <td>
+                        <a href="#" @click.prevent x-text="b.name" style="font-weight:500"></a><br>
+                        <span style="color:var(--text3);font-size:.8rem;max-width:300px;display:inline-block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" x-text="b.description"></span>
+                    </td>
+                    <td>
+                        <span class="badge" :class="b.isOfficial ? 'badge-official' : 'badge-community'" x-text="b.isOfficial ? 'Official' : 'Community'"></span>
+                    </td>
+                    <td>
+                        <span class="score-cell" :style="'color:'+qualityColor(b.qualityScore)" x-text="b.qualityScore.toFixed(0)"></span>
+                    </td>
+                    <td>
+                        <div class="dimension-dots">
+                            <div class="dimension-dot" title="Relevance">
+                                <div class="dimension-dot-fill" :style="'height:'+(b.dimensions.relevance/5*100)+'%;background:'+qualityColor(b.dimensions.relevance*20)"></div>
+                            </div>
+                            <div class="dimension-dot" title="Contamination Resistance">
+                                <div class="dimension-dot-fill" :style="'height:'+(b.dimensions.contamination/5*100)+'%;background:'+qualityColor(b.dimensions.contamination*20)"></div>
+                            </div>
+                            <div class="dimension-dot" title="Discriminability">
+                                <div class="dimension-dot-fill" :style="'height:'+(b.dimensions.discriminability/5*100)+'%;background:'+qualityColor(b.dimensions.discriminability*20)"></div>
+                            </div>
+                            <div class="dimension-dot" title="Reproducibility">
+                                <div class="dimension-dot-fill" :style="'height:'+(b.dimensions.reproducibility/5*100)+'%;background:'+qualityColor(b.dimensions.reproducibility*20)"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <template x-for="tg in b.tags.slice(0,3)" :key="tg">
+                            <span class="tag-sm" x-text="tg"></span>
+                        </template>
+                        <template x-if="b.tags.length > 3">
+                            <span style="font-size:.7rem;color:var(--text3)" x-text="'+' + (b.tags.length - 3)"></span>
+                        </template>
+                    </td>
+                    <td style="color:var(--text3);font-size:.85rem" x-text="b.modelCount"></td>
+                </tr>
+            </template>
+        </tbody>
+    </table>
+
+    <div class="empty-state" x-show="rankedBenches.length === 0">
+        No benchmarks yet — be the first to contribute.
+    </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     VIEW: BENCH DETAIL
+     ═══════════════════════════════════════ -->
+<div x-show="view==='benchDetail'" x-transition.opacity>
+
+    <template x-if="currentBench">
+        <div>
+            <span class="back-link" @click="navigate('benches')">← Benchmarks</span>
+
+            <span class="badge" :class="currentBench.isOfficial ? 'badge-official' : 'badge-community'"
+                  x-text="currentBench.isOfficial ? 'Official' : 'Community'"
+                  style="display:inline-block;margin-bottom:0.75rem"></span>
+
+            <h1 class="detail-title" x-text="currentBench.name"></h1>
+            <p style="color:var(--text2);font-size:1.05rem;max-width:650px;margin-bottom:1rem" x-text="currentBench.description"></p>
+
+            <p style="margin-bottom:0.5rem">
+                <a :href="currentBench.url" target="_blank" style="color:var(--accent);font-family:var(--hd);font-size:.85rem;text-transform:uppercase;letter-spacing:.5px">Source ↗</a>
+            </p>
+
+            <!-- Tags -->
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;align-items:center;margin-bottom:2rem">
+                <template x-for="tg in currentBench.tags" :key="tg">
+                    <span class="tag-sm" x-text="tg"></span>
+                </template>
+                <template x-if="user">
+                    <span>
+                        <button class="btn-sm btn-outline" style="font-size:.7rem;padding:.15rem .5rem;border-radius:100px" 
+                                x-show="!showAddTag" @click="showAddTag = true">+ add tag</button>
+                        <span x-show="showAddTag" style="display:inline-flex;gap:.3rem;align-items:center">
+                            <input type="text" x-model="addTagInput" @keydown.enter="addBenchDetailTag()" 
+                                   placeholder="tag name" 
+                                   style="padding:.2rem .5rem;font-size:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);width:100px">
+                            <button class="btn-sm btn-outline" style="font-size:.7rem;padding:.15rem .5rem" @click="addBenchDetailTag()">✓</button>
+                        </span>
+                    </span>
+                </template>
+            </div>
+
+            <!-- Quality Score Section -->
+            <div class="quality-section">
+                <div style="display:flex;align-items:baseline;gap:1rem;margin-bottom:1.5rem">
+                    <span class="quality-overall" :style="'color:'+qualityColor(currentBench.qualityScore)" x-text="currentBench.qualityScore.toFixed(0)"></span>
+                    <span style="font-family:var(--hd);font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Quality Score</span>
+                    <span class="quality-rater-count" x-text="currentBench.raterCount + ' ratings'" style="margin-left:auto"></span>
+                </div>
+
+                <!-- Dimension Rows -->
+                <div class="quality-dimension-row">
+                    <span class="quality-dim-label">Relevance</span>
+                    <div class="quality-dim-bar">
+                        <div class="quality-bar" style="width:100%">
+                            <div class="quality-bar-fill" :style="'width:'+(currentBench.dimensions.relevance/5*100)+'%;background:'+qualityColor(currentBench.dimensions.relevance*20)"></div>
+                        </div>
+                    </div>
+                    <span class="quality-dim-value" x-text="currentBench.dimensions.relevance.toFixed(1)"></span>
+                    <!-- Star Rating (if logged in and wants to rate) -->
+                    <template x-if="user && showRatingForm">
+                        <div class="star-rating">
+                            <template x-for="n in [1,2,3,4,5]" :key="'rel-'+n">
+                                <span class="star" :class="{'active': ratingForm.relevance >= n}" @click="setRating('relevance', n)">★</span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="quality-dimension-row">
+                    <span class="quality-dim-label">Contamination Resistance</span>
+                    <div class="quality-dim-bar">
+                        <div class="quality-bar" style="width:100%">
+                            <div class="quality-bar-fill" :style="'width:'+(currentBench.dimensions.contamination/5*100)+'%;background:'+qualityColor(currentBench.dimensions.contamination*20)"></div>
+                        </div>
+                    </div>
+                    <span class="quality-dim-value" x-text="currentBench.dimensions.contamination.toFixed(1)"></span>
+                    <template x-if="user && showRatingForm">
+                        <div class="star-rating">
+                            <template x-for="n in [1,2,3,4,5]" :key="'con-'+n">
+                                <span class="star" :class="{'active': ratingForm.contamination >= n}" @click="setRating('contamination', n)">★</span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="quality-dimension-row">
+                    <span class="quality-dim-label">Discriminability</span>
+                    <div class="quality-dim-bar">
+                        <div class="quality-bar" style="width:100%">
+                            <div class="quality-bar-fill" :style="'width:'+(currentBench.dimensions.discriminability/5*100)+'%;background:'+qualityColor(currentBench.dimensions.discriminability*20)"></div>
+                        </div>
+                    </div>
+                    <span class="quality-dim-value" x-text="currentBench.dimensions.discriminability.toFixed(1)"></span>
+                    <template x-if="user && showRatingForm">
+                        <div class="star-rating">
+                            <template x-for="n in [1,2,3,4,5]" :key="'disc-'+n">
+                                <span class="star" :class="{'active': ratingForm.discriminability >= n}" @click="setRating('discriminability', n)">★</span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="quality-dimension-row">
+                    <span class="quality-dim-label">Reproducibility</span>
+                    <div class="quality-dim-bar">
+                        <div class="quality-bar" style="width:100%">
+                            <div class="quality-bar-fill" :style="'width:'+(currentBench.dimensions.reproducibility/5*100)+'%;background:'+qualityColor(currentBench.dimensions.reproducibility*20)"></div>
+                        </div>
+                    </div>
+                    <span class="quality-dim-value" x-text="currentBench.dimensions.reproducibility.toFixed(1)"></span>
+                    <template x-if="user && showRatingForm">
+                        <div class="star-rating">
+                            <template x-for="n in [1,2,3,4,5]" :key="'repr-'+n">
+                                <span class="star" :class="{'active': ratingForm.reproducibility >= n}" @click="setRating('reproducibility', n)">★</span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Rate / Submit Buttons -->
+                <div style="margin-top:1rem;display:flex;gap:.75rem">
+                    <template x-if="user && !showRatingForm">
+                        <button class="btn btn-sm btn-outline" @click="showRatingForm = true" x-text="myRating ? 'Edit Rating' : 'Rate This Benchmark'"></button>
+                    </template>
+                    <template x-if="user && showRatingForm">
+                        <div style="display:flex;gap:.5rem">
+                            <button class="btn btn-sm" @click="submitRating()" 
+                                    :disabled="ratingForm.relevance===0 || ratingForm.contamination===0 || ratingForm.discriminability===0 || ratingForm.reproducibility===0">
+                                Save Rating
+                            </button>
+                            <button class="btn btn-sm btn-outline" @click="showRatingForm = false">Cancel</button>
+                        </div>
+                    </template>
+                    <template x-if="!user">
+                        <span style="font-size:.8rem;color:var(--text3)">Log in to rate this benchmark</span>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Model Scores Table -->
+            <h2 class="section-header">Model Scores</h2>
+            <table x-show="currentBench.modelScores && currentBench.modelScores.length > 0">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Effective Score</th>
+                        <th>Submissions</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="ms in currentBench.modelScores" :key="ms.modelId">
+                        <tr>
+                            <td>
+                                <a href="#" @click.prevent="navigate('model', {slug: ms.modelSlug})" x-text="ms.modelName" style="font-weight:500"></a>
+                            </td>
+                            <td>
+                                <span class="score-cell" x-text="ms.effectiveScore !== null ? ms.effectiveScore.toFixed(1) : '—'"></span>
+                            </td>
+                            <td style="color:var(--text3);font-size:.85rem" x-text="ms.validCount + ' / ' + ms.totalCount"></td>
+                            <td>
+                                <a href="#" class="link-arrow" @click.prevent="navigate('model', {slug: ms.modelSlug})">View →</a>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+
+            <div class="empty-state" x-show="!currentBench.modelScores || currentBench.modelScores.length === 0">
+                No model scores submitted yet.
+            </div>
+
+            <!-- All Submissions (expandable) -->
+            <template x-if="currentBench.modelScores && currentBench.modelScores.length > 0">
+                <div>
+                    <h2 class="section-header expandable-header" @click="showAllSubmissions = !showAllSubmissions">
+                        All Submissions
+                        <span class="expand-icon" :class="{'open': showAllSubmissions}">▼</span>
+                    </h2>
+
+                    <div x-show="showAllSubmissions" x-transition>
+                        <template x-for="ms in currentBench.modelScores" :key="ms.modelId + '-subs'">
+                            <div style="margin-bottom:1.5rem">
+                                <h3 style="font-family:var(--hd);font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2);margin-bottom:0.5rem" x-text="ms.modelName"></h3>
+                                <template x-for="sub in ms.submissions" :key="sub._id">
+                                    <div class="submission-card">
+                                        <div class="submission-card-scores">
+                                            <span class="score-cell" x-text="sub.normalizedScore.toFixed(1) + ' / 100'"></span>
+                                            <span style="font-size:.8rem;color:var(--text3)" x-text="'(raw: ' + sub.rawScore + ')'"></span>
+                                            <template x-if="!sub.isValid">
+                                                <span class="badge badge-disputed" style="margin-left:.5rem">Disputed</span>
+                                            </template>
+                                        </div>
+                                        <div class="submission-card-footer">
+                                            <div class="submitter" x-show="sub.submitterImage">
+                                                <img :src="sub.submitterImage" :alt="sub.submitterName">
+                                                <span x-text="sub.submitterName" style="font-size:.85rem"></span>
+                                            </div>
+                                            <a :href="sub.sourceUrl" target="_blank" style="color:var(--text2);font-size:.8rem" x-text="truncateUrl(sub.sourceUrl)"></a>
+                                            <span style="margin-left:auto;font-size:.8rem" x-text="formatDate(sub.createdAt)"></span>
+                                            <template x-if="user">
+                                                <div style="display:flex;gap:.4rem">
+                                                    <button class="vote-btn" @click.stop="castVote(sub._id, 1)">▲ <span x-text="sub.upvotes"></span></button>
+                                                    <button class="vote-btn" @click.stop="castVote(sub._id, -1)">▼ <span x-text="sub.downvotes"></span></button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Discussion Placeholder -->
+            <div class="discussion-placeholder" style="margin-top:3rem">
+                <h4>Discussion</h4>
+                <p>Community discussions coming soon.</p>
+            </div>
+        </div>
+    </template>
+
+    <div class="empty-state" x-show="!currentBench">
+        Loading benchmark...
+    </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     VIEW: SUBMISSION DETAIL
+     ═══════════════════════════════════════ -->
+<div x-show="view==='submission'" x-transition.opacity>
+
+    <template x-if="currentSubmission">
+        <div>
+            <span class="back-link" @click="history.back()">← Back</span>
+
+            <h1 class="detail-title" style="font-size:2.5rem">Submission Detail</h1>
+
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;margin-bottom:2rem">
+                <div>
+                    <span style="font-size:.8rem;color:var(--text3);font-family:var(--hd);text-transform:uppercase">Model</span><br>
+                    <a href="#" @click.prevent="navigate('model', {slug: currentSubmission.modelSlug})" 
+                       style="font-size:1.2rem;font-weight:500" x-text="currentSubmission.modelName"></a>
+                </div>
+                <div>
+                    <span style="font-size:.8rem;color:var(--text3);font-family:var(--hd);text-transform:uppercase">Benchmark</span><br>
+                    <a href="#" @click.prevent="navigate('bench', {slug: currentSubmission.benchSlug})" 
+                       style="font-size:1.2rem;font-weight:500" x-text="currentSubmission.benchName"></a>
+                </div>
+            </div>
+
+            <div class="form-section" style="max-width:500px">
+                <div style="display:flex;align-items:baseline;gap:1rem;margin-bottom:1rem">
+                    <span class="score-cell" style="font-size:2rem" x-text="currentSubmission.normalizedScore.toFixed(1)"></span>
+                    <span style="color:var(--text3)">/ 100 normalized</span>
+                </div>
+                <p style="color:var(--text2);font-size:.9rem;margin-bottom:1rem">
+                    Raw: <strong x-text="currentSubmission.rawScore"></strong>
+                    (scale: <span x-text="currentSubmission.scaleMin"></span>–<span x-text="currentSubmission.scaleMax"></span>)
+                </p>
+                <p style="margin-bottom:1rem">
+                    <a :href="currentSubmission.sourceUrl" target="_blank" style="color:var(--accent)" x-text="currentSubmission.sourceUrl">↗</a>
+                </p>
+                <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+                    <div class="submitter" x-show="currentSubmission.submitterImage">
+                        <img :src="currentSubmission.submitterImage" :alt="currentSubmission.submitterName">
+                        <span x-text="currentSubmission.submitterName"></span>
+                    </div>
+                    <span style="color:var(--text3);font-size:.85rem" x-text="formatDate(currentSubmission.createdAt)"></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:1rem">
+                    <span class="badge" :class="currentSubmission.isValid ? 'badge-valid' : 'badge-disputed'"
+                          x-text="currentSubmission.isValid ? 'Valid' : 'Disputed'"></span>
+                    <template x-if="user">
+                        <div style="display:flex;gap:.5rem">
+                            <button class="vote-btn" @click="castVote(currentSubmission._id, 1)">▲ <span x-text="currentSubmission.upvotes"></span></button>
+                            <button class="vote-btn" @click="castVote(currentSubmission._id, -1)">▼ <span x-text="currentSubmission.downvotes"></span></button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Discussion Placeholder -->
+            <div class="discussion-placeholder" style="margin-top:2rem">
+                <h4>Discussion</h4>
+                <p>Community discussions coming soon.</p>
+            </div>
+        </div>
+    </template>
+
+    <div class="empty-state" x-show="!currentSubmission">
+        Loading submission...
+    </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     VIEW: CONTRIBUTE / SUBMIT
+     ═══════════════════════════════════════ -->
+<div x-show="view==='submit'" x-transition.opacity>
+
+    <h1 class="page-title">Contribute.</h1>
+    <p class="page-desc">Submit a model score with a source link. The community validates through voting.</p>
+
+    <!-- Auth State -->
+    <div style="margin-bottom:2rem">
+        <template x-if="user">
+            <div class="user-badge">
+                <img :src="user.image" :alt="user.name" x-show="user.image">
+                <span x-text="user.name || user.email"></span>
+                <span style="color:var(--text3);font-size:.75rem;margin-left:.5rem;cursor:pointer" @click="logout()">logout</span>
+            </div>
+        </template>
+        <template x-if="!user">
+            <div class="login-card">
+                <p>Authenticate with GitHub to submit scores.</p>
+                <button class="gh-btn" @click="login()">
+                    <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    Login with GitHub →
+                </button>
+            </div>
+        </template>
+    </div>
+
+    <!-- Success State -->
+    <template x-if="submitSuccess">
+        <div class="success-box">
+            <h3>✓ Score Submitted</h3>
+            <p style="margin:1rem 0;color:var(--text2)">Your submission is live and ready for community review.</p>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap">
+                <button class="btn btn-sm" @click="submitAnother()">Submit Another Score</button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Submit Form -->
+    <form x-show="user && !submitSuccess" @submit.prevent="submitScore()">
+
+        <!-- Section 1: Benchmark -->
+        <div class="form-section">
+            <div class="form-section-title">1 — Benchmark</div>
+
+            <div class="form-group search-container">
+                <label>Search Existing Benchmark</label>
+                <input type="text" x-model="submitForm.benchSearch" @input.debounce.300ms="searchBenches()" 
+                       placeholder="Type to search benchmarks..." 
+                       :disabled="submitForm.selectedBench !== null">
+
+                <!-- Search Results Dropdown -->
+                <div class="search-dropdown" x-show="submitForm.benchResults.length > 0 || (submitForm.benchSearch.length >= 2 && !submitForm.selectedBench)">
+                    <template x-for="b in submitForm.benchResults" :key="b._id">
+                        <div class="search-dropdown-item" @click="selectBench(b)">
+                            <span x-text="b.name"></span>
+                            <span style="float:right" class="badge" :class="b.isOfficial ? 'badge-official' : 'badge-community'" x-text="b.isOfficial ? 'Official' : 'Community'"></span>
+                        </div>
+                    </template>
+                    <div class="search-dropdown-item search-new-item" @click="startNewBench()" x-show="submitForm.benchSearch.length >= 2">
+                        + Add New Benchmark
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Bench Info -->
+            <template x-if="submitForm.selectedBench">
+                <div style="display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;background:var(--surface2);border-radius:var(--radius);margin-bottom:1rem">
+                    <span x-text="submitForm.selectedBench.name" style="font-weight:500"></span>
+                    <span class="badge" :class="submitForm.selectedBench.isOfficial ? 'badge-official' : 'badge-community'" x-text="submitForm.selectedBench.isOfficial ? 'Official' : 'Community'"></span>
+                    <span style="color:var(--text3);font-size:.8rem" x-text="'Scale: ' + submitForm.selectedBench.scaleMin + '–' + submitForm.selectedBench.scaleMax"></span>
+                    <button type="button" class="btn btn-sm btn-danger" @click="submitForm.selectedBench = null; submitForm.benchSearch = ''" style="margin-left:auto">×</button>
+                </div>
+            </template>
+
+            <!-- New Bench Form -->
+            <div x-show="submitForm.isNewBench" x-transition style="margin-top:1rem">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" x-model="submitForm.newBench.name" placeholder="e.g. GPQA Diamond">
+                </div>
+                <div class="form-group">
+                    <label>Description *</label>
+                    <textarea x-model="submitForm.newBench.description" placeholder="What does this benchmark test?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>URL *</label>
+                    <input type="url" x-model="submitForm.newBench.url" @input="checkBenchUrl()" placeholder="https://github.com/... or https://huggingface.co/...">
+                    <div class="official-indicator" :class="submitForm.isOfficialDetected ? 'official' : 'community'" 
+                         x-show="submitForm.newBench.url.length > 5">
+                        <span x-text="submitForm.isOfficialDetected ? '✓ Official source' : 'Community benchmark'"></span>
+                    </div>
+                </div>
+                <div style="display:flex;gap:1rem">
+                    <div class="form-group" style="flex:1">
+                        <label>Scale Min *</label>
+                        <input type="number" x-model="submitForm.newBench.scaleMin" placeholder="0">
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label>Scale Max *</label>
+                        <input type="number" x-model="submitForm.newBench.scaleMax" placeholder="100">
+                        <span class="helper-text">e.g. 100 for percentage, 1400 for ELO</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tags</label>
+                    <div class="input-tags">
+                        <template x-for="(t, i) in submitForm.newBench.tags" :key="i">
+                            <span class="input-tag">
+                                <span x-text="t"></span>
+                                <span class="remove" @click="removeBenchTag(i)">×</span>
+                            </span>
+                        </template>
+                        <input type="text" x-model="submitForm.newBenchTagInput" 
+                               @keydown.enter.prevent="addBenchTag()" 
+                               @keydown.comma.prevent="addBenchTag()" 
+                               placeholder="Add tag...">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline" @click="submitForm.isNewBench = false; submitForm.benchSearch = ''">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Section 2: Model -->
+        <div class="form-section">
+            <div class="form-section-title">2 — Model</div>
+
+            <div class="form-group search-container">
+                <label>Search Existing Model</label>
+                <input type="text" x-model="submitForm.modelSearch" @input.debounce.300ms="searchModels()"
+                       placeholder="Type to search models..."
+                       :disabled="submitForm.selectedModel !== null">
+
+                <div class="search-dropdown" x-show="submitForm.modelResults.length > 0 || (submitForm.modelSearch.length >= 2 && !submitForm.selectedModel)">
+                    <template x-for="m in submitForm.modelResults" :key="m._id">
+                        <div class="search-dropdown-item" @click="selectModel(m)">
+                            <span x-text="m.name"></span>
+                            <span style="float:right;font-size:.8rem;color:var(--text3)" x-text="m.provider"></span>
+                        </div>
+                    </template>
+                    <div class="search-dropdown-item search-new-item" @click="startNewModel()" x-show="submitForm.modelSearch.length >= 2">
+                        + Add New Model
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Model Info -->
+            <template x-if="submitForm.selectedModel">
+                <div style="display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;background:var(--surface2);border-radius:var(--radius);margin-bottom:1rem">
+                    <span x-text="submitForm.selectedModel.name" style="font-weight:500"></span>
+                    <span style="color:var(--text3);font-size:.8rem" x-text="submitForm.selectedModel.provider"></span>
+                    <button type="button" class="btn btn-sm btn-danger" @click="submitForm.selectedModel = null; submitForm.modelSearch = ''" style="margin-left:auto">×</button>
+                </div>
+            </template>
+
+            <!-- New Model Form -->
+            <div x-show="submitForm.isNewModel" x-transition style="margin-top:1rem">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" x-model="submitForm.newModel.name" placeholder="e.g. GPT-4o-2024-11-20">
+                </div>
+                <div class="form-group">
+                    <label>Provider *</label>
+                    <input type="text" x-model="submitForm.newModel.provider" placeholder="e.g. OpenAI">
+                </div>
+                <div class="form-group">
+                    <label>Family Tag (optional)</label>
+                    <input type="text" x-model="submitForm.newModel.familyTag" placeholder="e.g. gpt-4o">
+                    <span class="helper-text">Groups model versions together</span>
+                </div>
+                <div class="form-group">
+                    <label>Tags</label>
+                    <div class="input-tags">
+                        <template x-for="(t, i) in submitForm.newModel.tags" :key="i">
+                            <span class="input-tag">
+                                <span x-text="t"></span>
+                                <span class="remove" @click="removeModelTag(i)">×</span>
+                            </span>
+                        </template>
+                        <input type="text" x-model="submitForm.newModelTagInput" 
+                               @keydown.enter.prevent="addModelTag()"
+                               @keydown.comma.prevent="addModelTag()"
+                               placeholder="Add tag...">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline" @click="submitForm.isNewModel = false; submitForm.modelSearch = ''">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Section 3: Score -->
+        <div class="form-section">
+            <div class="form-section-title">3 — Score</div>
+
+            <div class="form-group">
+                <label>Score *</label>
+                <input type="number" x-model="submitForm.rawScore" @input="updateNormalizePreview()" step="any"
+                       :placeholder="'Enter score in original scale: ' + currentScaleMin + '–' + currentScaleMax">
+                <template x-if="submitForm.normalizedPreview !== null">
+                    <div class="normalize-preview" x-text="'= ' + submitForm.normalizedPreview.toFixed(1) + ' / 100 normalized'"></div>
+                </template>
+            </div>
+
+            <div class="form-group">
+                <label>Source URL *</label>
+                <input type="url" x-model="submitForm.sourceUrl" placeholder="https://... (link to results page, paper, or leaderboard)">
+                <span class="helper-text">Required — link to the source of this score</span>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div style="margin-top:1rem">
+            <button type="submit" class="btn" :disabled="submitting">
+                <span x-show="!submitting">Submit Score →</span>
+                <span x-show="submitting"><span class="loading-spinner"></span> Submitting...</span>
+            </button>
+            <p class="error-msg" x-show="submitError" x-text="submitError"></p>
+        </div>
+
+    </form>
+
+</div>
+
+</main>
+</div>
+
+</body>
+</html>

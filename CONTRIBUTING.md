@@ -1,33 +1,61 @@
 # Contributing to SupraBench
 
-Thank you for your interest in contributing to SupraBench! This platform relies on community expertise to evaluate and rank AI models fairly.
+## How to Contribute
 
-## Adding a Benchmark
+SupraBench is fully community-driven. There are several ways to contribute:
 
-Benchmarks are added by creating a new `.md` file in the `benchmarks/` directory.
+### 1. Submit Model Scores
 
-### Pull Request Process
+The primary way to contribute is by submitting benchmark scores for AI models:
 
-1. You can use the "Contribute" page on the SupraBench website to automatically generate a Pull Request.
-2. Alternatively, fork this repository and create a Markdown file in `benchmarks/`. 
-3. Include the YAML frontmatter with the following fields:
-   - `name`: Benchmark name
-   - `trust`: Trust score (1.0 to 5.0)
-   - `gaming_risk`: Estimated gaming risk (0 to 100)
-   - `capability_tags`: List of tags
-4. Model scores are added using an explicit Markdown table in the body:
-   ```markdown
-   | Model | Score |
-   |-------|-------|
-   | Model Name | 95.0 |
-   ```
+1. Go to the **Contribute** page
+2. Log in with your GitHub account
+3. Select or create a benchmark
+4. Select or create a model
+5. Enter the score with a source URL
+6. Submit — the community will validate through voting
 
-### Important License Agreement
+### 2. Rate Benchmarks
 
-**By submitting a Pull Request, you agree your contributions may be used commercially by the project owner.** This repository operates under the BSL 1.1 license.
+Help the community assess benchmark quality by rating benchmarks on 4 dimensions:
 
-### Auto-Merge Rules
-Approved PRs are automatically merged via our GitHub Action if they meet these criteria:
-- Open for at least 48 hours.
-- 2 approvals from trusted contributors.
-- Do not modify files in the `.github/` directory.
+- **Relevance**: How well does this benchmark reflect real-world capability?
+- **Contamination Resistance**: How resistant is this benchmark to training data contamination?
+- **Discriminability**: How well does this benchmark separate good models from bad ones?
+- **Reproducibility**: Can this benchmark be run independently?
+
+Each dimension is rated 1–5 on the benchmark detail page.
+
+### 3. Vote on Submissions
+
+Every score submission can be upvoted or downvoted. Submissions with more downvotes than upvotes are marked as "disputed" and excluded from ranking calculations.
+
+### 4. Add Tags
+
+Help categorize benchmarks by adding tags on benchmark detail pages.
+
+## Anti-Gaming Rules
+
+- Max 5 score submissions per user per 24 hours
+- One vote per user per submission
+- One quality rating per user per benchmark
+- Source URL is required for all submissions
+- Scores must be within the benchmark's defined scale range
+
+## Tech Stack
+
+- **Backend**: Convex (serverless, reactive)
+- **Auth**: GitHub OAuth via `@convex-dev/auth`
+- **Frontend**: HTML + Alpine.js (no React, no build step)
+
+## Development Setup
+
+```bash
+npm install
+npx convex dev
+# Serve public/ with any static file server
+```
+
+## License
+
+BSL 1.1 — see [LICENSE](LICENSE) for details.
