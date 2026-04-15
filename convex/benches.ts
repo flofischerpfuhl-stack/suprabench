@@ -196,19 +196,19 @@ export const getBySlug = query({
 export const search = query({
   args: { query: v.string() },
   handler: async (ctx, { query: q }) => {
-    const benches = await ctx.db.query("benches").collect();
-    const lower = q.toLowerCase();
-    return benches
-      .filter((b) => b.name.toLowerCase().includes(lower))
-      .slice(0, 10)
-      .map((b) => ({
-        _id: b._id,
-        name: b.name,
-        slug: b.slug,
-        scaleMin: b.scaleMin,
-        scaleMax: b.scaleMax,
-        isOfficial: b.isOfficial,
-      }));
+    if (q.length < 2) return [];
+    const results = await ctx.db
+      .query("benches")
+      .withSearchIndex("search_name", (s) => s.search("name", q))
+      .take(10);
+    return results.map((b) => ({
+      _id: b._id,
+      name: b.name,
+      slug: b.slug,
+      scaleMin: b.scaleMin,
+      scaleMax: b.scaleMax,
+      isOfficial: b.isOfficial,
+    }));
   },
 });
 

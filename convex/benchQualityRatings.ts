@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 
 export const getMyRating = query({
   args: { benchId: v.id("benches") },
@@ -63,6 +64,24 @@ export const rate = mutation({
         contamination: args.contamination,
         discriminability: args.discriminability,
         reproducibility: args.reproducibility,
+      });
+    }
+
+    // Bench quality changed → recompute all models that have scores on this bench
+    // Find affected models and recompute each
+    const scores = await ctx.db
+      .query("modelScores")
+      .withIndex("by_bench", (q) => q.eq("benchId", args.benchId))
+      .collect();
+
+    const modelIds = new Set<string>();
+    for (const s of scores) {
+      modelIds.add(s.modelId as string);
+    }
+
+    for (const modelId of modelIds) {
+      await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, {
+        modelId: modelId as any,
       });
     }
   },

@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 
 const OFFICIAL_DOMAINS = [
   "lmsys.org",
@@ -34,7 +35,6 @@ function generateSlug(name: string): string {
 
 export const submit = mutation({
   args: {
-    // Bench: either existing ID or new bench data
     benchId: v.optional(v.id("benches")),
     newBench: v.optional(
       v.object({
@@ -46,7 +46,6 @@ export const submit = mutation({
         tags: v.array(v.string()),
       })
     ),
-    // Model: either existing ID or new model data
     modelId: v.optional(v.id("models")),
     newModel: v.optional(
       v.object({
@@ -63,12 +62,13 @@ export const submit = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    // Rate limiting: max 5 submissions in last 24h
+    // Rate limiting: max 5 submissions in last 24h — uses by_submitter index
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    const recentScores = await ctx.db.query("modelScores").collect();
-    const userRecent = recentScores.filter(
-      (s) => s.submittedBy === userId && s.createdAt > oneDayAgo
-    );
+    const userRecent = await ctx.db
+      .query("modelScores")
+      .withIndex("by_submitter", (q) => q.eq("submittedBy", userId))
+      .filter((q) => q.gte(q.field("createdAt"), oneDayAgo))
+      .collect();
     if (userRecent.length >= 5) {
       throw new Error("Rate limit: max 5 submissions per day");
     }
@@ -149,6 +149,19 @@ export const submit = mutation({
         addedBy: userId,
         createdAt: Date.now(),
       });
+
+      // Initialize ranking entry for new model
+      await ctx.db.insert("modelRankings", {
+        modelId,
+        name: nm.name,
+        provider: nm.provider,
+        slug,
+        familyTag: nm.familyTag,
+        tags: nm.tags,
+        supraScore: 0,
+        benchCount: 0,
+        updatedAt: Date.now(),
+      });
     } else {
       throw new Error("Either modelId or newModel must be provided");
     }
@@ -180,6 +193,11 @@ export const submit = mutation({
       createdAt: Date.now(),
       upvotes: 0,
       downvotes: 0,
+    });
+
+    // Trigger ranking recompute for affected model
+    await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, {
+      modelId: modelId!,
     });
 
     return scoreId;

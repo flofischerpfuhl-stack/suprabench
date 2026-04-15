@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 
 export const getMyVote = query({
   args: { targetId: v.string() },
@@ -56,13 +57,11 @@ export const cast = mutation({
         // Switch vote
         await ctx.db.patch(existingVote._id, { value });
         if (value === 1) {
-          // Was -1, now +1
           await ctx.db.patch(targetId as any, {
             upvotes: (score as any).upvotes + 1,
             downvotes: Math.max(0, (score as any).downvotes - 1),
           });
         } else {
-          // Was +1, now -1
           await ctx.db.patch(targetId as any, {
             upvotes: Math.max(0, (score as any).upvotes - 1),
             downvotes: (score as any).downvotes + 1,
@@ -86,6 +85,14 @@ export const cast = mutation({
           downvotes: (score as any).downvotes + 1,
         });
       }
+    }
+
+    // Trigger ranking recompute for the affected model
+    const modelId = (score as any).modelId;
+    if (modelId) {
+      await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, {
+        modelId,
+      });
     }
   },
 });

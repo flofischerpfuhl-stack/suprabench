@@ -78,14 +78,19 @@ function supraBench() {
 
     // ═══ INIT ═══
     async init() {
-      const { client, api, handleAuthCallback } = window.sbConvex;
+      const { client, api, initAuth } = window.sbConvex;
 
-      // Handle OAuth callback if present
-      handleAuthCallback();
+      // Handle OAuth callback / restore session
+      await initAuth();
 
       // Parse initial hash
       this._parseHash();
       window.addEventListener("hashchange", () => this._parseHash());
+
+      // Listen for auth state changes to re-subscribe
+      window.addEventListener("sb-auth-change", () => {
+        // User query will auto-refresh via subscription
+      });
 
       // Subscribe to tags
       this._subscribe(api.tags.listAll, {}, (data) => {
@@ -211,12 +216,16 @@ function supraBench() {
     },
 
     // ═══ AUTH ═══
-    login() {
-      window.sbConvex.startGitHubLogin();
+    async login() {
+      try {
+        await window.sbConvex.signIn("github");
+      } catch (e) {
+        console.error("Login failed:", e);
+      }
     },
 
-    logout() {
-      window.sbConvex.clearAuthToken();
+    async logout() {
+      await window.sbConvex.signOut();
       this.user = null;
     },
 

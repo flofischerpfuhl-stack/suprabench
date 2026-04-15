@@ -13,7 +13,9 @@ export default defineSchema({
     tags: v.array(v.string()),
     addedBy: v.id("users"),
     createdAt: v.number(),
-  }).index("by_slug", ["slug"]),
+  })
+    .index("by_slug", ["slug"])
+    .searchIndex("search_name", { searchField: "name" }),
 
   benches: defineTable({
     name: v.string(),
@@ -26,7 +28,9 @@ export default defineSchema({
     scaleMax: v.number(),
     addedBy: v.id("users"),
     createdAt: v.number(),
-  }).index("by_slug", ["slug"]),
+  })
+    .index("by_slug", ["slug"])
+    .searchIndex("search_name", { searchField: "name" }),
 
   benchQualityRatings: defineTable({
     benchId: v.id("benches"),
@@ -52,7 +56,8 @@ export default defineSchema({
   })
     .index("by_model", ["modelId"])
     .index("by_bench", ["benchId"])
-    .index("by_model_bench", ["modelId", "benchId"]),
+    .index("by_model_bench", ["modelId", "benchId"])
+    .index("by_submitter", ["submittedBy", "createdAt"]),
 
   votes: defineTable({
     targetId: v.string(),
@@ -62,4 +67,19 @@ export default defineSchema({
   })
     .index("by_target", ["targetId"])
     .index("by_user_target", ["userId", "targetId"]),
+
+  // Denormalized rankings cache — updated on mutations
+  modelRankings: defineTable({
+    modelId: v.id("models"),
+    name: v.string(),
+    provider: v.string(),
+    slug: v.string(),
+    familyTag: v.optional(v.string()),
+    tags: v.array(v.string()),
+    supraScore: v.number(),
+    benchCount: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_model", ["modelId"])
+    .index("by_score", ["supraScore"]),
 });
