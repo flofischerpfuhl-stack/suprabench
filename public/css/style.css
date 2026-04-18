@@ -55,7 +55,12 @@ a:hover {
 /* ── Layout ── */
 .app-layout {
   display: flex;
+  /* 100vh on iOS Safari includes the dynamic URL bar, causing the
+     layout to jump when it shows/hides. 100dvh tracks the *visible*
+     viewport, which is what we actually want for a fixed shell.
+     The 100vh line is the fallback for browsers without dvh support. */
   height: 100vh;
+  height: 100dvh;
 }
 
 .sidebar {
@@ -65,7 +70,13 @@ a:hover {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  padding: 2rem 1.5rem;
+  /* Top padding picks up the iOS Dynamic Island / notch via env() so the
+     logo isn't hidden under the status bar in standalone PWA mode. The
+     calc() keeps the original 2rem for browser-tab use and just adds
+     whatever safe area iOS reports (0 on Android / desktop). */
+  padding: calc(env(safe-area-inset-top, 0px) + 2rem) 1.5rem
+           calc(env(safe-area-inset-bottom, 0px) + 2rem)
+           calc(env(safe-area-inset-left, 0px) + 1.5rem);
   position: fixed;
   top: 0;
   left: 0;
@@ -226,7 +237,8 @@ a:hover {
 /* ── Cookie / storage notice ── */
 .cookie-notice {
   position: fixed;
-  bottom: 1rem;
+  /* Sits above the iOS home indicator on devices with one. */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
   left: 50%;
   transform: translateX(-50%);
   max-width: 560px;
@@ -1474,8 +1486,12 @@ tr.clickable-row {
   top: 0;
   left: 0;
   right: 0;
-  height: 56px;
-  padding: 0 1rem;
+  /* Bar grows to host the iOS notch / Dynamic Island. Inner content
+     stays the original 56px so layout (logo size etc.) is unchanged. */
+  height: calc(env(safe-area-inset-top, 0px) + 56px);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: calc(env(safe-area-inset-left, 0px) + 1rem);
+  padding-right: calc(env(safe-area-inset-right, 0px) + 1rem);
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   align-items: center;
@@ -1554,8 +1570,13 @@ tr.clickable-row {
 
   .main {
     margin-left: 0;
-    margin-top: 56px;
-    padding: 2rem 1.5rem 4rem;
+    /* Clears the mobile-bar including its safe-area top padding. */
+    margin-top: calc(env(safe-area-inset-top, 0px) + 56px);
+    /* Bottom padding keeps content above the iOS home-indicator. */
+    padding: 2rem
+             calc(env(safe-area-inset-right, 0px) + 1.5rem)
+             calc(env(safe-area-inset-bottom, 0px) + 4rem)
+             calc(env(safe-area-inset-left, 0px) + 1.5rem);
   }
   .page-title {
     font-size: 3rem;
@@ -2318,7 +2339,8 @@ ol.about-list li::before {
 
 .toast {
   position: fixed;
-  bottom: 1.5rem;
+  /* Lifts above the iOS home indicator. */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
   left: 50%;
   transform: translateX(-50%);
   background: var(--surface);

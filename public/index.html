@@ -1660,13 +1660,13 @@
         <button class="qa-question" :aria-expanded="aboutOpen.has('q10')" @click="aboutToggle('q10')">
             <span class="expand-icon" :class="{'open': aboutOpen.has('q10')}">▼</span>
             <span>Is there a public API?
-                <span class="badge-soon" style="background:var(--surface);color:var(--text3);font-size:.62rem;padding:.1rem .4rem;border-radius:999px;margin-left:.4rem;font-family:var(--bd);font-weight:400">Coming soon</span>
+                <span class="badge-soon" style="background:var(--surface);color:var(--text3);font-size:.62rem;padding:.1rem .4rem;border-radius:999px;margin-left:.4rem;font-family:var(--bd);font-weight:400">Demand-gated</span>
             </span>
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q10')" x-transition>
-            <p>Not yet — but the contract is fully designed and the documentation is published. The plan is a paid REST API for programmatic access to rankings, models, benchmarks and submissions. Tiered pricing from <strong>€9 / month</strong> (10k requests) to custom enterprise plans, billed via Stripe.</p>
-            <p>Read the full <a href="/docs/api/" style="color:var(--accent)"><strong>API documentation</strong></a> — every endpoint, error code, rate-limit and example is already there. Then <strong>join the waitlist</strong> for the tier you'd subscribe to: <a href="#profile" @click.prevent="navigate('profile'); $nextTick(() => profileTab='api')">Profile → API &amp; Billing</a>. We'll email you the moment it ships, in the order people signed up.</p>
-            <p class="helper-text">If you have a specific use case (research, dashboard, leaderboard mirror), tell us via a GitLab issue — high-signal asks help us prioritize endpoints.</p>
+            <p>Not yet &mdash; the contract is final, the implementation is built, the docs are live. We just don't flip the public <code>/v1/</code> endpoints on until enough developers are actually waiting for it; running Stripe + a dedicated edge cache for an API nobody uses isn't free. Pricing starts at <strong>$5 / month</strong> (10 000 requests) and goes up to custom enterprise plans, all billed in USD via Stripe.</p>
+            <p>Read the full <a href="/docs/api/" style="color:var(--accent)"><strong>API documentation</strong></a> &mdash; every endpoint, error code, rate-limit and example is already there. Then <strong>join the waitlist</strong> for the tier you'd actually subscribe to: <a href="#profile" @click.prevent="navigate('profile'); $nextTick(() => profileTab='api')">Profile → API &amp; Billing</a>. When the queue hits launch threshold we ship and email everyone in signup order.</p>
+            <p class="helper-text">Have a specific use case (research, dashboard, leaderboard mirror)? Tell us via a GitLab issue &mdash; high-signal asks weigh more than passive signups.</p>
         </div>
     </div>
 </div>
@@ -1702,7 +1702,7 @@
                 <button class="profile-tab" :class="{'is-active': profileTab==='api'}"
                         @click="profileTab='api'" role="tab"
                         :aria-selected="profileTab==='api'">
-                    API &amp; Billing <span class="badge-soon">Coming soon</span>
+                    API &amp; Billing <span class="badge-soon">Demand-gated</span>
                 </button>
             </nav>
 
@@ -1827,15 +1827,17 @@
                 <div class="api-banner">
                     <span class="api-banner__icon" aria-hidden="true">⚡</span>
                     <div>
-                        <p class="api-banner__title">Public API — Coming soon</p>
+                        <p class="api-banner__title">Public API — Demand-gated</p>
                         <p class="api-banner__text">
                             Programmatic access to SupraBench data (rankings, models,
-                            benchmarks, submissions). The API isn't live yet — but the
+                            benchmarks, submissions). The contract is final, the
                             <a href="/docs/api/" style="color:var(--accent);text-decoration:underline">full developer documentation</a>
-                            is published, so you can review the contract and start
-                            building against it. Join the waitlist below for the tier
-                            you're interested in; we'll email you the moment it ships,
-                            in launch order.
+                            is live, the implementation is built &mdash; we just don't
+                            flip <code>/v1/</code> on until enough developers are waiting
+                            for it to justify the recurring infra and Stripe overhead.
+                            Join the waitlist on the tier you'd actually subscribe to;
+                            once the queue hits launch threshold we ship and email
+                            everyone in signup order.
                         </p>
                     </div>
                 </div>
@@ -1846,7 +1848,7 @@
                     <div class="tier-card" :class="{'is-current': isOnWaitlist('hobby')}">
                         <span class="tier-card__badge" x-show="isOnWaitlist('hobby')">On waitlist</span>
                         <h3 class="tier-card__name">Hobby</h3>
-                        <p class="tier-card__price">€9 <small>/ month</small></p>
+                        <p class="tier-card__price">$5 <small>/ month</small></p>
                         <p class="tier-card__quota">10 000 requests / month</p>
                         <ul class="tier-card__features">
                             <li>Read access to all public endpoints</li>
@@ -1864,7 +1866,7 @@
                         <span class="tier-card__badge" x-show="!isOnWaitlist('pro')">Most popular</span>
                         <span class="tier-card__badge" x-show="isOnWaitlist('pro')">On waitlist</span>
                         <h3 class="tier-card__name">Pro</h3>
-                        <p class="tier-card__price">€29 <small>/ month</small></p>
+                        <p class="tier-card__price">$19 <small>/ month</small></p>
                         <p class="tier-card__quota">100 000 requests / month</p>
                         <ul class="tier-card__features">
                             <li>Everything in Hobby</li>
@@ -1882,7 +1884,7 @@
                     <div class="tier-card" :class="{'is-current': isOnWaitlist('scale')}">
                         <span class="tier-card__badge" x-show="isOnWaitlist('scale')">On waitlist</span>
                         <h3 class="tier-card__name">Scale</h3>
-                        <p class="tier-card__price">€99 <small>/ month</small></p>
+                        <p class="tier-card__price">$79 <small>/ month</small></p>
                         <p class="tier-card__quota">1 000 000 requests / month</p>
                         <ul class="tier-card__features">
                             <li>Everything in Pro</li>
@@ -1916,11 +1918,12 @@
                 </div>
 
                 <p style="color:var(--text3);font-size:.78rem;margin-top:-1rem">
-                    Prices are net of VAT. Read the full
+                    Prices are USD, net of any applicable tax. Read the full
                     <a href="/docs/api/" style="color:var(--accent)">API documentation →</a>.
                     Billing handled by
-                    <a href="https://stripe.com" target="_blank" rel="noopener">Stripe</a>
-                    (EU reverse-charge for B2B with valid VAT-ID).
+                    <a href="https://stripe.com" target="_blank" rel="noopener">Stripe</a>;
+                    Stripe collects EU VAT automatically and supports B2B reverse-charge
+                    when you provide a valid VAT-ID at checkout.
                     See <a href="/legal/terms#api">Terms § API</a> for cancellation,
                     refund and uptime details.
                 </p>

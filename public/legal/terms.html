@@ -150,12 +150,15 @@ applicable. Place of jurisdiction for disputes with merchants, legal entities un
 special funds under public law is Munich, Germany, to the extent permitted by law.
 </p>
 
-<h2 id="api">14. Paid API service (planned — not yet active)</h2>
+<h2 id="api">14. Paid API service (demand-gated — not yet active)</h2>
 <aside style="background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.3);border-radius:6px;padding:.85rem 1rem;margin:.75rem 0">
-<strong>Status:</strong> The paid REST API described in this section is <strong>not yet active</strong>.
-The terms below take effect only once the API is launched. Until then, no
-charges are made and the waitlist signup in your profile creates no
-contractual obligation. We publish the terms now in advance for transparency.
+<strong>Status:</strong> The paid REST API described in this section is
+<strong>demand-gated</strong>: the implementation is built but the public
+<code>/v1/</code> endpoints are not enabled until the waitlist accumulates
+enough signups to justify the launch. The terms below take effect only once
+the API is activated. Until then, no charges are made and the waitlist signup
+in your profile creates no contractual obligation. We publish the terms now in
+advance for transparency.
 </aside>
 
 <p>
@@ -169,12 +172,16 @@ by <strong>Stripe Payments Europe, Ltd.</strong> (Stripe) on our behalf; you acc
 when subscribing.
 </p>
 
-<h3>14.1 Subscription, billing cycle, taxes</h3>
+<h3>14.1 Subscription, billing cycle, taxes, currency</h3>
 <p>
-Subscriptions renew monthly on the day of initial subscription. Prices shown are
-net of VAT; we apply EU VAT (Reverse Charge for B2B with valid VAT-ID, German
-VAT for German consumers, OSS for EU consumers, no VAT for non-EU customers
-where applicable). Invoices are issued by us and delivered via Stripe.
+Subscriptions renew monthly on the day of initial subscription. Prices are
+quoted in <strong>US dollars (USD)</strong>; this is the contractual currency
+for the API service. EU VAT, where applicable, is added by Stripe at checkout
+on top of the listed USD price (Reverse Charge for B2B with valid VAT-ID,
+German VAT for German consumers, OSS for other EU consumers, no VAT for
+non-EU customers). Stripe converts to the customer's local card currency at
+the time of charge using its standard exchange rate. Invoices are issued by
+us and delivered via Stripe.
 </p>
 
 <h3>14.2 Right of withdrawal (consumers, § 312g BGB)</h3>

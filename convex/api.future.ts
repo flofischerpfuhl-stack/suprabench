@@ -43,19 +43,30 @@ import { Id } from "./_generated/dataModel";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 // Tier configuration — single source of truth used by API + Stripe.
-// Update prices ONLY in concert with the matching Stripe Price IDs
-// in stripe.future.ts; keep them aligned.
-// IMPORTANT: these numbers are the single source of truth for the
-// Stripe Price IDs (stripe.future.ts), the marketing tier-cards in
-// public/index.html (Profile → API & Billing) AND the public docs
-// under /docs/api/. If you change a number here, change it in all
-// three places. The docs pages have a comment block at the top
-// listing every value that needs to stay in sync.
+//
+// IMPORTANT: these numbers are the single source of truth for:
+//   • the Stripe Price IDs in stripe.future.ts
+//   • the marketing tier-cards in public/index.html (Profile → API)
+//   • the public docs under /docs/api/ (landing tier table + the
+//     authentication.html and rate-limits.html quota tables)
+//   • the legal contract in public/legal/terms.html (§ 14)
+// If you change a number here, change it in all four places.
+//
+// Pricing is in USD because that's the global default for developer
+// APIs (Stripe, OpenAI, GitHub, etc. all quote USD). Stripe adds
+// EU VAT automatically at checkout for B2C / non-VAT-ID customers.
+//
+// Why these specific numbers? Convex Pro ($25/month) gives 25M function
+// calls + 100GB egress. With our 5-minute CDN cache (Cloudflare in
+// front of /api/*), the vast majority of requests never reach Convex.
+// At ~50% origin-hit rate that's headroom for ~500 Pro customers on a
+// single $25 plan, so we can price the bottom tier aggressively to
+// remove friction for hobbyists / open-source devs.
 export const TIERS = {
-  hobby:     { monthlyQuota:    10_000, rpmLimit:   60, allowExport: false, maxKeys:  1 },
-  pro:       { monthlyQuota:   100_000, rpmLimit:  300, allowExport: true,  maxKeys:  3 },
-  scale:     { monthlyQuota: 1_000_000, rpmLimit: 1200, allowExport: true,  maxKeys: 10 },
-  enterprise:{ monthlyQuota: 10_000_000, rpmLimit: 6000, allowExport: true, maxKeys: 50 },
+  hobby:     { priceUsd:    5, monthlyQuota:    10_000, rpmLimit:   60, allowExport: false, maxKeys:  1 },
+  pro:       { priceUsd:   19, monthlyQuota:   100_000, rpmLimit:  300, allowExport: true,  maxKeys:  3 },
+  scale:     { priceUsd:   79, monthlyQuota: 1_000_000, rpmLimit: 1200, allowExport: true,  maxKeys: 10 },
+  enterprise:{ priceUsd: null, monthlyQuota: 10_000_000, rpmLimit: 6000, allowExport: true, maxKeys: 50 },
 } as const;
 export type Tier = keyof typeof TIERS;
 

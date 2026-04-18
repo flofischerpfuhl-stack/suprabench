@@ -69,7 +69,7 @@
   <!-- ── Content ── -->
   <main class="docs-content">
 
-    <h1>SupraBench API <span class="pill pill-soon">Pre-launch</span></h1>
+    <h1>SupraBench API <span class="pill pill-soon">Demand-gated</span></h1>
     <p class="lead">
       A read-only REST API over the SupraBench database: model rankings,
       benchmark metadata, score submissions and tag taxonomies.
@@ -83,11 +83,12 @@
     </div>
 
     <div class="preview-banner">
-      <strong>Status: Pre-launch.</strong> This documentation is published in advance
-      of the API going live so you can review the contract before subscribing.
-      No requests will succeed yet — the <code>/v1/</code> base URL returns
-      <code>503</code> until launch. <a href="/#api">Join the waitlist</a> to be
-      notified the moment endpoints flip on.
+      <strong>Status: Demand-gated.</strong> The contract you're reading is final and
+      the implementation is built &mdash; we just don't flip <code>/v1/</code> on
+      until enough developers are waiting for it to justify the recurring infra
+      and payment-processing overhead. Requests currently return <code>503</code>.
+      <a href="/#api">Join the waitlist</a> on the tier you'd actually pay for;
+      when the queue hits launch threshold we ship.
     </div>
 
     <h2 id="overview">What you get</h2>
@@ -181,7 +182,7 @@ const data = await r.json();</code></pre>
       <tbody>
         <tr>
           <td><strong>Hobby</strong></td>
-          <td>€9 / month</td>
+          <td>$5 / month</td>
           <td>10 000</td>
           <td>60 req / min</td>
           <td><span class="cross">—</span></td>
@@ -189,7 +190,7 @@ const data = await r.json();</code></pre>
         </tr>
         <tr>
           <td><strong>Pro</strong></td>
-          <td>€29 / month</td>
+          <td>$19 / month</td>
           <td>100 000</td>
           <td>300 req / min</td>
           <td><span class="check">✓</span></td>
@@ -197,7 +198,7 @@ const data = await r.json();</code></pre>
         </tr>
         <tr>
           <td><strong>Scale</strong></td>
-          <td>€99 / month</td>
+          <td>$79 / month</td>
           <td>1 000 000</td>
           <td>1 200 req / min</td>
           <td><span class="check">✓</span></td>
@@ -215,7 +216,10 @@ const data = await r.json();</code></pre>
     </table>
 
     <p style="font-size:.82rem;color:var(--text3)">
-      Prices net of VAT. EU reverse-charge applies to B2B with valid VAT-ID.
+      Prices are USD, net of any applicable tax. Billing handled by
+      <a href="https://stripe.com" target="_blank" rel="noopener">Stripe</a>:
+      EU VAT is added automatically at checkout, with B2B reverse-charge support
+      when a valid VAT-ID is provided.
       Need higher limits, an SLA or on-prem mirror?
       <a href="mailto:suprabench.editor887@passmail.com">Contact us</a>.
     </p>

@@ -16,19 +16,28 @@ html.legal-html, body.legal-body {
   color: var(--text);
   font-family: var(--bd);
   line-height: 1.65;
-  /* Top padding leaves room for the sticky topbar (3.5rem tall). */
-  padding: 5rem 1.5rem 6rem;
+  /* Top padding leaves room for the sticky topbar (3.5rem) plus the
+     iOS notch / Dynamic Island. Bottom padding lifts the page above
+     the iOS home indicator. Left/right pick up landscape insets. */
+  padding: calc(env(safe-area-inset-top, 0px) + 5rem)
+           calc(env(safe-area-inset-right, 0px) + 1.5rem)
+           calc(env(safe-area-inset-bottom, 0px) + 6rem)
+           calc(env(safe-area-inset-left, 0px) + 1.5rem);
 }
 
 .legal-topbar {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 100;
-  height: 3.5rem;
+  /* Bar grows to host the iOS notch / Dynamic Island; inner content
+     stays the original 3.5rem so layout (logo size etc.) is unchanged. */
+  height: calc(env(safe-area-inset-top, 0px) + 3.5rem);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: calc(env(safe-area-inset-left, 0px) + 1.5rem);
+  padding-right: calc(env(safe-area-inset-right, 0px) + 1.5rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
   background: rgba(3, 3, 3, 0.92);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -153,8 +162,16 @@ html.legal-html, body.legal-body {
 
 @media (max-width: 600px) {
   .legal-title { font-size: 2.1rem; }
-  .legal-body  { padding: 4.5rem 1rem 4rem; }
-  .legal-topbar { padding: 0 1rem; }
+  .legal-body  {
+    padding: calc(env(safe-area-inset-top, 0px) + 4.5rem)
+             calc(env(safe-area-inset-right, 0px) + 1rem)
+             calc(env(safe-area-inset-bottom, 0px) + 4rem)
+             calc(env(safe-area-inset-left, 0px) + 1rem);
+  }
+  .legal-topbar {
+    padding-left: calc(env(safe-area-inset-left, 0px) + 1rem);
+    padding-right: calc(env(safe-area-inset-right, 0px) + 1rem);
+  }
   .legal-topbar__nav { gap: 0.9rem; }
   .legal-topbar__nav a { font-size: 0.72rem; }
 }

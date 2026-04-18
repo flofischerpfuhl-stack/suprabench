@@ -19,7 +19,9 @@ html.docs-html, body.docs-body {
   color: var(--text);
   font-family: var(--bd);
   line-height: 1.65;
-  padding-top: 3.5rem; /* matches .legal-topbar height */
+  /* Top padding leaves room for the sticky topbar (3.5rem) plus the
+     iOS notch / Dynamic Island via env(). */
+  padding-top: calc(env(safe-area-inset-top, 0px) + 3.5rem);
 }
 
 /* ── Top bar (shared with legal pages, but with active state for Docs) ── */
@@ -27,11 +29,14 @@ html.docs-html, body.docs-body {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 100;
-  height: 3.5rem;
+  /* Bar grows to host the iOS notch / Dynamic Island. */
+  height: calc(env(safe-area-inset-top, 0px) + 3.5rem);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: calc(env(safe-area-inset-left, 0px) + 1.5rem);
+  padding-right: calc(env(safe-area-inset-right, 0px) + 1.5rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
   background: rgba(3, 3, 3, 0.92);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -92,13 +97,19 @@ html.docs-html, body.docs-body {
   gap: 2.5rem;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 6rem;
+  /* Bottom padding lifts content above the iOS home indicator.
+     Left/right pick up landscape notch insets. */
+  padding: 2rem
+           calc(env(safe-area-inset-right, 0px) + 1.5rem)
+           calc(env(safe-area-inset-bottom, 0px) + 6rem)
+           calc(env(safe-area-inset-left, 0px) + 1.5rem);
 }
 .docs-nav {
   position: sticky;
-  top: 4.5rem;
+  /* Track the dynamic topbar height (3.5rem + iOS notch). */
+  top: calc(env(safe-area-inset-top, 0px) + 4.5rem);
   align-self: start;
-  max-height: calc(100vh - 5.5rem);
+  max-height: calc(100vh - env(safe-area-inset-top, 0px) - 5.5rem);
   overflow-y: auto;
   padding-right: 0.5rem;
 }
@@ -224,7 +235,7 @@ html.docs-html, body.docs-body {
 .pill-required { background: #f8514930; color: #ff8b85; border: 1px solid #f8514960; }
 .pill-optional { background: var(--surface); color: var(--text3); border: 1px solid var(--border); }
 
-/* Pre-launch banner across all docs pages */
+/* Demand-gated banner across all docs pages */
 .preview-banner {
   background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(255, 107, 53, 0.02));
   border: 1px solid rgba(255, 107, 53, 0.4);
@@ -551,13 +562,20 @@ html.docs-html, body.docs-body {
   .docs-toc { display: none; }
 }
 @media (max-width: 800px) {
-  .docs-layout { grid-template-columns: 1fr; padding: 1rem 1rem 4rem; }
+  .docs-layout {
+    grid-template-columns: 1fr;
+    padding: 1rem
+             calc(env(safe-area-inset-right, 0px) + 1rem)
+             calc(env(safe-area-inset-bottom, 0px) + 4rem)
+             calc(env(safe-area-inset-left, 0px) + 1rem);
+  }
   .docs-topbar__hamburger { display: inline-flex; align-items: center; justify-content: center; }
   .docs-topbar__nav { display: none; }
   .docs-topbar__nav.is-open {
     display: flex;
     position: absolute;
-    top: 3.5rem;
+    /* Drops down from the dynamic-height bar (3.5rem + iOS notch). */
+    top: calc(env(safe-area-inset-top, 0px) + 3.5rem);
     right: 0;
     background: var(--surface);
     border: 1px solid var(--border);
