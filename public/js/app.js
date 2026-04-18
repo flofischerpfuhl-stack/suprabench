@@ -139,8 +139,8 @@ window.sbGiscus = {
   cfg: {
     repo: "f14703416-sketch/suprabench-comments",
     repoId: "R_kgDOSGYwBg",
-    category: "Announcements",
-    categoryId: "DIC_kwDOSGYwBs4C7Kf6",
+    category: "Comments",
+    categoryId: "DIC_kwDOSGYwBs4C7KjZ",
   },
   _resolveTheme() {
     const o = window.location.origin;
