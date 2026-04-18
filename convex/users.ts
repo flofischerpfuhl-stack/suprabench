@@ -104,6 +104,7 @@ export const myActivity = query({
         contamination: r.contamination,
         discriminability: r.discriminability,
         reproducibility: r.reproducibility,
+        difficulty: (r as any).difficulty ?? null,
       });
     }
 

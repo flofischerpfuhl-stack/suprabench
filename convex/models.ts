@@ -7,6 +7,7 @@ import {
   seedCreatorEntityVote,
   assertNotResurrectingOwnHidden,
 } from "./entityVotes";
+import { getBenchWeights } from "./rankings";
 
 function generateSlug(name: string): string {
   return name
@@ -160,6 +161,37 @@ export const search = query({
   },
 });
 
+// Distinct provider list — for autocomplete on the submit form so users
+// don't accidentally introduce duplicate spellings ("OpenAi" vs "OpenAI").
+export const listProviders = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("models").collect();
+    const seen = new Map<string, string>(); // lowercase -> canonical
+    for (const m of all) {
+      if (m.hidden) continue;
+      const key = (m.provider ?? "").trim().toLowerCase();
+      if (key && !seen.has(key)) seen.set(key, m.provider);
+    }
+    return Array.from(seen.values()).sort();
+  },
+});
+
+// Distinct family-tags list — same idea, prevents typo splits.
+export const listFamilyTags = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("models").collect();
+    const seen = new Map<string, string>();
+    for (const m of all) {
+      if (m.hidden || !m.familyTag) continue;
+      const key = m.familyTag.trim().toLowerCase();
+      if (key && !seen.has(key)) seen.set(key, m.familyTag);
+    }
+    return Array.from(seen.values()).sort();
+  },
+});
+
 // ── Ranked models + filtered score (scoped to benches matching any active tag) ──
 export const listRankedWithFilter = query({
   args: { activeTags: v.array(v.string()) },
@@ -193,25 +225,12 @@ export const listRankedWithFilter = query({
         .map((b) => b._id as string)
     );
 
-    // Pre-compute quality per matching bench
-    const benchQuality: Record<string, number> = {};
+    // Pre-compute full bench weight (quality × difficulty × headroom)
+    // for each matching bench. Same formula used in rankings.recomputeModel.
+    const benchWeight: Record<string, number> = {};
     for (const benchId of matchingBenchIds) {
-      const ratings = await ctx.db
-        .query("benchQualityRatings")
-        .withIndex("by_bench", (q) => q.eq("benchId", benchId as any))
-        .collect();
-      benchQuality[benchId] =
-        ratings.length === 0
-          ? 50
-          : (ratings.reduce(
-              (s, r) =>
-                s +
-                (r.relevance + r.contamination + r.discriminability + r.reproducibility) /
-                  4,
-              0
-            ) /
-              ratings.length) *
-            20;
+      const w = await getBenchWeights(ctx, benchId as any);
+      benchWeight[benchId] = w.weight;
     }
 
     const out = [];
@@ -239,9 +258,10 @@ export const listRankedWithFilter = query({
           vals.length % 2 === 0
             ? (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2
             : vals[Math.floor(vals.length / 2)];
-        const q = benchQuality[bId] ?? 50;
-        weighted += q * median;
-        weight += q;
+        const w = benchWeight[bId] ?? 0;
+        if (w <= 0) continue;
+        weighted += w * median;
+        weight += w;
       }
 
       const filteredScore =

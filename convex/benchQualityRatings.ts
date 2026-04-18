@@ -26,13 +26,19 @@ export const rate = mutation({
     contamination: v.number(),
     discriminability: v.number(),
     reproducibility: v.number(),
+    difficulty: v.number(),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    // Validate dimensions 1-5
-    for (const dim of [args.relevance, args.contamination, args.discriminability, args.reproducibility]) {
+    for (const dim of [
+      args.relevance,
+      args.contamination,
+      args.discriminability,
+      args.reproducibility,
+      args.difficulty,
+    ]) {
       if (dim < 1 || dim > 5 || !Number.isInteger(dim)) {
         throw new Error("Each dimension must be an integer between 1 and 5");
       }
@@ -41,7 +47,6 @@ export const rate = mutation({
     const bench = await ctx.db.get(args.benchId);
     if (!bench) throw new Error("Benchmark not found");
 
-    // Upsert
     const existing = await ctx.db
       .query("benchQualityRatings")
       .withIndex("by_bench_user", (q) =>
@@ -55,6 +60,7 @@ export const rate = mutation({
         contamination: args.contamination,
         discriminability: args.discriminability,
         reproducibility: args.reproducibility,
+        difficulty: args.difficulty,
       });
     } else {
       await ctx.db.insert("benchQualityRatings", {
@@ -64,6 +70,7 @@ export const rate = mutation({
         contamination: args.contamination,
         discriminability: args.discriminability,
         reproducibility: args.reproducibility,
+        difficulty: args.difficulty,
       });
     }
 

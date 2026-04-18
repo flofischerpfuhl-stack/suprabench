@@ -43,6 +43,10 @@ export default defineSchema({
     contamination: v.number(),
     discriminability: v.number(),
     reproducibility: v.number(),
+    // Difficulty (1-5): how much intelligence does this bench probe?
+    // Multiplied (not averaged) into the bench's effective weight, so a
+    // trivial bench contributes 20% of a frontier bench at the same quality.
+    difficulty: v.optional(v.number()),
   })
     .index("by_bench", ["benchId"])
     .index("by_bench_user", ["benchId", "userId"]),

@@ -43,10 +43,17 @@ function isoToTimestamp(iso) {
 let _entryCounter = 0;
 
 function makeEmptyBench() {
-  return { name: "", description: "", url: "", scaleMin: 0, scaleMax: 100, tags: [] };
+  return {
+    name: "", description: "", url: "",
+    scaleMin: 0, scaleMax: 100,
+    tags: [], tagInput: "", lastFlashIdx: -1,
+  };
 }
 function makeEmptyModel() {
-  return { name: "", provider: "", familyTag: "", tags: [] };
+  return {
+    name: "", provider: "", familyTag: "",
+    tags: [], tagInput: "", lastFlashIdx: -1,
+  };
 }
 
 // One entry inside the "for-bench" form (= one model on this bench)
@@ -60,8 +67,6 @@ function makeBenchScoreEntry() {
     selectedModel: null,
     isNewModel: false,
     newModel: makeEmptyModel(),
-    newModelTagInput: "",
-    newModelLastFlashIdx: -1,
     rawScore: "",
     normalizedPreview: null,
     sourceUrl: "",
@@ -98,10 +103,8 @@ function makeFormA() {
 function makeFormB() {
   return {
     benchSearch: "", benchResults: [], selectedBench: null,
-    isNewBench: true, // bench tab defaults to "new bench"
+    isNewBench: true,
     newBench: makeEmptyBench(),
-    newBenchTagInput: "",
-    newBenchLastFlashIdx: -1,
     isOfficialDetected: false,
     scoreEntries: [makeBenchScoreEntry()],
   };
@@ -110,10 +113,8 @@ function makeFormB() {
 function makeFormC() {
   return {
     modelSearch: "", modelResults: [], selectedModel: null,
-    isNewModel: true, // model tab defaults to "new model"
+    isNewModel: true,
     newModel: makeEmptyModel(),
-    newModelTagInput: "",
-    newModelLastFlashIdx: -1,
     scoreEntries: [makeModelScoreEntry()],
   };
 }
@@ -132,6 +133,8 @@ function supraBench() {
     rankedModels: [],
     rankedBenches: [],
     allTags: [],
+    allProviders: [],
+    allFamilyTags: [],
     activeTags: [],
     tagSearch: "",
     modelListSearch: "",
@@ -144,6 +147,7 @@ function supraBench() {
     currentBenchEntityVote: null,
     currentModelEntityVote: null,
     profileData: null,
+    profileSubmissionLimit: 25,
 
     // ── Auth ──
     user: null,
@@ -159,7 +163,7 @@ function supraBench() {
 
     // ── Bench Detail ──
     myRating: null,
-    ratingForm: { relevance: 0, contamination: 0, discriminability: 0, reproducibility: 0 },
+    ratingForm: { relevance: 0, contamination: 0, discriminability: 0, reproducibility: 0, difficulty: 0 },
     showRatingForm: false,
     showAllSubmissions: false,
     showTagSuggest: false,
@@ -199,6 +203,14 @@ function supraBench() {
 
       this._subscribe(api.tags.listAll, {}, (data) => {
         this.allTags = (data || []).map(t => t.tag);
+      });
+
+      this._subscribe(api.models.listProviders, {}, (data) => {
+        this.allProviders = data || [];
+      });
+
+      this._subscribe(api.models.listFamilyTags, {}, (data) => {
+        this.allFamilyTags = data || [];
       });
 
       this._subscribe(api.users.viewer, {}, (data) => {
@@ -321,6 +333,7 @@ function supraBench() {
                 contamination: this.myRating.contamination,
                 discriminability: this.myRating.discriminability,
                 reproducibility: this.myRating.reproducibility,
+                difficulty: this.myRating.difficulty ?? 0,
               };
             }
           }
@@ -344,9 +357,24 @@ function supraBench() {
       const { client, api } = window.sbConvex;
       try {
         this.profileData = await client.query(api.users.myActivity, {});
+        this.profileSubmissionLimit = 25;
       } catch (e) {
         console.error("Failed to load profile:", e);
       }
+    },
+
+    get profileVisibleSubmissions() {
+      if (!this.profileData) return [];
+      return this.profileData.submissions.slice(0, this.profileSubmissionLimit);
+    },
+    get profileHasMoreSubmissions() {
+      return this.profileData && this.profileData.submissions.length > this.profileSubmissionLimit;
+    },
+    showMoreSubmissions() {
+      this.profileSubmissionLimit += 50;
+    },
+    showAllSubmissionsToggle() {
+      this.profileSubmissionLimit = this.profileData?.submissions.length ?? 25;
     },
 
     // ═══ TAG FILTERING (model list) ═══
@@ -422,35 +450,39 @@ function supraBench() {
     },
 
     // ═══ TAG INPUT (shared) ═══
-    onTagInput(target, container) {
-      const v = container[target];
+    // `obj` must be an object that owns both `.tags` (array) and
+    // `.tagInput` (the bound text). `.lastFlashIdx` is optional (visual feedback).
+    onTagInput(obj) {
+      const v = obj.tagInput || "";
       const m = v.match(/^(.+?)\s*[,;]+\s*$/);
-      if (m) this._commitTag(m[1], container, target);
+      if (m) this._commitTag(m[1], obj);
     },
-    onTagKeydown(e, target, container) {
+    onTagKeydown(e, obj) {
       if (e.key === "Enter" || e.key === "," || e.key === ";") {
         e.preventDefault();
-        const raw = container[target];
-        const v = raw.replace(/[,;]+\s*$/, "").trim();
-        if (v) this._commitTag(v, container, target);
-        else container[target] = "";
+        const raw = (obj.tagInput || "").replace(/[,;]+\s*$/, "").trim();
+        if (raw) this._commitTag(raw, obj);
+        else obj.tagInput = "";
       }
     },
-    _commitTag(raw, container, inputField) {
+    onTagBlur(obj) {
+      const raw = (obj.tagInput || "").trim();
+      if (raw) this._commitTag(raw, obj);
+    },
+    _commitTag(raw, obj) {
       const t = raw.trim().toLowerCase().replace(/[,;]+$/g, "").trim();
-      container[inputField] = "";
+      obj.tagInput = "";
       if (!t || t.length > 30) return;
-      if (container.tags.includes(t)) return;
-      container.tags.push(t);
-      const idx = container.tags.length - 1;
-      const flashKey = inputField.replace("Input", "LastFlashIdx");
-      if (flashKey in container) {
-        container[flashKey] = idx;
-        const ref = container;
-        setTimeout(() => { if (ref[flashKey] === idx) ref[flashKey] = -1; }, 600);
+      if (!Array.isArray(obj.tags)) obj.tags = [];
+      if (obj.tags.includes(t)) return;
+      obj.tags.push(t);
+      const idx = obj.tags.length - 1;
+      if ("lastFlashIdx" in obj) {
+        obj.lastFlashIdx = idx;
+        setTimeout(() => { if (obj.lastFlashIdx === idx) obj.lastFlashIdx = -1; }, 700);
       }
     },
-    removeTag(container, idx) { container.tags.splice(idx, 1); },
+    removeTag(obj, idx) { obj.tags.splice(idx, 1); },
 
     // ═══ SUBMIT MODE A: SINGLE SCORE ═══
     async searchAModels() {
@@ -776,10 +808,14 @@ function supraBench() {
           contamination: this.ratingForm.contamination,
           discriminability: this.ratingForm.discriminability,
           reproducibility: this.ratingForm.reproducibility,
+          difficulty: this.ratingForm.difficulty,
         });
         this.showRatingForm = false;
         await this._loadBenchDetail();
-      } catch (e) { console.error("Rating failed:", e); }
+      } catch (e) {
+        console.error("Rating failed:", e);
+        alert(e.message || "Rating failed");
+      }
     },
 
     // ═══ BENCH SORT ═══

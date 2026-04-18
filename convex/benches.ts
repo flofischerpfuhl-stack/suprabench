@@ -29,7 +29,7 @@ export const listRanked = query({
         .collect();
 
       let qualityScore: number;
-      const dimensions = { relevance: 0, contamination: 0, discriminability: 0, reproducibility: 0 };
+      const dimensions = { relevance: 0, contamination: 0, discriminability: 0, reproducibility: 0, difficulty: 0 };
 
       if (ratings.length === 0) {
         qualityScore = 50;
@@ -38,6 +38,8 @@ export const listRanked = query({
         dimensions.contamination = ratings.reduce((s, r) => s + r.contamination, 0) / ratings.length;
         dimensions.discriminability = ratings.reduce((s, r) => s + r.discriminability, 0) / ratings.length;
         dimensions.reproducibility = ratings.reduce((s, r) => s + r.reproducibility, 0) / ratings.length;
+        const diffs = ratings.map((r) => (typeof (r as any).difficulty === "number" ? (r as any).difficulty : 3));
+        dimensions.difficulty = diffs.reduce((s, d) => s + d, 0) / diffs.length;
         qualityScore =
           ((dimensions.relevance + dimensions.contamination + dimensions.discriminability + dimensions.reproducibility) / 4) * 20;
       }
@@ -67,6 +69,7 @@ export const listRanked = query({
           contamination: Math.round(dimensions.contamination * 10) / 10,
           discriminability: Math.round(dimensions.discriminability * 10) / 10,
           reproducibility: Math.round(dimensions.reproducibility * 10) / 10,
+          difficulty: Math.round(dimensions.difficulty * 10) / 10,
         },
         modelCount: validModelIds.size,
         raterCount: ratings.length,
@@ -93,13 +96,15 @@ export const getBySlug = query({
       .withIndex("by_bench", (q) => q.eq("benchId", bench._id))
       .collect();
 
-    const dimensions = { relevance: 0, contamination: 0, discriminability: 0, reproducibility: 0 };
+    const dimensions = { relevance: 0, contamination: 0, discriminability: 0, reproducibility: 0, difficulty: 0 };
     let qualityScore = 50;
     if (ratings.length > 0) {
       dimensions.relevance = ratings.reduce((s, r) => s + r.relevance, 0) / ratings.length;
       dimensions.contamination = ratings.reduce((s, r) => s + r.contamination, 0) / ratings.length;
       dimensions.discriminability = ratings.reduce((s, r) => s + r.discriminability, 0) / ratings.length;
       dimensions.reproducibility = ratings.reduce((s, r) => s + r.reproducibility, 0) / ratings.length;
+      const diffs = ratings.map((r) => (typeof (r as any).difficulty === "number" ? (r as any).difficulty : 3));
+      dimensions.difficulty = diffs.reduce((s, d) => s + d, 0) / diffs.length;
       qualityScore =
         ((dimensions.relevance + dimensions.contamination + dimensions.discriminability + dimensions.reproducibility) / 4) * 20;
     }
@@ -162,6 +167,19 @@ export const getBySlug = query({
       });
     }
 
+    // SOTA + headroom — the same formula used in rankings, exposed for the UI
+    let top1 = 0;
+    for (const ms of modelScores) {
+      if (ms.effectiveScore !== null && ms.effectiveScore > top1) top1 = ms.effectiveScore;
+    }
+    const sotaClamped = Math.max(top1, 50);
+    const headroom = Math.max(0.1, (100 - sotaClamped) / 50);
+    const difficultyMultiplier =
+      ratings.length > 0
+        ? Math.max(0, Math.min(1, (dimensions.difficulty - 1) / 4))
+        : 0.5;
+    const effectiveWeight = qualityScore * difficultyMultiplier * headroom;
+
     return {
       ...bench,
       qualityScore: Math.round(qualityScore * 10) / 10,
@@ -170,9 +188,15 @@ export const getBySlug = query({
         contamination: Math.round(dimensions.contamination * 10) / 10,
         discriminability: Math.round(dimensions.discriminability * 10) / 10,
         reproducibility: Math.round(dimensions.reproducibility * 10) / 10,
+        difficulty: Math.round(dimensions.difficulty * 10) / 10,
       },
       raterCount: ratings.length,
       modelScores,
+      sota: Math.round(top1 * 10) / 10,
+      headroom: Math.round(headroom * 100) / 100,
+      difficultyMultiplier: Math.round(difficultyMultiplier * 100) / 100,
+      effectiveWeight: Math.round(effectiveWeight * 10) / 10,
+      saturated: top1 >= 90,
     };
   },
 });

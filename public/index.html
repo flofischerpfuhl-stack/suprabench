@@ -99,15 +99,11 @@
     <!-- Auth block: logged in → avatar + name + logout; logged out → sign-in button -->
     <div class="sidebar-auth">
         <template x-if="user">
-            <div class="sidebar-user" :class="{'active': view==='profile'}">
-                <div class="sidebar-user__main" @click="navigate('profile'); mobileMenuOpen = false" title="Open my profile">
-                    <img class="sidebar-user__avatar" :src="user.image" :alt="user.name" x-show="user.image">
-                    <div class="sidebar-user__meta">
-                        <div class="sidebar-user__name" x-text="user.name || user.email"></div>
-                        <div class="sidebar-user__sub">View profile</div>
-                    </div>
-                </div>
-                <button class="sidebar-user__logout" @click.stop="logout(); mobileMenuOpen = false">Log out</button>
+            <div class="sidebar-user" :class="{'active': view==='profile'}"
+                 @click="navigate('profile'); mobileMenuOpen = false" title="Open my profile">
+                <img class="sidebar-user__avatar" :src="user.image" :alt="user.name" x-show="user.image">
+                <span class="sidebar-user__name" x-text="user.name || user.email"></span>
+                <button class="sidebar-user__logout" @click.stop="logout(); mobileMenuOpen = false" title="Log out">⏻</button>
             </div>
         </template>
         <template x-if="!user">
@@ -239,6 +235,11 @@
                     <span class="entity-vote-score"
                           x-text="(currentModelEntityVote?.score > 0 ? '+' : '') + (currentModelEntityVote?.score ?? 0)"
                           :class="{'pos': currentModelEntityVote?.score > 0, 'neg': currentModelEntityVote?.score < 0}"></span>
+                    <span class="entity-vote-meta" x-show="currentModelEntityVote && !currentModel.hidden">
+                        <span x-text="(currentModelEntityVote?.ups ?? 0) + ' up · ' + (currentModelEntityVote?.downs ?? 0) + ' down'"></span>
+                        <span x-show="(currentModelEntityVote?.downsToHide ?? 0) > 0"
+                              x-text="'· ' + currentModelEntityVote.downsToHide + ' more downvotes would hide it'"></span>
+                    </span>
                     <template x-if="user">
                         <span class="entity-vote-buttons">
                             <button type="button" class="tv-btn"
@@ -283,7 +284,7 @@
                 <div class="tag-suggest-row" x-show="showTagSuggest">
                     <input type="text" x-model="tagSuggestInput"
                            @keydown.enter.prevent="suggestTag('model', currentModel._id)"
-                           placeholder="new-tag" maxlength="30">
+                           placeholder="new-tag" maxlength="30" list="all-tags-dl">
                     <button type="button" class="btn btn-sm" @click="suggestTag('model', currentModel._id)">Suggest</button>
                     <button type="button" class="btn btn-sm btn-outline" @click="showTagSuggest = false; tagSuggestInput = ''">Cancel</button>
                 </div>
@@ -444,6 +445,9 @@
                             <div class="dimension-dot" title="Reproducibility">
                                 <div class="dimension-dot-fill" :style="'height:'+(b.dimensions.reproducibility/5*100)+'%;background:'+qualityColor(b.dimensions.reproducibility*20)"></div>
                             </div>
+                            <div class="dimension-dot dimension-dot-difficulty" title="Difficulty">
+                                <div class="dimension-dot-fill" :style="'height:'+((b.dimensions.difficulty||0)/5*100)+'%;background:var(--accent)'"></div>
+                            </div>
                         </div>
                     </td>
                     <td class="b-tags">
@@ -502,6 +506,11 @@
                     <span class="entity-vote-score"
                           x-text="(currentBenchEntityVote?.score > 0 ? '+' : '') + (currentBenchEntityVote?.score ?? 0)"
                           :class="{'pos': currentBenchEntityVote?.score > 0, 'neg': currentBenchEntityVote?.score < 0}"></span>
+                    <span class="entity-vote-meta" x-show="currentBenchEntityVote && !currentBench.hidden">
+                        <span x-text="(currentBenchEntityVote?.ups ?? 0) + ' up · ' + (currentBenchEntityVote?.downs ?? 0) + ' down'"></span>
+                        <span x-show="(currentBenchEntityVote?.downsToHide ?? 0) > 0"
+                              x-text="'· ' + currentBenchEntityVote.downsToHide + ' more downvotes would hide it'"></span>
+                    </span>
                     <template x-if="user">
                         <span class="entity-vote-buttons">
                             <button type="button" class="tv-btn"
@@ -546,7 +555,7 @@
                 <div class="tag-suggest-row" x-show="showTagSuggest">
                     <input type="text" x-model="tagSuggestInput"
                            @keydown.enter.prevent="suggestTag('bench', currentBench._id)"
-                           placeholder="new-tag" maxlength="30">
+                           placeholder="new-tag" maxlength="30" list="all-tags-dl">
                     <button type="button" class="btn btn-sm" @click="suggestTag('bench', currentBench._id)">Suggest</button>
                     <button type="button" class="btn btn-sm btn-outline" @click="showTagSuggest = false; tagSuggestInput = ''">Cancel</button>
                 </div>
@@ -642,6 +651,54 @@
                     </template>
                 </div>
 
+                <div class="quality-dimension-row dimension-row-difficulty">
+                    <span class="quality-dim-label">
+                        Difficulty
+                        <span class="dim-help" tabindex="0" data-tip="How much intelligence does this benchmark probe? 1 = trivial / toy. 5 = approaching general intelligence. Multiplied (not averaged) into the bench's effective ranking weight, so a frontier bench counts 5× more than a trivial one.">?</span>
+                    </span>
+                    <div class="quality-dim-bar">
+                        <div class="quality-bar" style="width:100%">
+                            <div class="quality-bar-fill" :style="'width:'+(currentBench.dimensions.difficulty/5*100)+'%;background:var(--accent)'"></div>
+                        </div>
+                    </div>
+                    <span class="quality-dim-value" x-text="currentBench.dimensions.difficulty.toFixed(1)"></span>
+                    <template x-if="user && showRatingForm">
+                        <div class="star-rating">
+                            <template x-for="n in [1,2,3,4,5]" :key="'diff-'+n">
+                                <span class="star" :class="{'active': ratingForm.difficulty >= n}" @click="setRating('difficulty', n)">★</span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Effective ranking weight breakdown -->
+                <div class="weight-breakdown" x-show="currentBench.raterCount > 0">
+                    <div class="weight-breakdown__header">
+                        Effective ranking weight
+                        <span class="dim-help" tabindex="0" data-tip="The contribution of this benchmark to a model's SupraScore = quality × difficulty × headroom. Headroom shrinks as the bench saturates (top-1 score nears 100), so old solved benches naturally lose influence and newer harder benches take over — without anyone needing to retroactively re-rate.">?</span>
+                    </div>
+                    <div class="weight-breakdown__row">
+                        <span>Quality</span>
+                        <span x-text="currentBench.qualityScore.toFixed(0) + ' / 100'"></span>
+                    </div>
+                    <div class="weight-breakdown__row">
+                        <span>× Difficulty</span>
+                        <span x-text="currentBench.difficultyMultiplier.toFixed(2) + ' (avg ' + currentBench.dimensions.difficulty.toFixed(1) + ' / 5)'"></span>
+                    </div>
+                    <div class="weight-breakdown__row">
+                        <span>× Headroom</span>
+                        <span>
+                            <span x-text="currentBench.headroom.toFixed(2)"></span>
+                            <span style="color:var(--text3);font-size:.75rem" x-text="'(SOTA ' + currentBench.sota.toFixed(0) + ' / 100)'"></span>
+                            <span class="badge badge-disputed" x-show="currentBench.saturated" style="margin-left:.4rem">Saturated</span>
+                        </span>
+                    </div>
+                    <div class="weight-breakdown__row weight-breakdown__total">
+                        <span>= Effective weight</span>
+                        <span x-text="currentBench.effectiveWeight.toFixed(1)"></span>
+                    </div>
+                </div>
+
                 <!-- Rate / Submit Buttons -->
                 <div style="margin-top:1rem;display:flex;gap:.75rem">
                     <template x-if="user && !showRatingForm">
@@ -649,8 +706,8 @@
                     </template>
                     <template x-if="user && showRatingForm">
                         <div style="display:flex;gap:.5rem">
-                            <button class="btn btn-sm" @click="submitRating()" 
-                                    :disabled="ratingForm.relevance===0 || ratingForm.contamination===0 || ratingForm.discriminability===0 || ratingForm.reproducibility===0">
+                            <button class="btn btn-sm" @click="submitRating()"
+                                    :disabled="ratingForm.relevance===0 || ratingForm.contamination===0 || ratingForm.discriminability===0 || ratingForm.reproducibility===0 || ratingForm.difficulty===0">
                                 Save Rating
                             </button>
                             <button class="btn btn-sm btn-outline" @click="showRatingForm = false">Cancel</button>
@@ -1039,17 +1096,19 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Tags <span class="helper-text" style="font-weight:400">— press <code>,</code> <code>;</code> or Enter</span></label>
+                    <label>Tags <span class="helper-text" style="font-weight:400">— press <code>,</code> <code>;</code> or Enter to add</span></label>
                     <div class="input-tags">
                         <template x-for="(t, i) in submitFormB.newBench.tags" :key="i + '-' + t">
-                            <span class="input-tag" :class="{'just-added': submitFormB.newBenchLastFlashIdx === i}">
+                            <span class="input-tag" :class="{'just-added': submitFormB.newBench.lastFlashIdx === i}">
                                 <span x-text="t"></span>
                                 <span class="remove" @click="removeTag(submitFormB.newBench, i)">×</span>
                             </span>
                         </template>
-                        <input type="text" x-model="submitFormB.newBenchTagInput"
-                               @input="onTagInput('newBenchTagInput', submitFormB.newBench)"
-                               @keydown="onTagKeydown($event, 'newBenchTagInput', submitFormB.newBench)"
+                        <input type="text" x-model="submitFormB.newBench.tagInput"
+                               @input="onTagInput(submitFormB.newBench)"
+                               @keydown="onTagKeydown($event, submitFormB.newBench)"
+                               @blur="onTagBlur(submitFormB.newBench)"
+                               list="all-tags-dl"
                                placeholder="reasoning, code…">
                     </div>
                 </div>
@@ -1110,24 +1169,26 @@
                             </div>
                             <div class="form-group">
                                 <label>Provider *</label>
-                                <input type="text" x-model="entry.newModel.provider" placeholder="e.g. OpenAI">
+                                <input type="text" x-model="entry.newModel.provider" list="all-providers-dl" placeholder="e.g. OpenAI">
                             </div>
                             <div class="form-group">
                                 <label>Family Tag (optional)</label>
-                                <input type="text" x-model="entry.newModel.familyTag" placeholder="e.g. gpt-4o">
+                                <input type="text" x-model="entry.newModel.familyTag" list="all-family-tags-dl" placeholder="e.g. gpt-4o">
                             </div>
                             <div class="form-group">
-                                <label>Tags</label>
+                                <label>Tags <span class="helper-text" style="font-weight:400">— <code>,</code> <code>;</code> Enter</span></label>
                                 <div class="input-tags">
                                     <template x-for="(t, i) in entry.newModel.tags" :key="i + '-' + t">
-                                        <span class="input-tag" :class="{'just-added': entry.newModelLastFlashIdx === i}">
+                                        <span class="input-tag" :class="{'just-added': entry.newModel.lastFlashIdx === i}">
                                             <span x-text="t"></span>
                                             <span class="remove" @click="removeTag(entry.newModel, i)">×</span>
                                         </span>
                                     </template>
-                                    <input type="text" x-model="entry.newModelTagInput"
-                                           @input="onTagInput('newModelTagInput', entry.newModel)"
-                                           @keydown="onTagKeydown($event, 'newModelTagInput', entry.newModel)"
+                                    <input type="text" x-model="entry.newModel.tagInput"
+                                           @input="onTagInput(entry.newModel)"
+                                           @keydown="onTagKeydown($event, entry.newModel)"
+                                           @blur="onTagBlur(entry.newModel)"
+                                           list="all-tags-dl"
                                            placeholder="open-source, multilingual…">
                                 </div>
                             </div>
@@ -1209,25 +1270,27 @@
                 </div>
                 <div class="form-group">
                     <label>Provider *</label>
-                    <input type="text" x-model="submitFormC.newModel.provider" placeholder="e.g. Anthropic">
+                    <input type="text" x-model="submitFormC.newModel.provider" list="all-providers-dl" placeholder="e.g. Anthropic">
                 </div>
                 <div class="form-group">
                     <label>Family Tag (optional)</label>
-                    <input type="text" x-model="submitFormC.newModel.familyTag" placeholder="e.g. claude-opus">
+                    <input type="text" x-model="submitFormC.newModel.familyTag" list="all-family-tags-dl" placeholder="e.g. claude-opus">
                     <span class="helper-text">Groups model versions together</span>
                 </div>
                 <div class="form-group">
-                    <label>Tags</label>
+                    <label>Tags <span class="helper-text" style="font-weight:400">— press <code>,</code> <code>;</code> or Enter to add</span></label>
                     <div class="input-tags">
                         <template x-for="(t, i) in submitFormC.newModel.tags" :key="i + '-' + t">
-                            <span class="input-tag" :class="{'just-added': submitFormC.newModelLastFlashIdx === i}">
+                            <span class="input-tag" :class="{'just-added': submitFormC.newModel.lastFlashIdx === i}">
                                 <span x-text="t"></span>
                                 <span class="remove" @click="removeTag(submitFormC.newModel, i)">×</span>
                             </span>
                         </template>
-                        <input type="text" x-model="submitFormC.newModelTagInput"
-                               @input="onTagInput('newModelTagInput', submitFormC.newModel)"
-                               @keydown="onTagKeydown($event, 'newModelTagInput', submitFormC.newModel)"
+                        <input type="text" x-model="submitFormC.newModel.tagInput"
+                               @input="onTagInput(submitFormC.newModel)"
+                               @keydown="onTagKeydown($event, submitFormC.newModel)"
+                               @blur="onTagBlur(submitFormC.newModel)"
+                               list="all-tags-dl"
                                placeholder="proprietary, multimodal…">
                     </div>
                 </div>
@@ -1336,21 +1399,28 @@
 
     <div class="about-section">
         <h2 class="section-header">The SupraScore</h2>
-        <p>A model's <strong>SupraScore</strong> is the quality-weighted median of its normalised scores across every benchmark it has been evaluated on. Concretely:</p>
+        <p>A model's <strong>SupraScore</strong> is a quality- <em>and</em> difficulty-weighted average of its normalised scores across every benchmark it has been evaluated on. Concretely, for each bench:</p>
         <ol class="about-list">
-            <li>For every (model, bench) pair, take the <em>median</em> of all valid community submissions. This rejects single outliers.</li>
-            <li>Each bench has a community <em>quality score</em> (0–100) — the average of its four dimensions × 20.</li>
-            <li>The model's SupraScore is the bench-quality-weighted average of those medians. Higher quality benches count more.</li>
+            <li>Take the <em>median</em> of all valid community submissions for this (model, bench) pair. Outliers don't move it.</li>
+            <li>Compute the bench's effective ranking weight: <code>quality × difficulty × headroom</code>.</li>
+            <li>The SupraScore is the weighted average of those medians.</li>
         </ol>
+        <p class="helper-text">Three independent factors keep the ranking honest as the field evolves:</p>
+        <ul class="about-list">
+            <li><strong>Quality</strong> (0–100) — how trustworthy the bench is, average of the four trust dimensions × 20.</li>
+            <li><strong>Difficulty</strong> (0–1) — how much intelligence the bench probes, voted on a 1-5 scale. A trivial bench (1) contributes 20% of a frontier bench (5) at the same quality.</li>
+            <li><strong>Headroom</strong> (0.1–1) — automatic saturation penalty: as the SOTA approaches 100, the bench loses weight. Floor at 0.1 — old benches never disappear entirely, but they stop dominating once everyone solves them. <em>This is what fixes the "ARC-AGI 3 → ARC-AGI 4" hand-off without anyone retroactively re-rating older benches.</em></li>
+        </ul>
     </div>
 
     <div class="about-section">
-        <h2 class="section-header">The four bench dimensions</h2>
+        <h2 class="section-header">The five bench dimensions</h2>
         <ul class="about-list">
             <li><strong>Relevance</strong> — Does the benchmark measure something useful for real-world model use? High = clearly meaningful task. Low = trivia, toy puzzles, artificial setups.</li>
             <li><strong>Contamination Resistance</strong> — How sure are we the test set wasn't in the training data? High = held-out, rotating, or freshly generated questions. Low = scraped from the public web before model release.</li>
-            <li><strong>Discriminability</strong> — Does it actually separate weak from strong models? High = wide score spread between SOTA and baseline. Low = saturated, everyone scores 95–100.</li>
+            <li><strong>Discriminability</strong> — Does it actually separate weak from strong models? High = wide score spread between SOTA and baseline. Low = everyone scores 95–100.</li>
             <li><strong>Reproducibility</strong> — Can two independent runs reach the same conclusion? High = deterministic, well-specified protocol. Low = vague setup, judge-LLM, hand-graded.</li>
+            <li><strong>Difficulty</strong> — How much general intelligence does the bench actually probe? 1 = trivial / toy. 5 = approaches frontier capability. <em>Multiplied</em> into the bench's weight (not averaged) — community uses the median across raters, so single inflated votes can't move it.</li>
         </ul>
     </div>
 
@@ -1359,9 +1429,9 @@
         <p>Anything the community can get wrong, the community can correct via voting:</p>
         <ul class="about-list">
             <li><strong>Tags</strong> — every tag on a model or bench is community-voted. Net positive votes keep it; net non-positive removes it from the canonical set.</li>
-            <li><strong>Existence votes</strong> — if a model or bench is fake, a duplicate, or wildly wrong, vote it down. Net −3 hides it from listings (but the page stays accessible for context).</li>
-            <li><strong>Submission votes</strong> — every individual score gets up/downvoted; only net-positive scores are counted toward the SupraScore.</li>
-            <li><strong>Quality ratings</strong> — anyone signed in can rate a benchmark on the four dimensions. The score is the average across raters.</li>
+            <li><strong>Existence votes</strong> — if a model or bench is fake, a duplicate, or wildly wrong, vote it down. The threshold scales with engagement: an entity is hidden when downvotes ≥ <code>max(5, 60% of total votes)</code> <em>and</em> downvotes outnumber upvotes. Spam goes away fast; established entries are hard to remove with a small mob.</li>
+            <li><strong>Submission votes</strong> — every individual score gets up/downvoted; only net-positive scores count toward the SupraScore.</li>
+            <li><strong>Quality &amp; difficulty ratings</strong> — anyone signed in can rate a benchmark on all five dimensions. Averaged (mean for trust dimensions, median for difficulty).</li>
         </ul>
         <p class="helper-text">Re-submitting a model or bench you previously had removed under the same name is blocked. Other users may re-submit it (slug gets a numeric suffix), and the community votes again.</p>
     </div>
@@ -1426,7 +1496,10 @@
                         </div>
                     </div>
 
-                    <h2 class="section-header">My Submissions</h2>
+                    <h2 class="section-header">My Submissions
+                        <span class="profile-vote-num" x-show="profileData.submissions.length > 0"
+                              x-text="'(' + profileVisibleSubmissions.length + ' / ' + profileData.submissions.length + ')'"></span>
+                    </h2>
                     <div class="empty-state" x-show="profileData.submissions.length === 0">
                         No submissions yet. <a href="#submit" @click.prevent="navigate('submit')">Submit your first score →</a>
                     </div>
@@ -1442,7 +1515,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <template x-for="s in profileData.submissions" :key="s._id">
+                            <template x-for="s in profileVisibleSubmissions" :key="s._id">
                                 <tr>
                                     <td>
                                         <a href="#" @click.prevent="navigate('model', {slug: s.modelSlug})" x-text="s.modelName"></a>
@@ -1464,6 +1537,10 @@
                             </template>
                         </tbody>
                     </table>
+                    <div x-show="profileHasMoreSubmissions" style="display:flex;gap:.5rem;justify-content:center;margin-top:1rem">
+                        <button class="btn btn-sm btn-outline" @click="showMoreSubmissions()">Load 50 more</button>
+                        <button class="btn btn-sm btn-outline" @click="showAllSubmissionsToggle()">Show all</button>
+                    </div>
 
                     <h2 class="section-header" x-show="profileData.createdBenches.length + profileData.createdModels.length > 0">My Creations</h2>
                     <div class="profile-creations" x-show="profileData.createdBenches.length + profileData.createdModels.length > 0">
@@ -1506,6 +1583,20 @@
 
 </main>
 </div>
+
+<!-- ═══════════════════════════════════════
+     SHARED DATALISTS — native autocomplete to prevent
+     duplicate-spelling entries across the site.
+     ═══════════════════════════════════════ -->
+<datalist id="all-tags-dl">
+    <template x-for="t in allTags" :key="'tdl-' + t"><option :value="t"></option></template>
+</datalist>
+<datalist id="all-providers-dl">
+    <template x-for="p in allProviders" :key="'pdl-' + p"><option :value="p"></option></template>
+</datalist>
+<datalist id="all-family-tags-dl">
+    <template x-for="f in allFamilyTags" :key="'fdl-' + f"><option :value="f"></option></template>
+</datalist>
 
 <!-- ═══════════════════════════════════════
      COOKIE / STORAGE NOTICE

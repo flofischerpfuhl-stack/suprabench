@@ -5,9 +5,32 @@ import { Id } from "./_generated/dataModel";
 
 const ENTITY = v.union(v.literal("model"), v.literal("bench"));
 
-// Net score at or below this threshold hides the entity from listings.
-// (e.g. 3 more downvotes than upvotes.)
-export const HIDE_THRESHOLD = -3;
+// Hide rule (engagement-aware):
+//   downs ≥ max(MIN_DOWNS_FLOOR, ceil(RATIO * (ups + downs)))   AND   downs > ups
+//
+// Why this and not a flat -3 threshold?
+//   Flat thresholds let a tiny clique of malicious accounts kick legitimate
+//   benches/models with very little engagement. Scaling with total votes
+//   means: at low engagement we require the absolute floor (5), but the
+//   more the bench gets engaged with, the more downvotes are needed to
+//   override the upvotes. Established benches are hard to remove; spam is
+//   easy to remove.
+export const MIN_DOWNS_FLOOR = 5;
+export const DOWN_RATIO = 0.6;
+
+function shouldHide(ups: number, downs: number): boolean {
+  const total = ups + downs;
+  const required = Math.max(MIN_DOWNS_FLOOR, Math.ceil(DOWN_RATIO * total));
+  return downs >= required && downs > ups;
+}
+
+function downsRequiredToHide(ups: number, downs: number): number {
+  // How many more downvotes are needed to flip the hide flag right now?
+  // Useful for the UI (“X more downvotes would hide this”).
+  let d = downs;
+  while (!shouldHide(ups, d) && d < ups + downs + 200) d++;
+  return Math.max(0, d - downs);
+}
 
 async function entityNetScore(
   ctx: any,
@@ -34,8 +57,8 @@ async function applyHiddenState(
   entityType: "model" | "bench",
   entityId: string
 ) {
-  const { score } = await entityNetScore(ctx, entityType, entityId);
-  const hidden = score <= HIDE_THRESHOLD;
+  const { ups, downs } = await entityNetScore(ctx, entityType, entityId);
+  const hidden = shouldHide(ups, downs);
   if (entityType === "model") {
     const id = entityId as Id<"models">;
     const m = await ctx.db.get(id);
@@ -82,7 +105,15 @@ export const getForEntity = query({
         .first();
       if (mine) myVote = mine.value as 1 | -1;
     }
-    return { score, ups, downs, myVote, hideThreshold: HIDE_THRESHOLD };
+    return {
+      score,
+      ups,
+      downs,
+      myVote,
+      downsToHide: downsRequiredToHide(ups, downs),
+      minDownsFloor: MIN_DOWNS_FLOOR,
+      downRatio: DOWN_RATIO,
+    };
   },
 });
 

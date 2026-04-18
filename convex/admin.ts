@@ -1,4 +1,4 @@
-import { internalMutation, mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 
 // One-off cleanup: removes auth* records pointing to a non-existent user.
 // Safe to keep around; idempotent. Run via:
@@ -43,29 +43,3 @@ export const cleanupOrphanAuth = internalMutation({
   },
 });
 
-// One-shot DB wipe of application data, intentionally NOT touching auth*
-// tables so existing logged-in users keep their session. Run via:
-//   npx convex run --prod admin:wipeAppData
-// Remove again after use.
-export const wipeAppData = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const tables = [
-      "modelScores",
-      "votes",
-      "tagVotes",
-      "entityVotes",
-      "benchQualityRatings",
-      "modelRankings",
-      "models",
-      "benches",
-    ] as const;
-    const report: Record<string, number> = {};
-    for (const t of tables) {
-      const rows = await ctx.db.query(t as any).collect();
-      for (const r of rows) await ctx.db.delete(r._id);
-      report[t] = rows.length;
-    }
-    return report;
-  },
-});

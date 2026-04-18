@@ -124,42 +124,30 @@ a:hover {
 
 .sidebar-user {
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.5rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
   border-radius: var(--radius);
   border: 1px solid transparent;
+  cursor: pointer;
   transition: border-color var(--transition), background var(--transition);
+  min-width: 0;
 }
+.sidebar-user:hover { background: var(--surface2); }
 .sidebar-user.active {
   border-color: var(--accent);
   background: rgba(229, 254, 64, 0.06);
 }
-.sidebar-user__main {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  cursor: pointer;
-  border-radius: var(--radius);
-  transition: background var(--transition);
-  padding: 0.15rem;
-}
-.sidebar-user__main:hover { background: var(--surface2); }
 .sidebar-user__avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
   border: 1px solid var(--border);
 }
-.sidebar-user__meta {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.2;
-}
 .sidebar-user__name {
+  flex: 1;
   font-family: var(--hd);
   font-size: 0.85rem;
   font-weight: 500;
@@ -167,29 +155,24 @@ a:hover {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-.sidebar-user__sub {
-  font-size: 0.7rem;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-family: var(--hd);
+  min-width: 0;
 }
 .sidebar-user__logout {
-  align-self: flex-start;
+  flex-shrink: 0;
   background: transparent;
-  border: none;
-  padding: 0.15rem 0;
-  font-size: 0.7rem;
+  border: 1px solid var(--border);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 0.95rem;
   color: var(--text3);
   cursor: pointer;
-  font-family: var(--bd);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: color var(--transition);
-  margin-left: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition), border-color var(--transition);
 }
-.sidebar-user__logout:hover { color: var(--danger); }
+.sidebar-user__logout:hover { color: var(--danger); border-color: var(--danger); }
 
 .sidebar-signin {
   display: inline-flex;
@@ -626,6 +609,57 @@ tr.clickable-row {
 }
 .quality-dimension-row:last-child {
   border-bottom: none;
+}
+.dimension-row-difficulty {
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  margin-top: 0.4rem;
+  padding-top: 0.9rem;
+}
+.dimension-row-difficulty .quality-dim-label {
+  color: var(--accent);
+}
+
+/* Effective ranking weight panel — explains how this bench contributes
+   to a model's SupraScore (quality × difficulty × headroom). */
+.weight-breakdown {
+  margin-top: 1.25rem;
+  padding: 0.85rem 1rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--hd);
+  font-size: 0.8rem;
+}
+.weight-breakdown__header {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text2);
+  font-size: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+.weight-breakdown__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0;
+  color: var(--text2);
+}
+.weight-breakdown__row > span:last-child {
+  color: var(--text);
+  font-weight: 500;
+}
+.weight-breakdown__total {
+  border-top: 1px solid var(--border);
+  margin-top: 0.4rem;
+  padding-top: 0.5rem;
+  color: var(--text);
+  font-weight: 700;
+}
+.weight-breakdown__total > span:last-child {
+  color: var(--accent);
+}
+.dimension-dot-difficulty {
+  border-color: var(--accent);
 }
 .quality-dim-label {
   font-family: var(--hd);
@@ -1088,11 +1122,16 @@ tr.clickable-row {
 .expandable-header:hover {
   color: var(--accent);
 }
+/* Chevron icons (▼ glyph in markup) follow standard collapsable behaviour:
+   collapsed → points right; expanded → points down. */
 .expand-icon {
+  display: inline-block;
   transition: transform var(--transition);
+  transform: rotate(-90deg);
+  transform-origin: center;
 }
 .expand-icon.open {
-  transform: rotate(180deg);
+  transform: rotate(0deg);
 }
 
 /* ── View Transition ── */
@@ -1636,6 +1675,13 @@ tr.clickable-row {
 }
 .entity-vote-score.pos { color: var(--success); }
 .entity-vote-score.neg { color: var(--danger); }
+.entity-vote-meta {
+  font-size: 0.72rem;
+  color: var(--text3);
+  display: inline-flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
 .entity-vote-buttons {
   display: inline-flex;
   gap: 0.3rem;
