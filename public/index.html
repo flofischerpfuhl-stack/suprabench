@@ -61,6 +61,13 @@
 
     <link rel="stylesheet" href="css/style.css">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
+    <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+          integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+            integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+            integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
     <script src="js/convex.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -675,7 +682,7 @@
                 <div class="weight-breakdown" x-show="currentBench.raterCount > 0">
                     <div class="weight-breakdown__header">
                         Effective ranking weight
-                        <span class="dim-help" tabindex="0" data-tip="The contribution of this benchmark to a model's SupraScore = quality × difficulty × headroom. Headroom shrinks as the bench saturates (top-1 score nears 100), so old solved benches naturally lose influence and newer harder benches take over — without anyone needing to retroactively re-rate.">?</span>
+                        <span class="dim-help" tabindex="0" data-tip="Contribution of this bench to a model's SupraScore = quality × difficulty × headroom. Headroom = saturation penalty: shrinks as the mean of the top-K models on this bench approaches 100. Below 3 evaluated models the penalty is dampened to 1.0 (not enough signal yet).">?</span>
                     </div>
                     <div class="weight-breakdown__row">
                         <span>Quality</span>
@@ -689,7 +696,14 @@
                         <span>× Headroom</span>
                         <span>
                             <span x-text="currentBench.headroom.toFixed(2)"></span>
-                            <span style="color:var(--text3);font-size:.75rem" x-text="'(SOTA ' + currentBench.sota.toFixed(0) + ' / 100)'"></span>
+                            <template x-if="currentBench.modelCount >= 3">
+                                <span style="color:var(--text3);font-size:.75rem"
+                                      x-text="'(top-' + currentBench.topK + ' mean ' + currentBench.frontierMean.toFixed(0) + ' / 100, N=' + currentBench.modelCount + ')'"></span>
+                            </template>
+                            <template x-if="currentBench.modelCount < 3">
+                                <span style="color:var(--text3);font-size:.75rem"
+                                      x-text="'(N=' + currentBench.modelCount + ' &lt; 3, dampened to 1.0)'"></span>
+                            </template>
                             <span class="badge badge-disputed" x-show="currentBench.saturated" style="margin-left:.4rem">Saturated</span>
                         </span>
                     </div>
@@ -1386,65 +1400,226 @@
 
 
 <!-- ═══════════════════════════════════════
-     VIEW: ABOUT
+     VIEW: ABOUT  (Q&A with collapsable answers + KaTeX)
      ═══════════════════════════════════════ -->
-<div x-show="view==='about'" x-transition.opacity>
+<div x-show="view==='about'" x-transition.opacity x-init="$nextTick(() => renderAboutMath())">
     <h1 class="page-title">About.</h1>
-    <p class="page-desc">SupraBench is a community-driven, editorially honest ranking of AI models.</p>
+    <p class="page-desc">A community-driven, editorially honest ranking of AI models — and the math behind it.</p>
 
-    <div class="about-section">
-        <h2 class="section-header">The problem</h2>
-        <p>Every benchmark tells you something — but no benchmark tells you everything, and many tell you almost nothing useful. Public leaderboards reward gaming, contaminated training sets, and benchmarks that everyone has saturated. SupraBench tries to fix that by weighting each score by how trustworthy the underlying benchmark actually is.</p>
+    <div class="qa-actions">
+        <button class="btn btn-sm btn-outline" @click="aboutExpandAll()">Expand all</button>
+        <button class="btn btn-sm btn-outline" @click="aboutCollapseAll()">Collapse all</button>
     </div>
 
-    <div class="about-section">
-        <h2 class="section-header">The SupraScore</h2>
-        <p>A model's <strong>SupraScore</strong> is a quality- <em>and</em> difficulty-weighted average of its normalised scores across every benchmark it has been evaluated on. Concretely, for each bench:</p>
-        <ol class="about-list">
-            <li>Take the <em>median</em> of all valid community submissions for this (model, bench) pair. Outliers don't move it.</li>
-            <li>Compute the bench's effective ranking weight: <code>quality × difficulty × headroom</code>.</li>
-            <li>The SupraScore is the weighted average of those medians.</li>
-        </ol>
-        <p class="helper-text">Three independent factors keep the ranking honest as the field evolves:</p>
-        <ul class="about-list">
-            <li><strong>Quality</strong> (0–100) — how trustworthy the bench is, average of the four trust dimensions × 20.</li>
-            <li><strong>Difficulty</strong> (0–1) — how much intelligence the bench probes, voted on a 1-5 scale. A trivial bench (1) contributes 20% of a frontier bench (5) at the same quality.</li>
-            <li><strong>Headroom</strong> (0.1–1) — automatic saturation penalty: as the SOTA approaches 100, the bench loses weight. Floor at 0.1 — old benches never disappear entirely, but they stop dominating once everyone solves them. <em>This is what fixes the "ARC-AGI 3 → ARC-AGI 4" hand-off without anyone retroactively re-rating older benches.</em></li>
-        </ul>
+    <!-- Q1 -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q1')" @click="aboutToggle('q1')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q1')}">▼</span>
+            <span>What problem is SupraBench trying to solve?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q1')" x-transition>
+            <p>Every public AI leaderboard tells you something — but each one tells you something different, and many tell you almost nothing useful. Three failure modes are everywhere:</p>
+            <ul class="about-list">
+                <li><strong>Contamination</strong> — the test set leaked into the training data, so the score doesn't measure capability, it measures memorisation.</li>
+                <li><strong>Saturation</strong> — every frontier model scores 99 %, so the bench has no resolving power left, but it still dominates aggregate scores out of habit.</li>
+                <li><strong>Bench-maxing</strong> — a model is tuned for a small set of popular benches and looks great there while being unusable in practice.</li>
+            </ul>
+            <p>SupraBench gives <em>every</em> bench a community-voted quality and difficulty score, and adds an automatic saturation penalty on top. The result: a single number per model that respects how trustworthy and how informative each underlying benchmark actually is.</p>
+        </div>
     </div>
 
-    <div class="about-section">
-        <h2 class="section-header">The five bench dimensions</h2>
-        <ul class="about-list">
-            <li><strong>Relevance</strong> — Does the benchmark measure something useful for real-world model use? High = clearly meaningful task. Low = trivia, toy puzzles, artificial setups.</li>
-            <li><strong>Contamination Resistance</strong> — How sure are we the test set wasn't in the training data? High = held-out, rotating, or freshly generated questions. Low = scraped from the public web before model release.</li>
-            <li><strong>Discriminability</strong> — Does it actually separate weak from strong models? High = wide score spread between SOTA and baseline. Low = everyone scores 95–100.</li>
-            <li><strong>Reproducibility</strong> — Can two independent runs reach the same conclusion? High = deterministic, well-specified protocol. Low = vague setup, judge-LLM, hand-graded.</li>
-            <li><strong>Difficulty</strong> — How much general intelligence does the bench actually probe? 1 = trivial / toy. 5 = approaches frontier capability. <em>Multiplied</em> into the bench's weight (not averaged) — community uses the median across raters, so single inflated votes can't move it.</li>
-        </ul>
+    <!-- Q2 -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q2')" @click="aboutToggle('q2')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q2')}">▼</span>
+            <span>How is a model's SupraScore computed, end to end?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q2')" x-transition>
+            <p>Five steps, all reproducible from the raw data:</p>
+
+            <h4 class="qa-subheader">1. Normalise each submission</h4>
+            <p>Every bench has its own scale (0–100, 0–10, 0–1, …). Each raw score is normalised to 0–100:</p>
+            <p class="math-block">$$s_{\text{norm}} \;=\; \frac{s_{\text{raw}} - s_{\min}}{s_{\max} - s_{\min}} \cdot 100$$</p>
+
+            <h4 class="qa-subheader">2. Validate via community votes</h4>
+            <p>A submission only counts if its net vote is positive (the submitter gets an implicit +1, so a fresh submission starts at 1/0). Wrong, duplicate or fraudulent submissions get downvoted out of the calculation.</p>
+
+            <h4 class="qa-subheader">3. Take the median per (model, bench) pair</h4>
+            <p>For a model <em>m</em> on bench <em>b</em>, with valid normalised scores $\mathcal{S}_{m,b}$:</p>
+            <p class="math-block">$$\mu_{m,b} \;=\; \operatorname{median}\bigl(\mathcal{S}_{m,b}\bigr)$$</p>
+            <p>Median, not mean — one outlier submission cannot shift the result.</p>
+
+            <h4 class="qa-subheader">4. Compute the bench's effective weight</h4>
+            <p>Three independent factors. <strong>Quality</strong> (trust), <strong>difficulty</strong> (intelligence demand), <strong>headroom</strong> (saturation):</p>
+            <p class="math-block">$$w(b) \;=\; \underbrace{Q(b)}_{\text{quality}} \;\cdot\; \underbrace{D(b)}_{\text{difficulty}} \;\cdot\; \underbrace{H(b)}_{\text{headroom}}$$</p>
+
+            <h4 class="qa-subheader">5. The SupraScore</h4>
+            <p>A bench-weight-weighted average of the per-bench medians, over all benches $\mathcal{B}_m$ the model has been evaluated on:</p>
+            <p class="math-block">$$\operatorname{SupraScore}(m) \;=\; \frac{\displaystyle \sum_{b \in \mathcal{B}_m} \mu_{m,b} \cdot w(b)}{\displaystyle \sum_{b \in \mathcal{B}_m} w(b)}$$</p>
+            <p class="helper-text">Benches with $w(b)=0$ (e.g. zero difficulty, zero quality) are excluded from both numerator and denominator.</p>
+        </div>
     </div>
 
-    <div class="about-section">
-        <h2 class="section-header">Tag voting & community correction</h2>
-        <p>Anything the community can get wrong, the community can correct via voting:</p>
-        <ul class="about-list">
-            <li><strong>Tags</strong> — every tag on a model or bench is community-voted. Net positive votes keep it; net non-positive removes it from the canonical set.</li>
-            <li><strong>Existence votes</strong> — if a model or bench is fake, a duplicate, or wildly wrong, vote it down. The threshold scales with engagement: an entity is hidden when downvotes ≥ <code>max(5, 60% of total votes)</code> <em>and</em> downvotes outnumber upvotes. Spam goes away fast; established entries are hard to remove with a small mob.</li>
-            <li><strong>Submission votes</strong> — every individual score gets up/downvoted; only net-positive scores count toward the SupraScore.</li>
-            <li><strong>Quality &amp; difficulty ratings</strong> — anyone signed in can rate a benchmark on all five dimensions. Averaged (mean for trust dimensions, median for difficulty).</li>
-        </ul>
-        <p class="helper-text">Re-submitting a model or bench you previously had removed under the same name is blocked. Other users may re-submit it (slug gets a numeric suffix), and the community votes again.</p>
+    <!-- Q3 -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q3')" @click="aboutToggle('q3')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q3')}">▼</span>
+            <span>What exactly are the five bench dimensions?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q3')" x-transition>
+            <p>Each bench is rated on a 1–5 scale on five orthogonal axes. The first four feed <em>quality</em>; the fifth is <em>difficulty</em>.</p>
+            <ul class="about-list">
+                <li><strong>Relevance</strong> — does it measure something useful for real-world model use? High = meaningful task. Low = trivia, toy puzzles.</li>
+                <li><strong>Contamination Resistance</strong> — how sure are we the test set wasn't in the training data? High = held-out, rotating, freshly generated. Low = scraped from the public web before model release.</li>
+                <li><strong>Discriminability</strong> — does it separate weak from strong models? High = wide score spread. Low = everyone scores 95–100.</li>
+                <li><strong>Reproducibility</strong> — can two independent runs reach the same conclusion? High = deterministic, well-specified. Low = vague setup, judge-LLM, hand-graded.</li>
+                <li><strong>Difficulty</strong> — how much general intelligence does it actually probe? 1 = trivial. 5 = approaches frontier capability.</li>
+            </ul>
+            <p>Quality is the mean of the first four × 20:</p>
+            <p class="math-block">$$Q(b) \;=\; \frac{R + C + S + P}{4} \cdot 20 \quad \in [0,\,100]$$</p>
+            <p>Difficulty uses the <em>median</em> across raters (more robust to a single inflated vote), then linearly scaled to $[0,1]$:</p>
+            <p class="math-block">$$D(b) \;=\; \max\!\left(0,\; \min\!\left(1,\; \frac{\operatorname{median}(d_i) - 1}{4}\right)\right)$$</p>
+            <p>If nobody has rated a bench yet, it defaults to neutral: $Q = 50$, $D = 0.5$.</p>
+        </div>
     </div>
 
-    <div class="about-section">
-        <h2 class="section-header">Open source · BSL 1.1</h2>
-        <p>SupraBench is open source under the Business Source License 1.1 — code on GitLab:</p>
-        <p>
-            <a class="external-link" href="https://gitlab.com/florian-fischer-group/suprabench" target="_blank" rel="noopener">
-                gitlab.com/florian-fischer-group/suprabench ↗
-            </a>
-        </p>
-        <p class="helper-text">Issues, feature requests, PRs welcome. Imprint, privacy and terms in the sidebar footer.</p>
+    <!-- Q4 -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q4')" @click="aboutToggle('q4')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q4')}">▼</span>
+            <span>What is "headroom" and why does it exist?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q4')" x-transition>
+            <p>Imagine ARC-AGI 3 just got solved — every frontier model scores 99 %. The bench has stopped measuring intelligence; it now just measures "is your model in the frontier club". A score on it should contribute almost nothing to a model's SupraScore.</p>
+            <p>The naïve fix would be: ask the community to retroactively lower its quality. Nobody does that consistently. So we automate it — every bench has a <strong>headroom</strong> factor that shrinks as the bench saturates:</p>
+
+            <h4 class="qa-subheader">The frontier-mean approach</h4>
+            <p>Top-1 alone is too noisy: one freakishly good model would tank the bench's weight for everyone after a single submission. So we use the <em>mean of the top-K models</em>, which is robust to outliers:</p>
+            <p class="math-block">$$N \;=\; \bigl|\{\, m : \exists \text{ valid score for } (m,b)\}\bigr|, \qquad K \;=\; \min(10,\, N)$$</p>
+            <p class="math-block">$$f(b) \;=\; \frac{1}{K} \sum_{m \in \operatorname{top}_K(b)} \mu_{m,b}$$</p>
+            <p>where $\operatorname{top}_K(b)$ are the $K$ models with the highest per-model median on $b$.</p>
+
+            <h4 class="qa-subheader">From frontier-mean to headroom</h4>
+            <p>Two regimes. With fewer than 3 evaluated models we don't have enough signal to claim saturation, so we don't penalise:</p>
+            <p class="math-block">$$H(b) \;=\; \begin{cases} 1.0 & \text{if } N < 3 \\[6pt] \max\!\left(0.1,\; \dfrac{100 - \max(f(b),\, 50)}{50}\right) & \text{otherwise} \end{cases}$$</p>
+            <p>The pivot at 50 means a bench is "fully open" until at least its top-K models are above mid-range. The floor at 0.1 keeps historic benches alive — they never disappear, they just stop dominating.</p>
+
+            <h4 class="qa-subheader">Trajectory</h4>
+            <table class="qa-table">
+                <thead><tr><th>Scenario</th><th>$N$</th><th>$f(b)$</th><th>$H(b)$</th></tr></thead>
+                <tbody>
+                    <tr><td>Brand-new bench, 1 model @ 92</td><td>1</td><td>—</td><td>1.00</td></tr>
+                    <tr><td>3 models, top-3 mean 70</td><td>3</td><td>70</td><td>0.60</td></tr>
+                    <tr><td>10 models, top-10 mean 84</td><td>10</td><td>84</td><td>0.32</td></tr>
+                    <tr><td>30 models, top-10 mean 91</td><td>30</td><td>91</td><td>0.18</td></tr>
+                    <tr><td>50 models, top-10 mean 99</td><td>50</td><td>99</td><td>0.10 (floor)</td></tr>
+                </tbody>
+            </table>
+            <p class="helper-text">This is what makes the ARC-AGI 3 → 4 hand-off automatic. Nobody has to "retire" the old bench manually.</p>
+        </div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q5')" @click="aboutToggle('q5')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q5')}">▼</span>
+            <span>Worked example — how do the numbers add up for a single model?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q5')" x-transition>
+            <p>Take a hypothetical model "Claude X" with valid medians on three benches:</p>
+            <table class="qa-table">
+                <thead><tr><th>Bench</th><th>$\mu_{m,b}$</th><th>$Q$</th><th>$D$ (avg)</th><th>$N$</th><th>$f(b)$</th><th>$H$</th><th>$w$</th><th>$w \cdot \mu$</th></tr></thead>
+                <tbody>
+                    <tr><td>MMLU (saturated)</td><td>88</td><td>80</td><td>0.50 (3/5)</td><td>50</td><td>96</td><td>0.10</td><td>4.0</td><td>352</td></tr>
+                    <tr><td>ARC-AGI 4 (fresh)</td><td>72</td><td>75</td><td>1.00 (5/5)</td><td>8</td><td>65</td><td>0.70</td><td>52.5</td><td>3 780</td></tr>
+                    <tr><td>TrivialBench</td><td>99</td><td>60</td><td>0.00 (1/5)</td><td>20</td><td>99</td><td>0.10</td><td>0</td><td>0</td></tr>
+                    <tr><td><strong>Σ</strong></td><td></td><td></td><td></td><td></td><td></td><td></td><td><strong>56.5</strong></td><td><strong>4 132</strong></td></tr>
+                </tbody>
+            </table>
+            <p class="math-block">$$\operatorname{SupraScore}(\text{Claude X}) \;=\; \frac{4\,132}{56.5} \;\approx\; 73.1$$</p>
+            <p>Three takeaways from this:</p>
+            <ul class="about-list">
+                <li>The <strong>frontier bench</strong> dominates ($w = 52.5$) because it's hard, trustworthy, and not yet saturated.</li>
+                <li>The <strong>saturated bench</strong> still counts a little ($w = 4$) but contributes less than 10 % of the total weight.</li>
+                <li>The <strong>trivial bench</strong> is silently filtered out by $D = 0$ — scoring 99 % on it earns the model exactly nothing.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q6')" @click="aboutToggle('q6')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q6')}">▼</span>
+            <span>How does the community correct mistakes? (And what stops vandalism?)</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q6')" x-transition>
+            <p>Anything the community can get wrong, the community can correct via voting. Five layers:</p>
+            <ul class="about-list">
+                <li><strong>Submission votes</strong> — every individual score is up/downvoted. Only net-positive submissions count toward the SupraScore.</li>
+                <li><strong>Tag votes</strong> — each tag on a model or bench is voted independently. Net positive keeps it in the canonical tag set.</li>
+                <li><strong>Existence votes</strong> — fakes, duplicates, low-quality entries can be downvoted into a hidden state (see formula below).</li>
+                <li><strong>Quality &amp; difficulty ratings</strong> — anyone signed in can rate a bench on all five dimensions. Averaged across raters (mean for trust, median for difficulty).</li>
+                <li><strong>Per-bench scaling</strong> — a bench with one corrupt rater barely moves; the more raters, the harder it is to game.</li>
+            </ul>
+
+            <h4 class="qa-subheader">When does an entity get hidden?</h4>
+            <p>The hide threshold scales with engagement, so a small mob can't kick a well-established bench, but spam still goes away fast:</p>
+            <p class="math-block">$$\text{hide}(e) \;\Leftrightarrow\; \operatorname{down}(e) \;\geq\; \max\bigl(5,\, \lceil 0.6 \cdot (\operatorname{up}(e) + \operatorname{down}(e)) \rceil\bigr) \;\;\wedge\;\; \operatorname{down}(e) > \operatorname{up}(e)$$</p>
+            <p class="helper-text">A 5-downvote floor protects against drive-by spam. The 60 % ratio means that to remove a bench with 100 upvotes, you'd need at least 96 downvotes — much harder than 4 sock puppets.</p>
+
+            <h4 class="qa-subheader">Anti-resurrection</h4>
+            <p>If you submit a model or bench under your name and it gets community-removed, you cannot re-submit it under the same name. Other users can re-submit it (with a numeric suffix on the slug), and the community votes on the new version independently.</p>
+        </div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q7')" @click="aboutToggle('q7')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q7')}">▼</span>
+            <span>What's done to prevent gaming the SupraScore?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q7')" x-transition>
+            <p>Adversarial robustness is built into the formula at every layer:</p>
+            <ul class="about-list">
+                <li><strong>One submission can't carry a score</strong> — per-(model, bench) median needs multiple submissions to move; a single fake doesn't shift it.</li>
+                <li><strong>One bench can't carry a model</strong> — the SupraScore is averaged across <em>all</em> benches a model has scores on, weighted by trust × difficulty × headroom. You can't bench-max your way to the top with a few vanity benches.</li>
+                <li><strong>Difficulty uses median, not mean</strong> — a single 5-star rater on a trivial bench can't fake difficulty.</li>
+                <li><strong>Saturation auto-detected</strong> — pumping a saturated bench gives diminishing returns by construction.</li>
+                <li><strong>Engagement-aware hide threshold</strong> — small voting cliques can't take down established entries.</li>
+                <li><strong>Anti-resurrection</strong> — re-submitting your own removed entries under the same name is blocked.</li>
+                <li><strong>Rate limiting</strong> — submissions are capped at 30 individual scores per 24 h per user.</li>
+            </ul>
+            <p>None of these is bulletproof on its own. Together they make systemic gaming expensive enough that legitimate contribution is the cheaper path.</p>
+        </div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q8')" @click="aboutToggle('q8')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q8')}">▼</span>
+            <span>What counts as an "official" source?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q8')" x-transition>
+            <p>Any URL is a valid source — but only well-known academic, lab, and dedicated leaderboard hosts get an "Official source" badge. Everything else (YouTube, Substack, X/Twitter, personal blogs) is a valid <em>community source</em> and gets a "Community" badge instead. The submission is otherwise treated identically; the badge is a transparency signal, not a gatekeeper.</p>
+            <p class="helper-text">The whitelist is open source — see <code>convex/urls.ts</code> in the GitLab repo. Suggestions welcome via issues.</p>
+        </div>
+    </div>
+
+    <!-- Q9 -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q9')" @click="aboutToggle('q9')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q9')}">▼</span>
+            <span>Open source, license, contribution?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q9')" x-transition>
+            <p>SupraBench is open source under the <strong>Business Source License 1.1</strong>. The full code, including the ranking math you just read, is in the GitLab repo:</p>
+            <p>
+                <a class="external-link" href="https://gitlab.com/florian-fischer-group/suprabench" target="_blank" rel="noopener">
+                    gitlab.com/florian-fischer-group/suprabench ↗
+                </a>
+            </p>
+            <p>Issues, feature requests and merge requests are welcome. Imprint, privacy and terms in the sidebar footer.</p>
+        </div>
     </div>
 </div>
 

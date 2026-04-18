@@ -3,17 +3,30 @@ import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 
 // ── Bench weight = quality × difficulty × headroom ──
-// quality       : 0-100, mean of the four trust dimensions × 20
-// difficulty    : 0-1, (median(difficulty)-1)/4 — community-voted
-// headroom      : 0-1, soft penalty as the bench saturates
-//                 - SOTA ≤ 50 → 1.0  (lots of headroom left)
-//                 - SOTA = 75 → 0.5
-//                 - SOTA ≥ 100 → 0.1 (floor — never zero out completely)
 //
-// The two extra factors solve "old benches drown out new ones" without
-// requiring users to retroactively rate older benches down. As frontier
-// models saturate a bench, headroom collapses → bench naturally loses
-// weight → newer/harder benches dominate.
+// quality       : 0-100, mean of the four trust dimensions × 20
+// difficulty    : 0-1, (median(difficultyVotes)-1)/4 — community-voted
+// headroom      : 0.1-1, automatic saturation penalty
+//
+// Headroom uses the **top-K frontier-mean** of valid scores (not just top1)
+// to be robust against single-model outliers and against premature
+// saturation flagging when only one model has been tested:
+//
+//   N      = # of distinct non-hidden models with ≥1 valid score on this bench
+//   K      = min(10, N)            ← only the K best models per bench count
+//   front  = mean(top-K medians)   ← per-model bench medians, sorted desc
+//
+//   if N < 3:           headroom = 1.0    (not enough signal to claim saturation)
+//   else:               headroom = max(0.1, (100 − max(front, 50)) / 50)
+//
+// Floor at 0.1 keeps historical benches in the picture but stops them from
+// dominating once everyone solves them — so e.g. ARC-AGI 3 → 4 hand-off
+// happens automatically as the new bench's frontier mean is still low.
+export const HEADROOM_TOP_K = 10;
+export const HEADROOM_MIN_N = 3;
+export const HEADROOM_FLOOR = 0.1;
+export const HEADROOM_PIVOT = 50;
+
 export async function getBenchWeights(
   ctx: any,
   benchId: Id<"benches">
@@ -22,7 +35,9 @@ export async function getBenchWeights(
   difficulty: number;
   headroom: number;
   weight: number;
-  top1: number;
+  frontierMean: number;
+  modelCount: number;
+  topK: number;
   difficultyAvg: number;
 }> {
   const ratings = await ctx.db
@@ -53,25 +68,56 @@ export async function getBenchWeights(
   }
   const difficulty = Math.max(0, Math.min(1, (difficultyAvg - 1) / 4));
 
-  // SOTA on this bench across all valid scores from non-hidden models.
+  // Per-model median of valid scores on this bench (non-hidden models only).
   const scores = await ctx.db
     .query("modelScores")
     .withIndex("by_bench", (q: any) => q.eq("benchId", benchId))
     .collect();
-  let top1 = 0;
+  const perModel: Record<string, number[]> = {};
   for (const s of scores) {
     if (s.upvotes > s.downvotes) {
-      const m = await ctx.db.get(s.modelId);
-      if (m && !(m as any).hidden && s.normalizedScore > top1) {
-        top1 = s.normalizedScore;
-      }
+      const key = s.modelId as string;
+      (perModel[key] ??= []).push(s.normalizedScore);
     }
   }
-  const sota = Math.max(top1, 50);
-  const headroom = Math.max(0.1, (100 - sota) / 50);
+  const modelMedians: number[] = [];
+  for (const [modelId, vals] of Object.entries(perModel)) {
+    const m = await ctx.db.get(modelId as any);
+    if (!m || (m as any).hidden) continue;
+    vals.sort((a, b) => a - b);
+    const median =
+      vals.length % 2 === 0
+        ? (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2
+        : vals[Math.floor(vals.length / 2)];
+    modelMedians.push(median);
+  }
+  modelMedians.sort((a, b) => b - a); // best first
+
+  const N = modelMedians.length;
+  const K = Math.min(HEADROOM_TOP_K, N);
+  const topK = K;
+  const frontierMean =
+    K === 0 ? 0 : modelMedians.slice(0, K).reduce((s, v) => s + v, 0) / K;
+
+  let headroom: number;
+  if (N < HEADROOM_MIN_N) {
+    headroom = 1.0; // not enough signal yet — don't punish brand-new benches
+  } else {
+    const pivoted = Math.max(frontierMean, HEADROOM_PIVOT);
+    headroom = Math.max(HEADROOM_FLOOR, (100 - pivoted) / (100 - HEADROOM_PIVOT));
+  }
 
   const weight = quality * difficulty * headroom;
-  return { quality, difficulty, headroom, weight, top1, difficultyAvg };
+  return {
+    quality,
+    difficulty,
+    headroom,
+    weight,
+    frontierMean,
+    modelCount: N,
+    topK,
+    difficultyAvg,
+  };
 }
 
 async function recomputeOne(ctx: any, modelId: Id<"models">) {

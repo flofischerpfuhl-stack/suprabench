@@ -7,6 +7,7 @@ import {
   assertNotResurrectingOwnHidden,
 } from "./entityVotes";
 import { isOfficialUrl } from "./urls";
+import { getBenchWeights } from "./rankings";
 
 function generateSlug(name: string): string {
   return name
@@ -167,18 +168,8 @@ export const getBySlug = query({
       });
     }
 
-    // SOTA + headroom — the same formula used in rankings, exposed for the UI
-    let top1 = 0;
-    for (const ms of modelScores) {
-      if (ms.effectiveScore !== null && ms.effectiveScore > top1) top1 = ms.effectiveScore;
-    }
-    const sotaClamped = Math.max(top1, 50);
-    const headroom = Math.max(0.1, (100 - sotaClamped) / 50);
-    const difficultyMultiplier =
-      ratings.length > 0
-        ? Math.max(0, Math.min(1, (dimensions.difficulty - 1) / 4))
-        : 0.5;
-    const effectiveWeight = qualityScore * difficultyMultiplier * headroom;
+    // Reuse the canonical bench-weight formula (top-K headroom + N<3 dampener).
+    const w = await getBenchWeights(ctx, bench._id);
 
     return {
       ...bench,
@@ -192,11 +183,14 @@ export const getBySlug = query({
       },
       raterCount: ratings.length,
       modelScores,
-      sota: Math.round(top1 * 10) / 10,
-      headroom: Math.round(headroom * 100) / 100,
-      difficultyMultiplier: Math.round(difficultyMultiplier * 100) / 100,
-      effectiveWeight: Math.round(effectiveWeight * 10) / 10,
-      saturated: top1 >= 90,
+      frontierMean: Math.round(w.frontierMean * 10) / 10,
+      modelCount: w.modelCount,
+      topK: w.topK,
+      headroom: Math.round(w.headroom * 100) / 100,
+      difficultyMultiplier: Math.round(w.difficulty * 100) / 100,
+      effectiveWeight: Math.round(w.weight * 10) / 10,
+      saturated: w.modelCount >= 3 && w.frontierMean >= 90,
+      saturationDampened: w.modelCount < 3,
     };
   },
 });

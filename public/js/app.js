@@ -149,6 +149,10 @@ function supraBench() {
     profileData: null,
     profileSubmissionLimit: 25,
 
+    // About-page Q&A: a Set of question-IDs that are currently expanded.
+    // Default: first question open so the page isn't a wall of buttons.
+    aboutOpen: new Set(["q1"]),
+
     // ── Auth ──
     user: null,
 
@@ -270,6 +274,7 @@ function supraBench() {
         this._loadSubmissionDetail();
       } else if (parts[0] === "about") {
         this.view = "about";
+        this.$nextTick && this.$nextTick(() => this.renderAboutMath());
       } else if (parts[0] === "profile") {
         this.view = "profile";
         this._loadProfile();
@@ -375,6 +380,41 @@ function supraBench() {
     },
     showAllSubmissionsToggle() {
       this.profileSubmissionLimit = this.profileData?.submissions.length ?? 25;
+    },
+
+    // ── About-page Q&A controls ──
+    aboutToggle(id) {
+      if (this.aboutOpen.has(id)) this.aboutOpen.delete(id);
+      else this.aboutOpen.add(id);
+      // Trigger reactivity (Set mutations are not auto-tracked by Alpine).
+      this.aboutOpen = new Set(this.aboutOpen);
+      this.$nextTick(() => this.renderAboutMath());
+    },
+    aboutExpandAll() {
+      const ids = ["q1","q2","q3","q4","q5","q6","q7","q8","q9"];
+      this.aboutOpen = new Set(ids);
+      this.$nextTick(() => this.renderAboutMath());
+    },
+    aboutCollapseAll() {
+      this.aboutOpen = new Set();
+    },
+    renderAboutMath() {
+      // KaTeX auto-render is loaded via defer; wait for it if needed.
+      const run = () => {
+        if (typeof window.renderMathInElement !== "function") return;
+        const root = document.querySelector("[x-show=\"view==='about'\"]");
+        if (!root) return;
+        window.renderMathInElement(root, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+          ],
+          throwOnError: false,
+          strict: "ignore",
+        });
+      };
+      if (typeof window.renderMathInElement === "function") run();
+      else setTimeout(run, 200);
     },
 
     // ═══ TAG FILTERING (model list) ═══
