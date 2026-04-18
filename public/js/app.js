@@ -81,16 +81,30 @@ function supraBench() {
     async init() {
       const { client, api, initAuth } = window.sbConvex;
 
-      // Handle OAuth callback / restore session
+      // Handle OAuth callback / restore session BEFORE opening subscriptions,
+      // so that subs that need an identity (users.viewer) open with auth set.
       await initAuth();
 
       // Parse initial hash
       this._parseHash();
       window.addEventListener("hashchange", () => this._parseHash());
 
-      // Listen for auth state changes to re-subscribe
-      window.addEventListener("sb-auth-change", () => {
-        // User query will auto-refresh via subscription
+      // Listen for auth state changes — when login/logout happens, force
+      // an immediate re-fetch of the viewer query. The websocket subscription
+      // also re-runs on its own, but a direct query gives us a deterministic
+      // populated state right after the OAuth round-trip without waiting on
+      // ws reconnect timing.
+      window.addEventListener("sb-auth-change", async (e) => {
+        if (e.detail?.isAuthenticated) {
+          try {
+            const u = await client.query(api.users.viewer, {});
+            if (u) this.user = u;
+          } catch (err) {
+            console.error("[auth] viewer fetch after auth-change failed:", err);
+          }
+        } else {
+          this.user = null;
+        }
       });
 
       // Subscribe to tags
@@ -98,10 +112,21 @@ function supraBench() {
         this.allTags = (data || []).map(t => t.tag);
       });
 
-      // Subscribe to user
+      // Subscribe to user (will keep firing on profile updates / logout)
       this._subscribe(api.users.viewer, {}, (data) => {
         this.user = data;
       });
+
+      // Belt-and-suspenders: if a token is already in storage at init time,
+      // immediately fetch the viewer once so the UI shows the logged-in
+      // state on the very first paint, instead of waiting for the
+      // subscription to settle.
+      try {
+        if (localStorage.getItem(`__convexAuthJWT_${window.sbConvex.CONVEX_URL.replace(/[^a-zA-Z0-9]/g, "")}`)) {
+          const u = await client.query(api.users.viewer, {});
+          if (u) this.user = u;
+        }
+      } catch (e) { /* ignore */ }
 
       // Subscribe to ranked models
       this._subscribe(api.models.listRanked, {}, (data) => {

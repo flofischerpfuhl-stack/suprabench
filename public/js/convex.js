@@ -37,18 +37,27 @@ const api = window.convex.anyApi;
 // ── Token State ──
 let _currentToken = null;
 
-function _applyToken(token) {
+async function _applyToken(token) {
   _currentToken = token;
-  if (token) {
-    client.setAuth(
-      () => token,
-      (isAuthenticated) => {
-        window.dispatchEvent(
-          new CustomEvent("sb-auth-change", { detail: { isAuthenticated } })
-        );
-      }
-    );
-  }
+  if (!token) return;
+
+  // ConvexClient.setAuth returns a promise that resolves once the new
+  // auth has actually been pushed to the server and existing subscriptions
+  // are re-running with the new identity. We await it so callers know
+  // when auth is fully active.
+  await client.setAuth(
+    () => Promise.resolve(token),
+    (isAuthenticated) => {
+      window.dispatchEvent(
+        new CustomEvent("sb-auth-change", { detail: { isAuthenticated } })
+      );
+    }
+  );
+  // Always emit at least one event so listeners can sync state, even if
+  // the convex client doesn't fire its onChange immediately.
+  window.dispatchEvent(
+    new CustomEvent("sb-auth-change", { detail: { isAuthenticated: true } })
+  );
 }
 
 // ── Auth Flow: signIn ──
@@ -90,11 +99,10 @@ async function signIn(provider, params) {
   }
 
   if (result.tokens) {
-    // Got tokens — store and apply
+    // Got tokens — store and apply (await so subscriptions reflect new auth)
     localStorage.setItem(JWT_KEY, result.tokens.token);
     localStorage.setItem(REFRESH_KEY, result.tokens.refreshToken);
-    _applyToken(result.tokens.token);
-    window.dispatchEvent(new CustomEvent("sb-auth-change", { detail: { isAuthenticated: true } }));
+    await _applyToken(result.tokens.token);
     return { signingIn: true };
   }
 
@@ -111,6 +119,8 @@ async function signOut() {
   localStorage.removeItem(JWT_KEY);
   localStorage.removeItem(REFRESH_KEY);
   _currentToken = null;
+  // Clear auth on the client too so subscriptions re-run unauthenticated.
+  try { await client.setAuth(() => Promise.resolve(null)); } catch (e) { /* ignore */ }
   window.dispatchEvent(new CustomEvent("sb-auth-change", { detail: { isAuthenticated: false } }));
 }
 
@@ -149,10 +159,10 @@ async function handleAuthCallback() {
 }
 
 // ── Restore Session from Storage ──
-function restoreSession() {
+async function restoreSession() {
   const storedToken = localStorage.getItem(JWT_KEY);
   if (storedToken) {
-    _applyToken(storedToken);
+    await _applyToken(storedToken);
     return true;
   }
   return false;
@@ -170,7 +180,7 @@ async function refreshSession() {
     if (result.tokens) {
       localStorage.setItem(JWT_KEY, result.tokens.token);
       localStorage.setItem(REFRESH_KEY, result.tokens.refreshToken);
-      _applyToken(result.tokens.token);
+      await _applyToken(result.tokens.token);
       return true;
     }
   } catch (e) {
@@ -189,7 +199,7 @@ async function initAuth() {
   if (wasCallback) return;
 
   // 2. Try to restore from stored JWT
-  if (restoreSession()) return;
+  if (await restoreSession()) return;
 
   // 3. No session
 }
