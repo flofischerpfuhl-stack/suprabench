@@ -21,6 +21,13 @@
 /sitemap.xml
   Cache-Control: public, max-age=3600
 
+# ── API documentation pages ──
+# Docs are static HTML; cache aggressively at the edge but allow
+# Cloudflare's purge to deploy updates instantly. Same policy as
+# the legal pages.
+/docs/api/*
+  Cache-Control: public, max-age=300, s-maxage=86400
+
 # ── PWA: manifest + service worker ──
 # Manifest can cache for a day. Service worker MUST never be cached
 # beyond the current request — otherwise users keep running the old

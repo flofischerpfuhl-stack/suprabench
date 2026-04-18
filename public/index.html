@@ -1664,8 +1664,8 @@
             </span>
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q10')" x-transition>
-            <p>Not yet — but it's designed and scaffolded. The plan is a paid REST API for programmatic access to rankings, models, benchmarks and submissions. Tiered pricing from <strong>€9 / month</strong> (10k requests) to custom enterprise plans, billed via Stripe.</p>
-            <p>While the API isn't live, you can <strong>join the waitlist</strong> for the tier you'd subscribe to: <a href="#profile" @click.prevent="navigate('profile'); $nextTick(() => profileTab='api')">Profile → API &amp; Billing</a>. We'll email you the moment it ships, in the order people signed up.</p>
+            <p>Not yet — but the contract is fully designed and the documentation is published. The plan is a paid REST API for programmatic access to rankings, models, benchmarks and submissions. Tiered pricing from <strong>€9 / month</strong> (10k requests) to custom enterprise plans, billed via Stripe.</p>
+            <p>Read the full <a href="/docs/api/" style="color:var(--accent)"><strong>API documentation</strong></a> — every endpoint, error code, rate-limit and example is already there. Then <strong>join the waitlist</strong> for the tier you'd subscribe to: <a href="#profile" @click.prevent="navigate('profile'); $nextTick(() => profileTab='api')">Profile → API &amp; Billing</a>. We'll email you the moment it ships, in the order people signed up.</p>
             <p class="helper-text">If you have a specific use case (research, dashboard, leaderboard mirror), tell us via a GitLab issue — high-signal asks help us prioritize endpoints.</p>
         </div>
     </div>
@@ -1830,9 +1830,12 @@
                         <p class="api-banner__title">Public API — Coming soon</p>
                         <p class="api-banner__text">
                             Programmatic access to SupraBench data (rankings, models,
-                            benchmarks, submissions). The API isn't live yet — but you
-                            can join the waitlist below for the tier you're interested
-                            in. We'll email you the moment it ships, in launch order.
+                            benchmarks, submissions). The API isn't live yet — but the
+                            <a href="/docs/api/" style="color:var(--accent);text-decoration:underline">full developer documentation</a>
+                            is published, so you can review the contract and start
+                            building against it. Join the waitlist below for the tier
+                            you're interested in; we'll email you the moment it ships,
+                            in launch order.
                         </p>
                     </div>
                 </div>
@@ -1847,7 +1850,7 @@
                         <p class="tier-card__quota">10 000 requests / month</p>
                         <ul class="tier-card__features">
                             <li>Read access to all public endpoints</li>
-                            <li>5 requests / second rate limit</li>
+                            <li>60 req/min rate limit</li>
                             <li>1 API key</li>
                             <li>Community support</li>
                         </ul>
@@ -1865,10 +1868,10 @@
                         <p class="tier-card__quota">100 000 requests / month</p>
                         <ul class="tier-card__features">
                             <li>Everything in Hobby</li>
-                            <li>20 requests / second rate limit</li>
+                            <li>300 req/min rate limit</li>
                             <li>3 API keys</li>
                             <li>Email support</li>
-                            <li>Bulk export endpoints</li>
+                            <li>Bulk export endpoint</li>
                         </ul>
                         <button class="btn btn-sm btn-primary" :disabled="apiBusy"
                                 @click="toggleWaitlist('pro')"
@@ -1883,10 +1886,10 @@
                         <p class="tier-card__quota">1 000 000 requests / month</p>
                         <ul class="tier-card__features">
                             <li>Everything in Pro</li>
-                            <li>100 requests / second rate limit</li>
+                            <li>1 200 req/min rate limit</li>
                             <li>10 API keys</li>
                             <li>Priority support</li>
-                            <li>Webhook notifications (planned)</li>
+                            <li>Webhooks (beta)</li>
                         </ul>
                         <button class="btn btn-sm btn-outline" :disabled="apiBusy"
                                 @click="toggleWaitlist('scale')"
@@ -1898,11 +1901,11 @@
                         <span class="tier-card__badge" x-show="isOnWaitlist('enterprise')">On waitlist</span>
                         <h3 class="tier-card__name">Enterprise</h3>
                         <p class="tier-card__price">Custom</p>
-                        <p class="tier-card__quota">Unmetered, on-prem mirror, SLA</p>
+                        <p class="tier-card__quota">Custom quota, SLA, on-prem mirror</p>
                         <ul class="tier-card__features">
                             <li>Everything in Scale</li>
                             <li>Custom rate limits</li>
-                            <li>Unlimited keys + IP allowlists</li>
+                            <li>50+ keys + IP allowlists</li>
                             <li>SLA + dedicated Slack channel</li>
                             <li>Custom data agreements</li>
                         </ul>
@@ -1913,9 +1916,11 @@
                 </div>
 
                 <p style="color:var(--text3);font-size:.78rem;margin-top:-1rem">
-                    Prices are net of VAT. Billing will be handled by
+                    Prices are net of VAT. Read the full
+                    <a href="/docs/api/" style="color:var(--accent)">API documentation →</a>.
+                    Billing handled by
                     <a href="https://stripe.com" target="_blank" rel="noopener">Stripe</a>
-                    (incl. EU reverse-charge for B2B with valid VAT-ID).
+                    (EU reverse-charge for B2B with valid VAT-ID).
                     See <a href="/legal/terms#api">Terms § API</a> for cancellation,
                     refund and uptime details.
                 </p>

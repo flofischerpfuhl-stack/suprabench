@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" class="docs-html">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tags reference — SupraBench API</title>
+<meta name="description" content="List the full SupraBench tag taxonomy with per-tag model and benchmark counts.">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#030303">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://suprabench.com/docs/api/reference/tags.html">
+<link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/docs.css">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
+</head>
+<body class="docs-body">
+
+<header class="docs-topbar">
+  <a href="/" class="docs-topbar__logo">Supra<span>Bench</span>. <small>API Docs</small></a>
+  <nav class="docs-topbar__nav" aria-label="Site">
+    <a href="/">App</a>
+    <a href="/docs/api/" class="active">Docs</a>
+    <a href="/docs/api/changelog.html">Changelog</a>
+    <a href="/#api">Get a key</a>
+  </nav>
+  <button class="docs-topbar__hamburger" aria-label="Toggle menu">≡</button>
+</header>
+
+<div class="docs-layout">
+<aside class="docs-nav">
+    <button class="docs-nav-toggle">Browse docs ▾</button>
+    <div class="docs-nav-collapsible">
+    <h4>Get started</h4>
+    <ul>
+      <li><a href="/docs/api/">Overview</a></li>
+      <li><a href="/docs/api/quickstart.html">Quickstart</a></li>
+      <li><a href="/docs/api/authentication.html">Authentication</a></li>
+    </ul>
+    <h4>Core concepts</h4>
+    <ul>
+      <li><a href="/docs/api/rate-limits.html">Rate limits & quotas</a></li>
+      <li><a href="/docs/api/errors.html">Errors</a></li>
+      <li><a href="/docs/api/pagination.html">Pagination</a></li>
+      <li><a href="/docs/api/versioning.html">Versioning</a></li>
+    </ul>
+    <h4>API reference</h4>
+    <ul>
+      <li><a href="/docs/api/reference/models.html">Models</a></li>
+      <li><a href="/docs/api/reference/benches.html">Benchmarks</a></li>
+      <li><a href="/docs/api/reference/best.html">Best by tag</a></li>
+      <li><a href="/docs/api/reference/tags.html" class="active">Tags</a></li>
+      <li><a href="/docs/api/reference/export.html">Bulk export</a></li>
+    </ul>
+    <h4>Roadmap</h4>
+    <ul>
+      <li><a href="/docs/api/webhooks.html">Webhooks <span class="badge-soon">Soon</span></a></li>
+      <li><a href="/docs/api/sdks.html">SDKs <span class="badge-soon">Soon</span></a></li>
+      <li><a href="/docs/api/changelog.html">Changelog</a></li>
+    </ul>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+
+    <h1>Tags <span class="pill pill-ga">GA on launch</span></h1>
+    <p class="lead">
+      The full SupraBench capability taxonomy with usage counts. Useful
+      for populating filter dropdowns or mapping your own tags onto ours.
+    </p>
+
+    <div class="docs-meta">
+      <span>Last updated: April 18, 2026</span>
+      <span>Reading time: 2 min</span>
+    </div>
+
+    <h2 id="endpoint">Endpoint</h2>
+    <div class="endpoint">
+      <span class="method method-GET">GET</span>
+      <span>https://api.suprabench.com/v1/tags</span>
+    </div>
+    <p>No parameters. Returns the entire taxonomy in one shot &mdash; typically a few hundred entries, &lt; 30&nbsp;KB.</p>
+
+    <h2 id="response">Response &mdash; array of <code>TagInfo</code></h2>
+    <table class="params">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="name">tag</span></td><td><span class="type">string</span></td><td><span class="desc">Lowercase, hyphenated identifier (e.g. <code>"long-context"</code>).</span></td></tr>
+        <tr><td><span class="name">models</span></td><td><span class="type">integer</span></td><td><span class="desc">Number of models currently carrying this tag (after community vote thresholding).</span></td></tr>
+        <tr><td><span class="name">benches</span></td><td><span class="type">integer</span></td><td><span class="desc">Number of benchmarks tagged with this capability.</span></td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="example">Example</h2>
+    <div class="code-block">
+      <div class="code-tabs"><button class="code-tab active" data-lang="curl"><span class="lang-icon"></span>curl</button></div>
+      <div class="code-pane active" data-lang="curl">
+        <button class="code-copy">Copy</button>
+<pre><code>curl https://api.suprabench.com/v1/tags \
+  -H "Authorization: Bearer $SUPRABENCH_KEY"</code></pre>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-tabs"><button class="code-tab active" data-lang="json"><span class="lang-icon"></span>JSON</button></div>
+      <div class="code-pane active" data-lang="json">
+        <button class="code-copy">Copy</button>
+<pre><code>[
+  { "tag": "agentic",       "models": 31, "benches":  6 },
+  { "tag": "coding",        "models": 58, "benches": 12 },
+  { "tag": "long-context",  "models": 24, "benches":  4 },
+  { "tag": "math",          "models": 47, "benches":  9 },
+  { "tag": "multimodal",    "models": 19, "benches":  7 },
+  { "tag": "reasoning",     "models": 71, "benches": 14 },
+  { "tag": "safety",        "models": 14, "benches":  5 }
+]</code></pre>
+      </div>
+    </div>
+
+    <h2 id="about-tags">About the taxonomy</h2>
+    <ul>
+      <li><strong>Community-driven.</strong> Tags appear when users propose them and persist when they accumulate net upvotes. Low-quality tags fall off automatically.</li>
+      <li><strong>Lowercase hyphenated.</strong> <code>long-context</code>, never <code>longContext</code> or <code>"long context"</code>.</li>
+      <li><strong>Cross-cutting.</strong> A tag can apply to both models and benchmarks. The semantics are "this benchmark <em>tests</em> X" or "this model <em>is good at</em> X".</li>
+      <li><strong>No hierarchy.</strong> Tags are flat. <code>code-generation</code> and <code>code-review</code> are siblings, not children of <code>coding</code>.</li>
+      <li><strong>Cached for 1 hour.</strong> The taxonomy doesn't change minute-to-minute.</li>
+    </ul>
+
+
+    <div class="docs-pagenav">
+      <a href="/docs/api/reference/best.html">
+        <small>Previous</small>
+        <strong>← Best by tag</strong>
+      </a>
+      <a class="next" href="/docs/api/reference/export.html">
+        <small>Next</small>
+        <strong>Bulk export →</strong>
+      </a>
+    </div>
+  </main>
+
+  <aside class="docs-toc">
+    <h5>On this page</h5>
+    <ul>
+      <li><a href="#endpoint">Endpoint</a></li>
+      <li><a href="#response">Response</a></li>
+      <li><a href="#example">Example</a></li>
+      <li><a href="#about-tags">About the taxonomy</a></li>
+    </ul>
+  </aside>
+</div>
+
+<script src="/js/docs.js" defer></script>
+</body>
+</html>

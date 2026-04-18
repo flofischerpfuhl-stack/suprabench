@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" class="docs-html">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Changelog — SupraBench API</title>
+<meta name="description" content="Release history for the SupraBench API. Every shipped change, every deprecation, every breaking-change preview.">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#030303">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://suprabench.com/docs/api/changelog.html">
+<link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/docs.css">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
+</head>
+<body class="docs-body">
+
+<header class="docs-topbar">
+  <a href="/" class="docs-topbar__logo">Supra<span>Bench</span>. <small>API Docs</small></a>
+  <nav class="docs-topbar__nav" aria-label="Site">
+    <a href="/">App</a>
+    <a href="/docs/api/" class="active">Docs</a>
+    <a href="/docs/api/changelog.html">Changelog</a>
+    <a href="/#api">Get a key</a>
+  </nav>
+  <button class="docs-topbar__hamburger" aria-label="Toggle menu">≡</button>
+</header>
+
+<div class="docs-layout">
+<aside class="docs-nav">
+    <button class="docs-nav-toggle">Browse docs ▾</button>
+    <div class="docs-nav-collapsible">
+    <h4>Get started</h4>
+    <ul>
+      <li><a href="/docs/api/">Overview</a></li>
+      <li><a href="/docs/api/quickstart.html">Quickstart</a></li>
+      <li><a href="/docs/api/authentication.html">Authentication</a></li>
+    </ul>
+    <h4>Core concepts</h4>
+    <ul>
+      <li><a href="/docs/api/rate-limits.html">Rate limits & quotas</a></li>
+      <li><a href="/docs/api/errors.html">Errors</a></li>
+      <li><a href="/docs/api/pagination.html">Pagination</a></li>
+      <li><a href="/docs/api/versioning.html">Versioning</a></li>
+    </ul>
+    <h4>API reference</h4>
+    <ul>
+      <li><a href="/docs/api/reference/models.html">Models</a></li>
+      <li><a href="/docs/api/reference/benches.html">Benchmarks</a></li>
+      <li><a href="/docs/api/reference/best.html">Best by tag</a></li>
+      <li><a href="/docs/api/reference/tags.html">Tags</a></li>
+      <li><a href="/docs/api/reference/export.html">Bulk export</a></li>
+    </ul>
+    <h4>Roadmap</h4>
+    <ul>
+      <li><a href="/docs/api/webhooks.html">Webhooks <span class="badge-soon">Soon</span></a></li>
+      <li><a href="/docs/api/sdks.html">SDKs <span class="badge-soon">Soon</span></a></li>
+      <li><a href="/docs/api/changelog.html" class="active">Changelog</a></li>
+    </ul>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+
+    <h1>Changelog</h1>
+    <p class="lead">
+      Every change to the SupraBench API, in reverse-chronological order.
+      Subscribe via Atom or watch the
+      <a href="https://gitlab.com/florian-fischer-group/suprabench" target="_blank" rel="noopener">GitLab repository</a>.
+    </p>
+
+    <div class="docs-meta">
+      <span>Last updated: April 18, 2026</span>
+      <span>API version: <code>v1</code></span>
+    </div>
+
+    <h2 id="unreleased">Unreleased <span class="pill pill-soon">Pre-launch</span></h2>
+    <p style="color:var(--text2)">All scaffolding for v1 is done; activation pending sufficient waitlist demand.</p>
+
+    <h3 id="v1-design">v1 &mdash; Design freeze (April 18, 2026)</h3>
+    <ul>
+      <li><strong>Added</strong>: <code>GET /v1/models</code> &mdash; list ranked models with optional tag filter.</li>
+      <li><strong>Added</strong>: <code>GET /v1/models/:slug</code> &mdash; full per-bench score breakdown.</li>
+      <li><strong>Added</strong>: <code>GET /v1/benches</code> &mdash; list benchmarks with quality ratings.</li>
+      <li><strong>Added</strong>: <code>GET /v1/best?tag=...</code> &mdash; top-N models for a capability tag.</li>
+      <li><strong>Added</strong>: <code>GET /v1/tags</code> &mdash; full tag taxonomy with counts.</li>
+      <li><strong>Added</strong>: <code>GET /v1/export.json</code> &mdash; single-shot full snapshot, Pro+ only.</li>
+      <li><strong>Auth</strong>: Bearer-token format <code>sb_live_</code> + 64 hex chars.</li>
+      <li><strong>Limits</strong>: per-tier rate (60 / 300 / 1 200 / custom rpm) and quota (10k / 100k / 1M / custom monthly) buckets.</li>
+      <li><strong>Errors</strong>: 11 stable <code>error.code</code> values across 401, 402, 403, 404, 422, 429, 500, 503.</li>
+      <li><strong>Caching</strong>: 5-min TTL on rankings, 1-h on tags, 24-h on bulk export.</li>
+      <li><strong>Versioning</strong>: URL-based major (<code>/v1/</code>); RFC 8594 <code>Sunset</code> header for deprecations.</li>
+    </ul>
+
+    <h2 id="legend">Legend</h2>
+    <ul>
+      <li><strong>Added</strong> &mdash; new endpoint, field or feature. Always backward-compatible within a major version.</li>
+      <li><strong>Changed</strong> &mdash; behaviour tweak that's not a breaking change (perf, error message wording, internal limits).</li>
+      <li><strong>Deprecated</strong> &mdash; endpoint or field marked for removal. Comes with a <code>Sunset</code> response header at least 6 months before disappearance.</li>
+      <li><strong>Removed</strong> &mdash; actually deleted. Triggers a major-version bump if it changed observable behaviour.</li>
+      <li><strong>Fixed</strong> &mdash; bug fix. Always backward-compatible.</li>
+      <li><strong>Security</strong> &mdash; fix with security implications. We email all active subscribers immediately.</li>
+    </ul>
+
+    <h2 id="subscribe">Subscribe to updates</h2>
+    <ul>
+      <li><strong>Email</strong>: every active subscriber gets release notes for material changes (added endpoints, deprecations, security fixes).</li>
+      <li><strong>RSS / Atom</strong>: <code>https://gitlab.com/florian-fischer-group/suprabench/-/tags?format=atom</code></li>
+      <li><strong>GitLab tags</strong>: each released version is tagged in the open-source repo.</li>
+      <li><strong>Programmatic</strong>: a future <code>GET /v1/_meta</code> endpoint will return current API version, last-deployed-at and a link to the latest changelog entry.</li>
+    </ul>
+
+
+    <div class="docs-pagenav">
+      <a href="/docs/api/sdks.html">
+        <small>Previous</small>
+        <strong>← SDKs</strong>
+      </a>
+      <span></span>
+    </div>
+  </main>
+
+  <aside class="docs-toc">
+    <h5>On this page</h5>
+    <ul>
+      <li><a href="#unreleased">Unreleased</a></li>
+      <li><a href="#legend">Legend</a></li>
+      <li><a href="#subscribe">Subscribe to updates</a></li>
+    </ul>
+  </aside>
+</div>
+
+<script src="/js/docs.js" defer></script>
+</body>
+</html>

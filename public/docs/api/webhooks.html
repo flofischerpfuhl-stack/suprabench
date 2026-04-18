@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" class="docs-html">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Webhooks — SupraBench API</title>
+<meta name="description" content="Planned: subscribe to SupraBench data events (new submissions, ranking shifts, hidden flags) via signed HTTPS webhooks.">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#030303">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://suprabench.com/docs/api/webhooks.html">
+<link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/docs.css">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
+</head>
+<body class="docs-body">
+
+<header class="docs-topbar">
+  <a href="/" class="docs-topbar__logo">Supra<span>Bench</span>. <small>API Docs</small></a>
+  <nav class="docs-topbar__nav" aria-label="Site">
+    <a href="/">App</a>
+    <a href="/docs/api/" class="active">Docs</a>
+    <a href="/docs/api/changelog.html">Changelog</a>
+    <a href="/#api">Get a key</a>
+  </nav>
+  <button class="docs-topbar__hamburger" aria-label="Toggle menu">≡</button>
+</header>
+
+<div class="docs-layout">
+<aside class="docs-nav">
+    <button class="docs-nav-toggle">Browse docs ▾</button>
+    <div class="docs-nav-collapsible">
+    <h4>Get started</h4>
+    <ul>
+      <li><a href="/docs/api/">Overview</a></li>
+      <li><a href="/docs/api/quickstart.html">Quickstart</a></li>
+      <li><a href="/docs/api/authentication.html">Authentication</a></li>
+    </ul>
+    <h4>Core concepts</h4>
+    <ul>
+      <li><a href="/docs/api/rate-limits.html">Rate limits & quotas</a></li>
+      <li><a href="/docs/api/errors.html">Errors</a></li>
+      <li><a href="/docs/api/pagination.html">Pagination</a></li>
+      <li><a href="/docs/api/versioning.html">Versioning</a></li>
+    </ul>
+    <h4>API reference</h4>
+    <ul>
+      <li><a href="/docs/api/reference/models.html">Models</a></li>
+      <li><a href="/docs/api/reference/benches.html">Benchmarks</a></li>
+      <li><a href="/docs/api/reference/best.html">Best by tag</a></li>
+      <li><a href="/docs/api/reference/tags.html">Tags</a></li>
+      <li><a href="/docs/api/reference/export.html">Bulk export</a></li>
+    </ul>
+    <h4>Roadmap</h4>
+    <ul>
+      <li><a href="/docs/api/webhooks.html" class="active">Webhooks <span class="badge-soon">Soon</span></a></li>
+      <li><a href="/docs/api/sdks.html">SDKs <span class="badge-soon">Soon</span></a></li>
+      <li><a href="/docs/api/changelog.html">Changelog</a></li>
+    </ul>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+
+    <h1>Webhooks <span class="pill pill-soon">Planned &mdash; Scale tier</span></h1>
+    <p class="lead">
+      Subscribe to SupraBench data events &mdash; new score submissions,
+      ranking shifts, content flags &mdash; and have us POST signed JSON
+      payloads to your endpoint instead of polling.
+    </p>
+
+    <div class="docs-meta">
+      <span>Last updated: April 18, 2026</span>
+      <span>Reading time: 3 min</span>
+    </div>
+
+    <div class="preview-banner">
+      <strong>Status: design preview.</strong> Webhooks ship with the API GA
+      on the Scale tier; this page documents the planned contract so you
+      can architect against it now. Endpoint URLs and signature scheme
+      may change before GA &mdash; watch the
+      <a href="/docs/api/changelog.html">changelog</a>.
+    </div>
+
+    <h2 id="status">Status</h2>
+    <p>Not yet available. Scale-tier subscribers will be able to register a webhook URL from the dashboard at GA.</p>
+
+    <h2 id="planned-events">Planned events</h2>
+    <table class="params">
+      <thead><tr><th>Event</th><th>When fired</th></tr></thead>
+      <tbody>
+        <tr><td><span class="name">submission.created</span></td><td><span class="desc">A user submits a new score (subject to quality validation).</span></td></tr>
+        <tr><td><span class="name">submission.validated</span></td><td><span class="desc">Submission's vote balance crossed into <code>upvotes &gt; downvotes</code>; now counts toward rankings.</span></td></tr>
+        <tr><td><span class="name">submission.invalidated</span></td><td><span class="desc">Submission's vote balance flipped negative; removed from rankings.</span></td></tr>
+        <tr><td><span class="name">model.ranking_changed</span></td><td><span class="desc">A model's <code>supraScore</code> moved by &gt; 1.0 in the last refresh cycle.</span></td></tr>
+        <tr><td><span class="name">model.hidden</span></td><td><span class="desc">A model was hidden by community flag or admin action.</span></td></tr>
+        <tr><td><span class="name">bench.created</span></td><td><span class="desc">A new benchmark was added.</span></td></tr>
+        <tr><td><span class="name">bench.quality_changed</span></td><td><span class="desc">A benchmark's quality score moved by &gt; 5.</span></td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="delivery">Delivery model</h2>
+    <ul>
+      <li><strong>Method:</strong> HTTPS POST to your registered URL.</li>
+      <li><strong>Body:</strong> JSON envelope with <code>id</code>, <code>type</code>, <code>createdAt</code>, <code>data</code>.</li>
+      <li><strong>Retries:</strong> exponential backoff for 24 hours on non-2xx (1 min, 5 min, 30 min, 2 h, 6 h, 24 h).</li>
+      <li><strong>Idempotency:</strong> events have stable <code>id</code> values; treat repeats as no-ops.</li>
+      <li><strong>Ordering:</strong> not guaranteed. Always check <code>createdAt</code> against your last-processed timestamp.</li>
+      <li><strong>Timeout:</strong> we wait 10 seconds for your response before treating it as a failure.</li>
+    </ul>
+
+    <h2 id="signing">Signature verification</h2>
+    <p>Every payload will include <code>X-SupraBench-Signature</code>, computed as:</p>
+    <div class="code-block">
+      <div class="code-tabs"><button class="code-tab active" data-lang="text"><span class="lang-icon"></span>Format</button></div>
+      <div class="code-pane active" data-lang="text">
+        <button class="code-copy">Copy</button>
+<pre><code>X-SupraBench-Signature: t=&lt;unix-ts&gt;, v1=&lt;hex(hmac-sha256(secret, t + "." + body))&gt;</code></pre>
+      </div>
+    </div>
+    <p>
+      Verify by recomputing with your endpoint secret (issued at
+      registration time) and rejecting if mismatch or if
+      <code>t</code> is more than 5 minutes in the past (replay-attack
+      defence).
+    </p>
+
+    <h2 id="timeline">Timeline</h2>
+    <ul>
+      <li><strong>Now</strong> &mdash; design open for feedback. <a href="https://gitlab.com/florian-fischer-group/suprabench/-/issues" target="_blank" rel="noopener">Open an issue</a> if a planned event won't fit your use case.</li>
+      <li><strong>API GA + 30 days</strong> &mdash; webhooks beta opens on Scale tier.</li>
+      <li><strong>API GA + 90 days</strong> &mdash; webhooks marked GA, SLA applies.</li>
+    </ul>
+
+
+    <div class="docs-pagenav">
+      <a href="/docs/api/reference/export.html">
+        <small>Previous</small>
+        <strong>← Bulk export</strong>
+      </a>
+      <a class="next" href="/docs/api/sdks.html">
+        <small>Next</small>
+        <strong>SDKs →</strong>
+      </a>
+    </div>
+  </main>
+
+  <aside class="docs-toc">
+    <h5>On this page</h5>
+    <ul>
+      <li><a href="#status">Status</a></li>
+      <li><a href="#planned-events">Planned events</a></li>
+      <li><a href="#delivery">Delivery model</a></li>
+      <li><a href="#signing">Signature verification</a></li>
+      <li><a href="#timeline">Timeline</a></li>
+    </ul>
+  </aside>
+</div>
+
+<script src="/js/docs.js" defer></script>
+</body>
+</html>

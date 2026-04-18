@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" class="docs-html">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Versioning — SupraBench API</title>
+<meta name="description" content="How the SupraBench API is versioned. URL-based major versions, additive minor changes, six-month deprecation policy with Sunset headers.">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#030303">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://suprabench.com/docs/api/versioning.html">
+<link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/docs.css">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
+</head>
+<body class="docs-body">
+
+<header class="docs-topbar">
+  <a href="/" class="docs-topbar__logo">Supra<span>Bench</span>. <small>API Docs</small></a>
+  <nav class="docs-topbar__nav" aria-label="Site">
+    <a href="/">App</a>
+    <a href="/docs/api/" class="active">Docs</a>
+    <a href="/docs/api/changelog.html">Changelog</a>
+    <a href="/#api">Get a key</a>
+  </nav>
+  <button class="docs-topbar__hamburger" aria-label="Toggle menu">≡</button>
+</header>
+
+<div class="docs-layout">
+<aside class="docs-nav">
+    <button class="docs-nav-toggle">Browse docs ▾</button>
+    <div class="docs-nav-collapsible">
+    <h4>Get started</h4>
+    <ul>
+      <li><a href="/docs/api/">Overview</a></li>
+      <li><a href="/docs/api/quickstart.html">Quickstart</a></li>
+      <li><a href="/docs/api/authentication.html">Authentication</a></li>
+    </ul>
+    <h4>Core concepts</h4>
+    <ul>
+      <li><a href="/docs/api/rate-limits.html">Rate limits & quotas</a></li>
+      <li><a href="/docs/api/errors.html">Errors</a></li>
+      <li><a href="/docs/api/pagination.html">Pagination</a></li>
+      <li><a href="/docs/api/versioning.html" class="active">Versioning</a></li>
+    </ul>
+    <h4>API reference</h4>
+    <ul>
+      <li><a href="/docs/api/reference/models.html">Models</a></li>
+      <li><a href="/docs/api/reference/benches.html">Benchmarks</a></li>
+      <li><a href="/docs/api/reference/best.html">Best by tag</a></li>
+      <li><a href="/docs/api/reference/tags.html">Tags</a></li>
+      <li><a href="/docs/api/reference/export.html">Bulk export</a></li>
+    </ul>
+    <h4>Roadmap</h4>
+    <ul>
+      <li><a href="/docs/api/webhooks.html">Webhooks <span class="badge-soon">Soon</span></a></li>
+      <li><a href="/docs/api/sdks.html">SDKs <span class="badge-soon">Soon</span></a></li>
+      <li><a href="/docs/api/changelog.html">Changelog</a></li>
+    </ul>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+
+    <h1>Versioning</h1>
+    <p class="lead">
+      We version the API in the URL — the major version is in the path,
+      not in a header. This makes it impossible to accidentally call the
+      wrong version, and easy to grep for in your codebase.
+    </p>
+
+    <div class="docs-meta">
+      <span>Last updated: April 18, 2026</span>
+      <span>Reading time: 3 min</span>
+    </div>
+
+    <h2 id="scheme">Scheme</h2>
+    <p>The base URL is:</p>
+    <div class="endpoint">
+      <span class="method method-GET">GET</span>
+      <span>https://api.suprabench.com/<strong>v1</strong>/{resource}</span>
+    </div>
+    <p>
+      <code>v1</code> is the current and only major version. Inside a
+      major version we ship <em>additive minor changes</em> continuously
+      — new endpoints, new response fields, new optional parameters —
+      without bumping the version number.
+    </p>
+
+    <h2 id="what-changes">What can change without notice</h2>
+    <ul>
+      <li><strong>New endpoints</strong> — added under <code>/v1/</code>.</li>
+      <li><strong>New response fields</strong> — additive only. Always read JSON with a schema that ignores unknown fields (default in Python's <code>json.loads</code>, <code>JSON.parse</code>, Go's <code>encoding/json</code>).</li>
+      <li><strong>New optional query parameters</strong> — never required.</li>
+      <li><strong>Error message text</strong> — wording. Codes stay stable.</li>
+      <li><strong>Cache TTLs</strong> — may be tuned (always reflected in <code>Cache-Control</code>).</li>
+      <li><strong>Internal performance</strong> — response times, edge-cache footprint.</li>
+    </ul>
+
+    <h2 id="breaking">What counts as breaking</h2>
+    <ul>
+      <li><strong>Removing</strong> an endpoint, a response field, or an <code>error.code</code>.</li>
+      <li><strong>Renaming</strong> any of the above.</li>
+      <li><strong>Changing the type</strong> of a field (e.g. integer → string).</li>
+      <li><strong>Changing required parameters.</strong></li>
+      <li><strong>Changing the meaning</strong> of a field (e.g. switching <code>updatedAt</code> from milliseconds to seconds).</li>
+      <li><strong>Changing the HTTP status</strong> for an existing <code>error.code</code>.</li>
+    </ul>
+    <p>Anything in this list triggers a major-version bump (<code>v2</code>, etc.) and a deprecation period for <code>v1</code>.</p>
+
+    <h2 id="deprecation">Deprecation policy</h2>
+    <ul>
+      <li><strong>Major versions</strong> are supported for at least <strong>18 months</strong> after the next major ships.</li>
+      <li><strong>Individual endpoints or fields</strong> within a major may be deprecated with a minimum <strong>6 months</strong> notice.</li>
+      <li>Deprecated calls keep working for the entire notice period — they just emit signal headers (see below) and a notice in the changelog.</li>
+    </ul>
+
+    <h2 id="detecting">Detecting deprecation</h2>
+    <p>
+      Deprecated endpoints set two RFC-standard response headers:
+    </p>
+    <table class="params">
+      <thead><tr><th>Header</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><span class="name">Deprecation</span></td><td><span class="desc">Date when this endpoint was marked deprecated, in HTTP-date format.</span></td></tr>
+        <tr><td><span class="name">Sunset</span></td><td><span class="desc">Date when this endpoint will stop working, in HTTP-date format. RFC 8594.</span></td></tr>
+        <tr><td><span class="name">Link</span></td><td><span class="desc">Link to the migration guide with <code>rel="deprecation"</code>.</span></td></tr>
+      </tbody>
+    </table>
+    <p>
+      We strongly recommend logging any response with a non-empty
+      <code>Sunset</code> header. The minimum 6-month buffer is plenty
+      to plan a migration <em>if</em> you notice it on day one.
+    </p>
+
+    <div class="code-block">
+      <div class="code-tabs"><button class="code-tab active" data-lang="python"><span class="lang-icon"></span>Python</button></div>
+      <div class="code-pane active" data-lang="python">
+        <button class="code-copy">Copy</button>
+<pre><code>r = requests.get(...)
+sunset = r.headers.get("Sunset")
+if sunset:
+    log.warning("SupraBench endpoint deprecated; sunset=%s, see %s",
+                sunset, r.headers.get("Link"))</code></pre>
+      </div>
+    </div>
+
+    <h2 id="future">Future versions</h2>
+    <p>
+      We don't bump major versions for fun. <code>v2</code> will only
+      happen if we genuinely need to change the contract — for example,
+      switching from limit-based to mandatory cursor-based pagination
+      across all list endpoints. We'll announce intent in the
+      <a href="/docs/api/changelog.html">changelog</a> and email all
+      active subscribers at least 90 days before <code>v2</code> beta.
+    </p>
+
+
+    <div class="docs-pagenav">
+      <a href="/docs/api/pagination.html">
+        <small>Previous</small>
+        <strong>← Pagination</strong>
+      </a>
+      <a class="next" href="/docs/api/reference/models.html">
+        <small>Next</small>
+        <strong>Models reference →</strong>
+      </a>
+    </div>
+  </main>
+
+  <aside class="docs-toc">
+    <h5>On this page</h5>
+    <ul>
+      <li><a href="#scheme">Scheme</a></li>
+      <li><a href="#what-changes">What can change without notice</a></li>
+      <li><a href="#breaking">What counts as breaking</a></li>
+      <li><a href="#deprecation">Deprecation policy</a></li>
+      <li><a href="#detecting">Detecting deprecation</a></li>
+      <li><a href="#future">Future versions</a></li>
+    </ul>
+  </aside>
+</div>
+
+<script src="/js/docs.js" defer></script>
+</body>
+</html>

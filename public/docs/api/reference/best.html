@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" class="docs-html">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Best-by-tag reference — SupraBench API</title>
+<meta name="description" content="Get the top-N AI models for a given capability tag (e.g. coding, reasoning) sorted by Supra-Score.">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#030303">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://suprabench.com/docs/api/reference/best.html">
+<link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/docs.css">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
+</head>
+<body class="docs-body">
+
+<header class="docs-topbar">
+  <a href="/" class="docs-topbar__logo">Supra<span>Bench</span>. <small>API Docs</small></a>
+  <nav class="docs-topbar__nav" aria-label="Site">
+    <a href="/">App</a>
+    <a href="/docs/api/" class="active">Docs</a>
+    <a href="/docs/api/changelog.html">Changelog</a>
+    <a href="/#api">Get a key</a>
+  </nav>
+  <button class="docs-topbar__hamburger" aria-label="Toggle menu">≡</button>
+</header>
+
+<div class="docs-layout">
+<aside class="docs-nav">
+    <button class="docs-nav-toggle">Browse docs ▾</button>
+    <div class="docs-nav-collapsible">
+    <h4>Get started</h4>
+    <ul>
+      <li><a href="/docs/api/">Overview</a></li>
+      <li><a href="/docs/api/quickstart.html">Quickstart</a></li>
+      <li><a href="/docs/api/authentication.html">Authentication</a></li>
+    </ul>
+    <h4>Core concepts</h4>
+    <ul>
+      <li><a href="/docs/api/rate-limits.html">Rate limits & quotas</a></li>
+      <li><a href="/docs/api/errors.html">Errors</a></li>
+      <li><a href="/docs/api/pagination.html">Pagination</a></li>
+      <li><a href="/docs/api/versioning.html">Versioning</a></li>
+    </ul>
+    <h4>API reference</h4>
+    <ul>
+      <li><a href="/docs/api/reference/models.html">Models</a></li>
+      <li><a href="/docs/api/reference/benches.html">Benchmarks</a></li>
+      <li><a href="/docs/api/reference/best.html" class="active">Best by tag</a></li>
+      <li><a href="/docs/api/reference/tags.html">Tags</a></li>
+      <li><a href="/docs/api/reference/export.html">Bulk export</a></li>
+    </ul>
+    <h4>Roadmap</h4>
+    <ul>
+      <li><a href="/docs/api/webhooks.html">Webhooks <span class="badge-soon">Soon</span></a></li>
+      <li><a href="/docs/api/sdks.html">SDKs <span class="badge-soon">Soon</span></a></li>
+      <li><a href="/docs/api/changelog.html">Changelog</a></li>
+    </ul>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+
+    <h1>Best by tag <span class="pill pill-ga">GA on launch</span></h1>
+    <p class="lead">
+      Convenience endpoint that returns the top-N models for a single
+      capability tag, sorted by Supra-Score. Same data as filtering
+      <code>/v1/models?tag=...</code>, but with a smaller default limit
+      and a longer cache TTL &mdash; ideal for "what's the best coding
+      model right now" widgets.
+    </p>
+
+    <div class="docs-meta">
+      <span>Last updated: April 18, 2026</span>
+      <span>Reading time: 2 min</span>
+    </div>
+
+    <h2 id="endpoint">Endpoint</h2>
+    <div class="endpoint">
+      <span class="method method-GET">GET</span>
+      <span>https://api.suprabench.com/v1/best?tag=<strong>{tag}</strong></span>
+    </div>
+
+    <h2 id="params">Query parameters</h2>
+    <table class="params">
+      <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="name">tag</span> <span class="pill pill-required">required</span></td>
+          <td><span class="type">string</span></td>
+          <td><span class="desc">Capability tag (e.g. <code>coding</code>, <code>reasoning</code>, <code>multimodal</code>). See <a href="/docs/api/reference/tags.html"><code>/v1/tags</code></a>.</span></td>
+        </tr>
+        <tr>
+          <td><span class="name">limit</span> <span class="pill pill-optional">optional</span></td>
+          <td><span class="type">integer</span></td>
+          <td><span class="desc">1&ndash;100. Default 10.</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="response">Response</h2>
+    <p>
+      Same shape as <a href="/docs/api/reference/models.html#list-response"><code>ModelSummary[]</code></a>,
+      restricted to models carrying the requested tag and sorted by
+      <code>supraScore</code> descending.
+    </p>
+
+    <h2 id="example">Example</h2>
+    <div class="code-block">
+      <div class="code-tabs">
+        <button class="code-tab active" data-lang="curl"><span class="lang-icon"></span>curl</button>
+        <button class="code-tab" data-lang="python"><span class="lang-icon"></span>Python</button>
+      </div>
+      <div class="code-pane active" data-lang="curl">
+        <button class="code-copy">Copy</button>
+<pre><code>curl "https://api.suprabench.com/v1/best?tag=coding&amp;limit=5" \
+  -H "Authorization: Bearer $SUPRABENCH_KEY"</code></pre>
+      </div>
+      <div class="code-pane" data-lang="python">
+        <button class="code-copy">Copy</button>
+<pre><code>top_coding = requests.get(
+    "https://api.suprabench.com/v1/best",
+    params={"tag": "coding", "limit": 5},
+    headers={"Authorization": f"Bearer {KEY}"},
+).json()
+
+for m in top_coding:
+    print(m["name"], m["supraScore"])</code></pre>
+      </div>
+    </div>
+
+    <h2 id="errors">Errors</h2>
+    <table class="params">
+      <thead><tr><th>Status</th><th>Code</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td>400</td><td><span class="name">bad_request</span></td><td><span class="desc">Missing <code>tag</code> parameter.</span></td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="vs-models">When to use this versus <code>/v1/models?tag=...</code></h2>
+    <ul>
+      <li><strong>Use <code>/v1/best</code></strong> for "show me the top N for X" widgets and dashboards. Smaller default limit, longer cache TTL, faster.</li>
+      <li><strong>Use <code>/v1/models?tag=...</code></strong> when you want the full filtered list (up to 500) and may further filter client-side.</li>
+    </ul>
+
+
+    <div class="docs-pagenav">
+      <a href="/docs/api/reference/benches.html">
+        <small>Previous</small>
+        <strong>← Benchmarks</strong>
+      </a>
+      <a class="next" href="/docs/api/reference/tags.html">
+        <small>Next</small>
+        <strong>Tags →</strong>
+      </a>
+    </div>
+  </main>
+
+  <aside class="docs-toc">
+    <h5>On this page</h5>
+    <ul>
+      <li><a href="#endpoint">Endpoint</a></li>
+      <li><a href="#params">Parameters</a></li>
+      <li><a href="#response">Response</a></li>
+      <li><a href="#example">Example</a></li>
+      <li><a href="#errors">Errors</a></li>
+      <li><a href="#vs-models">Versus <code>/v1/models?tag=...</code></a></li>
+    </ul>
+  </aside>
+</div>
+
+<script src="/js/docs.js" defer></script>
+</body>
+</html>

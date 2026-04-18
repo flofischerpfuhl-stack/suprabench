@@ -45,11 +45,17 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 // Tier configuration — single source of truth used by API + Stripe.
 // Update prices ONLY in concert with the matching Stripe Price IDs
 // in stripe.future.ts; keep them aligned.
+// IMPORTANT: these numbers are the single source of truth for the
+// Stripe Price IDs (stripe.future.ts), the marketing tier-cards in
+// public/index.html (Profile → API & Billing) AND the public docs
+// under /docs/api/. If you change a number here, change it in all
+// three places. The docs pages have a comment block at the top
+// listing every value that needs to stay in sync.
 export const TIERS = {
-  hobby:     { monthlyQuota:    5_000, rpmLimit:  60, allowExport: false },
-  pro:       { monthlyQuota:   50_000, rpmLimit: 200, allowExport: true  },
-  scale:     { monthlyQuota:  500_000, rpmLimit: 600, allowExport: true  },
-  enterprise:{ monthlyQuota: 5_000_000, rpmLimit:2000, allowExport: true },
+  hobby:     { monthlyQuota:    10_000, rpmLimit:   60, allowExport: false, maxKeys:  1 },
+  pro:       { monthlyQuota:   100_000, rpmLimit:  300, allowExport: true,  maxKeys:  3 },
+  scale:     { monthlyQuota: 1_000_000, rpmLimit: 1200, allowExport: true,  maxKeys: 10 },
+  enterprise:{ monthlyQuota: 10_000_000, rpmLimit: 6000, allowExport: true, maxKeys: 50 },
 } as const;
 export type Tier = keyof typeof TIERS;
 
@@ -168,14 +174,15 @@ export const createKey = mutation({
       if (!sub) throw new Error(`no active ${tier} subscription`);
     }
 
-    // Cap key count per user to avoid abuse (one user = ~3 keys is plenty).
+    // Cap key count per user to the per-tier maxKeys.
+    const cfg = TIERS[tier as Tier];
     const existing = await ctx.db.query("apiKeys")
       .withIndex("by_owner", q => q.eq("ownerUserId", userId))
       .filter(q => q.eq(q.field("revokedAt"), undefined))
       .collect();
-    if (existing.length >= 3) throw new Error("max 3 active keys per user");
+    if (existing.length >= cfg.maxKeys)
+      throw new Error(`max ${cfg.maxKeys} active keys for ${tier} tier`);
 
-    const cfg = TIERS[tier as Tier];
     const { plaintext, hash, prefix } = await generateApiKey();
     await ctx.db.insert("apiKeys", {
       hash, prefix, name,
