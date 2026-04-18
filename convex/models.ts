@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
+import { recomputeEffectiveTags } from "./tagVotes";
 
 function generateSlug(name: string): string {
   return name
@@ -287,24 +288,37 @@ export const create = mutation({
       provider: args.provider,
       slug,
       familyTag: args.familyTag,
-      tags: args.tags,
+      tags: [],
       addedBy: userId,
       createdAt: Date.now(),
     });
 
-    // Initialize ranking entry
     await ctx.db.insert("modelRankings", {
       modelId,
       name: args.name,
       provider: args.provider,
       slug,
       familyTag: args.familyTag,
-      tags: args.tags,
+      tags: [],
       supraScore: 0,
       benchCount: 0,
       updatedAt: Date.now(),
     });
 
+    const seen = new Set<string>();
+    for (const raw of args.tags) {
+      const t = raw.trim().toLowerCase();
+      if (!t || t.length > 30 || seen.has(t)) continue;
+      seen.add(t);
+      await ctx.db.insert("tagVotes", {
+        entityType: "model",
+        entityId: modelId as unknown as string,
+        tag: t,
+        userId,
+        value: 1,
+      });
+    }
+    await recomputeEffectiveTags(ctx, "model", modelId as unknown as string);
     return modelId;
   },
 });

@@ -49,6 +49,7 @@ export default defineSchema({
     rawScore: v.number(),
     normalizedScore: v.number(),
     sourceUrl: v.string(),
+    accessedAt: v.number(),
     submittedBy: v.id("users"),
     createdAt: v.number(),
     upvotes: v.number(),
@@ -67,6 +68,22 @@ export default defineSchema({
   })
     .index("by_target", ["targetId"])
     .index("by_user_target", ["userId", "targetId"]),
+
+  tagVotes: defineTable({
+    entityType: v.union(v.literal("model"), v.literal("bench")),
+    entityId: v.string(),
+    tag: v.string(),
+    userId: v.id("users"),
+    value: v.union(v.literal(1), v.literal(-1)),
+  })
+    .index("by_entity", ["entityType", "entityId"])
+    .index("by_entity_tag", ["entityType", "entityId", "tag"])
+    .index("by_user_entity_tag", [
+      "userId",
+      "entityType",
+      "entityId",
+      "tag",
+    ]),
 
   // Denormalized rankings cache — updated on mutations
   modelRankings: defineTable({

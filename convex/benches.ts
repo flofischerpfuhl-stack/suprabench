@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { recomputeEffectiveTags } from "./tagVotes";
 
 const OFFICIAL_DOMAINS = [
   "lmsys.org",
@@ -240,36 +241,33 @@ export const create = mutation({
       counter++;
     }
 
-    return await ctx.db.insert("benches", {
+    const benchId = await ctx.db.insert("benches", {
       name: args.name,
       slug,
       description: args.description,
       url: args.url,
       isOfficial: isOfficialUrl(args.url),
-      tags: args.tags,
+      tags: [],
       scaleMin: args.scaleMin,
       scaleMax: args.scaleMax,
       addedBy: userId,
       createdAt: Date.now(),
     });
-  },
-});
 
-export const addTag = mutation({
-  args: { benchId: v.id("benches"), tag: v.string() },
-  handler: async (ctx, { benchId, tag }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
-    const bench = await ctx.db.get(benchId);
-    if (!bench) throw new Error("Benchmark not found");
-
-    const trimmed = tag.trim().toLowerCase();
-    if (!trimmed) throw new Error("Tag cannot be empty");
-    if (bench.tags.includes(trimmed)) return; // already exists
-
-    await ctx.db.patch(benchId, {
-      tags: [...bench.tags, trimmed],
-    });
+    const seen = new Set<string>();
+    for (const raw of args.tags) {
+      const t = raw.trim().toLowerCase();
+      if (!t || t.length > 30 || seen.has(t)) continue;
+      seen.add(t);
+      await ctx.db.insert("tagVotes", {
+        entityType: "bench",
+        entityId: benchId as unknown as string,
+        tag: t,
+        userId,
+        value: 1,
+      });
+    }
+    await recomputeEffectiveTags(ctx, "bench", benchId as unknown as string);
+    return benchId;
   },
 });

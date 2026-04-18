@@ -1,7 +1,8 @@
 import { internalMutation } from "./_generated/server";
 
 // One-off cleanup: removes auth* records pointing to a non-existent user.
-// Run via: npx convex run --prod admin:cleanupOrphanAuth
+// Safe to keep around; idempotent. Run via:
+//   npx convex run --prod admin:cleanupOrphanAuth
 export const cleanupOrphanAuth = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -15,7 +16,6 @@ export const cleanupOrphanAuth = internalMutation({
         report.accounts = (report.accounts ?? 0) + 1;
       }
     }
-
     const sessions = await ctx.db.query("authSessions").collect();
     for (const s of sessions) {
       const u = await ctx.db.get(s.userId as any);
@@ -24,7 +24,6 @@ export const cleanupOrphanAuth = internalMutation({
         report.sessions = (report.sessions ?? 0) + 1;
       }
     }
-
     const refresh = await ctx.db.query("authRefreshTokens").collect();
     for (const r of refresh) {
       const s = await ctx.db.get(r.sessionId as any);
@@ -33,16 +32,13 @@ export const cleanupOrphanAuth = internalMutation({
         report.refreshTokens = (report.refreshTokens ?? 0) + 1;
       }
     }
-
     const verifiers = await ctx.db.query("authVerifiers").collect();
     for (const v of verifiers) {
-      // delete stale verifiers older than 1h
       if (Date.now() - v._creationTime > 60 * 60 * 1000) {
         await ctx.db.delete(v._id);
         report.verifiers = (report.verifiers ?? 0) + 1;
       }
     }
-
     return report;
   },
 });
