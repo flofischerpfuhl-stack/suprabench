@@ -71,15 +71,51 @@
 <div class="app-layout">
 
 <!-- ═══════════════════════════════════════
-     SIDEBAR
+     MOBILE TOP BAR (< 900px only)
      ═══════════════════════════════════════ -->
-<nav class="sidebar">
-    <div class="logo" @click="navigate('models')">Supra<span>Bench</span>.</div>
+<header class="mobile-bar">
+    <div class="logo" @click="navigate('models'); mobileMenuOpen = false">Supra<span>Bench</span>.</div>
+    <button class="burger" :class="{'open': mobileMenuOpen}" @click="mobileMenuOpen = !mobileMenuOpen" :aria-expanded="mobileMenuOpen" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+    </button>
+</header>
+
+<!-- Backdrop behind the mobile drawer -->
+<div class="sidebar-backdrop" x-show="mobileMenuOpen" @click="mobileMenuOpen = false" x-transition.opacity></div>
+
+<!-- ═══════════════════════════════════════
+     SIDEBAR (desktop: fixed left; mobile: slide-in drawer)
+     ═══════════════════════════════════════ -->
+<nav class="sidebar" :class="{'open': mobileMenuOpen}">
+    <div class="logo sidebar-logo" @click="navigate('models'); mobileMenuOpen = false">Supra<span>Bench</span>.</div>
+
     <ul class="nav">
-        <li class="nav-item" :class="{'active': view==='models'}" @click="navigate('models')">Models</li>
-        <li class="nav-item" :class="{'active': view==='benchmarks'}" @click="navigate('benches')">Benchmarks</li>
-        <li class="nav-item" :class="{'active': view==='submit'}" @click="navigate('submit')">Contribute</li>
+        <li class="nav-item" :class="{'active': view==='models'}" @click="navigate('models'); mobileMenuOpen = false">Models</li>
+        <li class="nav-item" :class="{'active': view==='benchmarks'}" @click="navigate('benches'); mobileMenuOpen = false">Benchmarks</li>
+        <li class="nav-item" :class="{'active': view==='submit'}" @click="navigate('submit'); mobileMenuOpen = false">Contribute</li>
     </ul>
+
+    <!-- Auth block: logged in → avatar + name + logout; logged out → sign-in button -->
+    <div class="sidebar-auth">
+        <template x-if="user">
+            <div class="sidebar-user">
+                <img class="sidebar-user__avatar" :src="user.image" :alt="user.name" x-show="user.image">
+                <div class="sidebar-user__meta">
+                    <div class="sidebar-user__name" x-text="user.name || user.email"></div>
+                    <button class="sidebar-user__logout" @click="logout(); mobileMenuOpen = false">Log out</button>
+                </div>
+            </div>
+        </template>
+        <template x-if="!user">
+            <button class="sidebar-signin" @click="login()">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.4-1.7 4.1-5.5 4.1-3.3 0-6-2.7-6-6.2s2.7-6.2 6-6.2c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 2.9 14.7 2 12 2 6.9 2 2.8 6.1 2.8 11.2S6.9 20.4 12 20.4c6.9 0 9.5-4.9 9.5-7.4 0-.5 0-.9-.1-1.3H12z"/>
+                </svg>
+                <span>Sign in with Google</span>
+            </button>
+        </template>
+    </div>
+
     <div class="sidebar-footer">
         Community-driven.<br>No corporate influence.<br>BSL 1.1 Licensed.
         <div class="sidebar-legal">

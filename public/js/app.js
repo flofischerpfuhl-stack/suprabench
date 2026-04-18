@@ -23,6 +23,7 @@ function supraBench() {
     currentBenchSlug: null,
     currentSubmissionId: null,
     previousView: null,
+    mobileMenuOpen: false,
 
     // ── Data (reactive from Convex) ──
     rankedModels: [],
@@ -120,6 +121,8 @@ function supraBench() {
 
     // ═══ ROUTING ═══
     _parseHash() {
+      // Any route change closes the mobile drawer.
+      this.mobileMenuOpen = false;
       const hash = window.location.hash.slice(1) || "models";
       const parts = hash.split("/");
 

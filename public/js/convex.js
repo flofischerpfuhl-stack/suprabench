@@ -26,6 +26,8 @@ const NAMESPACE = CONVEX_URL.replace(/[^a-zA-Z0-9]/g, "");
 const VERIFIER_KEY = `__convexAuthOAuthVerifier_${NAMESPACE}`;
 const JWT_KEY = `__convexAuthJWT_${NAMESPACE}`;
 const REFRESH_KEY = `__convexAuthRefreshToken_${NAMESPACE}`;
+// Where to return after OAuth round-trip (Google strips the URL fragment).
+const RETURN_HASH_KEY = `__sbAuthReturnHash_${NAMESPACE}`;
 
 // ── Initialize Convex Client ──
 const ConvexClient = window.convex.ConvexClient;
@@ -75,8 +77,14 @@ async function signIn(provider, params) {
   }
 
   if (result.redirect) {
-    // OAuth flow: store verifier, redirect to provider
+    // OAuth flow: store verifier + current location, redirect to provider.
+    // Google strips the URL fragment, so we have to remember where the user was
+    // and restore it after the code-exchange completes.
     localStorage.setItem(VERIFIER_KEY, result.verifier);
+    try {
+      const h = window.location.hash || "#submit";
+      localStorage.setItem(RETURN_HASH_KEY, h);
+    } catch (e) { /* ignore */ }
     window.location.href = result.redirect;
     return { signingIn: false, redirect: result.redirect };
   }
@@ -113,10 +121,19 @@ async function handleAuthCallback() {
   const code = params.get("code");
 
   if (code) {
-    // Clean URL immediately
+    // Restore where the user was before the OAuth redirect.
+    let returnHash = "";
+    try { returnHash = localStorage.getItem(RETURN_HASH_KEY) || ""; } catch (e) {}
+    try { localStorage.removeItem(RETURN_HASH_KEY); } catch (e) {}
+
+    // Clean URL immediately (strip ?code=&state=) and put the user back
+    // onto the view they came from (fallback: #submit, since that's the only
+    // place the Sign-in button lives today).
     const url = new URL(window.location.href);
     url.searchParams.delete("code");
-    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+    url.searchParams.delete("state");
+    const finalHash = returnHash || window.location.hash || "#submit";
+    window.history.replaceState({}, "", url.pathname + url.search + finalHash);
 
     // Exchange code + stored verifier for tokens
     try {
@@ -124,6 +141,8 @@ async function handleAuthCallback() {
     } catch (e) {
       console.error("[Auth] Code exchange failed:", e);
     }
+    // Tell the app the hash changed so it re-renders the right view.
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
     return true;
   }
   return false;
