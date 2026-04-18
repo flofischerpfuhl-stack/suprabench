@@ -7,13 +7,19 @@
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
 
-# ── Static assets: hashed or rarely changing → long cache ──
+# ── Static assets ──
+# Images are nearly immutable → long cache.
 /img/*
   Cache-Control: public, max-age=31536000, immutable
+# CSS / JS are NOT hashed yet (we bust via ?v= query strings in HTML).
+# Short browser cache + long CDN cache: every browser revalidates after
+# 5 min, but Cloudflare keeps a fresh copy at the edge for 1 day.
+# Cloudflare Pages auto-purges the CDN cache on every deploy, so users
+# never see stale JS/CSS for longer than ~5 min after a deploy.
 /css/*
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=300, s-maxage=86400
 /js/*
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=300, s-maxage=86400
 
 # ── SEO helpers: short cache ──
 /robots.txt

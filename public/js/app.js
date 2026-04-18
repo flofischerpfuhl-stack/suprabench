@@ -324,6 +324,13 @@ function supraBench() {
     showTagSuggest: false,
     tagSuggestInput: "",
 
+    // Bench-detail tab: "submissions" | "discussion".
+    // Lives outside benchTabs because the data source is per-bench, not
+    // per-tab. Defaults to "submissions" since most users come for data.
+    // We watch this in init() to mount giscus only when first activated
+    // (avoids creating an iframe a user never scrolls to).
+    benchDetailTab: "submissions",
+
     // ── Sort ──
     benchSortField: "quality",
     benchSortAsc: false,
@@ -540,6 +547,7 @@ function supraBench() {
     async _loadBenchDetail() {
       const { client, api } = window.sbConvex;
       try {
+        this.benchDetailTab = "submissions";
         this.currentBench = await client.query(api.benches.getBySlug, { slug: this.currentBenchSlug });
         if (this.currentBench) {
           this.currentBenchTagVotes = await client.query(api.tagVotes.listForEntity, {

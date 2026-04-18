@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=20260418b">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -88,9 +88,9 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
             integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
-    <script src="js/convex.js"></script>
+    <script src="js/convex.js?v=20260418b"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=20260418b"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -785,15 +785,41 @@
                 No model scores submitted yet.
             </div>
 
-            <!-- All Submissions (expandable) -->
-            <template x-if="currentBench.modelScores && currentBench.modelScores.length > 0">
-                <div>
-                    <h2 class="section-header expandable-header" @click="showAllSubmissions = !showAllSubmissions">
-                        All Submissions
-                        <span class="expand-icon" :class="{'open': showAllSubmissions}">▼</span>
-                    </h2>
+            <!-- ─────────────────────────────────────────────────
+                 Tab strip: Submissions | Discussion.
+                 Replaces the previous stacked layout (giant
+                 always-rendered submission list + giscus underneath).
+                 Submissions can run into the thousands per bench, so
+                 forcing a toggle keeps the page scannable. Giscus
+                 is mounted lazily — only when its tab is active —
+                 which also fixes the "empty container" race we hit
+                 when the iframe was placed below a long, hidden list.
+                 ───────────────────────────────────────────────── -->
+            <nav class="profile-tabs" role="tablist" aria-label="Bench detail sections" style="margin-top:2.5rem">
+                <button class="profile-tab"
+                        :class="{'is-active': benchDetailTab==='submissions'}"
+                        role="tab"
+                        :aria-selected="benchDetailTab==='submissions'"
+                        @click="benchDetailTab='submissions'">
+                    All Submissions
+                    <template x-if="currentBench.modelScores && currentBench.modelScores.length > 0">
+                        <span class="badge-soon"
+                              x-text="currentBench.modelScores.reduce((n, ms) => n + (ms.submissions?.length ?? 0), 0)"></span>
+                    </template>
+                </button>
+                <button class="profile-tab"
+                        :class="{'is-active': benchDetailTab==='discussion'}"
+                        role="tab"
+                        :aria-selected="benchDetailTab==='discussion'"
+                        @click="benchDetailTab='discussion'">
+                    Discussion
+                </button>
+            </nav>
 
-                    <div x-show="showAllSubmissions" x-transition>
+            <!-- ── Tab pane: submissions ── -->
+            <div x-show="benchDetailTab==='submissions'" x-transition.opacity>
+                <template x-if="currentBench.modelScores && currentBench.modelScores.length > 0">
+                    <div>
                         <template x-for="ms in currentBench.modelScores" :key="ms.modelId + '-subs'">
                             <div style="margin-bottom:1.5rem">
                                 <h3 style="font-family:var(--hd);font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2);margin-bottom:0.5rem" x-text="ms.modelName"></h3>
@@ -829,20 +855,26 @@
                             </div>
                         </template>
                     </div>
+                </template>
+                <div class="empty-state" x-show="!currentBench.modelScores || currentBench.modelScores.length === 0">
+                    No submissions yet.
                 </div>
-            </template>
+            </div>
 
-            <!-- Discussion (Giscus) -->
-            <section class="giscus-section" style="margin-top:3rem">
-                <h2 class="section-header">Discussion</h2>
+            <!-- ── Tab pane: discussion (Giscus) ──
+                 x-effect only fires when the pane is actually rendered
+                 (x-show keeps the element in DOM, but the conditional
+                 in the expression also gates on the tab being active so
+                 we don't kick off the iframe before the user opts in). -->
+            <div x-show="benchDetailTab==='discussion'" x-transition.opacity>
                 <p style="color:var(--text3);font-size:.85rem;margin-bottom:1rem">
                     Powered by GitHub Discussions via
                     <a href="https://giscus.app" target="_blank" rel="noopener">giscus</a>.
                     Sign in with GitHub to comment.
                 </p>
                 <div class="giscus-host"
-                     x-effect="currentBench && window.sbGiscus.mount($el, 'bench:' + currentBench.slug)"></div>
-            </section>
+                     x-effect="benchDetailTab==='discussion' && currentBench && window.sbGiscus.mount($el, 'bench:' + currentBench.slug)"></div>
+            </div>
         </div>
     </template>
 
