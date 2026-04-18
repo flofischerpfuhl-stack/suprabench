@@ -982,6 +982,33 @@ tr.clickable-row {
   letter-spacing: 0.5px;
 }
 
+/* ── Giscus discussion section ── */
+.giscus-section {
+  max-width: 100%;
+}
+.giscus-host {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  min-height: 120px;
+  overflow: hidden;
+}
+/* The iframe giscus injects */
+.giscus-host .giscus,
+.giscus-host .giscus-frame {
+  width: 100% !important;
+  max-width: 100%;
+  border: 0;
+  color-scheme: dark;
+}
+@media (max-width: 600px) {
+  .giscus-host {
+    padding: 0.5rem 0.5rem;
+    border-radius: 6px;
+  }
+}
+
 /* ── SupraScore Display ── */
 .supra-score-display {
   display: flex;

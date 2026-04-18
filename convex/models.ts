@@ -16,9 +16,21 @@ function generateSlug(name: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+// Filter out hidden models from a rankings list.
+//
+// Fast path: read `hidden` directly from the denormalized
+// modelRankings cache (kept in sync by entityVotes.applyHiddenState).
+// Slow fallback: if a row hasn't been backfilled yet (cached field is
+// undefined), look up the source-of-truth on the models table. This
+// keeps results correct during migration; once `migrations:backfillAll`
+// has run, the slow path is never taken.
 async function filterHiddenRankings(ctx: any, rankings: any[]) {
   const out = [];
   for (const r of rankings) {
+    if (typeof r.hidden === "boolean") {
+      if (!r.hidden) out.push(r);
+      continue;
+    }
     const m = await ctx.db.get(r.modelId);
     if (m && !m.hidden) out.push(r);
   }
@@ -219,18 +231,28 @@ export const listRankedWithFilter = query({
 
     // Find benches matching ANY of the active tags
     const allBenches = await ctx.db.query("benches").collect();
+    const matchingBenches = allBenches.filter(
+      (b) => !b.hidden && b.tags.some((t) => activeTags.includes(t))
+    );
     const matchingBenchIds = new Set<string>(
-      allBenches
-        .filter((b) => !b.hidden && b.tags.some((t) => activeTags.includes(t)))
-        .map((b) => b._id as string)
+      matchingBenches.map((b) => b._id as string)
     );
 
-    // Pre-compute full bench weight (quality × difficulty × headroom)
-    // for each matching bench. Same formula used in rankings.recomputeModel.
+    // Pre-compute full bench weight (quality × difficulty × headroom).
+    //
+    // Fast path: read from the denormalized cachedEffectiveWeight on the
+    // bench (kept fresh by cache.recomputeBenchAggregates).
+    // Slow fallback: compute live via getBenchWeights for benches that
+    // haven't been backfilled yet. Once `migrations:backfillAll` has run,
+    // the slow path is never taken.
     const benchWeight: Record<string, number> = {};
-    for (const benchId of matchingBenchIds) {
-      const w = await getBenchWeights(ctx, benchId as any);
-      benchWeight[benchId] = w.weight;
+    for (const b of matchingBenches) {
+      if (typeof b.cachedEffectiveWeight === "number") {
+        benchWeight[b._id as string] = b.cachedEffectiveWeight;
+      } else {
+        const w = await getBenchWeights(ctx, b._id as any);
+        benchWeight[b._id as string] = w.weight;
+      }
     }
 
     const out = [];
@@ -344,6 +366,7 @@ export const create = mutation({
       supraScore: 0,
       benchCount: 0,
       updatedAt: Date.now(),
+      hidden: false,
     });
     await seedCreatorEntityVote(ctx, "model", modelId as unknown as string, userId);
 

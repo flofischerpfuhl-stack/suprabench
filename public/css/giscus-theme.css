@@ -1,0 +1,197 @@
+/* ════════════════════════════════════════════════════════════
+   Giscus theme — matches the SupraBench design system.
+
+   Loaded by giscus inside its iframe (data-theme="<absolute-url>").
+   Must be served with permissive CORS so the iframe can fetch it
+   from the giscus.app origin.
+
+   Token mapping (SupraBench → GitHub Primer variable):
+     --bg       #030303 → --color-canvas-default / inset
+     --surface  #121212 → --color-canvas-subtle / btn-bg
+     --surface2 #1a1a1a → --color-canvas-overlay / btn-hover-bg
+     --text     #ffffff → --color-fg-default
+     --text2    #888888 → --color-fg-muted
+     --text3    #555555 → --color-fg-subtle
+     --border   #333333 → --color-border-default
+     --accent   #E5FE40 → --color-accent-fg / btn-primary-bg
+     --danger   #ff4444 → --color-danger-fg
+     --success  #44ff88 → --color-success-fg
+   ════════════════════════════════════════════════════════════ */
+
+main {
+  --color-prettylights-syntax-comment: #888888;
+  --color-prettylights-syntax-constant: #79c0ff;
+  --color-prettylights-syntax-entity: #d2a8ff;
+  --color-prettylights-syntax-storage-modifier-import: #c9d1d9;
+  --color-prettylights-syntax-entity-tag: #7ee787;
+  --color-prettylights-syntax-keyword: #ff7b72;
+  --color-prettylights-syntax-string: #a5d6ff;
+  --color-prettylights-syntax-variable: #ffa657;
+  --color-prettylights-syntax-brackethighlighter-unmatched: #f85149;
+  --color-prettylights-syntax-invalid-illegal-text: #f0f6fc;
+  --color-prettylights-syntax-invalid-illegal-bg: #8e1519;
+  --color-prettylights-syntax-carriage-return-text: #f0f6fc;
+  --color-prettylights-syntax-carriage-return-bg: #b62324;
+  --color-prettylights-syntax-string-regexp: #7ee787;
+  --color-prettylights-syntax-markup-list: #f2cc60;
+  --color-prettylights-syntax-markup-heading: #1f6feb;
+  --color-prettylights-syntax-markup-italic: #c9d1d9;
+  --color-prettylights-syntax-markup-bold: #c9d1d9;
+  --color-prettylights-syntax-markup-deleted-text: #ffdcd7;
+  --color-prettylights-syntax-markup-deleted-bg: #67060c;
+  --color-prettylights-syntax-markup-inserted-text: #aff5b4;
+  --color-prettylights-syntax-markup-inserted-bg: #033a16;
+  --color-prettylights-syntax-markup-changed-text: #ffdfb6;
+  --color-prettylights-syntax-markup-changed-bg: #5a1e02;
+  --color-prettylights-syntax-markup-ignored-text: #c9d1d9;
+  --color-prettylights-syntax-markup-ignored-bg: #1158c7;
+  --color-prettylights-syntax-meta-diff-range: #d2a8ff;
+  --color-prettylights-syntax-brackethighlighter-angle: #888888;
+  --color-prettylights-syntax-sublimelinter-gutter-mark: #555555;
+  --color-prettylights-syntax-constant-other-reference-link: #a5d6ff;
+
+  /* Canvas / surfaces */
+  --color-canvas-default: #030303;
+  --color-canvas-overlay: #1a1a1a;
+  --color-canvas-inset: #000000;
+  --color-canvas-subtle: #121212;
+
+  /* Borders */
+  --color-border-default: #333333;
+  --color-border-muted: #222222;
+  --color-neutral-muted: rgba(229, 254, 64, 0.10);
+  --color-neutral-emphasis-plus: #ffffff;
+  --color-neutral-emphasis: #888888;
+  --color-neutral-subtle: rgba(255, 255, 255, 0.04);
+
+  /* Accent (SupraBench lime) */
+  --color-accent-fg: #E5FE40;
+  --color-accent-emphasis: #E5FE40;
+  --color-accent-muted: rgba(229, 254, 64, 0.40);
+  --color-accent-subtle: rgba(229, 254, 64, 0.15);
+
+  /* Status colors */
+  --color-success-fg: #44ff88;
+  --color-success-emphasis: #44ff88;
+  --color-attention-fg: #ffaa44;
+  --color-attention-emphasis: #ffaa44;
+  --color-attention-muted: rgba(255, 170, 68, 0.40);
+  --color-attention-subtle: rgba(255, 170, 68, 0.10);
+  --color-severe-fg: #ffaa44;
+  --color-danger-fg: #ff4444;
+  --color-danger-emphasis: #ff4444;
+  --color-danger-muted: rgba(255, 68, 68, 0.40);
+  --color-danger-subtle: rgba(255, 68, 68, 0.10);
+
+  /* Foreground (text) */
+  --color-fg-default: #ffffff;
+  --color-fg-muted: #888888;
+  --color-fg-subtle: #555555;
+  --color-fg-on-emphasis: #030303;     /* text on top of accent buttons */
+
+  /* Buttons */
+  --color-btn-text: #ffffff;
+  --color-btn-bg: #121212;
+  --color-btn-border: #333333;
+  --color-btn-shadow: none;
+  --color-btn-inset-shadow: none;
+  --color-btn-hover-bg: #1a1a1a;
+  --color-btn-hover-border: #E5FE40;
+  --color-btn-active-bg: #1a1a1a;
+  --color-btn-active-border: #E5FE40;
+  --color-btn-selected-bg: #1a1a1a;
+  --color-btn-counter-bg: rgba(229, 254, 64, 0.15);
+
+  --color-btn-primary-text: #030303;
+  --color-btn-primary-bg: #E5FE40;
+  --color-btn-primary-border: #E5FE40;
+  --color-btn-primary-shadow: none;
+  --color-btn-primary-inset-shadow: none;
+  --color-btn-primary-hover-bg: #c9e433;
+  --color-btn-primary-hover-border: #c9e433;
+  --color-btn-primary-selected-bg: #b0c92d;
+  --color-btn-primary-disabled-text: rgba(3, 3, 3, 0.5);
+  --color-btn-primary-disabled-bg: rgba(229, 254, 64, 0.4);
+  --color-btn-primary-icon: #030303;
+  --color-btn-primary-counter-bg: rgba(3, 3, 3, 0.2);
+
+  /* Action list (e.g. reaction picker) */
+  --color-action-list-item-default-hover-bg: rgba(229, 254, 64, 0.10);
+
+  /* Segmented control / tabs */
+  --color-segmented-control-bg: #121212;
+  --color-segmented-control-button-bg: #1a1a1a;
+  --color-segmented-control-button-selected-border: #E5FE40;
+
+  /* Inputs */
+  --color-fg-default: #ffffff;
+  --color-input-bg: #121212;
+  --color-input-text: #ffffff;
+  --color-primer-fg-disabled: #555555;
+  --color-primer-border-active: #E5FE40;
+
+  /* Timeline / labels */
+  --color-timeline-badge-bg: #121212;
+  --color-fg-on-emphasis: #030303;
+
+  /* Misc */
+  --color-shadow-small: none;
+  --color-shadow-medium: none;
+  --color-shadow-large: none;
+  --color-shadow-extra-large: none;
+}
+
+/* Outer wrapper — match SupraBench typography */
+.gsc-comments,
+.gsc-comments * {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+}
+
+/* Section headings inside giscus */
+.gsc-reactions h4,
+.gsc-comment-header h4,
+.gsc-header h2 {
+  font-family: 'Clash Display', sans-serif !important;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Counter pill above comments ("N Comments") */
+.gsc-comments-count {
+  color: #888888;
+  font-family: 'Clash Display', sans-serif !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.85rem;
+}
+
+/* Comment box border + corners */
+.gsc-comment-box,
+.gsc-comment {
+  border-radius: 8px;
+}
+
+/* Tighter padding on mobile */
+@media (max-width: 600px) {
+  .gsc-comment-box,
+  .gsc-comment {
+    border-radius: 6px;
+  }
+  .gsc-comment-header,
+  .gsc-comment-content,
+  .gsc-comment-footer {
+    padding: 0.5rem 0.75rem;
+  }
+  .gsc-reactions-count,
+  .gsc-comments-count {
+    font-size: 0.75rem;
+  }
+}
+
+/* Links inside comments → use accent */
+.gsc-comment-content a {
+  color: #E5FE40;
+}
+.gsc-comment-content a:hover {
+  text-decoration: underline;
+}

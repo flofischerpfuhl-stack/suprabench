@@ -2,6 +2,7 @@ import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
+import { applyTagDeltaInline } from "./cache";
 
 const ENTITY = v.union(v.literal("model"), v.literal("bench"));
 
@@ -36,17 +37,29 @@ export async function recomputeEffectiveTags(
     const id = entityId as Id<"models">;
     const model = await ctx.db.get(id);
     if (model) {
+      const oldTags = model.tags ?? [];
       await ctx.db.patch(id, { tags: effective });
       const ranking = await ctx.db
         .query("modelRankings")
         .withIndex("by_model", (q: any) => q.eq("modelId", id))
         .first();
       if (ranking) await ctx.db.patch(ranking._id, { tags: effective });
+      // Maintain global tagCounts cache incrementally. Hidden entities
+      // are excluded from public counts to match tags.listAll semantics.
+      if (!(model.hidden ?? false)) {
+        await applyTagDeltaInline(ctx, "model", oldTags, effective);
+      }
     }
   } else {
     const id = entityId as Id<"benches">;
     const bench = await ctx.db.get(id);
-    if (bench) await ctx.db.patch(id, { tags: effective });
+    if (bench) {
+      const oldTags = bench.tags ?? [];
+      await ctx.db.patch(id, { tags: effective });
+      if (!(bench.hidden ?? false)) {
+        await applyTagDeltaInline(ctx, "bench", oldTags, effective);
+      }
+    }
   }
   return effective;
 }

@@ -24,35 +24,70 @@ export const listRanked = query({
     const results = [];
     for (const bench of benches) {
       if (bench.hidden) continue;
-      const ratings = await ctx.db
-        .query("benchQualityRatings")
-        .withIndex("by_bench", (q) => q.eq("benchId", bench._id))
-        .collect();
 
+      // Fast path: read from denormalized aggregates (kept fresh by
+      // cache.recomputeBenchAggregates on every score / vote / rating).
+      // Slow fallback: compute live for benches not yet backfilled.
       let qualityScore: number;
-      const dimensions = { relevance: 0, contamination: 0, discriminability: 0, reproducibility: 0, difficulty: 0 };
+      let dimensions: {
+        relevance: number;
+        contamination: number;
+        discriminability: number;
+        reproducibility: number;
+        difficulty: number;
+      };
+      let modelCount: number;
+      let raterCount: number;
 
-      if (ratings.length === 0) {
-        qualityScore = 50;
+      if (
+        typeof bench.cachedQualityScore === "number" &&
+        bench.cachedDimensions &&
+        typeof bench.cachedModelCount === "number" &&
+        typeof bench.cachedRaterCount === "number"
+      ) {
+        qualityScore = bench.cachedQualityScore;
+        dimensions = bench.cachedDimensions;
+        modelCount = bench.cachedModelCount;
+        raterCount = bench.cachedRaterCount;
       } else {
-        dimensions.relevance = ratings.reduce((s, r) => s + r.relevance, 0) / ratings.length;
-        dimensions.contamination = ratings.reduce((s, r) => s + r.contamination, 0) / ratings.length;
-        dimensions.discriminability = ratings.reduce((s, r) => s + r.discriminability, 0) / ratings.length;
-        dimensions.reproducibility = ratings.reduce((s, r) => s + r.reproducibility, 0) / ratings.length;
-        const diffs = ratings.map((r) => (typeof (r as any).difficulty === "number" ? (r as any).difficulty : 3));
-        dimensions.difficulty = diffs.reduce((s, d) => s + d, 0) / diffs.length;
-        qualityScore =
-          ((dimensions.relevance + dimensions.contamination + dimensions.discriminability + dimensions.reproducibility) / 4) * 20;
+        // Fallback: original O(scores + ratings) compute. Only triggers
+        // for benches that haven't been touched since the cache was
+        // introduced (run `migrations:backfillBenchAggregates` to fix).
+        const ratings = await ctx.db
+          .query("benchQualityRatings")
+          .withIndex("by_bench", (q) => q.eq("benchId", bench._id))
+          .collect();
+        const dim = { relevance: 0, contamination: 0, discriminability: 0, reproducibility: 0, difficulty: 0 };
+        if (ratings.length === 0) {
+          qualityScore = 50;
+        } else {
+          dim.relevance = ratings.reduce((s, r) => s + r.relevance, 0) / ratings.length;
+          dim.contamination = ratings.reduce((s, r) => s + r.contamination, 0) / ratings.length;
+          dim.discriminability = ratings.reduce((s, r) => s + r.discriminability, 0) / ratings.length;
+          dim.reproducibility = ratings.reduce((s, r) => s + r.reproducibility, 0) / ratings.length;
+          const diffs = ratings.map((r) => (typeof (r as any).difficulty === "number" ? (r as any).difficulty : 3));
+          dim.difficulty = diffs.reduce((s, d) => s + d, 0) / diffs.length;
+          qualityScore =
+            ((dim.relevance + dim.contamination + dim.discriminability + dim.reproducibility) / 4) * 20;
+        }
+        const scores = await ctx.db
+          .query("modelScores")
+          .withIndex("by_bench", (q) => q.eq("benchId", bench._id))
+          .collect();
+        const validModelIds = new Set(
+          scores.filter((s) => s.upvotes > s.downvotes).map((s) => s.modelId)
+        );
+        dimensions = {
+          relevance: Math.round(dim.relevance * 10) / 10,
+          contamination: Math.round(dim.contamination * 10) / 10,
+          discriminability: Math.round(dim.discriminability * 10) / 10,
+          reproducibility: Math.round(dim.reproducibility * 10) / 10,
+          difficulty: Math.round(dim.difficulty * 10) / 10,
+        };
+        modelCount = validModelIds.size;
+        raterCount = ratings.length;
+        qualityScore = Math.round(qualityScore * 10) / 10;
       }
-
-      // Count models with valid scores
-      const scores = await ctx.db
-        .query("modelScores")
-        .withIndex("by_bench", (q) => q.eq("benchId", bench._id))
-        .collect();
-      const validModelIds = new Set(
-        scores.filter((s) => s.upvotes > s.downvotes).map((s) => s.modelId)
-      );
 
       results.push({
         _id: bench._id,
@@ -64,16 +99,10 @@ export const listRanked = query({
         tags: bench.tags,
         scaleMin: bench.scaleMin,
         scaleMax: bench.scaleMax,
-        qualityScore: Math.round(qualityScore * 10) / 10,
-        dimensions: {
-          relevance: Math.round(dimensions.relevance * 10) / 10,
-          contamination: Math.round(dimensions.contamination * 10) / 10,
-          discriminability: Math.round(dimensions.discriminability * 10) / 10,
-          reproducibility: Math.round(dimensions.reproducibility * 10) / 10,
-          difficulty: Math.round(dimensions.difficulty * 10) / 10,
-        },
-        modelCount: validModelIds.size,
-        raterCount: ratings.length,
+        qualityScore,
+        dimensions,
+        modelCount,
+        raterCount,
       });
     }
 
@@ -91,23 +120,76 @@ export const getBySlug = query({
       .first();
     if (!bench) return null;
 
-    // Quality ratings
-    const ratings = await ctx.db
-      .query("benchQualityRatings")
-      .withIndex("by_bench", (q) => q.eq("benchId", bench._id))
-      .collect();
+    // Aggregate fields — fast path reads from denormalized cache,
+    // slow fallback computes live (for unmigrated rows).
+    let qualityScore: number;
+    let dimensions: {
+      relevance: number;
+      contamination: number;
+      discriminability: number;
+      reproducibility: number;
+      difficulty: number;
+    };
+    let raterCount: number;
+    let frontierMean: number;
+    let modelCount: number;
+    let topK: number;
+    let headroom: number;
+    let difficultyMultiplier: number;
+    let effectiveWeight: number;
 
-    const dimensions = { relevance: 0, contamination: 0, discriminability: 0, reproducibility: 0, difficulty: 0 };
-    let qualityScore = 50;
-    if (ratings.length > 0) {
-      dimensions.relevance = ratings.reduce((s, r) => s + r.relevance, 0) / ratings.length;
-      dimensions.contamination = ratings.reduce((s, r) => s + r.contamination, 0) / ratings.length;
-      dimensions.discriminability = ratings.reduce((s, r) => s + r.discriminability, 0) / ratings.length;
-      dimensions.reproducibility = ratings.reduce((s, r) => s + r.reproducibility, 0) / ratings.length;
-      const diffs = ratings.map((r) => (typeof (r as any).difficulty === "number" ? (r as any).difficulty : 3));
-      dimensions.difficulty = diffs.reduce((s, d) => s + d, 0) / diffs.length;
-      qualityScore =
-        ((dimensions.relevance + dimensions.contamination + dimensions.discriminability + dimensions.reproducibility) / 4) * 20;
+    if (
+      typeof bench.cachedQualityScore === "number" &&
+      bench.cachedDimensions &&
+      typeof bench.cachedRaterCount === "number" &&
+      typeof bench.cachedFrontierMean === "number" &&
+      typeof bench.cachedModelCount === "number" &&
+      typeof bench.cachedTopK === "number" &&
+      typeof bench.cachedHeadroom === "number" &&
+      typeof bench.cachedDifficultyMultiplier === "number" &&
+      typeof bench.cachedEffectiveWeight === "number"
+    ) {
+      qualityScore = bench.cachedQualityScore;
+      dimensions = bench.cachedDimensions;
+      raterCount = bench.cachedRaterCount;
+      frontierMean = bench.cachedFrontierMean;
+      modelCount = bench.cachedModelCount;
+      topK = bench.cachedTopK;
+      headroom = bench.cachedHeadroom;
+      difficultyMultiplier = bench.cachedDifficultyMultiplier;
+      effectiveWeight = bench.cachedEffectiveWeight;
+    } else {
+      const ratings = await ctx.db
+        .query("benchQualityRatings")
+        .withIndex("by_bench", (q) => q.eq("benchId", bench._id))
+        .collect();
+      const dim = { relevance: 0, contamination: 0, discriminability: 0, reproducibility: 0, difficulty: 0 };
+      let qs = 50;
+      if (ratings.length > 0) {
+        dim.relevance = ratings.reduce((s, r) => s + r.relevance, 0) / ratings.length;
+        dim.contamination = ratings.reduce((s, r) => s + r.contamination, 0) / ratings.length;
+        dim.discriminability = ratings.reduce((s, r) => s + r.discriminability, 0) / ratings.length;
+        dim.reproducibility = ratings.reduce((s, r) => s + r.reproducibility, 0) / ratings.length;
+        const diffs = ratings.map((r) => (typeof (r as any).difficulty === "number" ? (r as any).difficulty : 3));
+        dim.difficulty = diffs.reduce((s, d) => s + d, 0) / diffs.length;
+        qs = ((dim.relevance + dim.contamination + dim.discriminability + dim.reproducibility) / 4) * 20;
+      }
+      const w = await getBenchWeights(ctx, bench._id);
+      qualityScore = Math.round(qs * 10) / 10;
+      dimensions = {
+        relevance: Math.round(dim.relevance * 10) / 10,
+        contamination: Math.round(dim.contamination * 10) / 10,
+        discriminability: Math.round(dim.discriminability * 10) / 10,
+        reproducibility: Math.round(dim.reproducibility * 10) / 10,
+        difficulty: Math.round(dim.difficulty * 10) / 10,
+      };
+      raterCount = ratings.length;
+      frontierMean = Math.round(w.frontierMean * 10) / 10;
+      modelCount = w.modelCount;
+      topK = w.topK;
+      headroom = Math.round(w.headroom * 100) / 100;
+      difficultyMultiplier = Math.round(w.difficulty * 100) / 100;
+      effectiveWeight = Math.round(w.weight * 10) / 10;
     }
 
     // All submissions for this bench
@@ -137,18 +219,26 @@ export const getBySlug = query({
             ? (validScores[validScores.length / 2 - 1] + validScores[validScores.length / 2]) / 2
             : validScores[Math.floor(validScores.length / 2)];
 
-      // Enrich submissions with user info
+      // Enrich submissions with denormalized submitter info. Fast path:
+      // read submitterName/Image directly off the score row. Slow fallback:
+      // db.get the user (only for un-backfilled rows).
       const enrichedSubmissions = [];
       for (const s of submissions) {
-        const user = await ctx.db.get(s.submittedBy);
+        let name = s.submitterName;
+        let image = s.submitterImage ?? null;
+        if (name === undefined) {
+          const user = await ctx.db.get(s.submittedBy);
+          name = (user as any)?.name ?? "Unknown";
+          image = (user as any)?.image ?? null;
+        }
         enrichedSubmissions.push({
           _id: s._id,
           rawScore: s.rawScore,
           normalizedScore: s.normalizedScore,
           sourceUrl: s.sourceUrl,
           submittedBy: s.submittedBy,
-          submitterName: (user as any)?.name ?? "Unknown",
-          submitterImage: (user as any)?.image ?? null,
+          submitterName: name,
+          submitterImage: image,
           createdAt: s.createdAt,
           upvotes: s.upvotes,
           downvotes: s.downvotes,
@@ -168,29 +258,20 @@ export const getBySlug = query({
       });
     }
 
-    // Reuse the canonical bench-weight formula (top-K headroom + N<3 dampener).
-    const w = await getBenchWeights(ctx, bench._id);
-
     return {
       ...bench,
-      qualityScore: Math.round(qualityScore * 10) / 10,
-      dimensions: {
-        relevance: Math.round(dimensions.relevance * 10) / 10,
-        contamination: Math.round(dimensions.contamination * 10) / 10,
-        discriminability: Math.round(dimensions.discriminability * 10) / 10,
-        reproducibility: Math.round(dimensions.reproducibility * 10) / 10,
-        difficulty: Math.round(dimensions.difficulty * 10) / 10,
-      },
-      raterCount: ratings.length,
+      qualityScore,
+      dimensions,
+      raterCount,
       modelScores,
-      frontierMean: Math.round(w.frontierMean * 10) / 10,
-      modelCount: w.modelCount,
-      topK: w.topK,
-      headroom: Math.round(w.headroom * 100) / 100,
-      difficultyMultiplier: Math.round(w.difficulty * 100) / 100,
-      effectiveWeight: Math.round(w.weight * 10) / 10,
-      saturated: w.modelCount >= 3 && w.frontierMean >= 90,
-      saturationDampened: w.modelCount < 3,
+      frontierMean,
+      modelCount,
+      topK,
+      headroom,
+      difficultyMultiplier,
+      effectiveWeight,
+      saturated: modelCount >= 3 && frontierMean >= 90,
+      saturationDampened: modelCount < 3,
     };
   },
 });

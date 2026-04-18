@@ -171,6 +171,8 @@ async function recomputeOne(ctx: any, modelId: Id<"models">) {
     supraScore: Math.round(supraScore * 10) / 10,
     benchCount,
     updatedAt: Date.now(),
+    // Mirror models.hidden so listRanked never has to do an N×db.get loop.
+    hidden: (model as any).hidden ?? false,
   };
 
   if (existing) await ctx.db.patch(existing._id, data);

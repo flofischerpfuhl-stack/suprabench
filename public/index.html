@@ -813,11 +813,17 @@
                 </div>
             </template>
 
-            <!-- Discussion Placeholder -->
-            <div class="discussion-placeholder" style="margin-top:3rem">
-                <h4>Discussion</h4>
-                <p>Community discussions coming soon.</p>
-            </div>
+            <!-- Discussion (Giscus) -->
+            <section class="giscus-section" style="margin-top:3rem">
+                <h2 class="section-header">Discussion</h2>
+                <p style="color:var(--text3);font-size:.85rem;margin-bottom:1rem">
+                    Powered by GitHub Discussions via
+                    <a href="https://giscus.app" target="_blank" rel="noopener">giscus</a>.
+                    Sign in with GitHub to comment.
+                </p>
+                <div class="giscus-host"
+                     x-effect="currentBench && window.sbGiscus.mount($el, 'bench:' + currentBench.slug)"></div>
+            </section>
         </div>
     </template>
 
@@ -886,11 +892,17 @@
                 </div>
             </div>
 
-            <!-- Discussion Placeholder -->
-            <div class="discussion-placeholder" style="margin-top:2rem">
-                <h4>Discussion</h4>
-                <p>Community discussions coming soon.</p>
-            </div>
+            <!-- Discussion (Giscus) -->
+            <section class="giscus-section" style="margin-top:3rem">
+                <h2 class="section-header">Discussion</h2>
+                <p style="color:var(--text3);font-size:.85rem;margin-bottom:1rem">
+                    Powered by GitHub Discussions via
+                    <a href="https://giscus.app" target="_blank" rel="noopener">giscus</a>.
+                    Sign in with GitHub to comment.
+                </p>
+                <div class="giscus-host"
+                     x-effect="currentSubmission && window.sbGiscus.mount($el, 'submission:' + currentSubmission._id)"></div>
+            </section>
         </div>
     </template>
 

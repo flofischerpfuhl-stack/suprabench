@@ -2,91 +2,188 @@
 
 **Community-driven AI model rankings based on benchmark trustworthiness.**
 
-> Not all benchmarks are equal. SupraBench accounts for this by scoring each benchmark on 4 quality dimensions and weighting model scores accordingly.
+> Not all benchmarks are equal. SupraBench scores each benchmark on five quality
+> dimensions, applies an automatic saturation penalty, and weights model scores
+> accordingly — so a single number per model respects how trustworthy and how
+> informative each underlying benchmark actually is.
 
 ---
 
 ## What is SupraBench?
 
-SupraBench is a platform for ranking AI language models using a **meta-score** (SupraScore) that weights benchmark performance by the **trustworthiness of the benchmark itself**. The core insight: some benchmarks have poor real-world relevance, some are too easy, some are heavily contaminated by training data. SupraBench fixes this with community-driven quality ratings.
+SupraBench is a platform for ranking AI language models using a **meta-score**
+(SupraScore) that weights benchmark performance by the trustworthiness,
+difficulty, and remaining headroom of each underlying benchmark. It exists to
+fix three failure modes of public leaderboards:
 
-**Everything is community-driven**: users add models, add benchmarks, submit scores, and rate benchmark quality. There is no admin curation layer.
+- **Contamination** — test set leaked into training data.
+- **Saturation** — every frontier model scores 99 %, no resolving power left.
+- **Bench-maxing** — a model is tuned for a small set of popular benches.
+
+**Everything is community-driven**: users add models, add benchmarks, submit
+scores, vote on every entity, and rate benchmark quality. There is no admin
+curation layer.
 
 ## How It Works
 
 ### The SupraScore
 
-Each model's ranking is determined by a weighted average:
+For a model $m$, with valid normalised per-bench medians $\mu_{m,b}$ over its
+evaluated benches $\mathcal{B}_m$:
 
 ```
-SupraScore(model) = Σ(benchQuality(b) × effectiveScore(model, b)) / Σ(benchQuality(b))
+SupraScore(m) = Σ_b μ(m,b) · w(b)  /  Σ_b w(b)
+w(b)         = Q(b) · D(b) · H(b)
 ```
 
-- **Bench Quality** (0–100): Average of community ratings across 4 dimensions (relevance, contamination resistance, discriminability, reproducibility), each rated 1–5.
-- **Effective Score**: Median of all valid (upvoted > downvoted) normalized submissions for a model+bench pair.
-- **Score Normalization**: Raw scores are mapped to 0–100 using each bench's original scale.
+- **Quality** $Q(b) \in [0,100]$ — mean of community ratings on relevance,
+  contamination resistance, discriminability, reproducibility, then ×20.
+- **Difficulty** $D(b) \in [0,1]$ — median rater difficulty, scaled
+  $((d-1)/4)$.
+- **Headroom** $H(b) \in [0.1,1]$ — automatic saturation penalty: shrinks as
+  the top-K models converge on 100 %, with a floor at 0.1 so historic benches
+  never disappear.
+- **Per-(model, bench) score** $\mu_{m,b}$ — median of all valid (net-positive
+  vote) normalised submissions, robust to a single outlier.
 
-### Community Validation
+Worked example, full math, and trajectory tables: [About page on the live site](https://suprabench.ai/#about).
 
-Every submitted score requires a source URL. The community validates submissions via upvote/downvote — only submissions with more upvotes than downvotes count toward rankings.
+### Community validation (five layers)
 
-### Official vs Community Benchmarks
+1. **Submission votes** — each individual score is up/downvoted; only
+   net-positive submissions count.
+2. **Quality + difficulty ratings** — anyone signed in rates a bench on five
+   1–5 dimensions (mean for quality, median for difficulty).
+3. **Tag votes** — each tag on a model or bench is voted independently.
+4. **Existence votes** — fakes and duplicates can be downvoted into a hidden
+   state. Engagement-aware threshold:
+   `down ≥ max(5, ⌈0.6 · (up + down)⌉) ∧ down > up`.
+5. **Anti-resurrection** — re-submitting your own community-removed entries
+   under the same name is blocked.
 
-Benchmarks are automatically classified as "Official" or "Community" based on their source URL domain (e.g., `lmsys.org`, `huggingface.co`, `arxiv.org` → Official).
+### Official vs Community sources
+
+Submissions from a curated whitelist of academic, lab, and dedicated
+leaderboard hosts get an "Official source" badge. Everything else is a
+"Community source". Both are accepted — the badge is a transparency signal,
+not a gatekeeper. Whitelist lives in [`convex/urls.ts`](convex/urls.ts).
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| **Backend** | [Convex](https://convex.dev) — reactive, serverless |
-| **Auth** | `@convex-dev/auth` with GitHub OAuth |
-| **Frontend** | Vanilla HTML + [Alpine.js](https://alpinejs.dev) v3 (no React, no build step) |
-| **Fonts** | [Clash Display](https://www.fontshare.com/fonts/clash-display) via Fontshare CDN |
-| **Discussion** | GitHub Issues (no custom comment system) |
+|---|---|
+| Backend | [Convex](https://convex.dev) — reactive serverless DB + functions |
+| Auth | [`@convex-dev/auth`](https://labs.convex.dev/auth) with Google OAuth |
+| Frontend | Vanilla HTML + [Alpine.js](https://alpinejs.dev) v3 (no React, no build step) |
+| Math rendering | [KaTeX](https://katex.org/) (About page only) |
+| Fonts | [Clash Display](https://www.fontshare.com/fonts/clash-display) via Fontshare CDN |
+| Discussion | None yet — planned via Giscus once GitHub integration is possible |
 
 ## Features
 
-- **Model Rankings** — Global SupraScore leaderboard with tag-based filtering and filtered scores
-- **Benchmark Index** — Quality-ranked benchmark directory with community ratings
-- **Score Submission** — Single-page form to submit model scores with source verification
-- **Benchmark Quality Ratings** — Rate benchmarks on relevance, contamination resistance, discriminability, and reproducibility
-- **Community Voting** — Upvote/downvote individual score submissions
-- **Tag Filtering** — Filter rankings by benchmark categories (coding, math, reasoning, etc.)
-- **Anti-Gaming** — Rate limiting, vote deduplication, score range validation
+- **Model Rankings** — global SupraScore leaderboard with tag-based filtering
+  and per-tag filtered scores
+- **Benchmark Index** — quality-ranked benchmark directory with five-dimension
+  community ratings
+- **Score Submission** — three modes: single score, "fill row" (one bench, many
+  models), "fill column" (one model, many benches)
+- **Quality Ratings** — five dimensions per bench (1–5 scale): relevance,
+  contamination resistance, discriminability, reproducibility, difficulty
+- **Voting** — submissions, tags, and entity existence are all separately
+  votable
+- **Tag Filtering** — filter models / benches by tags; rankings recompute
+  per active tag set
+- **User Profiles** — per-user submission, vote, rating, and tag-vote history
 
 ## Project Structure
 
 ```
 suprabench/
-├── convex/                    # Convex backend
-│   ├── schema.ts              # Database schema
-│   ├── auth.ts                # GitHub OAuth setup
-│   ├── models.ts              # Model queries & mutations
-│   ├── benches.ts             # Benchmark queries & mutations
-│   ├── submissions.ts         # Score submission logic
-│   ├── votes.ts               # Voting system
-│   ├── benchQualityRatings.ts # Quality rating system
-│   └── tags.ts                # Tag aggregation
+├── convex/                       # Convex backend
+│   ├── schema.ts                 # Database schema (incl. denormalized caches)
+│   ├── auth.ts                   # Google OAuth setup
+│   ├── models.ts                 # Model queries + mutations
+│   ├── benches.ts                # Benchmark queries + mutations
+│   ├── submissions.ts            # Score submission logic + rate limiting
+│   ├── votes.ts                  # Per-submission voting
+│   ├── tagVotes.ts               # Per-tag voting + effective-tag recompute
+│   ├── entityVotes.ts            # Entity-existence voting + auto-hide logic
+│   ├── benchQualityRatings.ts    # 5-dimension quality ratings
+│   ├── tags.ts                   # Tag aggregation (cached)
+│   ├── rankings.ts               # SupraScore + headroom math
+│   ├── cache.ts                  # Denormalized aggregate recompute helpers
+│   ├── migrations.ts             # One-off backfill mutations
+│   ├── users.ts                  # Viewer + activity feed
+│   ├── admin.ts                  # Internal cleanup utilities
+│   ├── urls.ts                   # Official-source whitelist
+│   └── api.future.ts             # Planned paid HTTP API (placeholder)
 ├── public/
-│   ├── index.html             # Single-page app (all views)
-│   ├── css/style.css          # Design system
+│   ├── index.html                # Single-page app — all views in one file
+│   ├── css/style.css             # Design system
+│   ├── img/                      # Logos + favicons
 │   └── js/
-│       ├── app.js             # Alpine.js application
-│       └── convex.js          # Convex client setup
+│       ├── app.js                # Alpine.js application
+│       └── convex.js             # Convex client + auth bootstrap
+├── docs/
+│   └── api-roadmap.md            # Public API design + pricing
 ├── package.json
-└── .env.local                 # OAuth credentials
+└── .env.local                    # OAuth + Convex credentials (gitignored)
 ```
 
 ## Pages
 
 | Route | Description |
-|-------|-------------|
+|---|---|
 | `#models` (default) | Model ranking table with tag filtering |
-| `#model/{slug}` | Model detail with per-bench scores |
-| `#benches` | Benchmark quality ranking |
-| `#bench/{slug}` | Benchmark detail with quality ratings & model scores |
-| `#submit` | Contribute scores, models, and benchmarks |
-| `#submission/{id}` | Individual submission detail |
+| `#model/{slug}` | Model detail with per-bench scores + tag voting |
+| `#benchmarks` | Benchmark quality ranking |
+| `#bench/{slug}` | Benchmark detail with quality ratings + per-model scores |
+| `#submit` | Submit scores / models / benchmarks (3 modes) |
+| `#submission/{id}` | Individual submission detail with vote panel |
+| `#about` | Q&A explaining the SupraScore math (rendered with KaTeX) |
+| `#profile` | Logged-in user's submissions / votes / ratings |
+| `#legal/imprint`, `#legal/privacy`, `#legal/terms` | Legal pages |
+
+## Anti-Gaming Rules
+
+- **One submission can't carry a score** — per-(model, bench) median needs
+  multiple submissions to move
+- **One bench can't carry a model** — SupraScore averages across all benches
+  weighted by trust × difficulty × headroom
+- **Difficulty uses median** — single inflated rater can't fake difficulty
+- **Saturation auto-detected** — pumping a saturated bench gives diminishing
+  returns by construction
+- **Engagement-aware hide threshold** — small voting cliques can't take down
+  established entries (5-downvote floor + 60 % ratio)
+- **Anti-resurrection** — re-submitting your own removed entries blocked
+- **Rate limiting** — max **30** individual scores per 24 h per user
+- **One vote per user per submission** (toggle behavior)
+- **One quality rating per user per benchmark** (upsert)
+- **Score range validation** against the bench's declared scale
+- **Source URL required** for every submission
+
+## Performance / cost notes
+
+The hot listing queries (`models.listRanked`, `models.listRankedWithFilter`,
+`benches.listRanked`, `benches.getBySlug`, `tags.listAll`) read from
+denormalized caches kept in sync by mutations — see
+[`convex/cache.ts`](convex/cache.ts). After deploying schema changes, run the
+backfill once:
+
+```bash
+npx convex run --prod migrations:backfillAll
+```
+
+Idempotent. The frontend opens subscriptions lazily per active view, so an
+idle session running on a model detail page costs ~1 long-lived subscription
+instead of 6.
+
+## Public API (planned)
+
+A paid HTTP API for routers / dashboards / observability tools is sketched
+out — schema, endpoints, pricing tiers and Convex-cost analysis live in
+[`docs/api-roadmap.md`](docs/api-roadmap.md). The placeholder implementation
+is in [`convex/api.future.ts`](convex/api.future.ts). Not active yet.
 
 ## Getting Started
 
@@ -94,47 +191,52 @@ suprabench/
 
 - Node.js 18+
 - A [Convex](https://convex.dev) account
-- A GitHub OAuth App
+- A Google Cloud project with OAuth 2.0 credentials
 
 ### Setup
 
-1. Clone the repo and install dependencies:
+1. Clone and install:
    ```bash
-   git clone https://github.com/flofischerpfuhl-stack/suprabench.git
+   git clone https://gitlab.com/florian-fischer-group/suprabench.git
    cd suprabench
    npm install
    ```
 
-2. Set up Convex:
+2. Provision a Convex deployment:
    ```bash
-   npx convex init
    npx convex dev
    ```
+   The first run links / creates a deployment and writes `CONVEX_DEPLOYMENT`
+   into `.env.local`.
 
-3. Create a GitHub OAuth App:
-   - Callback URL: `https://<your-convex-deployment>.convex.site/api/auth/callback/github`
+3. Create a Google OAuth client at
+   [console.cloud.google.com](https://console.cloud.google.com/apis/credentials):
+   - Authorized redirect URI:
+     `https://<your-convex-deployment>.convex.site/api/auth/callback/google`
 
 4. Set environment variables in `.env.local`:
    ```
-   AUTH_GITHUB_ID=your_github_client_id
-   AUTH_GITHUB_SECRET=your_github_client_secret
+   AUTH_GOOGLE_ID=your_google_client_id
+   AUTH_GOOGLE_SECRET=your_google_client_secret
    SITE_URL=http://localhost:5173
    JWT_PRIVATE_KEY=your_jwt_key
    ```
 
-5. Deploy Convex and serve the frontend:
+5. Serve the frontend (any static server works):
    ```bash
-   npx convex dev
-   # Serve public/ with any static server
+   npx serve public        # or python -m http.server, etc.
    ```
+   Keep `npx convex dev` running in another terminal.
 
-## Anti-Gaming Rules
+### Deploying to production
 
-- **1 vote per user per submission** (toggle behavior)
-- **1 quality rating per user per benchmark** (upsert)
-- **Max 5 score submissions per user per 24 hours**
-- **Score range validation** against benchmark scale
-- **Source URL required** for all submissions
+```bash
+npm run deploy                                # = npx convex deploy
+npx convex run --prod migrations:backfillAll  # only after schema changes
+```
+
+The static `public/` directory can be hosted on Cloudflare Pages, Netlify,
+Vercel, or any CDN — there is no build step.
 
 ## License
 

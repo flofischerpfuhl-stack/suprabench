@@ -1,7 +1,9 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
+import { syncModelRankingHiddenInline, applyTagDeltaInline } from "./cache";
 
 const ENTITY = v.union(v.literal("model"), v.literal("bench"));
 
@@ -64,12 +66,32 @@ async function applyHiddenState(
     const m = await ctx.db.get(id);
     if (m && (m.hidden ?? false) !== hidden) {
       await ctx.db.patch(id, { hidden });
+      // Mirror the flag onto the denormalized rankings cache so listRanked
+      // doesn't need an N×db.get loop just to filter hidden models.
+      await syncModelRankingHiddenInline(ctx, id, hidden);
+      // tagCounts excludes hidden entities. Going from visible→hidden
+      // removes its contribution; hidden→visible adds it back.
+      const tags = (m as any).tags ?? [];
+      if (hidden) await applyTagDeltaInline(ctx, "model", tags, []);
+      else await applyTagDeltaInline(ctx, "model", [], tags);
+      // Hidden models don't contribute to bench frontier-mean: every bench
+      // that has a score from this model needs its aggregate cache
+      // refreshed. We schedule this rather than running it inline because
+      // the model may have scores on many benches.
+      await ctx.scheduler.runAfter(
+        0,
+        internal.cache.recomputeBenchAggregatesForModel,
+        { modelId: id }
+      );
     }
   } else {
     const id = entityId as Id<"benches">;
     const b = await ctx.db.get(id);
     if (b && (b.hidden ?? false) !== hidden) {
       await ctx.db.patch(id, { hidden });
+      const tags = (b as any).tags ?? [];
+      if (hidden) await applyTagDeltaInline(ctx, "bench", tags, []);
+      else await applyTagDeltaInline(ctx, "bench", [], tags);
     }
   }
 }

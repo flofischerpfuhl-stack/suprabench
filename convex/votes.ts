@@ -94,5 +94,15 @@ export const cast = mutation({
         modelId,
       });
     }
+
+    // The vote may have flipped this submission's validity (upvotes vs
+    // downvotes), which changes the bench's frontier mean / model count.
+    // Refresh the bench aggregate cache.
+    const benchId = (score as any).benchId;
+    if (benchId) {
+      await ctx.scheduler.runAfter(0, internal.cache.recomputeBenchAggregates, {
+        benchId,
+      });
+    }
   },
 });

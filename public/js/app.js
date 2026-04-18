@@ -119,6 +119,63 @@ function makeFormC() {
   };
 }
 
+// ── Giscus integration ──────────────────────────────────────
+//
+// Mounts the giscus iframe in `container` for the discussion identified
+// by `term`. Re-mounts cleanly when the term changes (used to switch
+// between bench / submission detail pages without leaking the previous
+// thread).
+//
+// We tear down + re-inject the script tag rather than using giscus's
+// postMessage `setConfig` API, because the latter only works after the
+// iframe has finished loading — racy on the first navigation.
+//
+// Theme: a custom CSS file served from this origin
+// (/css/giscus-theme.css) that mirrors the SupraBench dark palette.
+// We resolve it to an absolute https:// URL so giscus's iframe can load
+// it cross-origin. On localhost we fall back to giscus's bundled
+// `noborder_dark`, since the iframe can't fetch http://localhost:*.
+window.sbGiscus = {
+  cfg: {
+    repo: "f14703416-sketch/suprabench-comments",
+    repoId: "R_kgDOSGYwBg",
+    category: "Announcements",
+    categoryId: "DIC_kwDOSGYwBs4C7Kf6",
+  },
+  _resolveTheme() {
+    const o = window.location.origin;
+    if (o.startsWith("https://")) return o + "/css/giscus-theme.css";
+    return "noborder_dark";
+  },
+  mount(container, term) {
+    if (!container || !term) return;
+    if (container.dataset.giscusTerm === term) return;
+    container.innerHTML = "";
+    container.dataset.giscusTerm = term;
+    const s = document.createElement("script");
+    s.src = "https://giscus.app/client.js";
+    const attrs = {
+      "data-repo": this.cfg.repo,
+      "data-repo-id": this.cfg.repoId,
+      "data-category": this.cfg.category,
+      "data-category-id": this.cfg.categoryId,
+      "data-mapping": "specific",
+      "data-term": term,
+      "data-strict": "0",
+      "data-reactions-enabled": "1",
+      "data-emit-metadata": "0",
+      "data-input-position": "bottom",
+      "data-theme": this._resolveTheme(),
+      "data-lang": "en",
+      "data-loading": "lazy",
+    };
+    for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+    s.crossOrigin = "anonymous";
+    s.async = true;
+    container.appendChild(s);
+  },
+};
+
 function supraBench() {
   return {
     // ── View State ──
@@ -181,7 +238,13 @@ function supraBench() {
     expandedListRows: {}, // { [id]: true }
 
     // ── Subscriptions ──
+    // Long-lived subscriptions that stay open for the whole session
+    // (one per query). Anything not listed here is loaded on-demand
+    // via _ensureViewSubscriptions when the user actually navigates to
+    // a view that needs it. This dramatically reduces idle bandwidth
+    // and Convex function calls — important on the free tier.
     _unsubscribers: [],
+    _activeSubs: {}, // { name: unsubFn } for view-scoped subs
 
     // ═══ INIT ═══
     async init() {
@@ -190,7 +253,10 @@ function supraBench() {
       await initAuth();
 
       this._parseHash();
-      window.addEventListener("hashchange", () => this._parseHash());
+      window.addEventListener("hashchange", () => {
+        this._parseHash();
+        this._ensureViewSubscriptions();
+      });
 
       window.addEventListener("sb-auth-change", async (e) => {
         if (e.detail?.isAuthenticated) {
@@ -205,18 +271,7 @@ function supraBench() {
         }
       });
 
-      this._subscribe(api.tags.listAll, {}, (data) => {
-        this.allTags = (data || []).map(t => t.tag);
-      });
-
-      this._subscribe(api.models.listProviders, {}, (data) => {
-        this.allProviders = data || [];
-      });
-
-      this._subscribe(api.models.listFamilyTags, {}, (data) => {
-        this.allFamilyTags = data || [];
-      });
-
+      // Auth identity: small, needed everywhere, keep as global subscription.
       this._subscribe(api.users.viewer, {}, (data) => {
         this.user = data;
         // refetch profile if currently shown
@@ -230,18 +285,89 @@ function supraBench() {
         }
       } catch (e) { /* ignore */ }
 
-      this._subscribe(api.models.listRanked, {}, (data) => {
-        this.rankedModels = data || [];
-      });
-
-      this._subscribe(api.benches.listRanked, {}, (data) => {
-        this.rankedBenches = data || [];
-      });
+      // Open the right view-scoped subscriptions for the initial route.
+      this._ensureViewSubscriptions();
     },
 
     _subscribe(fnRef, args, callback) {
       const unsub = window.sbConvex.client.onUpdate(fnRef, args, callback);
       this._unsubscribers.push(unsub);
+    },
+
+    // Open a named view-scoped subscription. Subsequent calls with the
+    // same name are no-ops (already subscribed).
+    _viewSub(name, fnRef, args, callback) {
+      if (this._activeSubs[name]) return;
+      this._activeSubs[name] = window.sbConvex.client.onUpdate(fnRef, args, callback);
+    },
+
+    _closeViewSub(name) {
+      const u = this._activeSubs[name];
+      if (u) {
+        try { u(); } catch (e) { /* ignore */ }
+        delete this._activeSubs[name];
+      }
+    },
+
+    // Open exactly the subscriptions / one-shot fetches the current view
+    // needs. Older subscriptions for views the user has navigated away
+    // from get torn down so their server-side query handlers stop firing
+    // for this client.
+    async _ensureViewSubscriptions() {
+      const { client, api } = window.sbConvex;
+      const v = this.view;
+
+      // Models list view: needs ranked models + tag list (for the filter bar).
+      const wantModels = v === "models";
+      // Benches list view: needs ranked benches + tag list.
+      const wantBenches = v === "benchmarks";
+      // Tag list is needed on:
+      //   - models / benchmarks list pages (filter bar)
+      //   - modelDetail / benchDetail (datalist autocomplete for "suggest tag")
+      //   - submit (datalist autocomplete on score forms)
+      const wantTags = wantModels || wantBenches
+        || v === "modelDetail" || v === "benchDetail" || v === "submit";
+      // Submit view: needs providers + familyTags for autocomplete.
+      const wantSubmitMeta = v === "submit";
+
+      if (wantModels) {
+        this._viewSub("models.listRanked", api.models.listRanked, {}, (data) => {
+          this.rankedModels = data || [];
+        });
+      } else {
+        this._closeViewSub("models.listRanked");
+      }
+
+      if (wantBenches) {
+        this._viewSub("benches.listRanked", api.benches.listRanked, {}, (data) => {
+          this.rankedBenches = data || [];
+        });
+      } else {
+        this._closeViewSub("benches.listRanked");
+      }
+
+      if (wantTags) {
+        this._viewSub("tags.listAll", api.tags.listAll, {}, (data) => {
+          this.allTags = (data || []).map(t => t.tag);
+        });
+      } else {
+        this._closeViewSub("tags.listAll");
+      }
+
+      // Submit-form metadata: one-shot fetch instead of subscription, since
+      // these lists barely change and the form doesn't need live updates.
+      if (wantSubmitMeta) {
+        if (this.allProviders.length === 0) {
+          try {
+            this.allProviders = await client.query(api.models.listProviders, {}) || [];
+          } catch (e) { console.error("listProviders failed:", e); }
+        }
+        if (this.allFamilyTags.length === 0) {
+          try {
+            this.allFamilyTags = await client.query(api.models.listFamilyTags, {}) || [];
+          } catch (e) { console.error("listFamilyTags failed:", e); }
+        }
+      }
     },
 
     // ═══ ROUTING ═══

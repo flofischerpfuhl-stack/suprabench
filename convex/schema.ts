@@ -31,6 +31,27 @@ export default defineSchema({
     addedBy: v.id("users"),
     createdAt: v.number(),
     hidden: v.optional(v.boolean()),
+    // ── Denormalized aggregate cache (recomputed by cache.recomputeBenchAggregates).
+    // All fields optional to keep schema migration backward-compatible:
+    // queries that read them must fall back to live computation when missing.
+    cachedQualityScore: v.optional(v.number()),       // 0-100
+    cachedDimensions: v.optional(
+      v.object({
+        relevance: v.number(),
+        contamination: v.number(),
+        discriminability: v.number(),
+        reproducibility: v.number(),
+        difficulty: v.number(),
+      })
+    ),
+    cachedRaterCount: v.optional(v.number()),
+    cachedModelCount: v.optional(v.number()),         // # distinct models with valid scores
+    cachedFrontierMean: v.optional(v.number()),
+    cachedHeadroom: v.optional(v.number()),
+    cachedDifficultyMultiplier: v.optional(v.number()),
+    cachedEffectiveWeight: v.optional(v.number()),    // quality × difficulty × headroom
+    cachedTopK: v.optional(v.number()),
+    cachedAggregatesAt: v.optional(v.number()),       // last refresh timestamp
   })
     .index("by_slug", ["slug"])
     .index("by_added_by", ["addedBy"])
@@ -62,6 +83,12 @@ export default defineSchema({
     createdAt: v.number(),
     upvotes: v.number(),
     downvotes: v.number(),
+    // Denormalized submitter identity captured at insert-time. Saves an
+    // O(1) db.get(submittedBy) per submission row in detail/profile queries.
+    // May go stale if the user later changes their Google profile name/image
+    // — that is acceptable for our use-case (display-only).
+    submitterName: v.optional(v.string()),
+    submitterImage: v.optional(v.string()),
   })
     .index("by_model", ["modelId"])
     .index("by_bench", ["benchId"])
@@ -86,6 +113,7 @@ export default defineSchema({
   })
     .index("by_entity", ["entityType", "entityId"])
     .index("by_entity_tag", ["entityType", "entityId", "tag"])
+    .index("by_user", ["userId"])
     .index("by_user_entity_tag", [
       "userId",
       "entityType",
@@ -116,7 +144,21 @@ export default defineSchema({
     supraScore: v.number(),
     benchCount: v.number(),
     updatedAt: v.number(),
+    // Mirror of models.hidden so listRanked doesn't need an N×db.get loop.
+    // Kept in sync by entityVotes.applyHiddenState. Optional for migration:
+    // queries treat undefined as "not hidden".
+    hidden: v.optional(v.boolean()),
   })
     .index("by_model", ["modelId"])
     .index("by_score", ["supraScore"]),
+
+  // Global tag-count cache. Maintained incrementally by tagVotes.
+  // Replaces the O(M+B) full-collect previously done on every tags.listAll
+  // subscription update. Optional table — queries fall back to live compute
+  // when row missing.
+  tagCounts: defineTable({
+    tag: v.string(),
+    benches: v.number(),
+    models: v.number(),
+  }).index("by_tag", ["tag"]),
 });

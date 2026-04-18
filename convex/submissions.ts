@@ -164,6 +164,7 @@ async function resolveOrCreateModel(
     supraScore: 0,
     benchCount: 0,
     updatedAt: Date.now(),
+    hidden: false,
   });
   await seedCreatorEntityVote(ctx, "model", modelId as unknown as string, userId);
 
@@ -212,6 +213,10 @@ async function insertScore(
       ? 0
       : ((rawScore - bench.scaleMin) / (bench.scaleMax - bench.scaleMin)) * 100;
 
+  // Denormalize submitter identity at insert time so detail/profile
+  // queries don't need an O(1) db.get(submittedBy) per submission.
+  const submitter = await ctx.db.get(userId);
+
   const scoreId = await ctx.db.insert("modelScores", {
     modelId,
     benchId,
@@ -223,6 +228,8 @@ async function insertScore(
     createdAt: Date.now(),
     upvotes: 1,
     downvotes: 0,
+    submitterName: (submitter as any)?.name ?? "Unknown",
+    submitterImage: (submitter as any)?.image ?? undefined,
   });
   await ctx.db.insert("votes", {
     targetId: scoreId as unknown as string,
@@ -262,6 +269,7 @@ export const submitOne = mutation({
       args.rawScore, args.sourceUrl, args.accessedAt
     );
     await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, { modelId });
+    await ctx.scheduler.runAfter(0, internal.cache.recomputeBenchAggregates, { benchId });
     return { scoreIds: [scoreId], benchId, modelIds: [modelId] };
   },
 });
@@ -316,6 +324,8 @@ export const submitForBench = mutation({
         modelId: m as Id<"models">,
       });
     }
+    // Single bench, many new scores → one aggregate refresh for it.
+    await ctx.scheduler.runAfter(0, internal.cache.recomputeBenchAggregates, { benchId });
     return { scoreIds, benchId, modelIds: Array.from(modelIdsAffected) };
   },
 });
@@ -348,6 +358,7 @@ export const submitForModel = mutation({
     });
 
     const scoreIds: Id<"modelScores">[] = [];
+    const benchIdsAffected = new Set<string>();
     for (let i = 0; i < args.scores.length; i++) {
       const e = args.scores[i];
       try {
@@ -359,11 +370,17 @@ export const submitForModel = mutation({
           e.rawScore, e.sourceUrl, e.accessedAt
         );
         scoreIds.push(scoreId);
+        benchIdsAffected.add(benchId as unknown as string);
       } catch (err: any) {
         throw new Error(`Score #${i + 1}: ${err.message}`);
       }
     }
     await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, { modelId });
+    for (const b of benchIdsAffected) {
+      await ctx.scheduler.runAfter(0, internal.cache.recomputeBenchAggregates, {
+        benchId: b as Id<"benches">,
+      });
+    }
     return { scoreIds, modelId };
   },
 });
@@ -379,7 +396,17 @@ export const getById = query({
     if (!score) return null;
     const model = await ctx.db.get(score.modelId);
     const bench = await ctx.db.get(score.benchId);
-    const user = await ctx.db.get(score.submittedBy);
+
+    // Prefer denormalized submitter fields; fall back to db.get only if
+    // the score row predates the migration.
+    let submitterName = score.submitterName;
+    let submitterImage = score.submitterImage ?? null;
+    if (submitterName === undefined) {
+      const user = await ctx.db.get(score.submittedBy);
+      submitterName = (user as any)?.name ?? "Unknown";
+      submitterImage = (user as any)?.image ?? null;
+    }
+
     return {
       ...score,
       modelName: model?.name ?? "Unknown",
@@ -390,8 +417,8 @@ export const getById = query({
       benchHidden: (bench as any)?.hidden ?? false,
       scaleMin: (bench as any)?.scaleMin ?? 0,
       scaleMax: (bench as any)?.scaleMax ?? 100,
-      submitterName: (user as any)?.name ?? "Unknown",
-      submitterImage: (user as any)?.image ?? null,
+      submitterName,
+      submitterImage,
       isValid: score.upvotes > score.downvotes,
     };
   },
@@ -408,11 +435,17 @@ export const listByModelBench = query({
       .collect();
     const enriched = [];
     for (const s of scores) {
-      const user = await ctx.db.get(s.submittedBy);
+      let submitterName = s.submitterName;
+      let submitterImage = s.submitterImage ?? null;
+      if (submitterName === undefined) {
+        const user = await ctx.db.get(s.submittedBy);
+        submitterName = (user as any)?.name ?? "Unknown";
+        submitterImage = (user as any)?.image ?? null;
+      }
       enriched.push({
         ...s,
-        submitterName: (user as any)?.name ?? "Unknown",
-        submitterImage: (user as any)?.image ?? null,
+        submitterName,
+        submitterImage,
         isValid: s.upvotes > s.downvotes,
       });
     }

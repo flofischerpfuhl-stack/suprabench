@@ -74,8 +74,15 @@ export const rate = mutation({
       });
     }
 
+    // Quality changed → bench aggregate cache (qualityScore, dimensions,
+    // headroom, effectiveWeight, …) is now stale. Recompute it before we
+    // touch model rankings so any subsequent listRanked subscribers see
+    // the updated bench info immediately.
+    await ctx.scheduler.runAfter(0, internal.cache.recomputeBenchAggregates, {
+      benchId: args.benchId,
+    });
+
     // Bench quality changed → recompute all models that have scores on this bench
-    // Find affected models and recompute each
     const scores = await ctx.db
       .query("modelScores")
       .withIndex("by_bench", (q) => q.eq("benchId", args.benchId))

@@ -64,9 +64,10 @@ export const myActivity = query({
       .withIndex("by_added_by", (q) => q.eq("addedBy", userId))
       .collect();
 
+    // Use the dedicated by_user index instead of a full-table .filter scan.
     const tagVotes = await ctx.db
       .query("tagVotes")
-      .filter((q) => q.eq(q.field("userId"), userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     const enrichedTagVotes = [];
     for (const tv of tagVotes) {
