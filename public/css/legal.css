@@ -1,7 +1,9 @@
 /* ══════════════════════════════════════════
    SupraBench — Legal pages (TOS, Privacy, Imprint)
    Shares tokens with style.css but uses a standalone
-   scrollable body (no sidebar).
+   scrollable body. The sticky top bar (.legal-topbar)
+   replaces the SPA sidebar so users always have a
+   one-tap way back into the app, on every viewport.
    ══════════════════════════════════════════ */
 
 html.legal-html, body.legal-body {
@@ -14,8 +16,51 @@ html.legal-html, body.legal-body {
   color: var(--text);
   font-family: var(--bd);
   line-height: 1.65;
-  padding: 3rem 1.5rem 6rem;
+  /* Top padding leaves room for the sticky topbar (3.5rem tall). */
+  padding: 5rem 1.5rem 6rem;
 }
+
+.legal-topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  background: rgba(3, 3, 3, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.legal-topbar__logo {
+  font-family: var(--hd);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+}
+.legal-topbar__logo span { color: var(--accent); }
+
+.legal-topbar__nav {
+  display: flex;
+  gap: 1.4rem;
+  align-items: center;
+}
+.legal-topbar__nav a {
+  color: var(--text2);
+  font-family: var(--hd);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+.legal-topbar__nav a:hover { color: var(--accent); }
+.legal-topbar__nav a.active { color: var(--accent); }
 
 .legal-container {
   max-width: 780px;
@@ -108,5 +153,16 @@ html.legal-html, body.legal-body {
 
 @media (max-width: 600px) {
   .legal-title { font-size: 2.1rem; }
-  .legal-body  { padding: 2rem 1rem 4rem; }
+  .legal-body  { padding: 4.5rem 1rem 4rem; }
+  .legal-topbar { padding: 0 1rem; }
+  .legal-topbar__nav { gap: 0.9rem; }
+  .legal-topbar__nav a { font-size: 0.72rem; }
+}
+
+@media (max-width: 380px) {
+  /* On the smallest phones, hide secondary nav items.
+     The logo (= home link) and the active page indicator stay. */
+  .legal-topbar__nav a:not(.active):not(.legal-topbar__home) {
+    display: none;
+  }
 }

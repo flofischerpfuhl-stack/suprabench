@@ -1652,6 +1652,23 @@
             <p>Issues, feature requests and merge requests are welcome. Imprint, privacy and terms in the sidebar footer.</p>
         </div>
     </div>
+
+    <!-- Q10 — API teaser. Lives in About so SEO/crawlers index it
+         and so curious users discover the planned API even if they
+         never sign in to the profile page. -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q10')" @click="aboutToggle('q10')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q10')}">▼</span>
+            <span>Is there a public API?
+                <span class="badge-soon" style="background:var(--surface);color:var(--text3);font-size:.62rem;padding:.1rem .4rem;border-radius:999px;margin-left:.4rem;font-family:var(--bd);font-weight:400">Coming soon</span>
+            </span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q10')" x-transition>
+            <p>Not yet — but it's designed and scaffolded. The plan is a paid REST API for programmatic access to rankings, models, benchmarks and submissions. Tiered pricing from <strong>€9 / month</strong> (10k requests) to custom enterprise plans, billed via Stripe.</p>
+            <p>While the API isn't live, you can <strong>join the waitlist</strong> for the tier you'd subscribe to: <a href="#profile" @click.prevent="navigate('profile'); $nextTick(() => profileTab='api')">Profile → API &amp; Billing</a>. We'll email you the moment it ships, in the order people signed up.</p>
+            <p class="helper-text">If you have a specific use case (research, dashboard, leaderboard mirror), tell us via a GitLab issue — high-signal asks help us prioritize endpoints.</p>
+        </div>
+    </div>
 </div>
 
 
@@ -1677,6 +1694,20 @@
                 <button class="btn btn-sm btn-outline" @click="logout()" style="margin-left:auto">Log out</button>
             </div>
 
+            <!-- Tab nav -->
+            <nav class="profile-tabs" role="tablist" aria-label="Profile sections">
+                <button class="profile-tab" :class="{'is-active': profileTab==='activity'}"
+                        @click="profileTab='activity'" role="tab"
+                        :aria-selected="profileTab==='activity'">Activity</button>
+                <button class="profile-tab" :class="{'is-active': profileTab==='api'}"
+                        @click="profileTab='api'" role="tab"
+                        :aria-selected="profileTab==='api'">
+                    API &amp; Billing <span class="badge-soon">Coming soon</span>
+                </button>
+            </nav>
+
+            <!-- ── TAB: Activity ── -->
+            <div x-show="profileTab==='activity'" x-transition.opacity>
             <template x-if="profileData">
                 <div>
                     <div class="profile-stats">
@@ -1783,6 +1814,171 @@
             <div class="empty-state" x-show="!profileData">
                 Loading your activity…
             </div>
+            </div><!-- /tab activity -->
+
+            <!-- ════════════════════════════════════
+                 TAB: API & Billing
+                 The full API ships behind a feature flag (api.future.ts +
+                 stripe.future.ts are commented). The waitlist below is LIVE
+                 — it captures demand so we know when to flip the switch.
+                 ════════════════════════════════════ -->
+            <div x-show="profileTab==='api'" x-transition.opacity>
+
+                <div class="api-banner">
+                    <span class="api-banner__icon" aria-hidden="true">⚡</span>
+                    <div>
+                        <p class="api-banner__title">Public API — Coming soon</p>
+                        <p class="api-banner__text">
+                            Programmatic access to SupraBench data (rankings, models,
+                            benchmarks, submissions). The API isn't live yet — but you
+                            can join the waitlist below for the tier you're interested
+                            in. We'll email you the moment it ships, in launch order.
+                        </p>
+                    </div>
+                </div>
+
+                <h2 class="section-header">Plans</h2>
+                <div class="tier-grid">
+                    <!-- Hobby -->
+                    <div class="tier-card" :class="{'is-current': isOnWaitlist('hobby')}">
+                        <span class="tier-card__badge" x-show="isOnWaitlist('hobby')">On waitlist</span>
+                        <h3 class="tier-card__name">Hobby</h3>
+                        <p class="tier-card__price">€9 <small>/ month</small></p>
+                        <p class="tier-card__quota">10 000 requests / month</p>
+                        <ul class="tier-card__features">
+                            <li>Read access to all public endpoints</li>
+                            <li>5 requests / second rate limit</li>
+                            <li>1 API key</li>
+                            <li>Community support</li>
+                        </ul>
+                        <button class="btn btn-sm btn-outline" :disabled="apiBusy"
+                                @click="toggleWaitlist('hobby')"
+                                x-text="isOnWaitlist('hobby') ? 'Leave waitlist' : 'Join waitlist'"></button>
+                    </div>
+
+                    <!-- Pro (featured) -->
+                    <div class="tier-card is-featured" :class="{'is-current': isOnWaitlist('pro')}">
+                        <span class="tier-card__badge" x-show="!isOnWaitlist('pro')">Most popular</span>
+                        <span class="tier-card__badge" x-show="isOnWaitlist('pro')">On waitlist</span>
+                        <h3 class="tier-card__name">Pro</h3>
+                        <p class="tier-card__price">€29 <small>/ month</small></p>
+                        <p class="tier-card__quota">100 000 requests / month</p>
+                        <ul class="tier-card__features">
+                            <li>Everything in Hobby</li>
+                            <li>20 requests / second rate limit</li>
+                            <li>3 API keys</li>
+                            <li>Email support</li>
+                            <li>Bulk export endpoints</li>
+                        </ul>
+                        <button class="btn btn-sm btn-primary" :disabled="apiBusy"
+                                @click="toggleWaitlist('pro')"
+                                x-text="isOnWaitlist('pro') ? 'Leave waitlist' : 'Join waitlist'"></button>
+                    </div>
+
+                    <!-- Scale -->
+                    <div class="tier-card" :class="{'is-current': isOnWaitlist('scale')}">
+                        <span class="tier-card__badge" x-show="isOnWaitlist('scale')">On waitlist</span>
+                        <h3 class="tier-card__name">Scale</h3>
+                        <p class="tier-card__price">€99 <small>/ month</small></p>
+                        <p class="tier-card__quota">1 000 000 requests / month</p>
+                        <ul class="tier-card__features">
+                            <li>Everything in Pro</li>
+                            <li>100 requests / second rate limit</li>
+                            <li>10 API keys</li>
+                            <li>Priority support</li>
+                            <li>Webhook notifications (planned)</li>
+                        </ul>
+                        <button class="btn btn-sm btn-outline" :disabled="apiBusy"
+                                @click="toggleWaitlist('scale')"
+                                x-text="isOnWaitlist('scale') ? 'Leave waitlist' : 'Join waitlist'"></button>
+                    </div>
+
+                    <!-- Enterprise -->
+                    <div class="tier-card" :class="{'is-current': isOnWaitlist('enterprise')}">
+                        <span class="tier-card__badge" x-show="isOnWaitlist('enterprise')">On waitlist</span>
+                        <h3 class="tier-card__name">Enterprise</h3>
+                        <p class="tier-card__price">Custom</p>
+                        <p class="tier-card__quota">Unmetered, on-prem mirror, SLA</p>
+                        <ul class="tier-card__features">
+                            <li>Everything in Scale</li>
+                            <li>Custom rate limits</li>
+                            <li>Unlimited keys + IP allowlists</li>
+                            <li>SLA + dedicated Slack channel</li>
+                            <li>Custom data agreements</li>
+                        </ul>
+                        <button class="btn btn-sm btn-outline" :disabled="apiBusy"
+                                @click="toggleWaitlist('enterprise')"
+                                x-text="isOnWaitlist('enterprise') ? 'Leave waitlist' : 'Join waitlist'"></button>
+                    </div>
+                </div>
+
+                <p style="color:var(--text3);font-size:.78rem;margin-top:-1rem">
+                    Prices are net of VAT. Billing will be handled by
+                    <a href="https://stripe.com" target="_blank" rel="noopener">Stripe</a>
+                    (incl. EU reverse-charge for B2B with valid VAT-ID).
+                    See <a href="/legal/terms#api">Terms § API</a> for cancellation,
+                    refund and uptime details.
+                </p>
+
+                <!-- ════════════════════════════════════════════════
+                     SUBSCRIPTION PANEL — disabled until api.future.ts ships
+                     Uncomment together with the backend (stripe.future.ts).
+                     ════════════════════════════════════════════════ -->
+                <!--
+                <h2 class="section-header">Your subscription</h2>
+                <template x-if="mySubscription && mySubscription.status === 'active'">
+                    <div class="card">
+                        <p>You're on the <strong x-text="mySubscription.tier"></strong> plan.</p>
+                        <p x-show="mySubscription.cancelAtPeriodEnd" style="color:#e3b341">
+                            Your subscription is set to cancel on
+                            <span x-text="formatDate(mySubscription.currentPeriodEnd)"></span>.
+                            You keep API access until then.
+                        </p>
+                        <button class="btn btn-sm btn-outline" @click="manageBilling()">
+                            Manage billing →
+                        </button>
+                    </div>
+                </template>
+                <template x-if="!mySubscription || mySubscription.status !== 'active'">
+                    <div class="empty-state">No active subscription. Pick a plan above.</div>
+                </template>
+
+                <h2 class="section-header">API keys
+                    <span class="profile-vote-num" x-text="'(' + myApiKeys.length + ' / ' + apiKeyLimit + ')'"></span>
+                </h2>
+                <div class="api-key-list" x-show="myApiKeys.length > 0">
+                    <template x-for="k in myApiKeys" :key="k._id">
+                        <div class="api-key-row">
+                            <span class="api-key-row__name" x-text="k.name"></span>
+                            <span class="api-key-row__hint" x-text="'sb_…' + k.last4"></span>
+                            <span class="api-key-row__date">created <span x-text="formatDate(k.createdAt)"></span></span>
+                            <button class="btn btn-sm btn-outline" @click="revokeApiKey(k._id)">Revoke</button>
+                        </div>
+                    </template>
+                </div>
+                <div class="api-empty" x-show="myApiKeys.length === 0">
+                    No keys yet. Create one once your subscription is active.
+                </div>
+                <button class="btn btn-sm btn-primary"
+                        :disabled="!mySubscription || myApiKeys.length >= apiKeyLimit"
+                        @click="openCreateKeyModal()">
+                    Create new key
+                </button>
+
+                <template x-if="newKeyJustCreated">
+                    <div class="api-key-modal">
+                        <h3>Save this key now</h3>
+                        <p class="api-key-modal__warn">
+                            This is the only time we'll show this key. Store it in a
+                            password manager — you can't see it again, only revoke + recreate.
+                        </p>
+                        <div class="api-key-modal__value" x-text="newKeyJustCreated"></div>
+                        <button class="btn btn-sm btn-outline" @click="copyNewKey()">Copy</button>
+                        <button class="btn btn-sm" @click="newKeyJustCreated=null">I've saved it</button>
+                    </div>
+                </template>
+                -->
+            </div><!-- /tab api -->
         </div>
     </template>
 </div>

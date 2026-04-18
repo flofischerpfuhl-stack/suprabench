@@ -162,6 +162,21 @@ export default defineSchema({
     models: v.number(),
   }).index("by_tag", ["tag"]),
 
+  // Public-API waitlist. The full API (apiKeys / Stripe / etc.) lives
+  // behind commented-out blocks (see below + api.future.ts), but the
+  // waitlist itself is LIVE so the dashboard can collect demand
+  // signal before we flip the API on.
+  apiWaitlist: defineTable({
+    userId: v.optional(v.id("users")),  // null = signed-out signup (we still capture)
+    email: v.string(),
+    tier: v.string(),                   // "hobby" | "pro" | "scale" | "enterprise"
+    createdAt: v.number(),
+    notifiedAt: v.optional(v.number()),
+  })
+    .index("by_email", ["email"])
+    .index("by_user", ["userId"])
+    .index("by_tier", ["tier"]),
+
   // ════════════════════════════════════════════════════════════
   // PUBLIC API + STRIPE BILLING — not yet active.
   //

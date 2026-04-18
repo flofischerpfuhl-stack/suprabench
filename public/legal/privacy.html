@@ -22,6 +22,14 @@
 <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
 </head>
 <body class="legal-body">
+<header class="legal-topbar">
+  <a href="/" class="legal-topbar__logo legal-topbar__home">Supra<span>Bench</span>.</a>
+  <nav class="legal-topbar__nav" aria-label="Legal">
+    <a href="/legal/privacy" class="active">Privacy</a>
+    <a href="/legal/terms">Terms</a>
+    <a href="/legal/imprint">Imprint</a>
+  </nav>
+</header>
 <main class="legal-container">
 <a href="/" class="back-link">← Back to SupraBench</a>
 
@@ -117,11 +125,41 @@ directly from Fontshare’s CDN, which will see your IP address. We chose Fontsh
 require an API key and does not set any cookies. Legal basis: Art. 6 (1) (f) GDPR — design and typography.
 </p>
 
-<h3>4.4 GitHub (source code repository)</h3>
+<h3>4.4 GitHub (source code repository + Discussions/Comments)</h3>
 <p>
 Links to github.com are provided for transparency and open-source collaboration. Visiting GitHub is
-governed by GitHub’s own privacy policy.
+governed by GitHub’s own privacy policy. We also embed
+<a href="https://giscus.app" target="_blank" rel="noopener">Giscus</a>, a third-party widget that
+maps benchmark and submission comment threads onto a public GitHub Discussions repository.
+When the comment widget loads, your browser sends a request to giscus.app and to github.com,
+which receive your IP address. To leave a comment you must sign in with your GitHub account;
+authentication and content storage are handled entirely by GitHub. Provider:
+GitHub B.V., Vijzelstraat 68-72, 1017 HL Amsterdam, Netherlands (a subsidiary of Microsoft Corporation).
+Legal basis: Art. 6 (1) (f) GDPR — community discussion functionality without operating our own
+moderation infrastructure.
 </p>
+
+<h3 id="stripe">4.5 Stripe (payment processing — for the planned API service)</h3>
+<aside style="background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.3);border-radius:6px;padding:.85rem 1rem;margin:.75rem 0">
+<strong>Status:</strong> The paid API service is <strong>not yet active</strong>. Stripe is
+<strong>not in use today</strong>. The information below describes processing that will begin
+once the API launches and is published in advance for transparency.
+</aside>
+<p>
+Provider: Stripe Payments Europe, Limited, 1 Grand Canal Street Lower, Grand Canal Dock,
+Dublin, Ireland ("Stripe"). When you subscribe to a paid API tier, Stripe processes your
+payment and tax data (name, billing address, email, payment instrument tokens, VAT-ID where
+provided). Stripe acts as an independent controller for fraud prevention and as our processor
+for processing the subscription on our behalf. Transfers to the United States (Stripe, Inc.)
+are safeguarded by Standard Contractual Clauses (Art. 46 GDPR) and the EU–U.S. Data Privacy
+Framework where applicable.
+</p>
+<ul>
+<li><strong>Legal basis:</strong> Art. 6 (1) (b) GDPR — performance of the paid subscription contract.</li>
+<li><strong>Retention:</strong> As required by tax and commercial law (typically 10 years for invoices, § 147 AO).</li>
+<li><strong>Stripe privacy policy:</strong>
+<a href="https://stripe.com/privacy" target="_blank" rel="noopener">https://stripe.com/privacy</a>.</li>
+</ul>
 
 <h2>5. Cookies and similar technologies</h2>
 <p>

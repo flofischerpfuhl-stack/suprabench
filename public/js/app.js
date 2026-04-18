@@ -285,6 +285,21 @@ function supraBench() {
     profileData: null,
     profileSubmissionLimit: 25,
 
+    // Profile sub-tab. Defaults to "activity" so existing users see the
+    // page they always saw. The "api" tab hosts the public-API dashboard
+    // (waitlist live, sub/keys disabled until api.future.ts ships).
+    profileTab: "activity",
+    waitlistEntries: [],   // { tier: string }[] — populated by waitlist.myEntries
+    apiBusy: false,        // blocks double-clicks during waitlist toggle
+
+    // The following are read by the (currently HTML-commented) subscription
+    // panel. Defaults shipped now so uncommenting the panel doesn't blow up
+    // before the backend wiring lands.
+    mySubscription: null,
+    myApiKeys: [],
+    apiKeyLimit: 3,
+    newKeyJustCreated: null,
+
     // About-page Q&A: a Set of question-IDs that are currently expanded.
     // Default: first question open so the page isn't a wall of buttons.
     aboutOpen: new Set(["q1"]),
@@ -563,7 +578,7 @@ function supraBench() {
     },
 
     async _loadProfile() {
-      if (!this.user) { this.profileData = null; return; }
+      if (!this.user) { this.profileData = null; this.waitlistEntries = []; return; }
       const { client, api } = window.sbConvex;
       try {
         this.profileData = await client.query(api.users.myActivity, {});
@@ -571,6 +586,71 @@ function supraBench() {
       } catch (e) {
         console.error("Failed to load profile:", e);
       }
+      // Waitlist is independent: load it whenever the user lands on
+      // their profile so the API tab is correct on first paint.
+      try {
+        this.waitlistEntries = await client.query(api.waitlist.myEntries, {});
+      } catch (e) {
+        console.warn("waitlist load failed (non-fatal):", e);
+      }
+    },
+
+    // ── API & Billing tab ────────────────────────────────────────────
+    isOnWaitlist(tier) {
+      return Array.isArray(this.waitlistEntries) &&
+             this.waitlistEntries.some((w) => w.tier === tier);
+    },
+    async toggleWaitlist(tier) {
+      if (!this.user) {
+        this.showToast("Sign in first to join the waitlist.", "info");
+        this.login();
+        return;
+      }
+      if (this.apiBusy) return;
+      this.apiBusy = true;
+      const { client, api } = window.sbConvex;
+      try {
+        if (this.isOnWaitlist(tier)) {
+          await client.mutation(api.waitlist.leave, { tier });
+          this.showToast(`Removed from ${tier} waitlist.`, "info");
+        } else {
+          await client.mutation(api.waitlist.join, { tier });
+          this.showToast(`You're on the ${tier} waitlist — we'll email you at launch.`, "info");
+        }
+        this.waitlistEntries = await client.query(api.waitlist.myEntries, {});
+      } catch (e) {
+        console.error("waitlist toggle failed:", e);
+        this.showToast(e?.message || "Something went wrong.", "error");
+      } finally {
+        this.apiBusy = false;
+      }
+    },
+
+    // Lightweight toast — used by waitlist + future API actions.
+    // Only one toast at a time; replacing the prior one is fine.
+    showToast(message, type = "info") {
+      this._toastTimer && clearTimeout(this._toastTimer);
+      let el = document.getElementById("sb-toast");
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "sb-toast";
+        document.body.appendChild(el);
+      }
+      el.className = `toast is-${type}`;
+      el.textContent = message;
+      this._toastTimer = setTimeout(() => { el.remove(); }, 4000);
+    },
+
+    // ── Disabled API actions (will be wired up when api.future.ts ships) ──
+    // These exist so the (currently HTML-commented) subscription panel
+    // doesn't throw on Alpine init if someone uncomments only part of it.
+    async manageBilling() { this.showToast("API not yet live — join the waitlist!", "info"); },
+    async openCreateKeyModal() { this.showToast("API not yet live — join the waitlist!", "info"); },
+    async revokeApiKey() { this.showToast("API not yet live — join the waitlist!", "info"); },
+    async copyNewKey() {
+      if (!this.newKeyJustCreated) return;
+      try { await navigator.clipboard.writeText(this.newKeyJustCreated); this.showToast("Copied.", "info"); }
+      catch { this.showToast("Copy failed — select & copy manually.", "error"); }
     },
 
     get profileVisibleSubmissions() {
