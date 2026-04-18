@@ -3,12 +3,25 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 import { recomputeEffectiveTags } from "./tagVotes";
+import {
+  seedCreatorEntityVote,
+  assertNotResurrectingOwnHidden,
+} from "./entityVotes";
 
 function generateSlug(name: string): string {
   return name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+async function filterHiddenRankings(ctx: any, rankings: any[]) {
+  const out = [];
+  for (const r of rankings) {
+    const m = await ctx.db.get(r.modelId);
+    if (m && !m.hidden) out.push(r);
+  }
+  return out;
 }
 
 // ── List ranked models from denormalized cache ──
@@ -21,8 +34,9 @@ export const listRanked = query({
       .withIndex("by_score")
       .order("desc")
       .collect();
+    const visible = await filterHiddenRankings(ctx, rankings);
 
-    return rankings.map((r) => ({
+    return visible.map((r) => ({
       _id: r.modelId,
       name: r.name,
       provider: r.provider,
@@ -133,13 +147,16 @@ export const search = query({
     const results = await ctx.db
       .query("models")
       .withSearchIndex("search_name", (s) => s.search("name", q))
-      .take(10);
-    return results.map((m) => ({
-      _id: m._id,
-      name: m.name,
-      provider: m.provider,
-      slug: m.slug,
-    }));
+      .take(20);
+    return results
+      .filter((m) => !m.hidden)
+      .slice(0, 10)
+      .map((m) => ({
+        _id: m._id,
+        name: m.name,
+        provider: m.provider,
+        slug: m.slug,
+      }));
   },
 });
 
@@ -147,11 +164,12 @@ export const search = query({
 export const listRankedWithFilter = query({
   args: { activeTags: v.array(v.string()) },
   handler: async (ctx, { activeTags }) => {
-    const rankings = await ctx.db
+    const allRankings = await ctx.db
       .query("modelRankings")
       .withIndex("by_score")
       .order("desc")
       .collect();
+    const rankings = await filterHiddenRankings(ctx, allRankings);
 
     if (activeTags.length === 0) {
       return rankings.map((r) => ({
@@ -171,7 +189,7 @@ export const listRankedWithFilter = query({
     const allBenches = await ctx.db.query("benches").collect();
     const matchingBenchIds = new Set<string>(
       allBenches
-        .filter((b) => b.tags.some((t) => activeTags.includes(t)))
+        .filter((b) => !b.hidden && b.tags.some((t) => activeTags.includes(t)))
         .map((b) => b._id as string)
     );
 
@@ -267,6 +285,9 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    if (!args.name?.trim()) throw new Error("Name is required");
+    if (!args.provider?.trim()) throw new Error("Provider is required");
+    await assertNotResurrectingOwnHidden(ctx, "model", args.name, userId);
 
     let slug = generateSlug(args.name);
     let existing = await ctx.db
@@ -304,6 +325,7 @@ export const create = mutation({
       benchCount: 0,
       updatedAt: Date.now(),
     });
+    await seedCreatorEntityVote(ctx, "model", modelId as unknown as string, userId);
 
     const seen = new Set<string>();
     for (const raw of args.tags) {

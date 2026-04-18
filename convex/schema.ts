@@ -13,8 +13,10 @@ export default defineSchema({
     tags: v.array(v.string()),
     addedBy: v.id("users"),
     createdAt: v.number(),
+    hidden: v.optional(v.boolean()),
   })
     .index("by_slug", ["slug"])
+    .index("by_added_by", ["addedBy"])
     .searchIndex("search_name", { searchField: "name" }),
 
   benches: defineTable({
@@ -28,8 +30,10 @@ export default defineSchema({
     scaleMax: v.number(),
     addedBy: v.id("users"),
     createdAt: v.number(),
+    hidden: v.optional(v.boolean()),
   })
     .index("by_slug", ["slug"])
+    .index("by_added_by", ["addedBy"])
     .searchIndex("search_name", { searchField: "name" }),
 
   benchQualityRatings: defineTable({
@@ -84,6 +88,18 @@ export default defineSchema({
       "entityId",
       "tag",
     ]),
+
+  // Per-user up/down votes on the *existence* of a model or bench.
+  // When net score ≤ ENTITY_HIDE_THRESHOLD (e.g. -3) the entity is
+  // soft-hidden from listings / detail pages.
+  entityVotes: defineTable({
+    entityType: v.union(v.literal("model"), v.literal("bench")),
+    entityId: v.string(),
+    userId: v.id("users"),
+    value: v.union(v.literal(1), v.literal(-1)),
+  })
+    .index("by_entity", ["entityType", "entityId"])
+    .index("by_user_entity", ["userId", "entityType", "entityId"]),
 
   // Denormalized rankings cache — updated on mutations
   modelRankings: defineTable({

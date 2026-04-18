@@ -10,6 +10,7 @@ export const listAll = query({
 
     const benches = await ctx.db.query("benches").collect();
     for (const b of benches) {
+      if (b.hidden) continue;
       for (const t of b.tags) {
         const e = counts[t] ?? { count: 0, benches: 0, models: 0 };
         e.count += 1;
@@ -20,6 +21,7 @@ export const listAll = query({
 
     const models = await ctx.db.query("models").collect();
     for (const m of models) {
+      if (m.hidden) continue;
       for (const t of m.tags) {
         const e = counts[t] ?? { count: 0, benches: 0, models: 0 };
         e.count += 1;
@@ -45,8 +47,8 @@ export const search = query({
     const models = await ctx.db.query("models").collect();
 
     const set = new Set<string>();
-    for (const b of benches) for (const t of b.tags) set.add(t);
-    for (const m of models) for (const t of m.tags) set.add(t);
+    for (const b of benches) if (!b.hidden) for (const t of b.tags) set.add(t);
+    for (const m of models) if (!m.hidden) for (const t of m.tags) set.add(t);
 
     return Array.from(set)
       .filter((t) => t.includes(q))

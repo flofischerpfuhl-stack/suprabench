@@ -2,29 +2,11 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { recomputeEffectiveTags } from "./tagVotes";
-
-const OFFICIAL_DOMAINS = [
-  "lmsys.org",
-  "chat.lmsys.org",
-  "swebench.com",
-  "paperswithcode.com",
-  "huggingface.co",
-  "scale.com",
-  "opencompass.org",
-  "evalplus.github.io",
-  "arxiv.org",
-];
-
-function isOfficialUrl(url: string): boolean {
-  try {
-    const hostname = new URL(url).hostname.toLowerCase();
-    return OFFICIAL_DOMAINS.some(
-      (d) => hostname === d || hostname.endsWith("." + d)
-    );
-  } catch {
-    return false;
-  }
-}
+import {
+  seedCreatorEntityVote,
+  assertNotResurrectingOwnHidden,
+} from "./entityVotes";
+import { isOfficialUrl } from "./urls";
 
 function generateSlug(name: string): string {
   return name
@@ -40,6 +22,7 @@ export const listRanked = query({
 
     const results = [];
     for (const bench of benches) {
+      if (bench.hidden) continue;
       const ratings = await ctx.db
         .query("benchQualityRatings")
         .withIndex("by_bench", (q) => q.eq("benchId", bench._id))
@@ -201,15 +184,18 @@ export const search = query({
     const results = await ctx.db
       .query("benches")
       .withSearchIndex("search_name", (s) => s.search("name", q))
-      .take(10);
-    return results.map((b) => ({
-      _id: b._id,
-      name: b.name,
-      slug: b.slug,
-      scaleMin: b.scaleMin,
-      scaleMax: b.scaleMax,
-      isOfficial: b.isOfficial,
-    }));
+      .take(20);
+    return results
+      .filter((b) => !b.hidden)
+      .slice(0, 10)
+      .map((b) => ({
+        _id: b._id,
+        name: b.name,
+        slug: b.slug,
+        scaleMin: b.scaleMin,
+        scaleMax: b.scaleMax,
+        isOfficial: b.isOfficial,
+      }));
   },
 });
 
@@ -225,6 +211,8 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    if (!args.name?.trim()) throw new Error("Name is required");
+    await assertNotResurrectingOwnHidden(ctx, "bench", args.name, userId);
 
     let slug = generateSlug(args.name);
     let existing = await ctx.db
@@ -253,6 +241,7 @@ export const create = mutation({
       addedBy: userId,
       createdAt: Date.now(),
     });
+    await seedCreatorEntityVote(ctx, "bench", benchId as unknown as string, userId);
 
     const seen = new Set<string>();
     for (const raw of args.tags) {
