@@ -119,6 +119,85 @@ function makeFormC() {
   };
 }
 
+// ── PWA: service worker + install prompt ────────────────────
+//
+// Registered after `load` so it never competes with critical
+// rendering. Skipped on `localhost` to avoid stale-cache headaches
+// during local development.
+//
+// The `beforeinstallprompt` event lets us defer the browser's
+// "Install app?" UI and trigger it from a button later, instead of
+// the browser deciding when to ambush the user. We stash it on
+// window.sbPwa.deferredPrompt — the Alpine root reads that to show
+// or hide an "Install" CTA.
+window.sbPwa = {
+  deferredPrompt: null,
+  isInstalled: false,
+  swRegistration: null,
+  async install() {
+    if (!this.deferredPrompt) return false;
+    this.deferredPrompt.prompt();
+    const choice = await this.deferredPrompt.userChoice;
+    this.deferredPrompt = null;
+    window.dispatchEvent(new CustomEvent("sb-pwa-state"));
+    return choice.outcome === "accepted";
+  },
+};
+
+(function bootPwa() {
+  if (typeof window === "undefined") return;
+
+  // Detect "running as installed PWA" to suppress the install CTA.
+  const standalone =
+    window.matchMedia?.("(display-mode: standalone)").matches ||
+    window.matchMedia?.("(display-mode: window-controls-overlay)").matches ||
+    window.navigator.standalone === true; // iOS
+  window.sbPwa.isInstalled = standalone;
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    window.sbPwa.deferredPrompt = e;
+    window.dispatchEvent(new CustomEvent("sb-pwa-state"));
+  });
+
+  window.addEventListener("appinstalled", () => {
+    window.sbPwa.isInstalled = true;
+    window.sbPwa.deferredPrompt = null;
+    window.dispatchEvent(new CustomEvent("sb-pwa-state"));
+  });
+
+  if (!("serviceWorker" in navigator)) return;
+  const isLocal =
+    location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  if (isLocal) return; // no SW in dev — easier to debug
+
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("/sw.js", {
+        scope: "/",
+        updateViaCache: "none",
+      });
+      window.sbPwa.swRegistration = reg;
+
+      // If a new SW is waiting, prompt it to take over on next nav.
+      // We don't auto-reload — that would yank the page out from under
+      // the user mid-action. The user gets a fresh build on their next
+      // navigation / hash change.
+      reg.addEventListener("updatefound", () => {
+        const w = reg.installing;
+        if (!w) return;
+        w.addEventListener("statechange", () => {
+          if (w.state === "installed" && navigator.serviceWorker.controller) {
+            w.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+    } catch (e) {
+      console.warn("[PWA] service worker registration failed:", e);
+    }
+  });
+})();
+
 // ── Giscus integration ──────────────────────────────────────
 //
 // Mounts the giscus iframe in `container` for the discussion identified

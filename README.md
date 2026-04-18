@@ -116,7 +116,8 @@ suprabench/
 │   ├── users.ts                  # Viewer + activity feed
 │   ├── admin.ts                  # Internal cleanup utilities
 │   ├── urls.ts                   # Official-source whitelist
-│   └── api.future.ts             # Planned paid HTTP API (placeholder)
+│   ├── api.future.ts             # Planned paid HTTP API (placeholder)
+│   └── stripe.future.ts          # Planned Stripe billing (placeholder)
 ├── public/
 │   ├── index.html                # Single-page app — all views in one file
 │   ├── css/style.css             # Design system
@@ -162,6 +163,31 @@ suprabench/
 - **Score range validation** against the bench's declared scale
 - **Source URL required** for every submission
 
+## PWA
+
+The site is installable as a native-feeling app on Android, iOS and
+Desktop. Components:
+
+- [`public/site.webmanifest`](public/site.webmanifest) — name, scope,
+  shortcuts (Models / Benchmarks / Submit / About), icons in `any` and
+  `maskable` purposes.
+- [`public/sw.js`](public/sw.js) — service worker with
+  network-first for HTML, stale-while-revalidate for JS/CSS,
+  cache-first for images. Convex and giscus traffic is never cached.
+- [`public/offline.html`](public/offline.html) — fallback shown when
+  the network is gone.
+- iOS-specific meta tags in `public/index.html` so Safari treats
+  Add-to-Home-Screen launches as a chromeless app with the dark
+  status bar style. The manifest's `display: standalone` covers
+  Android and Desktop Chromium.
+- Service worker is skipped on `localhost` to keep dev iterations
+  cache-free.
+
+After deploying changes, the SW picks them up on the next navigation
+(it `postMessage`s `SKIP_WAITING` once the new SW is installed).
+Force a reload in DevTools → Application → Service Workers if you
+want to test more aggressively.
+
 ## Performance / cost notes
 
 The hot listing queries (`models.listRanked`, `models.listRankedWithFilter`,
@@ -181,9 +207,13 @@ instead of 6.
 ## Public API (planned)
 
 A paid HTTP API for routers / dashboards / observability tools is sketched
-out — schema, endpoints, pricing tiers and Convex-cost analysis live in
-[`docs/api-roadmap.md`](docs/api-roadmap.md). The placeholder implementation
-is in [`convex/api.future.ts`](convex/api.future.ts). Not active yet.
+out — schema, endpoints, pricing tiers, Stripe activation steps and
+Convex-cost analysis live in [`docs/api-roadmap.md`](docs/api-roadmap.md).
+The placeholder implementations are in
+[`convex/api.future.ts`](convex/api.future.ts) (HTTP routes, key
+generation, rate limiting) and
+[`convex/stripe.future.ts`](convex/stripe.future.ts) (Checkout,
+billing portal, signed webhook). Not active yet.
 
 ## Getting Started
 

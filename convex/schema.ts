@@ -161,4 +161,115 @@ export default defineSchema({
     benches: v.number(),
     models: v.number(),
   }).index("by_tag", ["tag"]),
+
+  // ════════════════════════════════════════════════════════════
+  // PUBLIC API + STRIPE BILLING — not yet active.
+  //
+  // The tables below back the future paid public API (see
+  // docs/api-roadmap.md, convex/api.future.ts, convex/stripe.future.ts).
+  // They're kept commented so we don't pay for indexes / storage on
+  // empty tables before the API ships.
+  //
+  // To activate: uncomment this block, run `npx convex deploy --yes`,
+  // then uncomment the matching code in convex/api.future.ts and
+  // convex/stripe.future.ts (and rename them to drop the `.future`).
+  // ════════════════════════════════════════════════════════════
+
+  /*
+  // Hashed API tokens. The plaintext key is shown to the user ONCE on
+  // creation and never persisted; we only ever look up by hash.
+  apiKeys: defineTable({
+    hash: v.string(),                   // SHA-256(key) hex
+    prefix: v.string(),                 // "sb_live_a1b2c3d4" — for UI display
+    name: v.string(),                   // user-supplied label
+    ownerUserId: v.id("users"),
+    tier: v.union(
+      v.literal("hobby"),               //  7 €/mo, 5k req
+      v.literal("pro"),                 // 19 €/mo, 50k req
+      v.literal("scale"),               // 59 €/mo, 500k req
+      v.literal("enterprise"),          // negotiated
+    ),
+    monthlyQuota: v.number(),
+    rpmLimit: v.number(),               // sliding-window per minute
+    createdAt: v.number(),
+    lastUsedAt: v.optional(v.number()),
+    revokedAt: v.optional(v.number()),
+    // Stripe linkage. When the subscription lapses we set revokedAt.
+    stripeSubscriptionId: v.optional(v.string()),
+    stripeSubscriptionStatus: v.optional(v.string()),
+  })
+    .index("by_hash", ["hash"])
+    .index("by_owner", ["ownerUserId"])
+    .index("by_subscription", ["stripeSubscriptionId"]),
+
+  // Per-key, per-month request counter. Atomically incremented on
+  // every API call by api:consumeQuota. Cheap to reset (just stop
+  // querying old months; documents auto-expire via a cron later).
+  apiUsage: defineTable({
+    apiKeyId: v.id("apiKeys"),
+    yyyymm: v.string(),                 // "2026-04" — partition key
+    count: v.number(),
+    lastIncrementAt: v.number(),
+  }).index("by_key_month", ["apiKeyId", "yyyymm"]),
+
+  // Sliding-window rate-limit buckets. One row per (key, minute).
+  // Document auto-pruning by a periodic cron (cleanupRateLimits).
+  apiRateLimits: defineTable({
+    apiKeyId: v.id("apiKeys"),
+    minuteBucket: v.number(),           // floor(ts / 60_000)
+    count: v.number(),
+  }).index("by_key_bucket", ["apiKeyId", "minuteBucket"]),
+
+  // Per-call audit log. Kept short (<= 1000 most recent per key) so
+  // users can self-debug from the dashboard. Pruned by cron.
+  apiRequestLog: defineTable({
+    apiKeyId: v.id("apiKeys"),
+    endpoint: v.string(),
+    status: v.number(),
+    ms: v.number(),                     // server time
+    ts: v.number(),
+    ip: v.optional(v.string()),         // hashed for privacy
+    userAgent: v.optional(v.string()),
+  }).index("by_key_ts", ["apiKeyId", "ts"]),
+
+  // 1:1 mapping suprabench user → stripe customer. Populated on first
+  // checkout. Survives subscription churn so we don't create duplicate
+  // customers for the same person.
+  stripeCustomers: defineTable({
+    userId: v.id("users"),
+    stripeCustomerId: v.string(),
+    email: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_customer", ["stripeCustomerId"]),
+
+  // Subscription state mirror. Source of truth is Stripe; this is our
+  // queryable copy, kept fresh by the webhook handler.
+  stripeSubscriptions: defineTable({
+    userId: v.id("users"),
+    stripeCustomerId: v.string(),
+    stripeSubscriptionId: v.string(),
+    stripePriceId: v.string(),
+    tier: v.string(),                   // "hobby" | "pro" | "scale"
+    status: v.string(),                 // "active" | "past_due" | "canceled" | "trialing" | …
+    currentPeriodEnd: v.number(),
+    cancelAtPeriodEnd: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_subscription", ["stripeSubscriptionId"])
+    .index("by_customer", ["stripeCustomerId"]),
+
+  // Idempotency log for the Stripe webhook. Stripe retries on 5xx
+  // and we MUST NOT double-process events (would double-create keys,
+  // double-cancel subs, etc.). We insert event.id once and bail on
+  // re-delivery.
+  stripeEvents: defineTable({
+    stripeEventId: v.string(),
+    type: v.string(),
+    processedAt: v.number(),
+  }).index("by_event_id", ["stripeEventId"]),
+  */
 });

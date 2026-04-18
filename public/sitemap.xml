@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sitemap is intentionally short.
+
+  The app is a hash-routed SPA, so model/bench/submission detail pages
+  live at #model/<slug>, #bench/<slug>, etc. Search engines ignore
+  fragment identifiers (#…), so listing every hash route would be
+  noise. Google will crawl the SPA shell and surface the per-entity
+  data via the JSON-LD on the homepage and the open-graph tags
+  swapped in by the client.
+
+  Real, separately-served URLs (the legal pages) ARE listed.
+-->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://suprabench.com/</loc>

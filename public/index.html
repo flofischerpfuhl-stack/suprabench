@@ -2,24 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>SupraBench — Community-Driven AI Model Rankings</title>
     <meta name="description" content="Community-driven rankings of AI models, weighted by benchmark trustworthiness. Not all benchmarks are equal — SupraBench scores them on relevance, contamination resistance, discriminability and reproducibility.">
     <meta name="keywords" content="AI benchmarks, LLM rankings, model leaderboard, benchmark quality, SupraScore, community rankings, AI evaluation">
     <meta name="author" content="Florian Fischer">
     <meta name="robots" content="index,follow">
     <meta name="theme-color" content="#030303">
+    <meta name="color-scheme" content="dark">
+    <meta name="format-detection" content="telephone=no">
     <link rel="canonical" href="https://suprabench.com/">
 
-    <!-- Favicons -->
+    <!-- PWA — installable on Android, iOS, Desktop -->
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="application-name" content="SupraBench">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SupraBench">
+    <meta name="msapplication-TileColor" content="#030303">
+    <meta name="msapplication-TileImage" content="/img/icon-192.png">
+    <meta name="msapplication-config" content="none">
+
+    <!-- Favicons + touch icons -->
     <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
     <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
     <link rel="icon" type="image/png" sizes="48x48" href="/img/favicon-48.png">
     <link rel="icon" type="image/png" sizes="96x96" href="/img/favicon-96.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/img/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/img/icon-512.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
-    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/img/icon-512.png" color="#E5FE40">
+
+    <!-- iOS launch images: a single hi-res icon scaled by Safari to act
+         as a splash screen across all device sizes. Pixel-perfect splash
+         per-device would need ~30 separate PNGs; this is good enough. -->
+    <link rel="apple-touch-startup-image" href="/img/icon-512.png">
 
     <!-- Open Graph (Facebook, LinkedIn, WhatsApp, Slack, Discord…) -->
     <meta property="og:type" content="website">

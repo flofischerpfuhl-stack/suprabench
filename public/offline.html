@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Offline — SupraBench</title>
+<meta name="robots" content="noindex,follow">
+<meta name="theme-color" content="#030303">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SupraBench">
+<link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/legal.css">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
+<style>
+  .offline-icon {
+    width: 96px; height: 96px;
+    margin: 0 auto 2rem;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--hd);
+    font-size: 2.5rem;
+    color: var(--accent);
+  }
+</style>
+</head>
+<body class="legal-body">
+<main class="legal-container" style="text-align:center;padding-top:6rem;max-width:540px">
+  <div class="offline-icon" aria-hidden="true">⚡</div>
+  <h1 class="legal-title" style="font-size:3rem;margin-bottom:1rem">You're offline.</h1>
+  <p class="legal-lead" style="margin-bottom:2.5rem">
+    SupraBench can't reach the network right now. The app shell is cached,
+    so navigation still works — but rankings won't refresh until you're back online.
+  </p>
+  <a href="/" class="btn">← Try again</a>
+</main>
+<script>
+  window.addEventListener("online", () => location.reload());
+</script>
+</body>
+</html>

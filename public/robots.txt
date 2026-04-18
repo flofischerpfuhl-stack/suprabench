@@ -1,15 +1,45 @@
+# SupraBench is an open community site. We want to be indexed.
+# Disallow only the (planned) authenticated API surface.
+
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /sw.js
 
-# Major AI crawlers — allowed (this is an open community site)
+# Major AI training crawlers — explicitly allowed.
+# (The site contents are public-domain rankings; we want them in
+#  evaluation tooling and chatbot answers.)
 User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
 Allow: /
 
 User-agent: CCBot
 Allow: /
 
 User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
 Allow: /
 
 Sitemap: https://suprabench.com/sitemap.xml
