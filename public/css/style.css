@@ -121,6 +121,93 @@ a:hover {
   line-height: 1.6;
 }
 
+.sidebar-legal {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.7rem;
+  color: var(--text3);
+}
+.sidebar-legal a {
+  color: var(--text3);
+  transition: color var(--transition);
+}
+.sidebar-legal a:hover {
+  color: var(--accent);
+}
+
+/* ── Cookie / storage notice ── */
+.cookie-notice {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 560px;
+  width: calc(100% - 2rem);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 2.8rem 0.85rem 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  font-size: 0.82rem;
+  color: var(--text2);
+}
+.cookie-notice[hidden] { display: none; }
+.cookie-notice__text {
+  flex: 1;
+  line-height: 1.45;
+}
+.cookie-notice__text strong { color: var(--text); }
+.cookie-notice__text a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.cookie-notice__ok {
+  font-family: var(--hd);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: 100px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity var(--transition);
+}
+.cookie-notice__ok:hover { opacity: 0.85; }
+.cookie-notice__close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.55rem;
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem 0.35rem;
+  border-radius: 4px;
+  transition: color var(--transition);
+}
+.cookie-notice__close:hover { color: var(--text); }
+@media (max-width: 600px) {
+  .cookie-notice {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+    padding: 0.9rem 2.4rem 0.9rem 1rem;
+  }
+  .cookie-notice__ok { align-self: flex-end; }
+}
+
 .main {
   margin-left: 260px;
   flex: 1;

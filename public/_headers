@@ -1,0 +1,32 @@
+# Cloudflare Pages custom headers
+# Docs: https://developers.cloudflare.com/pages/platform/headers/
+
+# ── HTML: short cache, re-validate on every visit ──
+/
+  Cache-Control: public, max-age=0, must-revalidate
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# ── Static assets: hashed or rarely changing → long cache ──
+/img/*
+  Cache-Control: public, max-age=31536000, immutable
+/css/*
+  Cache-Control: public, max-age=86400
+/js/*
+  Cache-Control: public, max-age=86400
+
+# ── SEO helpers: short cache ──
+/robots.txt
+  Cache-Control: public, max-age=3600
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+/site.webmanifest
+  Cache-Control: public, max-age=86400
+
+# ── Security headers (apply to everything) ──
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload

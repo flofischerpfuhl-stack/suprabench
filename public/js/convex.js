@@ -3,8 +3,23 @@
 // Ported from @convex-dev/auth React client
 // ══════════════════════════════════════════
 
-const CONVEX_URL = "https://different-viper-119.convex.cloud";
-const CONVEX_SITE_URL = "https://different-viper-119.convex.site";
+// ── Backend URLs ─────────────────────────────────────────────
+// Dev deployment (used on localhost).
+// Prod deployment (used on every other host, i.e. *.pages.dev and
+// suprabench.com). After `npx convex deploy` for the first time,
+// replace PROD_CONVEX_URL + PROD_CONVEX_SITE with the output URLs.
+const DEV_CONVEX_URL  = "https://different-viper-119.convex.cloud";
+const DEV_CONVEX_SITE = "https://different-viper-119.convex.site";
+const PROD_CONVEX_URL  = "https://upbeat-clam-790.convex.cloud";
+const PROD_CONVEX_SITE = "https://upbeat-clam-790.convex.site";
+
+const _isLocal =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+   window.location.hostname === "127.0.0.1");
+
+const CONVEX_URL      = _isLocal ? DEV_CONVEX_URL  : PROD_CONVEX_URL;
+const CONVEX_SITE_URL = _isLocal ? DEV_CONVEX_SITE : PROD_CONVEX_SITE;
 
 // Storage keys (must match @convex-dev/auth convention)
 const NAMESPACE = CONVEX_URL.replace(/[^a-zA-Z0-9]/g, "");

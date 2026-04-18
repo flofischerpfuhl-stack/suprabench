@@ -142,6 +142,120 @@ export const search = query({
   },
 });
 
+// ── Ranked models + filtered score (scoped to benches matching any active tag) ──
+export const listRankedWithFilter = query({
+  args: { activeTags: v.array(v.string()) },
+  handler: async (ctx, { activeTags }) => {
+    const rankings = await ctx.db
+      .query("modelRankings")
+      .withIndex("by_score")
+      .order("desc")
+      .collect();
+
+    if (activeTags.length === 0) {
+      return rankings.map((r) => ({
+        _id: r.modelId,
+        name: r.name,
+        provider: r.provider,
+        slug: r.slug,
+        familyTag: r.familyTag,
+        tags: r.tags,
+        supraScore: r.supraScore,
+        benchCount: r.benchCount,
+        filteredScore: null,
+      }));
+    }
+
+    // Find benches matching ANY of the active tags
+    const allBenches = await ctx.db.query("benches").collect();
+    const matchingBenchIds = new Set<string>(
+      allBenches
+        .filter((b) => b.tags.some((t) => activeTags.includes(t)))
+        .map((b) => b._id as string)
+    );
+
+    // Pre-compute quality per matching bench
+    const benchQuality: Record<string, number> = {};
+    for (const benchId of matchingBenchIds) {
+      const ratings = await ctx.db
+        .query("benchQualityRatings")
+        .withIndex("by_bench", (q) => q.eq("benchId", benchId as any))
+        .collect();
+      benchQuality[benchId] =
+        ratings.length === 0
+          ? 50
+          : (ratings.reduce(
+              (s, r) =>
+                s +
+                (r.relevance + r.contamination + r.discriminability + r.reproducibility) /
+                  4,
+              0
+            ) /
+              ratings.length) *
+            20;
+    }
+
+    const out = [];
+    for (const r of rankings) {
+      const scores = await ctx.db
+        .query("modelScores")
+        .withIndex("by_model", (q) => q.eq("modelId", r.modelId))
+        .collect();
+
+      // Group valid scores by bench, scoped to matching benches
+      const byBench: Record<string, number[]> = {};
+      for (const s of scores) {
+        const bId = s.benchId as string;
+        if (!matchingBenchIds.has(bId)) continue;
+        if (s.upvotes <= s.downvotes) continue;
+        if (!byBench[bId]) byBench[bId] = [];
+        byBench[bId].push(s.normalizedScore);
+      }
+
+      let weighted = 0;
+      let weight = 0;
+      for (const [bId, vals] of Object.entries(byBench)) {
+        vals.sort((a, b) => a - b);
+        const median =
+          vals.length % 2 === 0
+            ? (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2
+            : vals[Math.floor(vals.length / 2)];
+        const q = benchQuality[bId] ?? 50;
+        weighted += q * median;
+        weight += q;
+      }
+
+      const filteredScore =
+        weight > 0 ? Math.round((weighted / weight) * 10) / 10 : null;
+
+      out.push({
+        _id: r.modelId,
+        name: r.name,
+        provider: r.provider,
+        slug: r.slug,
+        familyTag: r.familyTag,
+        tags: r.tags,
+        supraScore: r.supraScore,
+        benchCount: r.benchCount,
+        filteredScore,
+      });
+    }
+
+    // Sort: models with a filteredScore first, by filteredScore desc,
+    // then the rest by supraScore desc
+    out.sort((a, b) => {
+      if (a.filteredScore !== null && b.filteredScore === null) return -1;
+      if (a.filteredScore === null && b.filteredScore !== null) return 1;
+      if (a.filteredScore !== null && b.filteredScore !== null) {
+        return b.filteredScore - a.filteredScore;
+      }
+      return b.supraScore - a.supraScore;
+    });
+
+    return out;
+  },
+});
+
 export const create = mutation({
   args: {
     name: v.string(),

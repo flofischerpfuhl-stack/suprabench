@@ -4,7 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SupraBench — Community-Driven AI Model Rankings</title>
-    <meta name="description" content="A community-driven platform for ranking AI models based on benchmark trustworthiness. Not all benchmarks are equal.">
+    <meta name="description" content="Community-driven rankings of AI models, weighted by benchmark trustworthiness. Not all benchmarks are equal — SupraBench scores them on relevance, contamination resistance, discriminability and reproducibility.">
+    <meta name="keywords" content="AI benchmarks, LLM rankings, model leaderboard, benchmark quality, SupraScore, community rankings, AI evaluation">
+    <meta name="author" content="Florian Fischer">
+    <meta name="robots" content="index,follow">
+    <meta name="theme-color" content="#030303">
+    <link rel="canonical" href="https://suprabench.com/">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="/img/favicon-48.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/img/favicon-96.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/img/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp, Slack, Discord…) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SupraBench">
+    <meta property="og:title" content="SupraBench — Community-Driven AI Model Rankings">
+    <meta property="og:description" content="AI model rankings weighted by the trustworthiness of each benchmark. Community-driven, no corporate influence.">
+    <meta property="og:url" content="https://suprabench.com/">
+    <meta property="og:image" content="https://suprabench.com/img/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="SupraBench — Community-Driven AI Model Rankings">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SupraBench — Community-Driven AI Model Rankings">
+    <meta name="twitter:description" content="AI model rankings weighted by the trustworthiness of each benchmark. Community-driven.">
+    <meta name="twitter:image" content="https://suprabench.com/img/og-image.png">
+    <meta name="twitter:image:alt" content="SupraBench — Community-Driven AI Model Rankings">
+
+    <!-- JSON-LD structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "SupraBench",
+      "url": "https://suprabench.com/",
+      "description": "Community-driven AI model rankings based on benchmark trustworthiness.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "SupraBench",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://suprabench.com/img/icon-512.png"
+        }
+      }
+    }
+    </script>
+
     <link rel="stylesheet" href="css/style.css">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/convex@1.17.4/dist/browser.bundle.js"></script>
@@ -28,6 +82,11 @@
     </ul>
     <div class="sidebar-footer">
         Community-driven.<br>No corporate influence.<br>BSL 1.1 Licensed.
+        <div class="sidebar-legal">
+            <a href="/legal/privacy.html">Privacy</a> ·
+            <a href="/legal/terms.html">Terms</a> ·
+            <a href="/legal/imprint.html">Imprint</a>
+        </div>
     </div>
 </nav>
 
@@ -798,6 +857,37 @@
 
 </main>
 </div>
+
+<!-- ═══════════════════════════════════════
+     COOKIE / STORAGE NOTICE
+     Minimal, non-blocking, EU-compliant.
+     We only use strictly-necessary localStorage for auth —
+     no tracking, no analytics. Consent is therefore NOT
+     required by § 25 (2) TTDSG / ePrivacy, but we still
+     inform the user once (transparency principle, Art. 12 GDPR).
+     ═══════════════════════════════════════ -->
+<div id="sb-cookie" class="cookie-notice" hidden>
+    <div class="cookie-notice__text">
+        SupraBench uses only <strong>strictly necessary</strong> storage (to keep you signed in).
+        No cookies, no tracking, no analytics.
+        <a href="/legal/privacy.html">Privacy Policy</a>.
+    </div>
+    <button type="button" class="cookie-notice__ok" onclick="window.sbDismissCookie()">Got it</button>
+    <button type="button" class="cookie-notice__close" aria-label="Dismiss" onclick="window.sbDismissCookie()">×</button>
+</div>
+<script>
+(function () {
+    var KEY = 'sb_notice_v1';
+    var el = document.getElementById('sb-cookie');
+    try {
+        if (!localStorage.getItem(KEY)) el.hidden = false;
+    } catch (e) { /* localStorage blocked → just don't show */ }
+    window.sbDismissCookie = function () {
+        try { localStorage.setItem(KEY, '1'); } catch (e) {}
+        el.hidden = true;
+    };
+})();
+</script>
 
 </body>
 </html>

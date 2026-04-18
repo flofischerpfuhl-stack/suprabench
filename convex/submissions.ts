@@ -183,6 +183,9 @@ export const submit = mutation({
         ? 0
         : ((args.rawScore - scaleMin) / (scaleMax - scaleMin)) * 100;
 
+    // Submitter implicitly upvotes their own submission so it counts as
+    // valid (upvotes > downvotes) from the start. The submitter can still
+    // toggle this vote off via the normal voting UI if they change their mind.
     const scoreId = await ctx.db.insert("modelScores", {
       modelId: modelId!,
       benchId: benchId!,
@@ -191,8 +194,15 @@ export const submit = mutation({
       sourceUrl: args.sourceUrl,
       submittedBy: userId,
       createdAt: Date.now(),
-      upvotes: 0,
+      upvotes: 1,
       downvotes: 0,
+    });
+
+    await ctx.db.insert("votes", {
+      targetId: scoreId as unknown as string,
+      targetType: "modelScore",
+      userId,
+      value: 1,
     });
 
     // Trigger ranking recompute for affected model
