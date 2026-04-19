@@ -2201,9 +2201,8 @@ ol.about-list li::before {
   .benches-list tr {
     grid-template-columns: 1.5rem 1fr auto;
     grid-template-areas:
-      "rank  name   quality"
-      "rank  type   dims"
-      "rank  models models";
+      "rank  name  quality"
+      "rank  type  dims";
     align-items: baseline;
     column-gap: 0.85rem;
     row-gap: 0.45rem;
@@ -2243,12 +2242,8 @@ ol.about-list li::before {
   .b-dims .dimension-dot {
     width: 0.55rem; height: 1.1rem;
   }
-  .b-models  {
-    grid-area: models; align-self: center;
-    text-align: right; color: var(--text3); font-size: 0.72rem;
-    margin-top: 0.1rem;
-  }
-  .b-tags { display: none !important; }
+  .b-models { display: none !important; }
+  .b-tags   { display: none !important; }
 
   /* ── PROFILE submissions table ── */
   .profile-table tr {
