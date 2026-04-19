@@ -27,7 +27,7 @@
    want to force every client to drop its old cache after a deploy.
    ════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = "v1.1.0";
+const CACHE_VERSION = "v1.2.0";
 const CACHE_PREFIX = "suprabench-";
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 const PRECACHE = `${CACHE_PREFIX}precache-${CACHE_VERSION}`;

@@ -171,6 +171,36 @@ main {
   border-radius: 8px;
 }
 
+/* ── Compact reactions row ──
+   The default giscus reactions block ("0 reactions" + smiley) takes
+   ~80px vertically because the heading + add-button get full padding
+   each. SupraBench cares about comments first; reactions are a
+   nice-to-have. We collapse the block to a single tight row. */
+.gsc-reactions {
+  margin-bottom: 0.5rem !important;
+  padding: 0 !important;
+  border: none !important;
+}
+.gsc-reactions-menu {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.gsc-reactions-count {
+  font-size: 0.78rem !important;
+  margin: 0 !important;
+  padding: 0.25rem 0 !important;
+  color: #555555 !important;
+}
+.gsc-reactions-count + .gsc-reactions-menu,
+.gsc-reactions h4 {
+  display: none !important;   /* drop the "0 reactions" duplicate */
+}
+.gsc-reactions-menu .gsc-direct-reaction-buttons,
+.gsc-direct-reaction-buttons {
+  padding: 0.25rem !important;
+  gap: 0.25rem !important;
+}
+
 /* Tighter padding on mobile */
 @media (max-width: 600px) {
   .gsc-comment-box,
@@ -184,7 +214,10 @@ main {
   }
   .gsc-reactions-count,
   .gsc-comments-count {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
+  }
+  .gsc-reactions {
+    margin-bottom: 0.35rem !important;
   }
 }
 

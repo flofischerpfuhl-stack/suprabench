@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260418b">
+    <link rel="stylesheet" href="css/style.css?v=20260418c">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -88,9 +88,9 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
             integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
-    <script src="js/convex.js?v=20260418b"></script>
+    <script src="js/convex.js?v=20260418c"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260418b"></script>
+    <script src="js/app.js?v=20260418c"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -324,41 +324,49 @@
 
             <!-- Benchmark Performance Table -->
             <h2 class="section-header">Benchmark Performance</h2>
-            <table x-show="currentModel.benchPerformance && currentModel.benchPerformance.length > 0">
-                <thead>
-                    <tr>
-                        <th>Benchmark</th>
-                        <th>Bench Quality</th>
-                        <th>Effective Score</th>
-                        <th>Submissions</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <template x-for="bp in currentModel.benchPerformance" :key="bp.benchId">
+            <!-- Wrapper allows the wide table to scroll horizontally
+                 inside its own container instead of pushing the whole
+                 page sideways on phones / narrow tablets. The mobile
+                 stylesheet swaps it to a stacked card layout below
+                 700px so this wrapper only matters in the 700-1024px
+                 sweet spot. -->
+            <div class="table-scroll" x-show="currentModel.benchPerformance && currentModel.benchPerformance.length > 0">
+                <table class="bench-perf-list">
+                    <thead>
                         <tr>
-                            <td>
-                                <a href="#" @click.prevent="navigate('bench', {slug: bp.benchSlug})" x-text="bp.benchName"></a>
-                            </td>
-                            <td>
-                                <div class="quality-bar-container">
-                                    <div class="quality-bar">
-                                        <div class="quality-bar-fill" :style="'width:'+bp.benchQuality+'%;background:'+qualityColor(bp.benchQuality)"></div>
-                                    </div>
-                                    <span style="font-size:.8rem;color:var(--text2)" x-text="bp.benchQuality.toFixed(0)"></span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="score-cell" x-text="bp.effectiveScore !== null ? bp.effectiveScore.toFixed(1) : '—'"></span>
-                            </td>
-                            <td style="color:var(--text3);font-size:.85rem" x-text="bp.validCount + ' / ' + bp.totalCount"></td>
-                            <td>
-                                <a href="#" class="link-arrow" @click.prevent="navigate('bench', {slug: bp.benchSlug})">View →</a>
-                            </td>
+                            <th>Benchmark</th>
+                            <th>Bench Quality</th>
+                            <th>Effective Score</th>
+                            <th>Submissions</th>
+                            <th></th>
                         </tr>
-                    </template>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <template x-for="bp in currentModel.benchPerformance" :key="bp.benchId">
+                            <tr class="clickable-row" @click="navigate('bench', {slug: bp.benchSlug})">
+                                <td class="bp-name">
+                                    <a href="#" @click.prevent="navigate('bench', {slug: bp.benchSlug})" x-text="bp.benchName"></a>
+                                </td>
+                                <td class="bp-quality">
+                                    <div class="quality-bar-container">
+                                        <div class="quality-bar">
+                                            <div class="quality-bar-fill" :style="'width:'+bp.benchQuality+'%;background:'+qualityColor(bp.benchQuality)"></div>
+                                        </div>
+                                        <span style="font-size:.8rem;color:var(--text2)" x-text="bp.benchQuality.toFixed(0)"></span>
+                                    </div>
+                                </td>
+                                <td class="bp-score">
+                                    <span class="score-cell" x-text="bp.effectiveScore !== null ? bp.effectiveScore.toFixed(1) : '—'"></span>
+                                </td>
+                                <td class="bp-subs" style="color:var(--text3);font-size:.85rem" x-text="bp.validCount + ' / ' + bp.totalCount"></td>
+                                <td class="bp-arrow">
+                                    <a href="#" class="link-arrow" @click.prevent="navigate('bench', {slug: bp.benchSlug})">View →</a>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
 
             <div class="empty-state" x-show="!currentModel.benchPerformance || currentModel.benchPerformance.length === 0">
                 No benchmark scores submitted yet.
@@ -752,34 +760,36 @@
                 </div>
             </div>
 
-            <!-- Model Scores Table -->
+            <!-- Model Scores Table — wrapped + classed for mobile cards. -->
             <h2 class="section-header">Model Scores</h2>
-            <table x-show="currentBench.modelScores && currentBench.modelScores.length > 0">
-                <thead>
-                    <tr>
-                        <th>Model</th>
-                        <th>Effective Score</th>
-                        <th>Submissions</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <template x-for="ms in currentBench.modelScores" :key="ms.modelId">
+            <div class="table-scroll" x-show="currentBench.modelScores && currentBench.modelScores.length > 0">
+                <table class="model-scores-list">
+                    <thead>
                         <tr>
-                            <td>
-                                <a href="#" @click.prevent="navigate('model', {slug: ms.modelSlug})" x-text="ms.modelName" style="font-weight:500"></a>
-                            </td>
-                            <td>
-                                <span class="score-cell" x-text="ms.effectiveScore !== null ? ms.effectiveScore.toFixed(1) : '—'"></span>
-                            </td>
-                            <td style="color:var(--text3);font-size:.85rem" x-text="ms.validCount + ' / ' + ms.totalCount"></td>
-                            <td>
-                                <a href="#" class="link-arrow" @click.prevent="navigate('model', {slug: ms.modelSlug})">View →</a>
-                            </td>
+                            <th>Model</th>
+                            <th>Effective Score</th>
+                            <th>Submissions</th>
+                            <th></th>
                         </tr>
-                    </template>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <template x-for="ms in currentBench.modelScores" :key="ms.modelId">
+                            <tr class="clickable-row" @click="navigate('model', {slug: ms.modelSlug})">
+                                <td class="ms-name">
+                                    <a href="#" @click.prevent="navigate('model', {slug: ms.modelSlug})" x-text="ms.modelName" style="font-weight:500"></a>
+                                </td>
+                                <td class="ms-score">
+                                    <span class="score-cell" x-text="ms.effectiveScore !== null ? ms.effectiveScore.toFixed(1) : '—'"></span>
+                                </td>
+                                <td class="ms-subs" style="color:var(--text3);font-size:.85rem" x-text="ms.validCount + ' / ' + ms.totalCount"></td>
+                                <td class="ms-arrow">
+                                    <a href="#" class="link-arrow" @click.prevent="navigate('model', {slug: ms.modelSlug})">View →</a>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
 
             <div class="empty-state" x-show="!currentBench.modelScores || currentBench.modelScores.length === 0">
                 No model scores submitted yet.
