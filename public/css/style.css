@@ -219,6 +219,35 @@ a:hover {
   line-height: 1.6;
 }
 
+/* "Source on GitLab" link in the sidebar footer.
+   Sits between the BSL line and the legal links so the project's
+   open-source nature is one tap away on every page (and inside the
+   mobile burger drawer, which renders the same sidebar). */
+.sidebar-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 0.75rem;
+  color: var(--text2);
+  text-decoration: none;
+  transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+.sidebar-source:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--surface2);
+}
+.sidebar-source svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
 .sidebar-legal {
   margin-top: 0.9rem;
   padding-top: 0.9rem;

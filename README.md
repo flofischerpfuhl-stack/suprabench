@@ -7,6 +7,13 @@
 > accordingly — so a single number per model respects how trustworthy and how
 > informative each underlying benchmark actually is.
 
+> **This repository is open for transparency, not for redeployment.** The full
+> codebase is published so anyone can audit the SupraScore math, the
+> anti-gaming rules, the official-source whitelist and the moderation logic
+> end-to-end. Running your own copy as a competing public service is
+> **not permitted** — see [License](#license). If you want to *use* SupraBench,
+> visit [suprabench.ai](https://suprabench.ai).
+
 ---
 
 ## What is SupraBench?
@@ -220,63 +227,71 @@ generation, rate limiting) and
 [`convex/stripe.future.ts`](convex/stripe.future.ts) (Checkout,
 billing portal, signed webhook). Not active yet.
 
-## Getting Started
+## Reading the code
 
-### Prerequisites
+This repo is intentionally simple to read end-to-end:
 
-- Node.js 18+
-- A [Convex](https://convex.dev) account
-- A Google Cloud project with OAuth 2.0 credentials
+- **SupraScore math** — [`convex/rankings.ts`](convex/rankings.ts)
+- **Bench Score (quality × difficulty × headroom)** — same file, plus
+  [`convex/benches.ts`](convex/benches.ts) for the cached field.
+- **Anti-gaming rules** — [`convex/submissions.ts`](convex/submissions.ts),
+  [`convex/entityVotes.ts`](convex/entityVotes.ts).
+- **Official-source whitelist** — [`convex/urls.ts`](convex/urls.ts).
+- **Schema (incl. denormalised caches)** — [`convex/schema.ts`](convex/schema.ts).
+- **Frontend** — single-page app, vanilla HTML + Alpine.js, no build step:
+  [`public/index.html`](public/index.html), [`public/js/app.js`](public/js/app.js).
 
-### Setup
+There is **no setup guide** here on purpose. The license permits
+non-commercial use (research, audit, local reproduction) but not running
+this codebase as a competing public service, so an install script would
+mostly steer people toward something they can't ship. If you want to
+verify a number, the public dataset is the easier path — see
+[Public API](#public-api-planned). For genuine reproducibility questions,
+open an issue on the [tracker](https://gitlab.com/florian-fischer-group/suprabench/-/issues).
 
-1. Clone and install:
-   ```bash
-   git clone https://gitlab.com/florian-fischer-group/suprabench.git
-   cd suprabench
-   npm install
-   ```
+## Security model
 
-2. Provision a Convex deployment:
-   ```bash
-   npx convex dev
-   ```
-   The first run links / creates a deployment and writes `CONVEX_DEPLOYMENT`
-   into `.env.local`.
+The frontend, the Convex query/mutation handlers, and the planned HTTP API
+are **all** designed to be safe with a fully public codebase:
 
-3. Create a Google OAuth client at
-   [console.cloud.google.com](https://console.cloud.google.com/apis/credentials):
-   - Authorized redirect URI:
-     `https://<your-convex-deployment>.convex.site/api/auth/callback/google`
+- **No secrets in the repo.** Every secret (Google OAuth client ID/secret,
+  JWT keys, the planned Stripe + webhook secrets) lives in
+  `.env.local` (gitignored) for dev and in `npx convex env set` on the
+  Convex deployment for production. The repo only references their *names*.
+- **Authorization is server-side.** Every mutation re-checks
+  `ctx.auth.getUserIdentity()` and the caller's role — the client is treated
+  as fully untrusted. Rate limits, vote-once rules and the auto-hide
+  thresholds are enforced in Convex, not in the UI.
+- **Convex public URL is OK to be public.** The deployment URL in
+  `public/js/convex.js` is the same kind of identifier as a Firebase
+  project ID. Authentication still has to happen against it; an attacker
+  knowing the URL gains nothing they couldn't get by visiting the live site.
+- **Planned API.** Once enabled, the API uses hashed bearer keys
+  (`sb_live_…`) generated in Convex, validated server-side on every
+  request, with per-key tier-based rate limits and Stripe-driven
+  subscription gating. See [`convex/api.future.ts`](convex/api.future.ts)
+  and [`convex/stripe.future.ts`](convex/stripe.future.ts) — both are
+  fully commented-out skeletons. Stripe webhook signatures are verified
+  with `STRIPE_WEBHOOK_SECRET` (Convex env var, never in code).
 
-4. Set environment variables in `.env.local`:
-   ```
-   AUTH_GOOGLE_ID=your_google_client_id
-   AUTH_GOOGLE_SECRET=your_google_client_secret
-   SITE_URL=http://localhost:5173
-   JWT_PRIVATE_KEY=your_jwt_key
-   ```
-
-5. Serve the frontend (any static server works):
-   ```bash
-   npx serve public        # or python -m http.server, etc.
-   ```
-   Keep `npx convex dev` running in another terminal.
-
-### Deploying to production
-
-```bash
-npm run deploy                                # = npx convex deploy
-npx convex run --prod migrations:backfillAll  # only after schema changes
-```
-
-The static `public/` directory can be hosted on Cloudflare Pages, Netlify,
-Vercel, or any CDN — there is no build step.
+If you spot anything that looks security-sensitive, please report it
+privately via the email in [`/legal/imprint`](https://suprabench.ai/legal/imprint).
 
 ## License
 
 [Business Source License 1.1](LICENSE)
 
-Change Date: 2029-01-01 → Apache License 2.0
+- **Change Date:** 2029-01-01 → converts to Apache License 2.0.
+- **Permitted, no permission needed:** reading the code, auditing the
+  math, running it locally for verification, using it for evaluating
+  AI models or deriving benchmarks, contributing patches, and any
+  non-commercial use (copy, modify, create derivative works, redistribute).
+- **Requires explicit permission from the Licensor:** commercial use,
+  including running this codebase as a competing public service.
+
+> Tip for the curious: the simplest path to verify the SupraScore
+> independently is to reproduce the math from
+> [`convex/rankings.ts`](convex/rankings.ts) against the public dataset
+> exposed by the (planned) HTTP API. No deployment required.
 
 Community-driven. No corporate influence.
