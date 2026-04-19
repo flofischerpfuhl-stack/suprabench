@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260418g">
+    <link rel="stylesheet" href="css/style.css?v=20260418h">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -88,9 +88,9 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
             integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
-    <script src="js/convex.js?v=20260418g"></script>
+    <script src="js/convex.js?v=20260418h"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260418g"></script>
+    <script src="js/app.js?v=20260418h"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -282,41 +282,6 @@
                 </div>
             </div>
 
-            <!-- Tag voting (community polls each tag up/down) -->
-            <div class="tag-vote-block">
-                <div class="tag-vote-header">
-                    <span>Tags · community voted</span>
-                    <button class="btn-tag-suggest" x-show="user && !showTagSuggest" @click="showTagSuggest = true" type="button">+ suggest tag</button>
-                </div>
-                <div class="tag-vote-list" x-show="currentModelTagVotes.length > 0">
-                    <template x-for="tv in currentModelTagVotes" :key="tv.tag">
-                        <div class="tag-vote-chip" :class="{'is-positive': tv.score > 0, 'is-negative': tv.score <= 0}">
-                            <span class="tag-vote-name" x-text="tv.tag"></span>
-                            <span class="tag-vote-score" x-text="(tv.score > 0 ? '+' : '') + tv.score"></span>
-                            <template x-if="user">
-                                <span class="tag-vote-buttons">
-                                    <button type="button" class="tv-btn tv-up" :class="{active: tv.myVote === 1}"
-                                            @click.stop="voteTag('model', currentModel._id, tv.tag, 1)" aria-label="Upvote tag">▲</button>
-                                    <button type="button" class="tv-btn tv-down" :class="{active: tv.myVote === -1}"
-                                            @click.stop="voteTag('model', currentModel._id, tv.tag, -1)" aria-label="Downvote tag">▼</button>
-                                </span>
-                            </template>
-                        </div>
-                    </template>
-                </div>
-                <div x-show="currentModelTagVotes.length === 0" style="font-size:.85rem;color:var(--text3);padding:.5rem 0">
-                    No tags suggested yet.
-                </div>
-                <div class="tag-suggest-row" x-show="showTagSuggest">
-                    <input type="text" x-model="tagSuggestInput"
-                           @keydown.enter.prevent="suggestTag('model', currentModel._id)"
-                           placeholder="new-tag" maxlength="30" list="all-tags-dl">
-                    <button type="button" class="btn btn-sm" @click="suggestTag('model', currentModel._id)">Suggest</button>
-                    <button type="button" class="btn btn-sm btn-outline" @click="showTagSuggest = false; tagSuggestInput = ''">Cancel</button>
-                </div>
-                <p class="tag-vote-hint" x-show="!user">Sign in to vote on tags or suggest new ones.</p>
-            </div>
-
             <div class="supra-score-display">
                 <span class="supra-score-value" x-text="currentModel.supraScore.toFixed(1)"></span>
                 <span class="supra-score-label">SupraScore</span>
@@ -372,15 +337,41 @@
                 No benchmark scores submitted yet.
             </div>
 
-            <!-- Individual Submissions -->
+            <!-- ─────────────────────────────────────────────────
+                 Model-detail tab strip: All Submissions | Tags.
+                 The tag-vote block used to sit between entity-vote
+                 and the SupraScore which pushed the actual benchmark
+                 ranking off the first viewport. Tags + the raw
+                 submission stream are both "secondary" data on this
+                 page (the ranking table above is what people came
+                 for) so they share a single tab strip below.
+                 ───────────────────────────────────────────────── -->
             <template x-if="currentModel.benchPerformance && currentModel.benchPerformance.length > 0">
                 <div>
-                    <h2 class="section-header" style="cursor:pointer" @click="showAllSubmissions = !showAllSubmissions">
-                        All Submissions
-                        <span class="expand-icon" :class="{'open': showAllSubmissions}" style="font-size:.8rem;margin-left:.5rem">▼</span>
-                    </h2>
+                    <nav class="profile-tabs" role="tablist" aria-label="Model detail sections" style="margin-top:2.5rem">
+                        <button class="profile-tab"
+                                :class="{'is-active': modelDetailTab==='submissions'}"
+                                role="tab"
+                                :aria-selected="modelDetailTab==='submissions'"
+                                @click="modelDetailTab='submissions'">
+                            All Submissions
+                            <span class="badge-soon"
+                                  x-text="currentModel.benchPerformance.reduce((n, bp) => n + (bp.submissions?.length ?? 0), 0)"></span>
+                        </button>
+                        <button class="profile-tab"
+                                :class="{'is-active': modelDetailTab==='tags'}"
+                                role="tab"
+                                :aria-selected="modelDetailTab==='tags'"
+                                @click="modelDetailTab='tags'">
+                            Tags
+                            <template x-if="currentModelTagVotes.length > 0">
+                                <span class="badge-soon" x-text="currentModelTagVotes.length"></span>
+                            </template>
+                        </button>
+                    </nav>
 
-                    <div x-show="showAllSubmissions" x-transition>
+                    <!-- ── Tab pane: submissions, grouped per bench ── -->
+                    <div x-show="modelDetailTab==='submissions'" x-transition.opacity>
                         <template x-for="bp in currentModel.benchPerformance" :key="bp.benchId + '-subs'">
                             <div style="margin-bottom:1.5rem">
                                 <h3 style="font-family:var(--hd);font-size:0.9rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2);margin-bottom:0.75rem" x-text="bp.benchName"></h3>
@@ -411,6 +402,43 @@
                                 </template>
                             </div>
                         </template>
+                    </div>
+
+                    <!-- ── Tab pane: tags (community-voted tag chips) ── -->
+                    <div x-show="modelDetailTab==='tags'" x-transition.opacity>
+                        <div class="tag-vote-block" style="margin-top:0">
+                            <div class="tag-vote-header">
+                                <span>Tags · community voted</span>
+                                <button class="btn-tag-suggest" x-show="user && !showTagSuggest" @click="showTagSuggest = true" type="button">+ suggest tag</button>
+                            </div>
+                            <div class="tag-vote-list" x-show="currentModelTagVotes.length > 0">
+                                <template x-for="tv in currentModelTagVotes" :key="tv.tag">
+                                    <div class="tag-vote-chip" :class="{'is-positive': tv.score > 0, 'is-negative': tv.score <= 0}">
+                                        <span class="tag-vote-name" x-text="tv.tag"></span>
+                                        <span class="tag-vote-score" x-text="(tv.score > 0 ? '+' : '') + tv.score"></span>
+                                        <template x-if="user">
+                                            <span class="tag-vote-buttons">
+                                                <button type="button" class="tv-btn tv-up" :class="{active: tv.myVote === 1}"
+                                                        @click.stop="voteTag('model', currentModel._id, tv.tag, 1)" aria-label="Upvote tag">▲</button>
+                                                <button type="button" class="tv-btn tv-down" :class="{active: tv.myVote === -1}"
+                                                        @click.stop="voteTag('model', currentModel._id, tv.tag, -1)" aria-label="Downvote tag">▼</button>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                            <div x-show="currentModelTagVotes.length === 0" style="font-size:.85rem;color:var(--text3);padding:.5rem 0">
+                                No tags suggested yet.
+                            </div>
+                            <div class="tag-suggest-row" x-show="showTagSuggest">
+                                <input type="text" x-model="tagSuggestInput"
+                                       @keydown.enter.prevent="suggestTag('model', currentModel._id)"
+                                       placeholder="new-tag" maxlength="30" list="all-tags-dl">
+                                <button type="button" class="btn btn-sm" @click="suggestTag('model', currentModel._id)">Suggest</button>
+                                <button type="button" class="btn btn-sm btn-outline" @click="showTagSuggest = false; tagSuggestInput = ''">Cancel</button>
+                            </div>
+                            <p class="tag-vote-hint" x-show="!user">Sign in to vote on tags or suggest new ones.</p>
+                        </div>
                     </div>
                 </div>
             </template>
@@ -522,11 +550,28 @@
                   style="display:inline-block;margin-bottom:0.75rem"></span>
 
             <h1 class="detail-title" x-text="currentBench.name"></h1>
-            <p style="color:var(--text2);font-size:1.05rem;max-width:650px;margin-bottom:1rem" x-text="currentBench.description"></p>
 
-            <p style="margin-bottom:0.5rem">
-                <a :href="currentBench.url" target="_blank" style="color:var(--accent);font-family:var(--hd);font-size:.85rem;text-transform:uppercase;letter-spacing:.5px">Source ↗</a>
-            </p>
+            <!-- Description + source are collapsed by default. On a bench
+                 like SWE-bench Verified the description runs 4-5 lines
+                 which used to push the actual ranking off the first
+                 viewport. The toggle is small + low-contrast on purpose
+                 — the title alone is enough for visitors who already
+                 know what they're looking at. -->
+            <div class="bench-desc-collapse" :class="{'is-open': benchDescExpanded}">
+                <button type="button"
+                        class="bench-desc-toggle"
+                        :aria-expanded="benchDescExpanded"
+                        @click="benchDescExpanded = !benchDescExpanded">
+                    <span x-text="benchDescExpanded ? 'Hide description' : 'Show description'"></span>
+                    <span class="expand-icon" :class="{'open': benchDescExpanded}">▼</span>
+                </button>
+                <div class="bench-desc-body" x-show="benchDescExpanded" x-transition.opacity>
+                    <p style="color:var(--text2);font-size:1.05rem;max-width:650px;margin:0.6rem 0 0.5rem" x-text="currentBench.description"></p>
+                    <p style="margin:0">
+                        <a :href="currentBench.url" target="_blank" style="color:var(--accent);font-family:var(--hd);font-size:.85rem;text-transform:uppercase;letter-spacing:.5px">Source ↗</a>
+                    </p>
+                </div>
+            </div>
 
             <!-- Entity-existence voting + community-removed banner -->
             <div class="entity-vote-block">
@@ -559,41 +604,6 @@
                         <span class="tag-vote-hint">Sign in to vote.</span>
                     </template>
                 </div>
-            </div>
-
-            <!-- Tag voting (community polls each tag up/down) -->
-            <div class="tag-vote-block">
-                <div class="tag-vote-header">
-                    <span>Tags · community voted</span>
-                    <button class="btn-tag-suggest" x-show="user && !showTagSuggest" @click="showTagSuggest = true" type="button">+ suggest tag</button>
-                </div>
-                <div class="tag-vote-list" x-show="currentBenchTagVotes.length > 0">
-                    <template x-for="tv in currentBenchTagVotes" :key="tv.tag">
-                        <div class="tag-vote-chip" :class="{'is-positive': tv.score > 0, 'is-negative': tv.score <= 0}">
-                            <span class="tag-vote-name" x-text="tv.tag"></span>
-                            <span class="tag-vote-score" x-text="(tv.score > 0 ? '+' : '') + tv.score"></span>
-                            <template x-if="user">
-                                <span class="tag-vote-buttons">
-                                    <button type="button" class="tv-btn tv-up" :class="{active: tv.myVote === 1}"
-                                            @click.stop="voteTag('bench', currentBench._id, tv.tag, 1)" aria-label="Upvote tag">▲</button>
-                                    <button type="button" class="tv-btn tv-down" :class="{active: tv.myVote === -1}"
-                                            @click.stop="voteTag('bench', currentBench._id, tv.tag, -1)" aria-label="Downvote tag">▼</button>
-                                </span>
-                            </template>
-                        </div>
-                    </template>
-                </div>
-                <div x-show="currentBenchTagVotes.length === 0" style="font-size:.85rem;color:var(--text3);padding:.5rem 0">
-                    No tags suggested yet.
-                </div>
-                <div class="tag-suggest-row" x-show="showTagSuggest">
-                    <input type="text" x-model="tagSuggestInput"
-                           @keydown.enter.prevent="suggestTag('bench', currentBench._id)"
-                           placeholder="new-tag" maxlength="30" list="all-tags-dl">
-                    <button type="button" class="btn btn-sm" @click="suggestTag('bench', currentBench._id)">Suggest</button>
-                    <button type="button" class="btn btn-sm btn-outline" @click="showTagSuggest = false; tagSuggestInput = ''">Cancel</button>
-                </div>
-                <p class="tag-vote-hint" x-show="!user">Sign in to vote on tags or suggest new ones.</p>
             </div>
 
             <!-- Bench Score Section -->
@@ -763,61 +773,32 @@
                 </div>
             </div>
 
-            <!-- Model Scores Table — wrapped + classed for mobile cards. -->
-            <h2 class="section-header">Model Scores</h2>
-            <div class="table-scroll" x-show="currentBench.modelScores && currentBench.modelScores.length > 0">
-                <table class="model-scores-list">
-                    <thead>
-                        <tr>
-                            <th>Model</th>
-                            <th>Effective Score</th>
-                            <th>Submissions</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template x-for="ms in currentBench.modelScores" :key="ms.modelId">
-                            <tr class="clickable-row" @click="navigate('model', {slug: ms.modelSlug})">
-                                <td class="ms-name">
-                                    <a href="#" @click.prevent="navigate('model', {slug: ms.modelSlug})" x-text="ms.modelName" style="font-weight:500"></a>
-                                </td>
-                                <td class="ms-score">
-                                    <span class="score-cell" x-text="ms.effectiveScore !== null ? ms.effectiveScore.toFixed(1) : '—'"></span>
-                                </td>
-                                <td class="ms-subs" style="color:var(--text3);font-size:.85rem" x-text="ms.validCount + ' / ' + ms.totalCount"></td>
-                                <td class="ms-arrow">
-                                    <a href="#" class="link-arrow" @click.prevent="navigate('model', {slug: ms.modelSlug})">View →</a>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="empty-state" x-show="!currentBench.modelScores || currentBench.modelScores.length === 0">
-                No model scores submitted yet.
-            </div>
-
             <!-- ─────────────────────────────────────────────────
-                 Tab strip: Submissions | Discussion.
-                 Replaces the previous stacked layout (giant
-                 always-rendered submission list + giscus underneath).
-                 Submissions can run into the thousands per bench, so
-                 forcing a toggle keeps the page scannable. Giscus
-                 is mounted lazily — only when its tab is active —
-                 which also fixes the "empty container" race we hit
-                 when the iframe was placed below a long, hidden list.
+                 Bench-detail tab strip: Model Scores | Discussion |
+                 Submissions | Tags.
+                 The page used to render every section unconditionally
+                 which pushed the actual ranking far below the fold
+                 (description + 5 quality dimensions + bench-score
+                 breakdown + entire model-scores table + every
+                 submission stacked underneath + tag block + giscus).
+                 Everything below the bench-score panel now lives in
+                 a tab strip. Order matches user intent: ranking first
+                 (people came to see who's leading on this bench),
+                 then community discussion, then raw submission stream,
+                 then meta (tags). Giscus is mounted lazily — only when
+                 its tab is active — which also fixes the "empty
+                 container" race we hit when the iframe was placed
+                 below a long, hidden list.
                  ───────────────────────────────────────────────── -->
             <nav class="profile-tabs" role="tablist" aria-label="Bench detail sections" style="margin-top:2.5rem">
                 <button class="profile-tab"
-                        :class="{'is-active': benchDetailTab==='submissions'}"
+                        :class="{'is-active': benchDetailTab==='scores'}"
                         role="tab"
-                        :aria-selected="benchDetailTab==='submissions'"
-                        @click="benchDetailTab='submissions'">
-                    All Submissions
+                        :aria-selected="benchDetailTab==='scores'"
+                        @click="benchDetailTab='scores'">
+                    Model Scores
                     <template x-if="currentBench.modelScores && currentBench.modelScores.length > 0">
-                        <span class="badge-soon"
-                              x-text="currentBench.modelScores.reduce((n, ms) => n + (ms.submissions?.length ?? 0), 0)"></span>
+                        <span class="badge-soon" x-text="currentBench.modelScores.length"></span>
                     </template>
                 </button>
                 <button class="profile-tab"
@@ -827,7 +808,69 @@
                         @click="benchDetailTab='discussion'">
                     Discussion
                 </button>
+                <button class="profile-tab"
+                        :class="{'is-active': benchDetailTab==='submissions'}"
+                        role="tab"
+                        :aria-selected="benchDetailTab==='submissions'"
+                        @click="benchDetailTab='submissions'">
+                    Submissions
+                    <template x-if="currentBench.modelScores && currentBench.modelScores.length > 0">
+                        <span class="badge-soon"
+                              x-text="currentBench.modelScores.reduce((n, ms) => n + (ms.submissions?.length ?? 0), 0)"></span>
+                    </template>
+                </button>
+                <button class="profile-tab"
+                        :class="{'is-active': benchDetailTab==='tags'}"
+                        role="tab"
+                        :aria-selected="benchDetailTab==='tags'"
+                        @click="benchDetailTab='tags'">
+                    Tags
+                    <template x-if="currentBenchTagVotes.length > 0">
+                        <span class="badge-soon" x-text="currentBenchTagVotes.length"></span>
+                    </template>
+                </button>
             </nav>
+
+            <!-- ── Tab pane: model scores ──
+                 Same data as the old standalone "Model Scores" table
+                 plus a 1-indexed rank column so visitors can immediately
+                 see who leads this benchmark. The list is already
+                 sorted server-side by effectiveScore desc. -->
+            <div x-show="benchDetailTab==='scores'" x-transition.opacity>
+                <div class="table-scroll" x-show="currentBench.modelScores && currentBench.modelScores.length > 0">
+                    <table class="model-scores-list">
+                        <thead>
+                            <tr>
+                                <th style="width:50px">#</th>
+                                <th>Model</th>
+                                <th>Effective Score</th>
+                                <th>Submissions</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(ms, msIdx) in currentBench.modelScores" :key="ms.modelId">
+                                <tr class="clickable-row" @click="navigate('model', {slug: ms.modelSlug})">
+                                    <td class="ms-rank"><span class="rank-num" x-text="msIdx + 1"></span></td>
+                                    <td class="ms-name">
+                                        <a href="#" @click.prevent="navigate('model', {slug: ms.modelSlug})" x-text="ms.modelName" style="font-weight:500"></a>
+                                    </td>
+                                    <td class="ms-score">
+                                        <span class="score-cell" x-text="ms.effectiveScore !== null ? ms.effectiveScore.toFixed(1) : '—'"></span>
+                                    </td>
+                                    <td class="ms-subs" style="color:var(--text3);font-size:.85rem" x-text="ms.validCount + ' / ' + ms.totalCount"></td>
+                                    <td class="ms-arrow">
+                                        <a href="#" class="link-arrow" @click.prevent="navigate('model', {slug: ms.modelSlug})">View →</a>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty-state" x-show="!currentBench.modelScores || currentBench.modelScores.length === 0">
+                    No model scores submitted yet.
+                </div>
+            </div>
 
             <!-- ── Tab pane: submissions ── -->
             <div x-show="benchDetailTab==='submissions'" x-transition.opacity>
@@ -887,6 +930,43 @@
                 </p>
                 <div class="giscus-host"
                      x-effect="benchDetailTab==='discussion' && currentBench && window.sbGiscus.mount($el, 'bench:' + currentBench.slug)"></div>
+            </div>
+
+            <!-- ── Tab pane: tags (community-voted tag chips) ── -->
+            <div x-show="benchDetailTab==='tags'" x-transition.opacity>
+                <div class="tag-vote-block" style="margin-top:0">
+                    <div class="tag-vote-header">
+                        <span>Tags · community voted</span>
+                        <button class="btn-tag-suggest" x-show="user && !showTagSuggest" @click="showTagSuggest = true" type="button">+ suggest tag</button>
+                    </div>
+                    <div class="tag-vote-list" x-show="currentBenchTagVotes.length > 0">
+                        <template x-for="tv in currentBenchTagVotes" :key="tv.tag">
+                            <div class="tag-vote-chip" :class="{'is-positive': tv.score > 0, 'is-negative': tv.score <= 0}">
+                                <span class="tag-vote-name" x-text="tv.tag"></span>
+                                <span class="tag-vote-score" x-text="(tv.score > 0 ? '+' : '') + tv.score"></span>
+                                <template x-if="user">
+                                    <span class="tag-vote-buttons">
+                                        <button type="button" class="tv-btn tv-up" :class="{active: tv.myVote === 1}"
+                                                @click.stop="voteTag('bench', currentBench._id, tv.tag, 1)" aria-label="Upvote tag">▲</button>
+                                        <button type="button" class="tv-btn tv-down" :class="{active: tv.myVote === -1}"
+                                                @click.stop="voteTag('bench', currentBench._id, tv.tag, -1)" aria-label="Downvote tag">▼</button>
+                                    </span>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <div x-show="currentBenchTagVotes.length === 0" style="font-size:.85rem;color:var(--text3);padding:.5rem 0">
+                        No tags suggested yet.
+                    </div>
+                    <div class="tag-suggest-row" x-show="showTagSuggest">
+                        <input type="text" x-model="tagSuggestInput"
+                               @keydown.enter.prevent="suggestTag('bench', currentBench._id)"
+                               placeholder="new-tag" maxlength="30" list="all-tags-dl">
+                        <button type="button" class="btn btn-sm" @click="suggestTag('bench', currentBench._id)">Suggest</button>
+                        <button type="button" class="btn btn-sm btn-outline" @click="showTagSuggest = false; tagSuggestInput = ''">Cancel</button>
+                    </div>
+                    <p class="tag-vote-hint" x-show="!user">Sign in to vote on tags or suggest new ones.</p>
+                </div>
             </div>
         </div>
     </template>

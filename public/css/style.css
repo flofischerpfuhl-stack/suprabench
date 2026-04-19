@@ -1763,6 +1763,41 @@ tr.clickable-row {
   margin-bottom: 0.75rem;
 }
 
+/* ── Bench description collapsable ──
+   Default-collapsed pill-style toggle that sits between the bench
+   title and the entity-vote row. The button is intentionally low-key
+   (no border, small caps) so it doesn't compete with the title; it
+   blooms on hover. The body slot uses x-transition for the show/hide
+   so we don't depend on the @alpinejs/collapse plugin. */
+.bench-desc-collapse {
+  margin: 0.4rem 0 1rem;
+}
+.bench-desc-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem 0.35rem 0;
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-family: var(--hd);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: color var(--transition);
+}
+.bench-desc-toggle:hover { color: var(--text2); }
+.bench-desc-collapse.is-open .bench-desc-toggle { color: var(--text2); }
+.bench-desc-toggle .expand-icon {
+  font-size: 0.7rem;
+  transition: transform var(--transition);
+  display: inline-block;
+}
+.bench-desc-toggle .expand-icon.open { transform: rotate(180deg); }
+.bench-desc-body { padding-bottom: 0.4rem; }
+
 /* ── Dimension help-icon (tooltip) ── */
 .dim-help {
   display: inline-flex;
@@ -2287,14 +2322,26 @@ ol.about-list li::before {
   .bp-subs { grid-area: subs; font-size: 0.75rem; color: var(--text3); margin-top: 0.4rem; }
   .bp-arrow { grid-area: arrow; text-align: right; margin-top: 0.4rem; font-size: 0.78rem; }
 
-  /* ── MODEL SCORES card layout (bench detail) ── */
+  /* ── MODEL SCORES card layout (bench detail) ──
+     Same compact layout as the benches list card: rank | name | score
+     on the headline row, subs/arrow on the second row. The rank is
+     pinned because it's the most useful info on a leaderboard
+     ("who's #1 on SWE-bench Verified?"). */
   .model-scores-list tr {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1.5rem 1fr auto;
     grid-template-areas:
-      "name  score"
-      "subs  arrow";
+      "rank  name  score"
+      "rank  subs  arrow";
+    align-items: baseline;
+    column-gap: 0.85rem;
   }
-  .ms-name { grid-area: name; font-weight: 600; font-size: 0.95rem; line-height: 1.25; }
+  .ms-rank {
+    grid-area: rank; align-self: start;
+    color: var(--text3); font-family: var(--hd);
+    font-size: 0.85rem; font-weight: 600;
+  }
+  .ms-rank .rank-num { font-size: 0.85rem; }
+  .ms-name { grid-area: name; font-weight: 600; font-size: 0.95rem; line-height: 1.25; min-width: 0; }
   .ms-name a { white-space: normal; word-break: break-word; color: var(--text); }
   .ms-score {
     grid-area: score; align-self: start; text-align: right;

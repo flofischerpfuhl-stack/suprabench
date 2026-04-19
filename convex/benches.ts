@@ -269,6 +269,17 @@ export const getBySlug = query({
       });
     }
 
+    // Sort the per-model leaderboard for this bench by effective score
+    // descending so the bench detail page can render a meaningful #1, #2,
+    // … rank column. Models with no valid score (effectiveScore === null)
+    // sink to the bottom — they haven't actually competed yet.
+    modelScores.sort((a, b) => {
+      if (a.effectiveScore === null && b.effectiveScore === null) return 0;
+      if (a.effectiveScore === null) return 1;
+      if (b.effectiveScore === null) return -1;
+      return b.effectiveScore - a.effectiveScore;
+    });
+
     return {
       ...bench,
       qualityScore,

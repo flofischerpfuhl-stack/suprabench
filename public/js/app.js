@@ -320,16 +320,34 @@ function supraBench() {
     myRating: null,
     ratingForm: { relevance: 0, contamination: 0, discriminability: 0, reproducibility: 0, difficulty: 0 },
     showRatingForm: false,
-    showAllSubmissions: false,
     showTagSuggest: false,
     tagSuggestInput: "",
 
-    // Bench-detail tab: "submissions" | "discussion".
-    // Lives outside benchTabs because the data source is per-bench, not
-    // per-tab. Defaults to "submissions" since most users come for data.
-    // We watch this in init() to mount giscus only when first activated
-    // (avoids creating an iframe a user never scrolls to).
-    benchDetailTab: "submissions",
+    // Bench-detail tab: "scores" | "discussion" | "submissions" | "tags".
+    // The bench detail page used to render every section unconditionally
+    // which pushed the actual ranking far below the fold (description +
+    // 5 quality dimensions + bench-score breakdown + entire model-scores
+    // table + every submission stacked underneath). We pulled the
+    // model-scores table, the all-submissions list, the discussion iframe
+    // and the tag-vote block into a single tab strip so the user sees
+    // metadata first, then picks what they want. "scores" is the default
+    // because that's what people came for — the ranking on this bench.
+    // Giscus is mounted lazily — only when its tab is active — which
+    // also fixes the "empty container" race we hit when the iframe was
+    // placed below a long, hidden list.
+    benchDetailTab: "scores",
+
+    // Model-detail tab: "submissions" | "tags". Same idea — the tag-vote
+    // block was sitting between entity-vote and the SupraScore which
+    // ate space above the actual ranking data. Pushed below into a tab
+    // strip alongside the per-bench submission list.
+    modelDetailTab: "submissions",
+
+    // Bench description on the detail page is collapsed by default —
+    // the description + source link can run 4-5 lines on benches like
+    // SWE-bench Verified, which pushes the entity-vote / quality bars
+    // off the first viewport on a phone.
+    benchDescExpanded: false,
 
     // ── Sort ──
     benchSortField: "score",
@@ -528,6 +546,7 @@ function supraBench() {
     async _loadModelDetail() {
       const { client, api } = window.sbConvex;
       try {
+        this.modelDetailTab = "submissions";
         this.currentModel = await client.query(api.models.getBySlug, { slug: this.currentModelSlug });
         if (this.currentModel) {
           this.currentModelTagVotes = await client.query(api.tagVotes.listForEntity, {
@@ -547,7 +566,8 @@ function supraBench() {
     async _loadBenchDetail() {
       const { client, api } = window.sbConvex;
       try {
-        this.benchDetailTab = "submissions";
+        this.benchDetailTab = "scores";
+        this.benchDescExpanded = false;
         this.currentBench = await client.query(api.benches.getBySlug, { slug: this.currentBenchSlug });
         if (this.currentBench) {
           this.currentBenchTagVotes = await client.query(api.tagVotes.listForEntity, {
