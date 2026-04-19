@@ -1746,6 +1746,13 @@ tr.clickable-row {
   display: inline-flex;
   gap: 0.3rem;
 }
+/* The "Sign in to vote." hint is reused from the tag-vote block which
+   pushes it down with a top margin. Inside the inline entity-vote-row
+   that margin breaks vertical alignment with the rest of the chips. */
+.entity-vote-row .tag-vote-hint {
+  margin-top: 0;
+  align-self: center;
+}
 .entity-removed-banner {
   background: rgba(255, 68, 68, 0.08);
   border: 1px solid var(--danger);
@@ -2557,4 +2564,121 @@ ol.about-list li::before {
   .tier-grid { grid-template-columns: 1fr; }
   .api-key-row { flex-wrap: wrap; gap: 0.5rem; }
   .api-key-row__hint { width: 100%; order: 3; }
+}
+
+/* ══════════════════════════════════════════
+   Submission workflow — mobile polish.
+   The desktop layout assumes ≥600px of breathing room and a mouse.
+   On phones we need:
+     1. font-size ≥ 16px on form fields, otherwise iOS Safari zooms
+        in on focus and the user can never get back to the original
+        scale without a manual pinch.
+     2. Real flex layouts in the search dropdown rows — float:right
+        clips the right column off-screen when the left text is long.
+     3. Bigger touch targets on the row-delete (×) button — 22px is
+        below Apple's 44px guideline and people miss the tap.
+     4. Full-width submit buttons; tiny left-anchored buttons feel
+        broken on a 360px screen.
+     5. Picked-pill close button stays inline (don't auto-margin to
+        the far right of a wrapped row — leaves it on its own line).
+     6. Smaller padding on the success / login cards — 2.5rem eats
+        most of the viewport.
+   ══════════════════════════════════════════ */
+@media (max-width: 700px) {
+  /* (1) Stop iOS auto-zoom. 16px is the magic number Safari uses. */
+  .form-group input,
+  .form-group textarea,
+  .form-group select,
+  .input-tags input,
+  .list-search input { font-size: 16px; }
+
+  /* (2) Search dropdown: replace float:right + span hack with a
+     proper flex row so name + provider/badge always sit on the
+     same baseline and never overlap. */
+  .search-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.7rem 0.85rem;
+  }
+  .search-dropdown-item > span:first-child {
+    min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex: 1 1 auto;
+  }
+  .search-dropdown-item > span:not(:first-child) {
+    float: none !important;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .search-dropdown { max-height: 240px; }
+
+  /* (5) Picked-pill: keep × inline (no auto-margin) and let the
+     name span shrink with ellipsis instead of pushing × to a new
+     line. */
+  .picked-pill {
+    gap: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    align-items: center;
+  }
+  .picked-pill > span {
+    min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 100%;
+  }
+  .picked-pill .btn-danger {
+    margin-left: 0;
+    flex: 0 0 auto;
+  }
+
+  /* (3) Score-entry header: bigger touch target on ×, allow the
+     summary chip to wrap underneath if the name is long. */
+  .score-entry-header { padding: 0.65rem 0.75rem; gap: 0.5rem; flex-wrap: wrap; }
+  .score-entry-label  { flex: 1 1 60%; min-width: 0; }
+  .score-entry-summary { flex: 0 0 auto; }
+  .score-entry-header .btn-danger {
+    padding: 0.45rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1;
+    min-width: 36px; min-height: 36px;
+  }
+  .score-entry-body { padding: 0.6rem 0.75rem 1rem; }
+  .btn-add-entry { padding: 0.85rem; font-size: 0.9rem; }
+
+  /* (4) Submit + auth buttons full-width. */
+  form .btn[type="submit"],
+  form .btn[type="submit"] + .btn,
+  .login-card .gh-btn,
+  .success-box .btn { width: 100%; }
+  .success-box > div { flex-direction: column; }
+
+  /* (6) Tighter cards on small screens. */
+  .login-card,
+  .success-box { padding: 1.5rem; max-width: 100%; }
+  .form-section { padding: 1rem; }
+
+  /* (7) Helper-text with inline <code> chips: keep them on the same
+     baseline and prevent the `<code>` keyboard-shortcut chips from
+     looking like an awkward second sentence. */
+  .form-group label .helper-text {
+    display: block;
+    margin-top: 0.2rem;
+    font-weight: 400;
+  }
+  .form-group label .helper-text code {
+    padding: 0 0.3rem;
+    background: var(--surface2);
+    border-radius: 3px;
+  }
+
+  /* Defensive: never let a form section blow the page width. */
+  .form-section,
+  .score-entry,
+  .picked-pill { max-width: 100%; overflow: hidden; }
+
+  /* The "logout" link inside the user-badge sits awkwardly close to
+     the email on phones — give it a little air and a tap target. */
+  .user-badge { flex-wrap: wrap; gap: 0.5rem; padding: 0.4rem 0.75rem; }
+  .user-badge > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 }
