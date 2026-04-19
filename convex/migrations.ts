@@ -16,6 +16,7 @@ import {
   syncModelRankingHiddenInline,
   applyTagDeltaInline,
 } from "./cache";
+import { isOfficialUrl } from "./urls";
 
 // 1. Mirror models.hidden → modelRankings.hidden for every existing row.
 export const backfillModelRankingHidden = internalMutation({
@@ -100,6 +101,46 @@ export const backfillTagCounts = internalMutation({
       await applyTagDeltaInline(ctx, "model", [], m.tags ?? []);
     }
     return { benches: benches.length, models: models.length };
+  },
+});
+
+// 5. Re-evaluate benches.isOfficial against the current whitelist.
+//
+// `isOfficial` is decided once at insert-time from the bench's URL via
+// isOfficialUrl(). When we add new domains to the whitelist (e.g. after
+// "Humanity's Last Exam" highlighted that agi.safe.ai was missing),
+// already-stored benches still hold the stale boolean. This migration
+// walks every bench and patches the field if and only if the live
+// computation disagrees with what's stored.
+//
+// Idempotent — re-running after the whitelist has stabilised is a no-op.
+//
+// Usage:
+//   npx convex run --prod migrations:recomputeBenchIsOfficial
+export const recomputeBenchIsOfficial = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const benches = await ctx.db.query("benches").collect();
+    let promoted = 0; // false → true (whitelist grew)
+    let demoted = 0;  // true  → false (domain removed)
+    const promotedSlugs: string[] = [];
+    for (const b of benches) {
+      const desired = isOfficialUrl(b.url);
+      if (desired === b.isOfficial) continue;
+      await ctx.db.patch(b._id, { isOfficial: desired });
+      if (desired) {
+        promoted++;
+        promotedSlugs.push(b.slug);
+      } else {
+        demoted++;
+      }
+    }
+    return {
+      benches: benches.length,
+      promoted,
+      demoted,
+      promotedSlugs,
+    };
   },
 });
 
