@@ -47,12 +47,25 @@ function makeEmptyBench() {
     name: "", description: "", url: "",
     scaleMin: 0, scaleMax: 100,
     tags: [], tagInput: "", lastFlashIdx: -1,
+    // UI-only flag: whether the tag-suggestion dropdown is open.
+    // We need explicit state because we suppress the dropdown after a
+    // chip is added so the user sees the chip land instead of an
+    // immediate re-suggestion.
+    tagSuggestOpen: false,
   };
 }
 function makeEmptyModel() {
   return {
     name: "", provider: "", familyTag: "",
     tags: [], tagInput: "", lastFlashIdx: -1,
+    // UI-only autocomplete-dropdown state. The native HTML5 <datalist>
+    // we previously relied on is unreliable on mobile (Android Chrome's
+    // suggest bar covers it, iOS shows it as a tiny scroller above the
+    // keyboard) so we render our own dropdown and gate visibility with
+    // these per-field flags.
+    providerOpen: false,
+    familyOpen: false,
+    tagSuggestOpen: false,
   };
 }
 
@@ -764,6 +777,41 @@ function supraBench() {
       return !this.tagSearch && this.allTags.length > 20;
     },
 
+    // ── Local autocomplete helpers for the submit form ──
+    // The native HTML5 <datalist> we used to rely on is broken on mobile:
+    // Android Chrome's keyboard-suggest bar covers the dropdown and iOS
+    // surfaces it as a barely-visible scroller above the keyboard. So
+    // every "free-text but ideally pick an existing one" field on the
+    // submit form (provider, family tag, tags) now uses the same
+    // styled dropdown pattern as the model-name search. These helpers
+    // do client-side substring filtering against the in-memory dictionary
+    // already loaded by _ensureViewSubscriptions() for the submit view.
+    // Capped at 8 visible to keep the dropdown short on phones.
+    filteredProviders(query) {
+      const q = (query || "").trim().toLowerCase();
+      if (!q) return this.allProviders.slice(0, 8);
+      return this.allProviders
+        .filter((p) => p.toLowerCase().includes(q))
+        .slice(0, 8);
+    },
+    filteredFamilyTags(query) {
+      const q = (query || "").trim().toLowerCase();
+      if (!q) return this.allFamilyTags.slice(0, 8);
+      return this.allFamilyTags
+        .filter((f) => f.toLowerCase().includes(q))
+        .slice(0, 8);
+    },
+    // For the tag-chip input: filter the master tag list by current
+    // typed prefix and exclude tags already added as chips, so the
+    // dropdown doesn't suggest something the user just selected.
+    filteredTagSuggestions(query, alreadyAdded) {
+      const q = (query || "").trim().toLowerCase();
+      const added = new Set((alreadyAdded || []).map((t) => t.toLowerCase()));
+      const base = this.allTags.filter((t) => !added.has(t.toLowerCase()));
+      if (!q) return base.slice(0, 8);
+      return base.filter((t) => t.toLowerCase().includes(q)).slice(0, 8);
+    },
+
     get filteredRankedModels() {
       const q = this.modelListSearch.trim().toLowerCase();
       if (!q) return this.rankedModels;
@@ -836,6 +884,20 @@ function supraBench() {
       }
     },
     removeTag(obj, idx) { obj.tags.splice(idx, 1); },
+
+    // Click handler for the tag-suggestion dropdown items.
+    // We can't just call _commitTag with the chosen tag and leave it at
+    // that, because the user has likely partially typed something into
+    // tagInput — that partial text would otherwise sit in the input
+    // after selection and look like an extra unfinished tag. So clear
+    // the input first, commit the chosen suggestion, and close the
+    // dropdown so it doesn't immediately re-open with the now-shorter
+    // candidate set.
+    addTagFromSuggestion(obj, tag) {
+      obj.tagInput = "";
+      this._commitTag(tag, obj);
+      if ("tagSuggestOpen" in obj) obj.tagSuggestOpen = false;
+    },
 
     // ═══ SUBMIT MODE A: SINGLE SCORE ═══
     async searchAModels() {

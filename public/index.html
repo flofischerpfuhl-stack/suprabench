@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260418j">
+    <link rel="stylesheet" href="css/style.css?v=20260418k">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -88,9 +88,9 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
             integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
-    <script src="js/convex.js?v=20260418j"></script>
+    <script src="js/convex.js?v=20260418k"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260418j"></script>
+    <script src="js/app.js?v=20260418k"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -1260,7 +1260,7 @@
                 </div>
                 <div class="form-group">
                     <label>Tags <span class="helper-text" style="font-weight:400">— press <code>,</code> <code>;</code> or Enter to add</span></label>
-                    <div class="input-tags">
+                    <div class="input-tags search-container">
                         <template x-for="(t, i) in submitFormB.newBench.tags" :key="i + '-' + t">
                             <span class="input-tag" :class="{'just-added': submitFormB.newBench.lastFlashIdx === i}">
                                 <span x-text="t"></span>
@@ -1268,11 +1268,21 @@
                             </span>
                         </template>
                         <input type="text" x-model="submitFormB.newBench.tagInput"
-                               @input="onTagInput(submitFormB.newBench)"
+                               @input="onTagInput(submitFormB.newBench); submitFormB.newBench.tagSuggestOpen = true"
+                               @focus="submitFormB.newBench.tagSuggestOpen = true"
                                @keydown="onTagKeydown($event, submitFormB.newBench)"
-                               @blur="onTagBlur(submitFormB.newBench)"
+                               @blur="onTagBlur(submitFormB.newBench); setTimeout(() => submitFormB.newBench.tagSuggestOpen = false, 150)"
                                list="all-tags-dl"
-                               placeholder="reasoning, code…">
+                               placeholder="reasoning, code…"
+                               autocomplete="off">
+                        <div class="search-dropdown search-dropdown--tags"
+                             x-show="submitFormB.newBench.tagSuggestOpen && filteredTagSuggestions(submitFormB.newBench.tagInput, submitFormB.newBench.tags).length > 0">
+                            <template x-for="t in filteredTagSuggestions(submitFormB.newBench.tagInput, submitFormB.newBench.tags)" :key="'bt-' + t">
+                                <div class="search-dropdown-item"
+                                     @mousedown.prevent="addTagFromSuggestion(submitFormB.newBench, t)"
+                                     x-text="t"></div>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1330,17 +1340,45 @@
                                 <label>Name *</label>
                                 <input type="text" x-model="entry.newModel.name" placeholder="e.g. GPT-4o-2024-11-20">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group search-container">
                                 <label>Provider *</label>
-                                <input type="text" x-model="entry.newModel.provider" list="all-providers-dl" placeholder="e.g. OpenAI">
+                                <input type="text" x-model="entry.newModel.provider"
+                                       @focus="entry.newModel.providerOpen = true"
+                                       @input="entry.newModel.providerOpen = true"
+                                       @blur="setTimeout(() => entry.newModel.providerOpen = false, 150)"
+                                       list="all-providers-dl"
+                                       placeholder="e.g. OpenAI"
+                                       autocomplete="off">
+                                <div class="search-dropdown"
+                                     x-show="entry.newModel.providerOpen && filteredProviders(entry.newModel.provider).length > 0">
+                                    <template x-for="p in filteredProviders(entry.newModel.provider)" :key="'pp-' + entry._id + '-' + p">
+                                        <div class="search-dropdown-item"
+                                             @mousedown.prevent="entry.newModel.provider = p; entry.newModel.providerOpen = false"
+                                             x-text="p"></div>
+                                    </template>
+                                </div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group search-container">
                                 <label>Family Tag (optional)</label>
-                                <input type="text" x-model="entry.newModel.familyTag" list="all-family-tags-dl" placeholder="e.g. gpt-4o">
+                                <input type="text" x-model="entry.newModel.familyTag"
+                                       @focus="entry.newModel.familyOpen = true"
+                                       @input="entry.newModel.familyOpen = true"
+                                       @blur="setTimeout(() => entry.newModel.familyOpen = false, 150)"
+                                       list="all-family-tags-dl"
+                                       placeholder="e.g. gpt-4o"
+                                       autocomplete="off">
+                                <div class="search-dropdown"
+                                     x-show="entry.newModel.familyOpen && filteredFamilyTags(entry.newModel.familyTag).length > 0">
+                                    <template x-for="f in filteredFamilyTags(entry.newModel.familyTag)" :key="'ff-' + entry._id + '-' + f">
+                                        <div class="search-dropdown-item"
+                                             @mousedown.prevent="entry.newModel.familyTag = f; entry.newModel.familyOpen = false"
+                                             x-text="f"></div>
+                                    </template>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>Tags <span class="helper-text" style="font-weight:400">— <code>,</code> <code>;</code> Enter</span></label>
-                                <div class="input-tags">
+                                <div class="input-tags search-container">
                                     <template x-for="(t, i) in entry.newModel.tags" :key="i + '-' + t">
                                         <span class="input-tag" :class="{'just-added': entry.newModel.lastFlashIdx === i}">
                                             <span x-text="t"></span>
@@ -1348,11 +1386,21 @@
                                         </span>
                                     </template>
                                     <input type="text" x-model="entry.newModel.tagInput"
-                                           @input="onTagInput(entry.newModel)"
+                                           @input="onTagInput(entry.newModel); entry.newModel.tagSuggestOpen = true"
+                                           @focus="entry.newModel.tagSuggestOpen = true"
                                            @keydown="onTagKeydown($event, entry.newModel)"
-                                           @blur="onTagBlur(entry.newModel)"
+                                           @blur="onTagBlur(entry.newModel); setTimeout(() => entry.newModel.tagSuggestOpen = false, 150)"
                                            list="all-tags-dl"
-                                           placeholder="open-source, multilingual…">
+                                           placeholder="open-source, multilingual…"
+                                           autocomplete="off">
+                                    <div class="search-dropdown search-dropdown--tags"
+                                         x-show="entry.newModel.tagSuggestOpen && filteredTagSuggestions(entry.newModel.tagInput, entry.newModel.tags).length > 0">
+                                        <template x-for="t in filteredTagSuggestions(entry.newModel.tagInput, entry.newModel.tags)" :key="'tt-' + entry._id + '-' + t">
+                                            <div class="search-dropdown-item"
+                                                 @mousedown.prevent="addTagFromSuggestion(entry.newModel, t)"
+                                                 x-text="t"></div>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-sm btn-outline" @click="entry.isNewModel = false; entry.modelSearch = ''">Cancel</button>
@@ -1431,18 +1479,46 @@
                     <label>Name *</label>
                     <input type="text" x-model="submitFormC.newModel.name" placeholder="e.g. Claude Opus 4.7">
                 </div>
-                <div class="form-group">
+                <div class="form-group search-container">
                     <label>Provider *</label>
-                    <input type="text" x-model="submitFormC.newModel.provider" list="all-providers-dl" placeholder="e.g. Anthropic">
+                    <input type="text" x-model="submitFormC.newModel.provider"
+                           @focus="submitFormC.newModel.providerOpen = true"
+                           @input="submitFormC.newModel.providerOpen = true"
+                           @blur="setTimeout(() => submitFormC.newModel.providerOpen = false, 150)"
+                           list="all-providers-dl"
+                           placeholder="e.g. Anthropic"
+                           autocomplete="off">
+                    <div class="search-dropdown"
+                         x-show="submitFormC.newModel.providerOpen && filteredProviders(submitFormC.newModel.provider).length > 0">
+                        <template x-for="p in filteredProviders(submitFormC.newModel.provider)" :key="'cp-' + p">
+                            <div class="search-dropdown-item"
+                                 @mousedown.prevent="submitFormC.newModel.provider = p; submitFormC.newModel.providerOpen = false"
+                                 x-text="p"></div>
+                        </template>
+                    </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group search-container">
                     <label>Family Tag (optional)</label>
-                    <input type="text" x-model="submitFormC.newModel.familyTag" list="all-family-tags-dl" placeholder="e.g. claude-opus">
+                    <input type="text" x-model="submitFormC.newModel.familyTag"
+                           @focus="submitFormC.newModel.familyOpen = true"
+                           @input="submitFormC.newModel.familyOpen = true"
+                           @blur="setTimeout(() => submitFormC.newModel.familyOpen = false, 150)"
+                           list="all-family-tags-dl"
+                           placeholder="e.g. claude-opus"
+                           autocomplete="off">
+                    <div class="search-dropdown"
+                         x-show="submitFormC.newModel.familyOpen && filteredFamilyTags(submitFormC.newModel.familyTag).length > 0">
+                        <template x-for="f in filteredFamilyTags(submitFormC.newModel.familyTag)" :key="'cf-' + f">
+                            <div class="search-dropdown-item"
+                                 @mousedown.prevent="submitFormC.newModel.familyTag = f; submitFormC.newModel.familyOpen = false"
+                                 x-text="f"></div>
+                        </template>
+                    </div>
                     <span class="helper-text">Groups model versions together</span>
                 </div>
                 <div class="form-group">
                     <label>Tags <span class="helper-text" style="font-weight:400">— press <code>,</code> <code>;</code> or Enter to add</span></label>
-                    <div class="input-tags">
+                    <div class="input-tags search-container">
                         <template x-for="(t, i) in submitFormC.newModel.tags" :key="i + '-' + t">
                             <span class="input-tag" :class="{'just-added': submitFormC.newModel.lastFlashIdx === i}">
                                 <span x-text="t"></span>
@@ -1450,11 +1526,21 @@
                             </span>
                         </template>
                         <input type="text" x-model="submitFormC.newModel.tagInput"
-                               @input="onTagInput(submitFormC.newModel)"
+                               @input="onTagInput(submitFormC.newModel); submitFormC.newModel.tagSuggestOpen = true"
+                               @focus="submitFormC.newModel.tagSuggestOpen = true"
                                @keydown="onTagKeydown($event, submitFormC.newModel)"
-                               @blur="onTagBlur(submitFormC.newModel)"
+                               @blur="onTagBlur(submitFormC.newModel); setTimeout(() => submitFormC.newModel.tagSuggestOpen = false, 150)"
                                list="all-tags-dl"
-                               placeholder="proprietary, multimodal…">
+                               placeholder="proprietary, multimodal…"
+                               autocomplete="off">
+                        <div class="search-dropdown search-dropdown--tags"
+                             x-show="submitFormC.newModel.tagSuggestOpen && filteredTagSuggestions(submitFormC.newModel.tagInput, submitFormC.newModel.tags).length > 0">
+                            <template x-for="t in filteredTagSuggestions(submitFormC.newModel.tagInput, submitFormC.newModel.tags)" :key="'ct-' + t">
+                                <div class="search-dropdown-item"
+                                     @mousedown.prevent="addTagFromSuggestion(submitFormC.newModel, t)"
+                                     x-text="t"></div>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </div>
