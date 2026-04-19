@@ -331,19 +331,6 @@ a:hover {
   line-height: 0.9;
   margin-bottom: 1.5rem;
 }
-/* List-page H1: same hierarchy (still the page title) but
-   editorially smaller because these are descriptive labels
-   ("Model Reality Ranking", "Benchmark Quality Ranking") not
-   2-word brand statements. The 5.5rem display size is reserved
-   for those big single-concept headers like "About." and the
-   contribute page. */
-.page-title--list {
-  font-size: 2.4rem;
-  letter-spacing: -0.5px;
-  line-height: 1.05;
-  margin-bottom: 1rem;
-  text-transform: none;
-}
 
 .page-desc {
   color: var(--text2);
@@ -1626,6 +1613,12 @@ tr.clickable-row {
 }
 
 @media (max-width: 600px) {
+  /* Long list-page titles ("Model Reality Ranking", "Benchmark
+     Quality Ranking") use an explicit <br> to split into two
+     uppercase rows. At 2.2rem with -1px letter-spacing, the
+     longer row "BENCHMARK QUALITY" (17 uppercase chars) fits
+     ≥360px viewports comfortably; on the rare 320px iPhone-SE
+     class screen the .page-title--narrow rule below kicks in. */
   .page-title {
     font-size: 2.2rem;
   }
@@ -1640,6 +1633,16 @@ tr.clickable-row {
              calc(env(safe-area-inset-right, 0px) + 1rem)
              calc(env(safe-area-inset-bottom, 0px) + 4rem)
              calc(env(safe-area-inset-left, 0px) + 1rem);
+  }
+}
+
+/* iPhone-SE / iPhone-mini class screens (320–375 px). At 2.2rem
+   "BENCHMARK QUALITY" with uppercase + bold can clip past the
+   right edge with our 1rem mobile gutters. Drop another notch. */
+@media (max-width: 380px) {
+  .page-title {
+    font-size: 1.85rem;
+    letter-spacing: -0.5px;
   }
 }
 
