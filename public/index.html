@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260418h">
+    <link rel="stylesheet" href="css/style.css?v=20260418i">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -88,9 +88,9 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
             integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
-    <script src="js/convex.js?v=20260418h"></script>
+    <script src="js/convex.js?v=20260418i"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260418h"></script>
+    <script src="js/app.js?v=20260418i"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -159,8 +159,7 @@
      ═══════════════════════════════════════ -->
 <div x-show="view==='models'" x-transition.opacity>
 
-    <h1 class="page-title">Discover.<br>Verify.</h1>
-    <p class="page-desc">An editorial, community-driven ranking of AI models. Scores weighted by benchmark trustworthiness.</p>
+    <h1 class="page-title page-title--list">Model Reality Ranking</h1>
 
     <!-- Tag Filter Bar (with search if many tags) -->
     <div class="tag-filter-wrap" x-show="allTags.length > 0">
@@ -180,9 +179,6 @@
             </template>
         </div>
     </div>
-
-    <h2 class="section-header">Model Reality Ranking</h2>
-    <p style="color:var(--text3);margin-bottom:1rem;font-size:.85rem">Each model score is weighted by the underlying benchmark's <em>Bench Score</em> (quality × difficulty × headroom).</p>
 
     <!-- List search -->
     <div class="list-search" x-show="rankedModels.length > 0">
@@ -457,10 +453,7 @@
      ═══════════════════════════════════════ -->
 <div x-show="view==='benchmarks'" x-transition.opacity>
 
-    <h1 class="page-title">The Index.</h1>
-    <p class="page-desc">Complete registry of all benchmarks with community quality ratings.</p>
-
-    <h2 class="section-header">Benchmark Quality Ranking</h2>
+    <h1 class="page-title page-title--list">Benchmark Quality Ranking</h1>
 
     <div class="list-search" x-show="rankedBenches.length > 0">
         <input type="text" x-model="benchListSearch" placeholder="Search benchmarks by name, description, or tag…"

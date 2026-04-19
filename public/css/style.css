@@ -331,6 +331,19 @@ a:hover {
   line-height: 0.9;
   margin-bottom: 1.5rem;
 }
+/* List-page H1: same hierarchy (still the page title) but
+   editorially smaller because these are descriptive labels
+   ("Model Reality Ranking", "Benchmark Quality Ranking") not
+   2-word brand statements. The 5.5rem display size is reserved
+   for those big single-concept headers like "About." and the
+   contribute page. */
+.page-title--list {
+  font-size: 2.4rem;
+  letter-spacing: -0.5px;
+  line-height: 1.05;
+  margin-bottom: 1rem;
+  text-transform: none;
+}
 
 .page-desc {
   color: var(--text2);
@@ -2606,8 +2619,26 @@ ol.about-list li::before {
 .toast.is-error { border-color: #f85149; color: #f85149; }
 
 @media (max-width: 600px) {
-  .profile-tabs { overflow-x: auto; }
-  .profile-tab { white-space: nowrap; padding: 0.7rem 0.9rem; font-size: 0.78rem; }
+  /* Tab strip on mobile must scroll horizontally only. Without the
+     explicit overflow-y / flex-wrap, the badge counters or the
+     active-tab underline can nudge the row past its computed
+     height and trigger a vertical scrollbar — looks broken on
+     iPhone. flex-wrap:nowrap also prevents the strip from
+     becoming a 2-row block on a too-narrow viewport. */
+  .profile-tabs {
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .profile-tabs::-webkit-scrollbar { display: none; }
+  .profile-tab {
+    white-space: nowrap;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+  }
   .tier-grid { grid-template-columns: 1fr; }
   .api-key-row { flex-wrap: wrap; gap: 0.5rem; }
   .api-key-row__hint { width: 100%; order: 3; }
