@@ -87,18 +87,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://suprabench.com/docs/api/webhooks.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://suprabench.com/docs/api/sdks.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
-  <url>
     <loc>https://suprabench.com/docs/api/reference/models.html</loc>
     <lastmod>2026-04-18</lastmod>
     <changefreq>monthly</changefreq>

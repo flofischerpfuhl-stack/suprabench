@@ -32,10 +32,15 @@ For a model $m$, with valid normalised per-bench medians $\mu_{m,b}$ over its
 evaluated benches $\mathcal{B}_m$:
 
 ```
-SupraScore(m) = Σ_b μ(m,b) · w(b)  /  Σ_b w(b)
-w(b)         = Q(b) · D(b) · H(b)
+SupraScore(m)   = Σ_b μ(m,b) · BenchScore(b)  /  Σ_b BenchScore(b)
+BenchScore(b)   = Q(b) · D(b) · H(b)          ∈ [0, 100]
 ```
 
+- **Bench Score** $\operatorname{BenchScore}(b) \in [0,100]$ — the bench's
+  contribution to a model's SupraScore, and the headline number shown for
+  each bench in the UI. It's the multiplicative product of the three factors
+  below; the natural range is $[0,100]$ because difficulty and headroom are
+  both already on $[0,1]$.
 - **Quality** $Q(b) \in [0,100]$ — mean of community ratings on relevance,
   contamination resistance, discriminability, reproducibility, then ×20.
 - **Difficulty** $D(b) \in [0,1]$ — median rater difficulty, scaled
@@ -83,7 +88,7 @@ not a gatekeeper. Whitelist lives in [`convex/urls.ts`](convex/urls.ts).
 
 - **Model Rankings** — global SupraScore leaderboard with tag-based filtering
   and per-tag filtered scores
-- **Benchmark Index** — quality-ranked benchmark directory with five-dimension
+- **Benchmark Index** — Bench-Score-ranked benchmark directory with five-dimension
   community ratings
 - **Score Submission** — three modes: single score, "fill row" (one bench, many
   models), "fill column" (one model, many benches)

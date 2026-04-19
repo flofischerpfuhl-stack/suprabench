@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260418c">
+    <link rel="stylesheet" href="css/style.css?v=20260418d">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -88,9 +88,9 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
             integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
-    <script src="js/convex.js?v=20260418c"></script>
+    <script src="js/convex.js?v=20260418d"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260418c"></script>
+    <script src="js/app.js?v=20260418d"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -182,7 +182,7 @@
     </div>
 
     <h2 class="section-header">Model Reality Ranking</h2>
-    <p style="color:var(--text3);margin-bottom:1rem;font-size:.85rem">Scores weighted by the community quality score of each benchmark.</p>
+    <p style="color:var(--text3);margin-bottom:1rem;font-size:.85rem">Each model score is weighted by the underlying benchmark's <em>Bench Score</em> (quality × difficulty × headroom).</p>
 
     <!-- List search -->
     <div class="list-search" x-show="rankedModels.length > 0">
@@ -445,7 +445,7 @@
                 <th style="width:50px">#</th>
                 <th class="sort-btn" @click="toggleBenchSort('name')">Benchmark</th>
                 <th>Type</th>
-                <th class="sort-btn" @click="toggleBenchSort('quality')">Quality Score</th>
+                <th class="sort-btn" @click="toggleBenchSort('score')" title="Bench Score = quality × difficulty × headroom. The bench's actual contribution to a model's SupraScore. Range 0–100.">Bench Score</th>
                 <th>Dimensions</th>
                 <th>Tags</th>
                 <th>Models</th>
@@ -463,7 +463,7 @@
                         <span class="badge" :class="b.isOfficial ? 'badge-official' : 'badge-community'" x-text="b.isOfficial ? 'Official' : 'Community'"></span>
                     </td>
                     <td class="b-quality">
-                        <span class="score-cell" :style="'color:'+qualityColor(b.qualityScore)" x-text="b.qualityScore.toFixed(0)"></span>
+                        <span class="score-cell" :style="'color:'+benchScoreColor(b.effectiveWeight)" x-text="b.effectiveWeight.toFixed(0)"></span>
                     </td>
                     <td class="b-dims">
                         <div class="dimension-dots">
@@ -596,13 +596,16 @@
                 <p class="tag-vote-hint" x-show="!user">Sign in to vote on tags or suggest new ones.</p>
             </div>
 
-            <!-- Quality Score Section -->
+            <!-- Bench Score Section -->
             <div class="quality-section">
-                <div style="display:flex;align-items:baseline;gap:1rem;margin-bottom:1.5rem">
-                    <span class="quality-overall" :style="'color:'+qualityColor(currentBench.qualityScore)" x-text="currentBench.qualityScore.toFixed(0)"></span>
-                    <span style="font-family:var(--hd);font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Quality Score</span>
+                <div style="display:flex;align-items:baseline;gap:1rem;margin-bottom:.4rem">
+                    <span class="quality-overall" :style="'color:'+benchScoreColor(currentBench.effectiveWeight)" x-text="currentBench.effectiveWeight.toFixed(0)"></span>
+                    <span style="font-family:var(--hd);font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Bench Score</span>
                     <span class="quality-rater-count" x-text="currentBench.raterCount + ' ratings'" style="margin-left:auto"></span>
                 </div>
+                <p style="color:var(--text3);font-size:.78rem;margin:0 0 1.4rem;line-height:1.5">
+                    Bench Score = Quality × Difficulty × Headroom — the bench's actual contribution to a model's SupraScore. Range 0–100.
+                </p>
 
                 <!-- Dimension Rows -->
                 <div class="quality-dimension-row">
@@ -688,7 +691,7 @@
                 <div class="quality-dimension-row dimension-row-difficulty">
                     <span class="quality-dim-label">
                         Difficulty
-                        <span class="dim-help" tabindex="0" data-tip="How much intelligence does this benchmark probe? 1 = trivial / toy. 5 = approaching general intelligence. Multiplied (not averaged) into the bench's effective ranking weight, so a frontier bench counts 5× more than a trivial one.">?</span>
+                        <span class="dim-help" tabindex="0" data-tip="How much intelligence does this benchmark probe? 1 = trivial / toy. 5 = approaching general intelligence. Multiplied (not averaged) into the Bench Score, so a frontier bench counts up to 5× more than a trivial one.">?</span>
                     </span>
                     <div class="quality-dim-bar">
                         <div class="quality-bar" style="width:100%">
@@ -705,11 +708,11 @@
                     </template>
                 </div>
 
-                <!-- Effective ranking weight breakdown -->
+                <!-- Bench Score breakdown -->
                 <div class="weight-breakdown" x-show="currentBench.raterCount > 0">
                     <div class="weight-breakdown__header">
-                        Effective ranking weight
-                        <span class="dim-help" tabindex="0" data-tip="Contribution of this bench to a model's SupraScore = quality × difficulty × headroom. Headroom = saturation penalty: shrinks as the mean of the top-K models on this bench approaches 100. Below 3 evaluated models the penalty is dampened to 1.0 (not enough signal yet).">?</span>
+                        Bench Score breakdown
+                        <span class="dim-help" tabindex="0" data-tip="Bench Score = quality × difficulty × headroom. It's the bench's contribution to a model's SupraScore. Headroom = saturation penalty: shrinks as the mean of the top-K models on this bench approaches 100. Below 3 evaluated models the penalty is dampened to 1.0 (not enough signal yet).">?</span>
                     </div>
                     <div class="weight-breakdown__row">
                         <span>Quality</span>
@@ -735,7 +738,7 @@
                         </span>
                     </div>
                     <div class="weight-breakdown__row weight-breakdown__total">
-                        <span>= Effective weight</span>
+                        <span>= Bench Score</span>
                         <span x-text="currentBench.effectiveWeight.toFixed(1)"></span>
                     </div>
                 </div>
@@ -1522,14 +1525,15 @@
             <p class="math-block">$$\mu_{m,b} \;=\; \operatorname{median}\bigl(\mathcal{S}_{m,b}\bigr)$$</p>
             <p>Median, not mean — one outlier submission cannot shift the result.</p>
 
-            <h4 class="qa-subheader">4. Compute the bench's effective weight</h4>
+            <h4 class="qa-subheader">4. Compute the Bench Score</h4>
             <p>Three independent factors. <strong>Quality</strong> (trust), <strong>difficulty</strong> (intelligence demand), <strong>headroom</strong> (saturation):</p>
-            <p class="math-block">$$w(b) \;=\; \underbrace{Q(b)}_{\text{quality}} \;\cdot\; \underbrace{D(b)}_{\text{difficulty}} \;\cdot\; \underbrace{H(b)}_{\text{headroom}}$$</p>
+            <p class="math-block">$$\operatorname{BenchScore}(b) \;=\; \underbrace{Q(b)}_{\text{quality}} \;\cdot\; \underbrace{D(b)}_{\text{difficulty}} \;\cdot\; \underbrace{H(b)}_{\text{headroom}}$$</p>
+            <p class="helper-text">Quality is on $[0,100]$; difficulty and headroom are both on $[0,1]$, so the Bench Score is naturally on $[0,100]$ — same scale as the per-model scores. It's also the headline number shown on every bench page and in the benchmarks list.</p>
 
             <h4 class="qa-subheader">5. The SupraScore</h4>
-            <p>A bench-weight-weighted average of the per-bench medians, over all benches $\mathcal{B}_m$ the model has been evaluated on:</p>
-            <p class="math-block">$$\operatorname{SupraScore}(m) \;=\; \frac{\displaystyle \sum_{b \in \mathcal{B}_m} \mu_{m,b} \cdot w(b)}{\displaystyle \sum_{b \in \mathcal{B}_m} w(b)}$$</p>
-            <p class="helper-text">Benches with $w(b)=0$ (e.g. zero difficulty, zero quality) are excluded from both numerator and denominator.</p>
+            <p>A Bench-Score-weighted average of the per-bench medians, over all benches $\mathcal{B}_m$ the model has been evaluated on:</p>
+            <p class="math-block">$$\operatorname{SupraScore}(m) \;=\; \frac{\displaystyle \sum_{b \in \mathcal{B}_m} \mu_{m,b} \cdot \operatorname{BenchScore}(b)}{\displaystyle \sum_{b \in \mathcal{B}_m} \operatorname{BenchScore}(b)}$$</p>
+            <p class="helper-text">Benches with $\operatorname{BenchScore}(b)=0$ (e.g. zero difficulty, zero quality) are excluded from both numerator and denominator.</p>
         </div>
     </div>
 

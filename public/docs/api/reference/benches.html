@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Benchmarks reference — SupraBench API</title>
-<meta name="description" content="List benchmarks with quality ratings, dimensions, model coverage and effective weight in the Supra-Score formula.">
+<meta name="description" content="List benchmarks with quality ratings, dimensions, model coverage and Bench Score (the actual ranking weight in the Supra-Score formula).">
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#030303">
 <meta name="color-scheme" content="dark">
 <link rel="canonical" href="https://suprabench.com/docs/api/reference/benches.html">
 <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
 <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
-<link rel="stylesheet" href="/css/docs.css?v=20260418c">
+<link rel="stylesheet" href="/css/docs.css?v=20260418d">
 <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
 </head>
 <body class="docs-body">
@@ -52,11 +52,9 @@
       <li><a href="/docs/api/reference/tags.html">Tags</a></li>
       <li><a href="/docs/api/reference/export.html">Bulk export</a></li>
     </ul>
-    <h4>Roadmap</h4>
+    <h4>Changelog</h4>
     <ul>
-      <li><a href="/docs/api/webhooks.html">Webhooks <span class="badge-soon">Soon</span></a></li>
-      <li><a href="/docs/api/sdks.html">SDKs <span class="badge-soon">Soon</span></a></li>
-      <li><a href="/docs/api/changelog.html">Changelog</a></li>
+      <li><a href="/docs/api/changelog.html">Release notes</a></li>
     </ul>
     </div>
   </aside>
@@ -65,9 +63,9 @@
 
     <h1>Benchmarks <span class="pill pill-ga">GA on launch</span></h1>
     <p class="lead">
-      List the benchmarks SupraBench tracks, with their community
-      quality rating, per-dimension breakdowns and effective weight
-      in the Supra-Score aggregation.
+      List the benchmarks SupraBench tracks, with their per-dimension
+      community ratings, raw quality score and Bench Score
+      (the actual ranking weight in the Supra-Score aggregation).
     </p>
 
     <div class="docs-meta">
@@ -81,8 +79,8 @@
       <span>https://api.suprabench.com/v1/benches</span>
     </div>
     <p>
-      Returns benchmarks sorted by <code>qualityScore</code> descending.
-      Hidden / disputed benchmarks are excluded.
+      Returns benchmarks sorted by <code>effectiveWeight</code> (Bench Score)
+      descending. Hidden / disputed benchmarks are excluded.
     </p>
 
     <h3 id="params">Query parameters</h3>
@@ -109,11 +107,11 @@
         <tr><td><span class="name">tags</span></td><td><span class="type">string[]</span></td><td><span class="desc">Capability tags voted up by the community.</span></td></tr>
         <tr><td><span class="name">scaleMin</span></td><td><span class="type">number</span></td><td><span class="desc">Native scale lower bound.</span></td></tr>
         <tr><td><span class="name">scaleMax</span></td><td><span class="type">number</span></td><td><span class="desc">Native scale upper bound.</span></td></tr>
-        <tr><td><span class="name">qualityScore</span></td><td><span class="type">number</span></td><td><span class="desc">0&ndash;100 community quality rating used as weight in the Supra-Score formula.</span></td></tr>
-        <tr><td><span class="name">dimensions</span></td><td><span class="type">object</span></td><td><span class="desc">Per-dimension averages (<code>relevance</code>, <code>rigor</code>, <code>coverage</code>, ...). Keys may evolve additively.</span></td></tr>
+        <tr><td><span class="name">qualityScore</span></td><td><span class="type">number</span></td><td><span class="desc">0&ndash;100, mean of the four quality dimensions × 20. Input into <code>effectiveWeight</code>.</span></td></tr>
+        <tr><td><span class="name">dimensions</span></td><td><span class="type">object</span></td><td><span class="desc">Per-dimension averages on a 1&ndash;5 scale: <code>relevance</code>, <code>contamination</code>, <code>discriminability</code>, <code>reproducibility</code>, <code>difficulty</code>. Keys may evolve additively.</span></td></tr>
         <tr><td><span class="name">modelCount</span></td><td><span class="type">integer</span></td><td><span class="desc">Distinct models with at least one valid score.</span></td></tr>
         <tr><td><span class="name">raterCount</span></td><td><span class="type">integer</span></td><td><span class="desc">Number of users who rated this benchmark.</span></td></tr>
-        <tr><td><span class="name">effectiveWeight</span></td><td><span class="type">number</span></td><td><span class="desc">Final weight this benchmark carries in the Supra-Score aggregation, after rater-count tempering.</span></td></tr>
+        <tr><td><span class="name">effectiveWeight</span></td><td><span class="type">number</span></td><td><span class="desc">Bench Score on 0&ndash;100. Equal to <code>qualityScore</code> × difficulty × headroom (both in [0, 1]). This is the actual ranking weight applied to a model's normalised score on this bench when computing the Supra-Score.</span></td></tr>
       </tbody>
     </table>
 
@@ -143,14 +141,15 @@
     "scaleMax": 100,
     "qualityScore": 87.4,
     "dimensions": {
-      "relevance": 92,
-      "rigor": 89,
-      "coverage": 78,
-      "reproducibility": 85
+      "relevance": 4.6,
+      "contamination": 4.5,
+      "discriminability": 3.9,
+      "reproducibility": 4.3,
+      "difficulty": 4.7
     },
     "modelCount": 41,
     "raterCount": 23,
-    "effectiveWeight": 0.873
+    "effectiveWeight": 56.8
   },
   {
     "slug": "mmlu-pro",
@@ -163,14 +162,15 @@
     "scaleMax": 1,
     "qualityScore": 81.2,
     "dimensions": {
-      "relevance": 88,
-      "rigor": 82,
-      "coverage": 75,
-      "reproducibility": 79
+      "relevance": 4.4,
+      "contamination": 4.1,
+      "discriminability": 3.7,
+      "reproducibility": 3.9,
+      "difficulty": 4.0
     },
     "modelCount": 67,
     "raterCount": 19,
-    "effectiveWeight": 0.802
+    "effectiveWeight": 41.0
   }
 ]</code></pre>
       </div>
@@ -209,6 +209,6 @@
   </aside>
 </div>
 
-<script src="/js/docs.js?v=20260418c" defer></script>
+<script src="/js/docs.js?v=20260418d" defer></script>
 </body>
 </html>

@@ -332,7 +332,7 @@ function supraBench() {
     benchDetailTab: "submissions",
 
     // ── Sort ──
-    benchSortField: "quality",
+    benchSortField: "score",
     benchSortAsc: false,
 
     // ── Mobile expand state for list rows ──
@@ -1157,7 +1157,9 @@ function supraBench() {
       if (this.benchSortField === "name") {
         sorted.sort((a, b) => this.benchSortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
       } else {
-        sorted.sort((a, b) => this.benchSortAsc ? a.qualityScore - b.qualityScore : b.qualityScore - a.qualityScore);
+        // Default ranking dimension is the Bench Score (effectiveWeight),
+        // i.e. quality × difficulty × headroom — the actual ranking weight.
+        sorted.sort((a, b) => this.benchSortAsc ? a.effectiveWeight - b.effectiveWeight : b.effectiveWeight - a.effectiveWeight);
       }
       return sorted;
     },
@@ -1171,6 +1173,16 @@ function supraBench() {
     qualityColor(score) {
       if (score > 70) return "var(--success)";
       if (score > 40) return "var(--warn)";
+      return "var(--danger)";
+    },
+
+    // Bench Score (effectiveWeight) lives on the same 0–100 scale as
+    // qualityScore but its empirical distribution skews lower because it's
+    // a 3-way product. Lower colour thresholds keep the list legible:
+    // ≥ 50 is genuinely a top-tier bench, 20–50 is solid, < 20 is weak.
+    benchScoreColor(score) {
+      if (score >= 50) return "var(--success)";
+      if (score >= 20) return "var(--warn)";
       return "var(--danger)";
     },
 

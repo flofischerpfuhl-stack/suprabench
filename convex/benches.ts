@@ -89,6 +89,16 @@ export const listRanked = query({
         qualityScore = Math.round(qualityScore * 10) / 10;
       }
 
+      // Bench Score = quality × difficulty × headroom (the bench's actual
+      // weight in the SupraScore). Range is [0, 100] because difficulty and
+      // headroom are both already normalised to [0, 1] in cache.ts.
+      // Fallback to qualityScore for benches that haven't been backfilled
+      // yet so the list never shows a misleading 0.
+      const effectiveWeight =
+        typeof bench.cachedEffectiveWeight === "number"
+          ? bench.cachedEffectiveWeight
+          : qualityScore;
+
       results.push({
         _id: bench._id,
         name: bench.name,
@@ -100,13 +110,14 @@ export const listRanked = query({
         scaleMin: bench.scaleMin,
         scaleMax: bench.scaleMax,
         qualityScore,
+        effectiveWeight,
         dimensions,
         modelCount,
         raterCount,
       });
     }
 
-    results.sort((a, b) => b.qualityScore - a.qualityScore);
+    results.sort((a, b) => b.effectiveWeight - a.effectiveWeight);
     return results;
   },
 });

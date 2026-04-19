@@ -373,7 +373,7 @@ export const publicListBenches = internalQuery({
         raterCount: b.cachedRaterCount,
         effectiveWeight: b.cachedEffectiveWeight,
       }))
-      .sort((a, b) => (b.qualityScore ?? 0) - (a.qualityScore ?? 0))
+      .sort((a, b) => (b.effectiveWeight ?? 0) - (a.effectiveWeight ?? 0))
       .slice(0, limit);
   },
 });
