@@ -2138,84 +2138,117 @@ ol.about-list li::before {
   }
 
   /* ── MODELS card layout ──
-     Two compact rows. Family-tag chip is suppressed on mobile per
-     editorial decision: it duplicates context users can find in the
-     model detail page, and otherwise misaligns the second column. */
+     Minimal preview card: rank | name + provider | SupraScore.
+     The score column is the right-hand anchor; when a tag filter is
+     active a smaller filtered score docks directly below the headline
+     score (NOT off to the left like before).
+     Coverage ("X benches") and the family-tag chip are intentionally
+     omitted — both belong on the model detail page; squeezing them
+     onto a phone card produced split text and bad alignment. */
   .models-list tr {
     grid-template-columns: 1.5rem 1fr auto;
     grid-template-areas:
-      "rank name     supra"
-      "rank meta     meta";
+      "rank  name      supra"
+      "rank  provider  filtered";
     align-items: baseline;
+    column-gap: 0.85rem;
   }
   .m-rank {
-    grid-area: rank; align-self: baseline;
+    grid-area: rank; align-self: start;
     color: var(--text3); font-family: var(--hd);
     font-size: 0.85rem; font-weight: 600;
   }
   .m-name {
     grid-area: name; font-weight: 600;
     font-size: 0.95rem; line-height: 1.25;
-    overflow: hidden;
+    min-width: 0;
   }
-  .m-name a { white-space: normal; word-break: break-word; }
-  .m-name .tag-sm { display: none; }   /* hide family chip on phones */
+  .m-name a {
+    white-space: normal; word-break: break-word;
+    display: inline;
+  }
+  .m-name .tag-sm { display: none; }
+  .m-provider {
+    grid-area: provider;
+    font-size: 0.78rem; color: var(--text3);
+    margin-top: 0.15rem;
+    min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .m-supra {
     grid-area: supra; align-self: start;
     text-align: right; font-family: var(--hd);
-    font-size: 1.15rem; font-weight: 600;
+    font-size: 1.2rem; font-weight: 600;
+    line-height: 1.1;
+    white-space: nowrap;
   }
-  /* Provider + coverage collapse into a single quiet meta line. */
-  .m-provider {
-    grid-area: meta; font-size: 0.78rem; color: var(--text3);
+  .m-filtered {
+    grid-area: filtered; align-self: start;
+    text-align: right; font-family: var(--hd);
+    font-size: 0.95rem; font-weight: 600;
     margin-top: 0.15rem;
+    line-height: 1.1;
+    white-space: nowrap;
   }
-  .m-coverage { display: none; }
-  .m-filtered { display: none; }
+  .m-coverage { display: none !important; }
 
   /* ── BENCHES card layout ──
-     Tighter grid, no border dividers. Dimension dots and tag pills
-     are intentionally hidden on phones — both belong on the bench
-     detail page where they have room to breathe. */
+     Three rows: name + score, type + dim-dots, model-count line.
+     Description is suppressed (lives on the bench detail page) and
+     tag pills are too — phone width can't show them without wrapping
+     the whole card. The five colored dimension dots are kept because
+     they're the most information-dense at-a-glance signal we have. */
   .benches-list tr {
     grid-template-columns: 1.5rem 1fr auto;
     grid-template-areas:
-      "rank name    quality"
-      "rank desc    quality"
-      "rank type    models";
+      "rank  name   quality"
+      "rank  type   dims"
+      "rank  models models";
     align-items: baseline;
+    column-gap: 0.85rem;
+    row-gap: 0.45rem;
   }
   .b-rank {
-    grid-area: rank; align-self: baseline;
+    grid-area: rank; align-self: start;
     color: var(--text3); font-family: var(--hd);
     font-size: 0.85rem; font-weight: 600;
   }
   .b-name {
     grid-area: name; font-weight: 600;
     font-size: 0.95rem; line-height: 1.25;
-    overflow: hidden;
+    min-width: 0;
   }
   .b-name a { white-space: normal; word-break: break-word; }
   .b-name br { display: none; }
-  .b-desc {
-    grid-area: desc; max-width: 100%; white-space: normal;
-    color: var(--text2); font-size: 0.8rem; line-height: 1.4;
-    margin-top: 0.2rem;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
+  .b-desc { display: none !important; }
   .b-quality {
     grid-area: quality; align-self: start;
     text-align: right; font-family: var(--hd);
     font-size: 1.4rem; font-weight: 600;
+    line-height: 1.1;
+    white-space: nowrap;
   }
-  /* Type badge + model count both ride the meta row defined above. */
-  .b-type    { grid-area: type; margin-top: 0.4rem; align-self: center; }
+  .b-type    {
+    grid-area: type; align-self: center;
+  }
+  .b-dims    {
+    grid-area: dims; align-self: center;
+    display: block !important;       /* override the desktop wrapper rule */
+    text-align: right;
+  }
+  .b-dims .dimension-dots {
+    justify-content: flex-end;
+    gap: 0.25rem;
+  }
+  .b-dims .dimension-dot {
+    width: 0.55rem; height: 1.1rem;
+  }
   .b-models  {
-    grid-area: models; margin-top: 0.4rem; align-self: center;
+    grid-area: models; align-self: center;
     text-align: right; color: var(--text3); font-size: 0.72rem;
+    margin-top: 0.1rem;
   }
-  .b-dims, .b-tags { display: none !important; }
+  .b-tags { display: none !important; }
 
   /* ── PROFILE submissions table ── */
   .profile-table tr {
