@@ -1583,12 +1583,21 @@ tr.clickable-row {
   .mobile-bar { display: flex; }
   .sidebar-backdrop { display: block; }
 
-  /* Sidebar becomes a slide-in drawer from the left. */
+  /* Sidebar becomes a slide-in drawer from the left.
+     The desktop padding rule already accounts for env(safe-area-inset-*),
+     but this mobile override used to flatten it back to a hard-coded
+     value — which meant on iPhones the SupraBench logo sat directly
+     under the Dynamic Island / notch when the drawer opened. We
+     reapply the same safe-area math here, scaled to the tighter
+     drawer paddings (1.25rem instead of 2rem). */
   .sidebar {
     width: 280px;
     min-width: 280px;
     border-right: 1px solid var(--border);
-    padding: 1.25rem 1.25rem 1.5rem;
+    padding: calc(env(safe-area-inset-top, 0px) + 1.25rem)
+             1.25rem
+             calc(env(safe-area-inset-bottom, 0px) + 1.5rem)
+             calc(env(safe-area-inset-left, 0px) + 1.25rem);
     z-index: 120;
     transform: translateX(-100%);
     transition: transform 0.24s ease;
