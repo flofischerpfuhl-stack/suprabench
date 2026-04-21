@@ -90,7 +90,7 @@ not a gatekeeper. Whitelist lives in [`convex/urls.ts`](convex/urls.ts).
 | Frontend | Vanilla HTML + [Alpine.js](https://alpinejs.dev) v3 (no React, no build step) |
 | Math rendering | [KaTeX](https://katex.org/) (About page only) |
 | Fonts | [Clash Display](https://www.fontshare.com/fonts/clash-display) via Fontshare CDN |
-| Discussion | None yet — planned via Giscus once GitHub integration is possible |
+| Discussion | [Giscus](https://giscus.app) on every bench and submission page, themed to match the site ([`public/css/giscus-theme.css`](public/css/giscus-theme.css)) |
 
 ## Features
 
