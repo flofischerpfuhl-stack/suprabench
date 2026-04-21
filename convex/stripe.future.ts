@@ -12,33 +12,14 @@
 //      stops working immediately (next request → 402).
 //
 // ──────────────────────────────────────────────────────────────
-// HOW TO ACTIVATE:
-//
-//   1. Stripe dashboard → create Products + Prices for the three tiers.
-//      Note the recurring Price IDs (e.g. "price_1QxYz...").
-//   2. Copy the Price IDs into PRICE_IDS below.
-//   3. Stripe → Developers → API keys → grab the secret key.
-//      Store it via:
-//        npx convex env set STRIPE_SECRET_KEY sk_live_xxx
-//   4. Stripe → Developers → Webhooks → "Add endpoint":
-//        URL: https://<your-deployment>.convex.site/stripe/webhook
-//        Events to send:
-//          - checkout.session.completed
-//          - customer.subscription.created
-//          - customer.subscription.updated
-//          - customer.subscription.deleted
-//          - invoice.payment_failed
-//        Copy the signing secret (whsec_...) and:
-//          npx convex env set STRIPE_WEBHOOK_SECRET whsec_xxx
-//   5. Set the public site URL Stripe should redirect back to:
-//        npx convex env set STRIPE_RETURN_URL https://suprabench.com/#api
-//   6. Uncomment the stripe* tables in convex/schema.ts.
-//   7. Move the code below out of comments, rename to convex/stripe.ts.
-//   8. In convex/http.ts:
-//        import { registerStripeRoutes } from "./stripe";
-//        registerStripeRoutes(http);
-//   9. `npx convex deploy --yes`. Test with Stripe's CLI:
-//        stripe trigger checkout.session.completed
+// HOW TO ACTIVATE: see ACTIVATION.md in the repo root for the
+// step-by-step runbook. Short summary: Products + Prices already
+// exist in Stripe (PRICE_IDS below are live). What's missing before
+// users can actually pay is (a) uncommenting the code block, (b)
+// uncommenting the stripe* tables in schema.ts, (c) registering the
+// /stripe/webhook endpoint in Stripe and setting STRIPE_WEBHOOK_SECRET
+// + STRIPE_SECRET_KEY on prod env, (d) uncommenting the
+// subscription UI in public/index.html. Three independent locks.
 //
 // Why no node-stripe SDK?
 //   Convex's runtime doesn't ship a Node environment for HTTP actions
@@ -57,7 +38,7 @@ import { internalMutation, internalQuery, mutation, httpAction } from "./_genera
 import { internal } from "./_generated/api";
 import { httpRouter } from "convex/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { TIERS, type Tier } from "./api";
+import { TIERS, type Tier } from "./tiers";
 
 // ── Configuration ──────────────────────────────────────────
 
@@ -65,10 +46,14 @@ import { TIERS, type Tier } from "./api";
 // Stripe dashboard. Use *recurring* prices, not one-time.
 // enterprise_plus is excluded — that tier is manual/contract and
 // never hits self-serve checkout.
+// Live-mode Price IDs (created 2026-04). These are NOT secrets — Stripe
+// embeds them in every Checkout URL and they're safe to ship in public
+// source. The *Product* these belong to lives in our Stripe account;
+// without our secret key nobody else can attach a Checkout to them.
 const PRICE_IDS: Record<Exclude<Tier, "enterprise_plus">, string> = {
-  starter:    "price_REPLACE_ME_STARTER",
-  pro:        "price_REPLACE_ME_PRO",
-  enterprise: "price_REPLACE_ME_ENTERPRISE",
+  starter:    "price_1TOj2pDffjr690qOwgavreSA",
+  pro:        "price_1TOj3kDffjr690qOijRWNO0v",
+  enterprise: "price_1TOj4QDffjr690qOvgEZmj6s",
 };
 
 // Reverse lookup so the webhook can map incoming Price IDs back to tiers.
