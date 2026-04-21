@@ -23,11 +23,11 @@ A paid API:
 
 | Endpoint | Returns | Cache TTL | Min tier |
 |---|---|---|---|
-| `GET /v1/models` | ranked models with `supraScore`, `provider`, tags, `benchCount` | 5 min | hobby |
-| `GET /v1/models/{slug}` | model detail incl. per-bench scores | 5 min | hobby |
-| `GET /v1/benches` | benches with `qualityScore`, dimensions, `modelCount` | 5 min | hobby |
-| `GET /v1/tags` | all known tags with counts | 1 h | hobby |
-| `GET /v1/best?tag=…` | top-N models filtered by tag | 5 min | hobby |
+| `GET /v1/models` | ranked models with `supraScore`, `provider`, tags, `benchCount` | 5 min | starter |
+| `GET /v1/models/{slug}` | model detail incl. per-bench scores | 5 min | starter |
+| `GET /v1/benches` | benches with `qualityScore`, dimensions, `modelCount` | 5 min | starter |
+| `GET /v1/tags` | all known tags with counts | 1 h | starter |
+| `GET /v1/best?tag=…` | top-N models filtered by tag | 5 min | starter |
 | `GET /v1/export.json` | full snapshot, JSON | 24 h | **pro** |
 
 Auth: bearer token in `Authorization` header. Tokens look like
@@ -45,13 +45,28 @@ subs return 402 `subscription_inactive`.
 ## Pricing
 
 No free tier (per the original brief). Three paid tiers + custom enterprise.
+**Prices are TBD until launch** — the waitlist is how we figure out
+what each tier should actually cost. Quotas, RPM and key counts are
+the part of the tier shape that's locked.
 
-| Tier | €/month | Requests/month | RPM | Endpoints | Use-case |
-|---|---|---|---|---|---|
-| **Hobby** | 7 | 5 000 | 60 | all read endpoints, no `/export` | indie router / personal dashboard |
-| **Pro** | 19 | 50 000 | 200 | + `/export.json` daily | small AI startup |
-| **Scale** | 59 | 500 000 | 600 | + priority queue (planned) | observability vendor |
-| **Enterprise** | custom | custom | custom | + SLA, on-prem snapshot drops | hyperscaler / lab |
+> **Single source of truth:** these numbers (and the pending price
+> column) are mirrored from [`convex/tiers.ts`](../convex/tiers.ts)
+> — that file is the only place to edit them.
+> `scripts/check-tier-consistency.mjs` runs in CI and will fail the
+> build if this table drifts. When we set real prices we update
+> `tiers.ts` and the `TBD` cells here in the same commit.
+
+| Tier | $ / month (USD) | Requests / month | RPM | Max keys | Endpoints | Use-case |
+|---|---|---|---|---|---|---|
+| **Starter** | TBD | 10 000 | 60 | 1 | all read endpoints, no `/export` | indie router / personal dashboard |
+| **Pro** | TBD | 100 000 | 300 | 3 | + `/export.json` daily | small AI startup |
+| **Enterprise** | TBD | 1 000 000 | 1 200 | 10 | + priority queue (planned) | observability vendor |
+| **Enterprise+** | custom | custom | custom | 50+ | + SLA, on-prem snapshot drops | hyperscaler / lab |
+
+Billing currency at launch will be USD (global default for developer APIs).
+Stripe Tax adds EU VAT automatically at checkout for B2C / non-VAT-ID
+customers; B2B reverse-charge is supported when the buyer provides a
+valid VAT-ID.
 
 ## Payment: Stripe
 
@@ -65,13 +80,14 @@ Why Stripe over Lemon Squeezy / Polar:
 - Wide language SDK support if we add a Python helper later.
 
 Tradeoff: we collect VAT but are the merchant of record (Lemon Squeezy
-would absorb that liability). For €7–€60 SaaS this is fine; revisit
-if we hit MOSS-relevant volumes.
+would absorb that liability). For the per-seat SaaS price points we're
+targeting this is fine; revisit if we hit MOSS-relevant volumes.
 
 ### Stripe setup checklist (when activating)
 
 1. Stripe dashboard → Products → create three Products: "SupraBench
-   API — Hobby / Pro / Scale". Each with one *recurring* monthly Price.
+   API — Starter / Pro / Enterprise". Each with one *recurring*
+   monthly Price. (Enterprise+ is manual invoicing, no Stripe Product.)
 2. Copy the three `price_…` IDs into `PRICE_IDS` in
    `convex/stripe.future.ts`.
 3. `npx convex env set STRIPE_SECRET_KEY sk_live_…`

@@ -5,7 +5,8 @@
   "description": "Community-driven AI model rankings based on benchmark trustworthiness",
   "scripts": {
     "dev": "npx convex dev",
-    "deploy": "npx convex deploy"
+    "deploy": "npx convex deploy",
+    "check:tiers": "node scripts/check-tier-consistency.mjs"
   },
   "dependencies": {
     "@auth/core": "0.37.0",

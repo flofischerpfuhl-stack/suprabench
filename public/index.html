@@ -143,7 +143,7 @@
     </div>
 
     <div class="sidebar-footer">
-        Community-driven.<br>No corporate influence.<br>BSL 1.1 Licensed.
+        Community-driven.<br>No corporate influence.<br>BSL 1.1 Licensed.<br>
         <a class="sidebar-source" href="https://gitlab.com/florian-fischer-group/suprabench"
            target="_blank" rel="noopener noreferrer"
            title="View source on GitLab">
@@ -1877,7 +1877,7 @@
             </span>
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q10')" x-transition>
-            <p>Not yet &mdash; the contract is final, the implementation is built, the docs are live. We just don't flip the public <code>/v1/</code> endpoints on until enough developers are actually waiting for it; running Stripe + a dedicated edge cache for an API nobody uses isn't free. Pricing starts at <strong>$5 / month</strong> (10 000 requests) and goes up to custom enterprise plans, all billed in USD via Stripe.</p>
+            <p>Not yet &mdash; the contract is final, the implementation is built, the docs are live. We just don't flip the public <code>/v1/</code> endpoints on until enough developers are actually waiting for it; running Stripe + a dedicated edge cache for an API nobody uses isn't free. Pricing is <strong>TBD until launch</strong> &mdash; the waitlist is how we figure out what each tier should actually cost. Enterprise plans are always custom. Billing will be handled by Stripe (EU VAT collected automatically).</p>
             <p>Read the full <a href="/docs/api/" style="color:var(--accent)"><strong>API documentation</strong></a> &mdash; every endpoint, error code, rate-limit and example is already there. Then <strong>join the waitlist</strong> for the tier you'd actually subscribe to: <a href="#profile" @click.prevent="navigate('profile'); $nextTick(() => profileTab='api')">Profile → API &amp; Billing</a>. When the queue hits launch threshold we ship and email everyone in signup order.</p>
             <p class="helper-text">Have a specific use case (research, dashboard, leaderboard mirror)? Tell us via a GitLab issue &mdash; high-signal asks weigh more than passive signups.</p>
         </div>
@@ -2057,11 +2057,11 @@
 
                 <h2 class="section-header">Plans</h2>
                 <div class="tier-grid">
-                    <!-- Hobby -->
-                    <div class="tier-card" :class="{'is-current': isOnWaitlist('hobby')}">
-                        <span class="tier-card__badge" x-show="isOnWaitlist('hobby')">On waitlist</span>
-                        <h3 class="tier-card__name">Hobby</h3>
-                        <p class="tier-card__price">$5 <small>/ month</small></p>
+                    <!-- Starter -->
+                    <div class="tier-card" :class="{'is-current': isOnWaitlist('starter')}">
+                        <span class="tier-card__badge" x-show="isOnWaitlist('starter')">On waitlist</span>
+                        <h3 class="tier-card__name">Starter</h3>
+                        <p class="tier-card__price">TBD <small>at launch</small></p>
                         <p class="tier-card__quota">10 000 requests / month</p>
                         <ul class="tier-card__features">
                             <li>Read access to all public endpoints</li>
@@ -2070,8 +2070,8 @@
                             <li>Community support</li>
                         </ul>
                         <button class="btn btn-sm btn-outline" :disabled="apiBusy"
-                                @click="toggleWaitlist('hobby')"
-                                x-text="isOnWaitlist('hobby') ? 'Leave waitlist' : 'Join waitlist'"></button>
+                                @click="toggleWaitlist('starter')"
+                                x-text="isOnWaitlist('starter') ? 'Leave waitlist' : 'Join waitlist'"></button>
                     </div>
 
                     <!-- Pro (featured) -->
@@ -2079,10 +2079,10 @@
                         <span class="tier-card__badge" x-show="!isOnWaitlist('pro')">Most popular</span>
                         <span class="tier-card__badge" x-show="isOnWaitlist('pro')">On waitlist</span>
                         <h3 class="tier-card__name">Pro</h3>
-                        <p class="tier-card__price">$19 <small>/ month</small></p>
+                        <p class="tier-card__price">TBD <small>at launch</small></p>
                         <p class="tier-card__quota">100 000 requests / month</p>
                         <ul class="tier-card__features">
-                            <li>Everything in Hobby</li>
+                            <li>Everything in Starter</li>
                             <li>300 req/min rate limit</li>
                             <li>3 API keys</li>
                             <li>Email support</li>
@@ -2093,11 +2093,11 @@
                                 x-text="isOnWaitlist('pro') ? 'Leave waitlist' : 'Join waitlist'"></button>
                     </div>
 
-                    <!-- Scale -->
-                    <div class="tier-card" :class="{'is-current': isOnWaitlist('scale')}">
-                        <span class="tier-card__badge" x-show="isOnWaitlist('scale')">On waitlist</span>
-                        <h3 class="tier-card__name">Scale</h3>
-                        <p class="tier-card__price">$79 <small>/ month</small></p>
+                    <!-- Enterprise -->
+                    <div class="tier-card" :class="{'is-current': isOnWaitlist('enterprise')}">
+                        <span class="tier-card__badge" x-show="isOnWaitlist('enterprise')">On waitlist</span>
+                        <h3 class="tier-card__name">Enterprise</h3>
+                        <p class="tier-card__price">TBD <small>at launch</small></p>
                         <p class="tier-card__quota">1 000 000 requests / month</p>
                         <ul class="tier-card__features">
                             <li>Everything in Pro</li>
@@ -2107,36 +2107,37 @@
                             <li>Webhooks (beta)</li>
                         </ul>
                         <button class="btn btn-sm btn-outline" :disabled="apiBusy"
-                                @click="toggleWaitlist('scale')"
-                                x-text="isOnWaitlist('scale') ? 'Leave waitlist' : 'Join waitlist'"></button>
+                                @click="toggleWaitlist('enterprise')"
+                                x-text="isOnWaitlist('enterprise') ? 'Leave waitlist' : 'Join waitlist'"></button>
                     </div>
 
-                    <!-- Enterprise -->
-                    <div class="tier-card" :class="{'is-current': isOnWaitlist('enterprise')}">
-                        <span class="tier-card__badge" x-show="isOnWaitlist('enterprise')">On waitlist</span>
-                        <h3 class="tier-card__name">Enterprise</h3>
+                    <!-- Enterprise+ -->
+                    <div class="tier-card" :class="{'is-current': isOnWaitlist('enterprise_plus')}">
+                        <span class="tier-card__badge" x-show="isOnWaitlist('enterprise_plus')">On waitlist</span>
+                        <h3 class="tier-card__name">Enterprise+</h3>
                         <p class="tier-card__price">Custom</p>
                         <p class="tier-card__quota">Custom quota, SLA, on-prem mirror</p>
                         <ul class="tier-card__features">
-                            <li>Everything in Scale</li>
+                            <li>Everything in Enterprise</li>
                             <li>Custom rate limits</li>
                             <li>50+ keys + IP allowlists</li>
                             <li>SLA + dedicated Slack channel</li>
                             <li>Custom data agreements</li>
                         </ul>
                         <button class="btn btn-sm btn-outline" :disabled="apiBusy"
-                                @click="toggleWaitlist('enterprise')"
-                                x-text="isOnWaitlist('enterprise') ? 'Leave waitlist' : 'Join waitlist'"></button>
+                                @click="toggleWaitlist('enterprise_plus')"
+                                x-text="isOnWaitlist('enterprise_plus') ? 'Leave waitlist' : 'Join waitlist'"></button>
                     </div>
                 </div>
 
                 <p style="color:var(--text3);font-size:.78rem;margin-top:-1rem">
-                    Prices are USD, net of any applicable tax. Read the full
-                    <a href="/docs/api/" style="color:var(--accent)">API documentation →</a>.
-                    Billing handled by
-                    <a href="https://stripe.com" target="_blank" rel="noopener">Stripe</a>;
-                    Stripe collects EU VAT automatically and supports B2B reverse-charge
-                    when you provide a valid VAT-ID at checkout.
+                    Pricing is intentionally TBD until launch &mdash; the waitlist
+                    is how we figure out what each tier should actually cost.
+                    Read the full <a href="/docs/api/" style="color:var(--accent)">API documentation →</a>.
+                    Billing will be handled by
+                    <a href="https://stripe.com" target="_blank" rel="noopener">Stripe</a>
+                    (EU VAT collected automatically, B2B reverse-charge supported
+                    via VAT-ID at checkout).
                     See <a href="/legal/terms#api">Terms § API</a> for cancellation,
                     refund and uptime details.
                 </p>

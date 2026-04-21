@@ -7,12 +7,13 @@
 > accordingly — so a single number per model respects how trustworthy and how
 > informative each underlying benchmark actually is.
 
-> **This repository is open for transparency, not for redeployment.** The full
-> codebase is published so anyone can audit the SupraScore math, the
-> anti-gaming rules, the official-source whitelist and the moderation logic
-> end-to-end. Running your own copy as a competing public service is
-> **not permitted** — see [License](#license). If you want to *use* SupraBench,
-> visit [suprabench.ai](https://suprabench.ai).
+> The full codebase is published so anyone can audit the SupraScore
+> math, the anti-gaming rules, the official-source whitelist and the
+> moderation logic end-to-end. Read the code, reproduce the numbers,
+> fork for research and learning, open issues and PRs. If you want
+> to *use* SupraBench day-to-day, visit
+> [suprabench.ai](https://suprabench.ai). Licensing terms are in
+> [LICENSE](LICENSE).
 
 ---
 
@@ -227,6 +228,22 @@ generation, rate limiting) and
 [`convex/stripe.future.ts`](convex/stripe.future.ts) (Checkout,
 billing portal, signed webhook). Not active yet.
 
+**Tier shape lives in exactly one place:**
+[`convex/tiers.ts`](convex/tiers.ts). Every other file (the
+tier-cards in `public/index.html`, the API docs tables under
+`public/docs/api/`, the roadmap markdown) mirrors quotas, RPM and
+key counts from that file. **Prices are intentionally `null` /
+"TBD" everywhere right now** — the API is finished and Stripe-wired,
+but final pricing is collected via the waitlist before launch. The
+real numbers will live in the Stripe dashboard (Products → recurring
+Prices) and never in this repo: at checkout we send only the Stripe
+Price ID and Stripe owns the amount/currency. To prevent drift,
+`npm run check:tiers` runs
+[`scripts/check-tier-consistency.mjs`](scripts/check-tier-consistency.mjs)
+which parses `tiers.ts` and grep-validates every other place — it
+fails with a non-zero exit code if any document disagrees. Run it
+before merging any tier change (or wire it into CI).
+
 ## Reading the code
 
 This repo is intentionally simple to read end-to-end:
@@ -241,13 +258,15 @@ This repo is intentionally simple to read end-to-end:
 - **Frontend** — single-page app, vanilla HTML + Alpine.js, no build step:
   [`public/index.html`](public/index.html), [`public/js/app.js`](public/js/app.js).
 
-There is **no setup guide** here on purpose. The license permits
-non-commercial use (research, audit, local reproduction) but not running
-this codebase as a competing public service, so an install script would
-mostly steer people toward something they can't ship. If you want to
-verify a number, the public dataset is the easier path — see
-[Public API](#public-api-planned). For genuine reproducibility questions,
-open an issue on the [tracker](https://gitlab.com/florian-fischer-group/suprabench/-/issues).
+There is **no setup guide** here on purpose — for most questions
+("what does bench X score?", "how is model Y's SupraScore computed?")
+the easier path is the public dataset, which the (planned)
+[Public API](#public-api-planned) exposes directly. If you're
+digging into the math, an install isn't required: `convex/rankings.ts`
+is self-contained enough to reproduce against the dataset in any
+language. For reproducibility or implementation questions, open an
+issue on the [tracker](https://gitlab.com/florian-fischer-group/suprabench/-/issues) —
+PRs are welcome too.
 
 ## Security model
 
@@ -279,15 +298,13 @@ privately via the email in [`/legal/imprint`](https://suprabench.ai/legal/imprin
 
 ## License
 
-[Business Source License 1.1](LICENSE)
-
-- **Change Date:** 2029-01-01 → converts to Apache License 2.0.
-- **Permitted, no permission needed:** reading the code, auditing the
-  math, running it locally for verification, using it for evaluating
-  AI models or deriving benchmarks, contributing patches, and any
-  non-commercial use (copy, modify, create derivative works, redistribute).
-- **Requires explicit permission from the Licensor:** commercial use,
-  including running this codebase as a competing public service.
+[Business Source License 1.1](LICENSE) — see the [`LICENSE`](LICENSE)
+file for the exact terms. The short version: read, fork, study,
+patch, redistribute, and use non-commercially; commercial use has a
+standard BSL carve-out until the **Change Date of 2029-01-01**, when
+the whole codebase auto-converts to Apache License 2.0. If you're
+unsure whether your use case fits, the LICENSE text is short and
+covers it; open an issue if you'd like clarification.
 
 > Tip for the curious: the simplest path to verify the SupraScore
 > independently is to reproduce the math from

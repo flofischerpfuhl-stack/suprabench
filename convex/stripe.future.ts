@@ -63,10 +63,12 @@ import { TIERS, type Tier } from "./api";
 
 // Map our tier names → Stripe Price IDs. Keep in sync with the
 // Stripe dashboard. Use *recurring* prices, not one-time.
-const PRICE_IDS: Record<Exclude<Tier, "enterprise">, string> = {
-  hobby: "price_REPLACE_ME_HOBBY",
-  pro:   "price_REPLACE_ME_PRO",
-  scale: "price_REPLACE_ME_SCALE",
+// enterprise_plus is excluded — that tier is manual/contract and
+// never hits self-serve checkout.
+const PRICE_IDS: Record<Exclude<Tier, "enterprise_plus">, string> = {
+  starter:    "price_REPLACE_ME_STARTER",
+  pro:        "price_REPLACE_ME_PRO",
+  enterprise: "price_REPLACE_ME_ENTERPRISE",
 };
 
 // Reverse lookup so the webhook can map incoming Price IDs back to tiers.
@@ -120,7 +122,7 @@ export const createCheckout = mutation({
   handler: async (ctx, { tier }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("not signed in");
-    if (tier === "enterprise") throw new Error("contact sales for enterprise");
+    if (tier === "enterprise_plus") throw new Error("contact sales for enterprise+");
     if (!(tier in PRICE_IDS)) throw new Error("unknown tier");
 
     const user = await ctx.db.get(userId);
@@ -158,7 +160,7 @@ export const createCheckout = mutation({
       body: form({
         mode: "subscription",
         customer: customerId,
-        "line_items[0][price]": PRICE_IDS[tier as Exclude<Tier, "enterprise">],
+        "line_items[0][price]": PRICE_IDS[tier as Exclude<Tier, "enterprise_plus">],
         "line_items[0][quantity]": 1,
         success_url: `${returnUrl}?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url:  `${returnUrl}?stripe=cancel`,

@@ -623,6 +623,39 @@ html.docs-html, body.docs-body {
   .params th, .params td { padding: 0.55rem 0.6rem; }
 
   .docs-pagenav { grid-template-columns: 1fr; }
+
+  /* Tables can easily exceed viewport width on phones (tier table has
+     6 columns, params table has long type cells). Without this rule,
+     the whole page scrolls horizontally. Switching the table itself
+     to a scrolling block contains the overflow and leaves the rest
+     of the article in place. Trade-off: the border-radius-clip on
+     .tier-table is lost on mobile, which is acceptable. */
+  .docs-content .tier-table,
+  .docs-content .params {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    /* Subtle shadow hint on the right edge tells the user there's
+       more to scroll; hidden once scrolled. */
+    background-image:
+      linear-gradient(to right, var(--bg) 30%, transparent),
+      linear-gradient(to left,  var(--bg) 30%, transparent);
+    background-position: left center, right center;
+    background-repeat: no-repeat;
+    background-size: 20px 100%, 20px 100%;
+    background-attachment: local, local;
+  }
+  /* Prevent cell text from wrapping into ultra-narrow columns inside
+     the scrolling table — keep natural column widths. */
+  .docs-content .tier-table th,
+  .docs-content .tier-table td {
+    white-space: nowrap;
+  }
+  .docs-content .params th,
+  .docs-content .params td:first-child {
+    white-space: nowrap;
+  }
 }
 @media (min-width: 801px) {
   .docs-nav-toggle { display: none; }

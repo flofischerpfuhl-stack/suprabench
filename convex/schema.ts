@@ -169,7 +169,7 @@ export default defineSchema({
   apiWaitlist: defineTable({
     userId: v.optional(v.id("users")),  // null = signed-out signup (we still capture)
     email: v.string(),
-    tier: v.string(),                   // "hobby" | "pro" | "scale" | "enterprise"
+    tier: v.string(),                   // "starter" | "pro" | "enterprise" | "enterprise_plus"
     createdAt: v.number(),
     notifiedAt: v.optional(v.number()),
   })
@@ -198,11 +198,14 @@ export default defineSchema({
     prefix: v.string(),                 // "sb_live_a1b2c3d4" — for UI display
     name: v.string(),                   // user-supplied label
     ownerUserId: v.id("users"),
+    // Tier names are mirrored from convex/tiers.ts (the single source
+    // of truth for pricing + quotas). Don't put numbers in this comment
+    // — they'll drift; see tiers.ts.
     tier: v.union(
-      v.literal("hobby"),               //  7 €/mo, 5k req
-      v.literal("pro"),                 // 19 €/mo, 50k req
-      v.literal("scale"),               // 59 €/mo, 500k req
-      v.literal("enterprise"),          // negotiated
+      v.literal("starter"),
+      v.literal("pro"),
+      v.literal("enterprise"),
+      v.literal("enterprise_plus"),
     ),
     monthlyQuota: v.number(),
     rpmLimit: v.number(),               // sliding-window per minute
@@ -266,7 +269,7 @@ export default defineSchema({
     stripeCustomerId: v.string(),
     stripeSubscriptionId: v.string(),
     stripePriceId: v.string(),
-    tier: v.string(),                   // "hobby" | "pro" | "scale"
+    tier: v.string(),                   // "starter" | "pro" | "enterprise" (not enterprise_plus — that's manual)
     status: v.string(),                 // "active" | "past_due" | "canceled" | "trialing" | …
     currentPeriodEnd: v.number(),
     cancelAtPeriodEnd: v.boolean(),

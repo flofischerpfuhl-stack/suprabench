@@ -216,3 +216,51 @@ export const backfillAll = internalMutation({
     };
   },
 });
+
+// One-off: rename tier keys in the live `apiWaitlist` table after the
+// tier taxonomy changed from hobby/pro/scale/enterprise to the new
+// starter/pro/enterprise/enterprise_plus scheme.
+//
+//   hobby      → starter
+//   pro        → pro              (unchanged, skipped)
+//   scale      → enterprise
+//   enterprise → enterprise_plus
+//
+// Order matters: rename the top tier FIRST, otherwise the scale →
+// enterprise step would clobber unrelated enterprise rows that
+// haven't been renamed yet.
+//
+// Idempotent: re-running on already-renamed rows is a no-op because
+// the source keys no longer appear.
+//
+// Run once after deploying the new code:
+//   npx convex run --prod migrations:renameWaitlistTiers
+export const renameWaitlistTiers = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db.query("apiWaitlist").collect();
+    let enterprisePlus = 0, enterprise = 0, starter = 0;
+    for (const r of rows) {
+      if (r.tier === "enterprise") {
+        await ctx.db.patch(r._id, { tier: "enterprise_plus" });
+        enterprisePlus++;
+      }
+    }
+    for (const r of rows) {
+      if (r.tier === "scale") {
+        await ctx.db.patch(r._id, { tier: "enterprise" });
+        enterprise++;
+      }
+    }
+    for (const r of rows) {
+      if (r.tier === "hobby") {
+        await ctx.db.patch(r._id, { tier: "starter" });
+        starter++;
+      }
+    }
+    return {
+      total: rows.length,
+      renamed: { enterprisePlus, enterprise, starter },
+    };
+  },
+});

@@ -41,34 +41,10 @@ import { internal } from "./_generated/api";
 import { httpRouter } from "convex/server";
 import { Id } from "./_generated/dataModel";
 import { getAuthUserId } from "@convex-dev/auth/server";
-
-// Tier configuration — single source of truth used by API + Stripe.
-//
-// IMPORTANT: these numbers are the single source of truth for:
-//   • the Stripe Price IDs in stripe.future.ts
-//   • the marketing tier-cards in public/index.html (Profile → API)
-//   • the public docs under /docs/api/ (landing tier table + the
-//     authentication.html and rate-limits.html quota tables)
-//   • the legal contract in public/legal/terms.html (§ 14)
-// If you change a number here, change it in all four places.
-//
-// Pricing is in USD because that's the global default for developer
-// APIs (Stripe, OpenAI, GitHub, etc. all quote USD). Stripe adds
-// EU VAT automatically at checkout for B2C / non-VAT-ID customers.
-//
-// Why these specific numbers? Convex Pro ($25/month) gives 25M function
-// calls + 100GB egress. With our 5-minute CDN cache (Cloudflare in
-// front of /api/*), the vast majority of requests never reach Convex.
-// At ~50% origin-hit rate that's headroom for ~500 Pro customers on a
-// single $25 plan, so we can price the bottom tier aggressively to
-// remove friction for hobbyists / open-source devs.
-export const TIERS = {
-  hobby:     { priceUsd:    5, monthlyQuota:    10_000, rpmLimit:   60, allowExport: false, maxKeys:  1 },
-  pro:       { priceUsd:   19, monthlyQuota:   100_000, rpmLimit:  300, allowExport: true,  maxKeys:  3 },
-  scale:     { priceUsd:   79, monthlyQuota: 1_000_000, rpmLimit: 1200, allowExport: true,  maxKeys: 10 },
-  enterprise:{ priceUsd: null, monthlyQuota: 10_000_000, rpmLimit: 6000, allowExport: true, maxKeys: 50 },
-} as const;
-export type Tier = keyof typeof TIERS;
+// Tier pricing / quotas live in convex/tiers.ts (single source of
+// truth — see header comment there for the list of files that must
+// be kept in sync, and the lint script that enforces it).
+import { TIERS, type Tier } from "./tiers";
 
 const KEY_PREFIX = "sb_live_";
 // Cache TTLs (per docs/api-roadmap.md). Sent as Cache-Control headers
@@ -173,10 +149,10 @@ export const createKey = mutation({
     if (!userId) throw new Error("not signed in");
     if (!(tier in TIERS)) throw new Error("unknown tier");
 
-    // Enforce subscription state. Enterprise keys are minted manually
-    // (see comment in stripe.future.ts); we let admins do it via
-    // npx convex run api:adminCreateEnterpriseKey.
-    if (tier !== "enterprise") {
+    // Enforce subscription state. enterprise_plus keys are minted
+    // manually (see comment in stripe.future.ts); admins do it via
+    // npx convex run api:adminCreateEnterprisePlusKey.
+    if (tier !== "enterprise_plus") {
       const sub = await ctx.db.query("stripeSubscriptions")
         .withIndex("by_user", q => q.eq("userId", userId))
         .filter(q => q.eq(q.field("tier"), tier))

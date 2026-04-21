@@ -14,7 +14,10 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-const TIERS = ["hobby", "pro", "scale", "enterprise"] as const;
+// Mirrors the keys in convex/tiers.ts — keep in sync if those change.
+// We duplicate rather than import so the list stays a `const` string
+// union for the v.string() validator below.
+const TIERS = ["starter", "pro", "enterprise", "enterprise_plus"] as const;
 
 // Returns the rows for the current user, so the UI can render
 // "you signed up for Pro on …" instead of the bare button.
