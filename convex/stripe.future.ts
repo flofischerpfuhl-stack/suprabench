@@ -34,7 +34,7 @@ export {};
 /* ════════════════════════════════════════════════════════════
 
 import { v } from "convex/values";
-import { internalMutation, internalQuery, mutation, httpAction } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query, httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { httpRouter } from "convex/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
@@ -138,7 +138,11 @@ export const createCheckout = mutation({
       });
     }
 
-    const returnUrl = process.env.STRIPE_RETURN_URL ?? "https://suprabench.com/#api";
+    // The SPA's profile route is `/#profile`; _handleStripeReturn in
+    // app.js forces profileTab='api' after reading ?stripe=success,
+    // so the user lands directly on the API & Billing tab regardless
+    // of what STRIPE_RETURN_URL points at.
+    const returnUrl = process.env.STRIPE_RETURN_URL ?? "https://suprabench.ai/#profile";
     const session = await stripeFetch("/checkout/sessions", {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -175,13 +179,36 @@ export const createBillingPortalSession = mutation({
       .withIndex("by_user", q => q.eq("userId", userId)).first();
     if (!mapping) throw new Error("no stripe customer");
 
-    const returnUrl = process.env.STRIPE_RETURN_URL ?? "https://suprabench.com/#api";
+    const returnUrl = process.env.STRIPE_RETURN_URL ?? "https://suprabench.ai/#profile";
     const portal = await stripeFetch("/billing_portal/sessions", {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: form({ customer: mapping.stripeCustomerId, return_url: returnUrl }),
     });
     return { url: portal.url };
+  },
+});
+
+// What the profile UI needs on the API & Billing tab. Returns null
+// for users without a stripeSubscriptions row yet. Order-desc so if
+// a user has ever had multiple subs (e.g. upgraded, then cancelled,
+// then resubscribed) we always reflect the most recent one.
+export const mySubscription = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const sub = await ctx.db.query("stripeSubscriptions")
+      .withIndex("by_user", q => q.eq("userId", userId))
+      .order("desc")
+      .first();
+    if (!sub) return null;
+    return {
+      tier: sub.tier,
+      status: sub.status,
+      currentPeriodEnd: sub.currentPeriodEnd,
+      cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+    };
   },
 });
 

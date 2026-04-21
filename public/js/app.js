@@ -29,6 +29,28 @@ function checkOfficialUrl(url) {
   } catch { return false; }
 }
 
+// Display-only mirror of the max-keys-per-tier config in
+// convex/tiers.ts. Server-side enforcement lives in the `createKey`
+// mutation; this just powers the "(2 / 3)" UI counter and disables
+// the "Create key" button once the cap is hit, so the user gets
+// a clear UI hint instead of a thrown error.
+//
+// Drift is caught by npm run check:tiers (see
+// scripts/check-tier-consistency.mjs) via the max-keys column in
+// public/docs/api/authentication.html; if you change these, adjust
+// that doc in the same commit.
+const TIER_MAX_KEYS = {
+  starter: 1,
+  pro: 3,
+  enterprise: 10,
+  enterprise_plus: 50,
+};
+
+// Used by tier-card buttons to decide which tier is "up" vs "down"
+// when an already-subscribed user clicks another tier. Stripe itself
+// doesn't know this ordering — we do.
+const TIER_ORDER = ["starter", "pro", "enterprise", "enterprise_plus"];
+
 function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -305,11 +327,27 @@ function supraBench() {
     waitlistEntries: [],   // { tier: string }[] — populated by waitlist.myEntries
     apiBusy: false,        // blocks double-clicks during waitlist toggle
 
-    // The following are read by the (currently HTML-commented) subscription
-    // panel. Defaults shipped now so uncommenting the panel doesn't blow up
-    // before the backend wiring lands.
+    // Master switch for the paid API. false = waitlist-only mode
+    // (current state of the world): all subscribe / manage-billing /
+    // create-key / revoke-key methods short-circuit to a toast, the
+    // tier-cards render "Join waitlist" buttons, no Stripe calls are
+    // made, and _loadProfile skips the subscription/key queries so
+    // it never hits non-existent backend functions.
+    //
+    // When the backend ships (see ACTIVATION.md): set this to true,
+    // uncomment the subscription panel in public/index.html, and
+    // uncomment the stripe/api modules in convex/. Every frontend
+    // hook is already written; activation is a one-liner here plus
+    // mechanical uncommenting elsewhere. No new JS gets authored.
+    apiLive: false,
+
+    // Populated by _loadProfile when apiLive is true. Schema matches
+    // the commented-out api.api.myKeys + stripe.mySubscription queries.
     mySubscription: null,
     myApiKeys: [],
+    // Display-only — derived from mySubscription.tier via TIER_MAX_KEYS.
+    // Default 3 (Pro) so the UI text makes sense on first paint for
+    // users without a sub (they see "0 / 3" which reads fine).
     apiKeyLimit: 3,
     newKeyJustCreated: null,
 
@@ -419,6 +457,49 @@ function supraBench() {
 
       // Open the right view-scoped subscriptions for the initial route.
       this._ensureViewSubscriptions();
+
+      // Stripe-Checkout return handler. When the user completes (or
+      // cancels) Checkout, Stripe redirects to
+      //   /#api?stripe=success&session_id=...
+      //   /#api?stripe=cancel
+      // (success_url / cancel_url are set in stripe.future.ts).
+      // We toast appropriately, refresh the profile twice (once now,
+      // once in 3s — the webhook that mirrors the sub into Convex may
+      // lag the redirect by a second or two), and strip the query
+      // string so a page-reload doesn't re-fire the toast.
+      //
+      // Runs unconditionally (not gated on apiLive) because the URL
+      // params can only exist if someone actually went through Stripe
+      // Checkout, which requires the backend to be live — if we're
+      // pre-launch, this block is just a no-op.
+      this._handleStripeReturn();
+    },
+
+    _handleStripeReturn() {
+      const params = new URLSearchParams(location.search);
+      const stripeStatus = params.get("stripe");
+      if (!stripeStatus) return;
+      if (stripeStatus === "success") {
+        this.showToast(
+          "Subscription activated — create your first API key below.",
+          "info",
+        );
+        // Make sure the user lands on the API & Billing tab, not the
+        // Activity tab — regardless of what the SPA default is. The
+        // hash may or may not already be #profile depending on what
+        // STRIPE_RETURN_URL is set to; force it explicitly.
+        if (this.view !== "profile") this.navigate?.("profile");
+        this.profileTab = "api";
+        // The webhook that mirrors the sub into Convex may lag the
+        // redirect by a second or two. Refresh twice: once now (fast
+        // path), once after 3s (slow path).
+        setTimeout(() => this._loadProfile(), 100);
+        setTimeout(() => this._loadProfile(), 3000);
+      } else if (stripeStatus === "cancel") {
+        this.showToast("Checkout canceled — no charge was made.", "info");
+        this.profileTab = "api";
+      }
+      history.replaceState({}, "", location.pathname + location.hash);
     },
 
     _subscribe(fnRef, args, callback) {
@@ -634,6 +715,28 @@ function supraBench() {
       } catch (e) {
         console.warn("waitlist load failed (non-fatal):", e);
       }
+      // Paid-API state: subscription + key list. Skipped entirely
+      // pre-launch so we don't try to call backend functions that
+      // don't exist yet (they'd throw "function not found"). Both
+      // queries are cheap and only fire when the user actually
+      // lands on their profile, not for anonymous pageviews.
+      if (this.apiLive) {
+        try {
+          const [sub, keys] = await Promise.all([
+            client.query(api.stripe.mySubscription, {}),
+            client.query(api.api.myKeys, {}),
+          ]);
+          this.mySubscription = sub;
+          this.myApiKeys = keys || [];
+          // Sync display cap to the actually-subscribed tier so the
+          // "(N / X)" counter shows the right denominator.
+          if (sub?.tier && TIER_MAX_KEYS[sub.tier]) {
+            this.apiKeyLimit = TIER_MAX_KEYS[sub.tier];
+          }
+        } catch (e) {
+          console.warn("[api] subscription/keys load failed:", e);
+        }
+      }
     },
 
     // ── API & Billing tab ────────────────────────────────────────────
@@ -682,17 +785,204 @@ function supraBench() {
       this._toastTimer = setTimeout(() => { el.remove(); }, 4000);
     },
 
-    // ── Disabled API actions (will be wired up when api.future.ts ships) ──
-    // These exist so the (currently HTML-commented) subscription panel
-    // doesn't throw on Alpine init if someone uncomments only part of it.
-    async manageBilling() { this.showToast("API not yet live — join the waitlist!", "info"); },
-    async openCreateKeyModal() { this.showToast("API not yet live — join the waitlist!", "info"); },
-    async revokeApiKey() { this.showToast("API not yet live — join the waitlist!", "info"); },
+    // ── Paid-API actions ────────────────────────────────────────
+    //
+    // Every method below short-circuits when `apiLive` is false — that
+    // flag gates the whole paid-API layer so this code can ship in the
+    // public repo long before the backend is uncommented without the
+    // risk of accidentally invoking a non-existent Convex function.
+    //
+    // Post-activation flow (when apiLive = true):
+    //   subscribe(tier)         → Convex createCheckout → redirect to Stripe
+    //   Stripe redirects back   → _handleStripeReturn in init() toasts + refetches
+    //   manageBilling()         → Convex createBillingPortalSession → redirect
+    //   openCreateKeyModal()    → prompt(name) → Convex createKey → show plaintext once
+    //   revokeApiKey(id)        → confirm() → Convex revokeKey → refetch list
+    //
+    // Upgrade/downgrade is intentionally routed through the Stripe
+    // Billing Portal rather than a new Checkout: Stripe handles the
+    // proration, card reuse and VAT recalculation, and we get the new
+    // tier via the customer.subscription.updated webhook, same
+    // pipeline as an initial subscribe. One code path for every
+    // subscription state change.
+
+    async subscribe(tier) {
+      if (!this.user) {
+        this.showToast("Sign in first to subscribe.", "info");
+        this.login();
+        return;
+      }
+      if (!this.apiLive) {
+        // Pre-launch users land here if they somehow hit a Subscribe
+        // button that slipped through. Fall back to waitlist so the
+        // button is never a dead end.
+        return this.toggleWaitlist(tier);
+      }
+      if (tier === "enterprise_plus") {
+        this.showToast("Enterprise+ is contract-based — contact us.", "info");
+        return;
+      }
+      if (this.apiBusy) return;
+      this.apiBusy = true;
+      try {
+        const { client, api } = window.sbConvex;
+        const { url } = await client.mutation(api.stripe.createCheckout, { tier });
+        window.location.href = url;
+      } catch (e) {
+        console.error("[stripe] checkout failed:", e);
+        this.showToast(e?.message || "Could not start checkout.", "error");
+        this.apiBusy = false;
+      }
+      // Note: we don't reset apiBusy on the success path — the browser
+      // is about to navigate away from this tab entirely.
+    },
+
+    async manageBilling() {
+      if (!this.apiLive) {
+        this.showToast("API not yet live — join the waitlist!", "info");
+        return;
+      }
+      if (!this.user) { this.login(); return; }
+      if (this.apiBusy) return;
+      this.apiBusy = true;
+      try {
+        const { client, api } = window.sbConvex;
+        const { url } = await client.mutation(api.stripe.createBillingPortalSession, {});
+        window.location.href = url;
+      } catch (e) {
+        console.error("[stripe] billing portal failed:", e);
+        this.showToast(e?.message || "Could not open billing portal.", "error");
+        this.apiBusy = false;
+      }
+    },
+
+    async openCreateKeyModal() {
+      if (!this.apiLive) {
+        this.showToast("API not yet live — join the waitlist!", "info");
+        return;
+      }
+      if (!this.user) { this.login(); return; }
+      if (!this.mySubscription || this.mySubscription.status !== "active") {
+        this.showToast("Subscribe to a tier first.", "info");
+        return;
+      }
+      // Browser prompt() is the MVP — it's the 5-keys-per-year kind of
+      // action, so a pure-Alpine modal is over-engineering. Trim keeps
+      // stray whitespace out of the display name. Skipping the server
+      // call on empty input means the user can hit Cancel without
+      // triggering a "name required" toast.
+      const name = (window.prompt(
+        "Name for this API key (e.g. 'My laptop', 'Production'):",
+      ) || "").trim();
+      if (!name) return;
+      if (this.apiBusy) return;
+      this.apiBusy = true;
+      try {
+        const { client, api } = window.sbConvex;
+        const { plaintext } = await client.mutation(api.api.createKey, {
+          name,
+          tier: this.mySubscription.tier,
+        });
+        // Show the plaintext in the inline modal; it's the only time
+        // the user will ever see it. The HTML-side <template x-if>
+        // renders the modal when newKeyJustCreated is truthy.
+        this.newKeyJustCreated = plaintext;
+        this.myApiKeys = await client.query(api.api.myKeys, {});
+      } catch (e) {
+        console.error("[api] createKey failed:", e);
+        this.showToast(e?.message || "Could not create key.", "error");
+      } finally {
+        this.apiBusy = false;
+      }
+    },
+
+    async revokeApiKey(apiKeyId) {
+      if (!this.apiLive) {
+        this.showToast("API not yet live — join the waitlist!", "info");
+        return;
+      }
+      if (!apiKeyId) return;
+      if (!window.confirm(
+        "Revoke this key? Any app using it will stop working immediately.",
+      )) return;
+      if (this.apiBusy) return;
+      this.apiBusy = true;
+      try {
+        const { client, api } = window.sbConvex;
+        await client.mutation(api.api.revokeKey, { apiKeyId });
+        this.myApiKeys = await client.query(api.api.myKeys, {});
+        this.showToast("Key revoked.", "info");
+      } catch (e) {
+        console.error("[api] revokeKey failed:", e);
+        this.showToast(e?.message || "Could not revoke key.", "error");
+      } finally {
+        this.apiBusy = false;
+      }
+    },
+
     async copyNewKey() {
       if (!this.newKeyJustCreated) return;
       try { await navigator.clipboard.writeText(this.newKeyJustCreated); this.showToast("Copied.", "info"); }
       catch { this.showToast("Copy failed — select & copy manually.", "error"); }
     },
+
+    // ── Tier-card button dispatcher ─────────────────────────────
+    //
+    // Single click-handler for all four tier-card buttons. Branches
+    // based on apiLive + current subscription so the tier-card HTML
+    // stays identical across the pre-launch ("Join waitlist") and
+    // post-launch ("Subscribe" / "Current plan" / "Change plan")
+    // worlds. Enterprise+ stays waitlist-only forever — that tier
+    // is contract-based and never hits self-serve checkout.
+
+    async tierAction(tier) {
+      if (tier === "enterprise_plus") return this.toggleWaitlist(tier);
+      if (!this.apiLive) return this.toggleWaitlist(tier);
+      if (!this.user) { this.login(); return; }
+      const cur = this.mySubscription;
+      if (cur?.status === "active") {
+        // User already has a sub; route ALL tier-card clicks
+        // (same-tier or different-tier) through the billing portal —
+        // that's where Stripe handles upgrade/downgrade/cancel with
+        // proration in one place. Avoids us trying to reimplement
+        // Stripe's plan-change UI.
+        return this.manageBilling();
+      }
+      return this.subscribe(tier);
+    },
+
+    tierButtonLabel(tier) {
+      // Enterprise+ + pre-launch: pure waitlist semantics.
+      if (tier === "enterprise_plus" || !this.apiLive) {
+        return this.isOnWaitlist(tier) ? "Leave waitlist" : "Join waitlist";
+      }
+      const cur = this.mySubscription;
+      if (cur?.status === "active" && cur.tier === tier) {
+        return cur.cancelAtPeriodEnd ? "Resume plan" : "Current plan";
+      }
+      if (cur?.status === "active") {
+        // On another tier — show upgrade / downgrade based on
+        // TIER_ORDER so the user understands direction before click.
+        const curIdx = TIER_ORDER.indexOf(cur.tier);
+        const thisIdx = TIER_ORDER.indexOf(tier);
+        if (thisIdx > curIdx)  return "Upgrade";
+        if (thisIdx < curIdx)  return "Downgrade";
+      }
+      return "Subscribe";
+    },
+
+    tierButtonDisabled(tier) {
+      if (this.apiBusy) return true;
+      if (!this.apiLive) return false;
+      // Current-plan button is a no-op if no cancel pending. The click
+      // would go through manageBilling so it's actually useful (lets
+      // user cancel / update card), so keep it enabled.
+      return false;
+    },
+
+    // NB: formatDate() exists lower down in this Alpine object and
+    // handles the "cancels on DATE" rendering for the subscription
+    // panel — don't re-declare here.
 
     get profileVisibleSubmissions() {
       if (!this.profileData) return [];

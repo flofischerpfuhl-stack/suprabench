@@ -7,55 +7,75 @@ to re-run if something fails mid-flight.
 
 ## State today
 
-- ✅ **Tier grid** (Starter / Pro / Enterprise / Enterprise+) renders at
-  `/#profile` → API & Billing tab with `TBD` pricing and waitlist
-  join/leave wired end-to-end (frontend + Convex `waitlist.ts`).
-- ✅ **Stripe Products + Prices** exist in Stripe (live mode). Their
+### ✅ Fully written and shipping now
+
+- **Tier grid** (Starter / Pro / Enterprise / Enterprise+) renders at
+  `/#profile` → API & Billing tab with `TBD` pricing, `tierAction()`
+  dispatcher, and `tierButtonLabel()` that switches between `Join
+  waitlist` / `Subscribe` / `Current plan` / `Upgrade` / `Downgrade`
+  depending on `apiLive` + `mySubscription`.
+- **Frontend subscription dashboard** (HTML in `public/index.html`,
+  gated behind `x-show="apiLive"`): "Your subscription" card, cancel-at-
+  period-end banner, "Manage billing →" button, API-key list with
+  revoke, "Create new key" button with browser-`prompt()` name input,
+  and the one-time plaintext-reveal modal. CSS already ships in
+  `public/css/style.css`; mobile-breakpoint rules at `max-width: 600px`
+  handle row-wrapping + word-break on the key string.
+- **Frontend Alpine methods** (all in `public/js/app.js`):
+  `subscribe(tier)`, `manageBilling()`, `openCreateKeyModal()`,
+  `revokeApiKey(id)`, `copyNewKey()`, `tierAction(tier)`,
+  `tierButtonLabel(tier)`, `tierButtonDisabled(tier)`,
+  `_handleStripeReturn()` (runs in `init()` — toasts + refetches on
+  `?stripe=success|cancel`). All short-circuit when `apiLive=false`.
+- **Frontend state loading**: `_loadProfile()` fetches
+  `api.stripe.mySubscription` + `api.api.myKeys` in parallel when
+  `apiLive=true`; auto-syncs `apiKeyLimit` to the subscribed tier's cap
+  via `TIER_MAX_KEYS`.
+- **Stripe Products + Prices** exist in Stripe (live mode). Their
   recurring Price IDs are already embedded in
   [`convex/stripe.future.ts`](convex/stripe.future.ts) under
   `PRICE_IDS`.
-- ✅ **Full API implementation** is written and code-reviewed — every
+- **Backend implementations** fully written and code-reviewed — every
   endpoint in `/docs/api/`, the rate limiter, the quota enforcer, the
-  auth layer — but sits inside one big block comment in
-  [`convex/api.future.ts`](convex/api.future.ts).
-- ✅ **Full Stripe implementation** (Checkout, Billing-Portal, webhook
-  signature-verification, event fan-out, sub↔key cascade) sits
-  block-commented in [`convex/stripe.future.ts`](convex/stripe.future.ts).
-- ✅ **Subscription / API-keys UI** (dashboard panel with the
-  "Subscribe", "Manage billing", "Create key", "Revoke" controls) is
-  HTML-commented inside `public/index.html` around line 2150. Alpine
-  stubs are in `public/js/app.js` (they just toast "API not yet live").
-- ❌ **Schema tables** (`apiKeys`, `apiUsage`, `apiRateLimits`,
-  `apiRequestLog`, `stripeCustomers`, `stripeSubscriptions`,
-  `stripeEvents`) are commented out in `convex/schema.ts` — Convex
-  therefore cannot store any of this yet.
-- ❌ **HTTP routes** — `convex/http.ts` only registers `auth`. No
-  `/v1/*` endpoints and no `/stripe/webhook` endpoint exist.
-- ❌ **Webhook** not registered in Stripe. No Stripe events flow
-  anywhere.
-- ❌ **Environment**: `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`
-  are **not** set on prod (dev was cleared after we rolled a key).
+  auth layer, Checkout, Billing-Portal, webhook signature-verification,
+  event fan-out, sub↔key cascade, `mySubscription` query — but sit
+  inside `/* ... */` block comments in `convex/api.future.ts` and
+  `convex/stripe.future.ts`.
+- **Waitlist flow** (backend + frontend) works end-to-end independently
+  of `apiLive`.
 
-Net effect: nobody can subscribe and nobody can call `/v1/*`, because
-three independent locks are closed (commented code, missing schema,
-missing webhook). Each must be unlocked deliberately — no single
-misclick flips billing on.
+### ❌ Deliberately not shipping until activation
+
+- **Schema tables**: `apiKeys`, `apiUsage`, `apiRateLimits`,
+  `apiRequestLog`, `stripeCustomers`, `stripeSubscriptions`,
+  `stripeEvents` are commented out in `convex/schema.ts`. Convex
+  therefore cannot store any of this yet.
+- **HTTP routes**: `convex/http.ts` only registers `auth`. No `/v1/*`
+  endpoints and no `/stripe/webhook` endpoint exist.
+- **Webhook registration**: not created in Stripe. No Stripe events
+  flow anywhere.
+- **`apiLive` flag** in `public/js/app.js` is `false`.
+- **Environment**: `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`
+  are not set on prod.
+
+Net effect: nobody can subscribe and nobody can call `/v1/*`. Four
+independent locks are closed (frontend flag, commented code, missing
+schema, missing webhook). Each must be unlocked deliberately.
 
 ## Activation steps
 
-### 1. Uncomment the backend (≈5 min)
+### 1. Uncomment the backend (≈3 min)
 
-Three files, all mechanical:
+Three files, mechanical:
 
 - **`convex/schema.ts`** — uncomment the `apiKeys`, `apiUsage`,
   `apiRateLimits`, `apiRequestLog`, `stripeCustomers`,
   `stripeSubscriptions`, `stripeEvents` tables. Grep for `// API` and
   `// Stripe` section headers.
 - **`convex/api.future.ts`** — delete the top `export {};`, delete the
-  outer `/* */` fence around the code, then rename the file to
+  outer `/* */` fence around the code, rename the file to
   `convex/api.ts`.
-- **`convex/stripe.future.ts`** — same dance, rename to
-  `convex/stripe.ts`.
+- **`convex/stripe.future.ts`** — same, rename to `convex/stripe.ts`.
 
 ### 2. Register HTTP routes (≈1 min)
 
@@ -74,42 +94,38 @@ registerStripeRoutes(http);
 export default http;
 ```
 
-### 3. Uncomment the frontend UI (≈2 min)
+### 3. Flip the frontend flag (≈5 seconds)
 
-- **`public/index.html`** — remove the `<!-- ... -->` fence around the
-  SUBSCRIPTION PANEL block (search for `SUBSCRIPTION PANEL — disabled
-  until api.future.ts ships`). Change the tier-card buttons from
-  `@click="toggleWaitlist('starter')"` to call a new
-  `subscribe('starter')` method (or make them dual: waitlist if not
-  signed in / signed in but no sub, Subscribe otherwise — up to you).
-- **`public/js/app.js`** — replace the three stub methods near the
-  `Disabled API actions` header with real implementations that call
-  `api.stripe.createCheckout`, `api.stripe.createBillingPortalSession`,
-  `api.api.createKey`, `api.api.revokeKey`, and add a `subscribe(tier)`
-  method. Also add a subscription to `api.api.listMyKeys` +
-  `api.stripe.mySubscription` in `fetchProfileData()` so
-  `myApiKeys`/`mySubscription` actually populate.
+In `public/js/app.js`, search for `apiLive: false,` and change to
+`apiLive: true,`. That's it — the tier-card buttons, subscription
+dashboard (it's not HTML-commented anymore, just `x-show="apiLive"`-
+gated), `_loadProfile`'s subscription fetch, and all Stripe action
+methods activate automatically. No other frontend changes required.
 
-### 4. Set production secrets (≈1 min)
+### 4. Set production secrets (≈2 min)
 
 ```bash
-# Stripe live secret key (full or restricted with scopes for checkout,
-# customers, billing portal, webhooks). DO NOT type this interactively
-# in a Cursor-tracked terminal; use stdin or the Stripe CLI:
-pbpaste | npx convex env set --prod STRIPE_SECRET_KEY --from-stdin
+# Stripe live secret key (full or restricted with scopes for
+# checkout.sessions.create, customers, billing_portal, webhook).
+# DO NOT type this interactively in a Cursor-tracked terminal —
+# pipe via stdin or use the clipboard + file trick. Better yet,
+# run from a separate plain terminal that's not in an IDE session.
+printf '%s\n' "$STRIPE_SK" | xclip -selection clipboard
+# then:
+npx convex env set --prod STRIPE_SECRET_KEY  # paste when prompted
 
-# Placeholder for now — real value comes from step 5.
+# Placeholder — real value comes from step 6.
 npx convex env set --prod STRIPE_WEBHOOK_SECRET whsec_placeholder
 
-# The URL Stripe redirects users back to after checkout / billing portal.
-npx convex env set --prod STRIPE_RETURN_URL https://suprabench.com/#api
+# The URL Stripe redirects users back to after Checkout / Billing-Portal.
+npx convex env set --prod STRIPE_RETURN_URL https://suprabench.ai/#profile
 ```
 
-### 5. Deploy the code (≈2 min)
+### 5. Deploy (≈2 min)
 
 ```bash
 npm run check:tiers          # sanity: no drifted numbers
-npx convex deploy --prod -y  # pushes code + schema together; both tables and functions become live atomically
+npx convex deploy --prod -y  # code + schema go live atomically
 ```
 
 ### 6. Register the Stripe webhook (≈2 min)
@@ -131,48 +147,62 @@ Stripe dashboard → **Developers** → **Webhooks** → **Add endpoint**:
   npx convex env set --prod STRIPE_WEBHOOK_SECRET whsec_real_value
   ```
 
-### 7. Smoke test (≈5 min)
+### 7. Smoke test (≈10 min)
 
-1. Log in with a test account, go to Profile → API & Billing, click
-   **Subscribe** on Starter, complete checkout with a **real card** on
-   the first run (use a cheap tier — Stripe will charge the real price)
-   OR flip the whole flow to test-mode keys first and use
-   `4242 4242 4242 4242`. Check the `stripeSubscriptions` table in
-   Convex dashboard fills in.
-2. Create a key. `curl` an endpoint:
+1. Log in with a test account, go to Profile → API & Billing. The
+   tier-card buttons should now read `Subscribe` instead of
+   `Join waitlist` (except Enterprise+ which stays waitlist-only).
+2. Click **Subscribe** on Starter. Verify:
+   - browser redirects to `checkout.stripe.com`
+   - Stripe shows the correct tier + live price
+   - after completing checkout (cheap real-card payment OR
+     test-mode `4242 4242 4242 4242`) you land on `/#profile?stripe=success`
+   - a toast appears: "Subscription activated…"
+   - the URL cleans up to `/#profile`
+   - the "Your subscription" card shows `starter / active`
+   - Convex dashboard → `stripeSubscriptions` has a new row
+3. Click **Create new key**, give it a name. Verify:
+   - plaintext modal appears with a fresh `sb_live_...` string
+   - clicking "I've saved it" dismisses the modal
+   - key list shows the new key with its `sb_live_xxxxxxxx` prefix
+4. `curl` an endpoint:
    ```bash
-   curl -H "authorization: Bearer sb_live_..." \
-        https://api.suprabench.com/v1/models
+   curl -H "authorization: Bearer sb_live_<the-plaintext>" \
+        https://<deployment>.convex.site/v1/models | head
    ```
-3. Cancel via **Manage billing** → confirm `cancelAtPeriodEnd: true`
-   lands in the row, key keeps working until period end.
+5. Click **Manage billing →**. Verify Stripe's portal opens. Cancel
+   the sub inside the portal; return to the site; within ~5 s the
+   dashboard should show `cancelAtPeriodEnd: true`.
+6. Click **Revoke** on the key — confirms, then moves to `Revoked`.
+7. Enterprise+ button should still say `Join waitlist`.
 
 ### 8. Update the public docs (≈2 min)
 
-- `public/docs/api/changelog.html` — drop the "waitlist" line, add an
-  "API live" entry.
-- `public/index.html`'s "Not yet" paragraph — replace with "Live: see
-  [docs →](/docs/api/)".
-- Optionally: bump real prices into `convex/tiers.ts`
-  (`priceUsd: null` → actual numbers) and the TBD cells in the tier
-  grid + `docs/api-roadmap.md` + `public/docs/api/index.html`.
-  `npm run check:tiers` will fail until all four are consistent.
+- `public/docs/api/changelog.html` — add an "API live" entry at the
+  top of the timeline.
+- `public/index.html` ("Not yet" Q&A on the About page) — change the
+  answer from "Not yet…" to "Live: see [docs →](/docs/api/)".
+- Optionally: bump real prices into `convex/tiers.ts` (`priceUsd: null`
+  → actual numbers) and the TBD cells in the tier grid,
+  `docs/api-roadmap.md`, and `public/docs/api/index.html`.
+  `npm run check:tiers` will fail until all are consistent.
 
 ## Rollback
 
 If something's on fire:
 
 ```bash
-git revert HEAD                # undo the activation commit
-npx convex deploy --prod -y    # re-deploys the commented-out code
-```
+# Flip the frontend flag off first — cheapest, instant.
+# In public/js/app.js: apiLive: true → false
+git commit -am "emergency: apiLive off"
 
-Stripe webhook endpoint can stay registered — it'll just get 404s from
-Convex, Stripe retries for ~3 days, then gives up. No money moves
-because `stripe.createCheckout` no longer exists to create new
-sessions.
+# Revert the full activation commit if more is broken.
+git revert HEAD~1
+npx convex deploy --prod -y
+```
 
 Existing subscribers' cards are NOT charged again during a revert —
 Stripe's billing engine is independent of our code. They'll get emails
 from Stripe (invoices) even if our `/v1/*` is down. Refund from the
-Stripe dashboard if needed.
+Stripe dashboard if needed. The webhook endpoint can stay registered
+— Convex will 404 it and Stripe stops retrying after ~3 days.

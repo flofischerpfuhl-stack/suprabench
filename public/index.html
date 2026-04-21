@@ -2058,8 +2058,15 @@
                 <h2 class="section-header">Plans</h2>
                 <div class="tier-grid">
                     <!-- Starter -->
-                    <div class="tier-card" :class="{'is-current': isOnWaitlist('starter')}">
-                        <span class="tier-card__badge" x-show="isOnWaitlist('starter')">On waitlist</span>
+                    <!-- Button text + action swap automatically when apiLive flips
+                         to true: pre-launch → "Join waitlist", post-launch →
+                         "Subscribe" / "Current plan" / "Upgrade" / "Downgrade"
+                         depending on mySubscription. See tierAction / tierButtonLabel
+                         in app.js. The `.is-current` class still keys off waitlist
+                         membership — once apiLive, swap it to the sub-tier match. -->
+                    <div class="tier-card" :class="{'is-current': apiLive ? (mySubscription?.tier === 'starter' && mySubscription?.status === 'active') : isOnWaitlist('starter')}">
+                        <span class="tier-card__badge" x-show="!apiLive && isOnWaitlist('starter')">On waitlist</span>
+                        <span class="tier-card__badge" x-show="apiLive && mySubscription?.tier === 'starter' && mySubscription?.status === 'active'">Your plan</span>
                         <h3 class="tier-card__name">Starter</h3>
                         <p class="tier-card__price">TBD <small>at launch</small></p>
                         <p class="tier-card__quota">10 000 requests / month</p>
@@ -2069,15 +2076,17 @@
                             <li>1 API key</li>
                             <li>Community support</li>
                         </ul>
-                        <button class="btn btn-sm btn-outline" :disabled="apiBusy"
-                                @click="toggleWaitlist('starter')"
-                                x-text="isOnWaitlist('starter') ? 'Leave waitlist' : 'Join waitlist'"></button>
+                        <button class="btn btn-sm btn-outline" :disabled="tierButtonDisabled('starter')"
+                                @click="tierAction('starter')"
+                                x-text="tierButtonLabel('starter')"></button>
                     </div>
 
                     <!-- Pro (featured) -->
-                    <div class="tier-card is-featured" :class="{'is-current': isOnWaitlist('pro')}">
-                        <span class="tier-card__badge" x-show="!isOnWaitlist('pro')">Most popular</span>
-                        <span class="tier-card__badge" x-show="isOnWaitlist('pro')">On waitlist</span>
+                    <div class="tier-card is-featured" :class="{'is-current': apiLive ? (mySubscription?.tier === 'pro' && mySubscription?.status === 'active') : isOnWaitlist('pro')}">
+                        <span class="tier-card__badge" x-show="!apiLive && !isOnWaitlist('pro')">Most popular</span>
+                        <span class="tier-card__badge" x-show="!apiLive && isOnWaitlist('pro')">On waitlist</span>
+                        <span class="tier-card__badge" x-show="apiLive && mySubscription?.tier === 'pro' && mySubscription?.status === 'active'">Your plan</span>
+                        <span class="tier-card__badge" x-show="apiLive && mySubscription?.tier !== 'pro'">Most popular</span>
                         <h3 class="tier-card__name">Pro</h3>
                         <p class="tier-card__price">TBD <small>at launch</small></p>
                         <p class="tier-card__quota">100 000 requests / month</p>
@@ -2088,14 +2097,15 @@
                             <li>Email support</li>
                             <li>Bulk export endpoint</li>
                         </ul>
-                        <button class="btn btn-sm btn-primary" :disabled="apiBusy"
-                                @click="toggleWaitlist('pro')"
-                                x-text="isOnWaitlist('pro') ? 'Leave waitlist' : 'Join waitlist'"></button>
+                        <button class="btn btn-sm btn-primary" :disabled="tierButtonDisabled('pro')"
+                                @click="tierAction('pro')"
+                                x-text="tierButtonLabel('pro')"></button>
                     </div>
 
                     <!-- Enterprise -->
-                    <div class="tier-card" :class="{'is-current': isOnWaitlist('enterprise')}">
-                        <span class="tier-card__badge" x-show="isOnWaitlist('enterprise')">On waitlist</span>
+                    <div class="tier-card" :class="{'is-current': apiLive ? (mySubscription?.tier === 'enterprise' && mySubscription?.status === 'active') : isOnWaitlist('enterprise')}">
+                        <span class="tier-card__badge" x-show="!apiLive && isOnWaitlist('enterprise')">On waitlist</span>
+                        <span class="tier-card__badge" x-show="apiLive && mySubscription?.tier === 'enterprise' && mySubscription?.status === 'active'">Your plan</span>
                         <h3 class="tier-card__name">Enterprise</h3>
                         <p class="tier-card__price">TBD <small>at launch</small></p>
                         <p class="tier-card__quota">1 000 000 requests / month</p>
@@ -2106,12 +2116,13 @@
                             <li>Priority support</li>
                             <li>Webhooks (beta)</li>
                         </ul>
-                        <button class="btn btn-sm btn-outline" :disabled="apiBusy"
-                                @click="toggleWaitlist('enterprise')"
-                                x-text="isOnWaitlist('enterprise') ? 'Leave waitlist' : 'Join waitlist'"></button>
+                        <button class="btn btn-sm btn-outline" :disabled="tierButtonDisabled('enterprise')"
+                                @click="tierAction('enterprise')"
+                                x-text="tierButtonLabel('enterprise')"></button>
                     </div>
 
-                    <!-- Enterprise+ -->
+                    <!-- Enterprise+ is always contract / waitlist (never self-serve) —
+                         tierAction routes it to toggleWaitlist regardless of apiLive -->
                     <div class="tier-card" :class="{'is-current': isOnWaitlist('enterprise_plus')}">
                         <span class="tier-card__badge" x-show="isOnWaitlist('enterprise_plus')">On waitlist</span>
                         <h3 class="tier-card__name">Enterprise+</h3>
@@ -2124,9 +2135,9 @@
                             <li>SLA + dedicated Slack channel</li>
                             <li>Custom data agreements</li>
                         </ul>
-                        <button class="btn btn-sm btn-outline" :disabled="apiBusy"
-                                @click="toggleWaitlist('enterprise_plus')"
-                                x-text="isOnWaitlist('enterprise_plus') ? 'Leave waitlist' : 'Join waitlist'"></button>
+                        <button class="btn btn-sm btn-outline" :disabled="tierButtonDisabled('enterprise_plus')"
+                                @click="tierAction('enterprise_plus')"
+                                x-text="tierButtonLabel('enterprise_plus')"></button>
                     </div>
                 </div>
 
@@ -2143,63 +2154,73 @@
                 </p>
 
                 <!-- ════════════════════════════════════════════════
-                     SUBSCRIPTION PANEL — disabled until api.future.ts ships
-                     Uncomment together with the backend (stripe.future.ts).
+                     SUBSCRIPTION PANEL — gated by apiLive JS flag.
+                     All bindings (mySubscription, myApiKeys, manageBilling,
+                     openCreateKeyModal, revokeApiKey, copyNewKey, formatDate,
+                     newKeyJustCreated, apiKeyLimit) are real methods/state
+                     on the Alpine object. While apiLive=false (current state)
+                     the `x-show` on the wrapper keeps the whole block hidden;
+                     flipping apiLive to true makes it appear with zero DOM
+                     mutations required. Activation: set apiLive=true in
+                     app.js, uncomment the stripe* + api* modules in convex/,
+                     register the webhook with Stripe. Done.
                      ════════════════════════════════════════════════ -->
-                <!--
-                <h2 class="section-header">Your subscription</h2>
-                <template x-if="mySubscription && mySubscription.status === 'active'">
-                    <div class="card">
-                        <p>You're on the <strong x-text="mySubscription.tier"></strong> plan.</p>
-                        <p x-show="mySubscription.cancelAtPeriodEnd" style="color:#e3b341">
-                            Your subscription is set to cancel on
-                            <span x-text="formatDate(mySubscription.currentPeriodEnd)"></span>.
-                            You keep API access until then.
-                        </p>
-                        <button class="btn btn-sm btn-outline" @click="manageBilling()">
-                            Manage billing →
-                        </button>
-                    </div>
-                </template>
-                <template x-if="!mySubscription || mySubscription.status !== 'active'">
-                    <div class="empty-state">No active subscription. Pick a plan above.</div>
-                </template>
+                <div x-show="apiLive" x-cloak>
+                    <h2 class="section-header">Your subscription</h2>
+                    <template x-if="mySubscription && mySubscription.status === 'active'">
+                        <div class="card">
+                            <p>You're on the <strong x-text="mySubscription.tier"></strong> plan.</p>
+                            <p x-show="mySubscription.cancelAtPeriodEnd" style="color:#e3b341">
+                                Your subscription is set to cancel on
+                                <span x-text="formatDate(mySubscription.currentPeriodEnd)"></span>.
+                                You keep API access until then.
+                            </p>
+                            <button class="btn btn-sm btn-outline" @click="manageBilling()" :disabled="apiBusy">
+                                Manage billing →
+                            </button>
+                        </div>
+                    </template>
+                    <template x-if="!mySubscription || mySubscription.status !== 'active'">
+                        <div class="empty-state">No active subscription. Pick a plan above.</div>
+                    </template>
 
-                <h2 class="section-header">API keys
-                    <span class="profile-vote-num" x-text="'(' + myApiKeys.length + ' / ' + apiKeyLimit + ')'"></span>
-                </h2>
-                <div class="api-key-list" x-show="myApiKeys.length > 0">
-                    <template x-for="k in myApiKeys" :key="k._id">
-                        <div class="api-key-row">
-                            <span class="api-key-row__name" x-text="k.name"></span>
-                            <span class="api-key-row__hint" x-text="'sb_…' + k.last4"></span>
-                            <span class="api-key-row__date">created <span x-text="formatDate(k.createdAt)"></span></span>
-                            <button class="btn btn-sm btn-outline" @click="revokeApiKey(k._id)">Revoke</button>
+                    <h2 class="section-header">API keys
+                        <span class="profile-vote-num" x-text="'(' + myApiKeys.length + ' / ' + apiKeyLimit + ')'"></span>
+                    </h2>
+                    <div class="api-key-list" x-show="myApiKeys.length > 0">
+                        <template x-for="k in myApiKeys" :key="k._id">
+                            <div class="api-key-row">
+                                <span class="api-key-row__name" x-text="k.name"></span>
+                                <span class="api-key-row__hint" x-text="k.prefix + '…'"></span>
+                                <span class="api-key-row__date">created <span x-text="formatDate(k.createdAt)"></span></span>
+                                <button class="btn btn-sm btn-outline" @click="revokeApiKey(k._id)" :disabled="apiBusy || k.revoked">
+                                    <span x-text="k.revoked ? 'Revoked' : 'Revoke'"></span>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="api-empty" x-show="myApiKeys.length === 0">
+                        No keys yet. Create one once your subscription is active.
+                    </div>
+                    <button class="btn btn-sm btn-primary"
+                            :disabled="apiBusy || !mySubscription || mySubscription.status !== 'active' || myApiKeys.length >= apiKeyLimit"
+                            @click="openCreateKeyModal()">
+                        Create new key
+                    </button>
+
+                    <template x-if="newKeyJustCreated">
+                        <div class="api-key-modal">
+                            <h3>Save this key now</h3>
+                            <p class="api-key-modal__warn">
+                                This is the only time we'll show this key. Store it in a
+                                password manager — you can't see it again, only revoke + recreate.
+                            </p>
+                            <div class="api-key-modal__value" x-text="newKeyJustCreated"></div>
+                            <button class="btn btn-sm btn-outline" @click="copyNewKey()">Copy</button>
+                            <button class="btn btn-sm" @click="newKeyJustCreated=null">I've saved it</button>
                         </div>
                     </template>
                 </div>
-                <div class="api-empty" x-show="myApiKeys.length === 0">
-                    No keys yet. Create one once your subscription is active.
-                </div>
-                <button class="btn btn-sm btn-primary"
-                        :disabled="!mySubscription || myApiKeys.length >= apiKeyLimit"
-                        @click="openCreateKeyModal()">
-                    Create new key
-                </button>
-
-                <template x-if="newKeyJustCreated">
-                    <div class="api-key-modal">
-                        <h3>Save this key now</h3>
-                        <p class="api-key-modal__warn">
-                            This is the only time we'll show this key. Store it in a
-                            password manager — you can't see it again, only revoke + recreate.
-                        </p>
-                        <div class="api-key-modal__value" x-text="newKeyJustCreated"></div>
-                        <button class="btn btn-sm btn-outline" @click="copyNewKey()">Copy</button>
-                        <button class="btn btn-sm" @click="newKeyJustCreated=null">I've saved it</button>
-                    </div>
-                </template>
-                -->
             </div><!-- /tab api -->
         </div>
     </template>
