@@ -3382,3 +3382,156 @@ ol.about-list li::before {
     padding-top: 0.3rem;
   }
 }
+
+/* ════════════════════════════════════════════════════════════
+   Custom dialog (replaces window.confirm + window.prompt)
+   - Dark glass card, accent button, escape-to-cancel,
+     enter-to-confirm. One <div class="sb-dialog"> covers both
+     the confirm and prompt variants — the kind switch lives
+     in Alpine state (`sbDialog.kind`).
+   - Backdrop click cancels; pointer events are scoped to the
+     card so the wrap can stay semantically a sibling.
+   ════════════════════════════════════════════════════════════ */
+.sb-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.sb-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.sb-dialog__card {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.6rem 1.6rem 1.3rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(229, 254, 64, 0.04);
+  animation: sb-dialog-pop 0.18s ease-out;
+}
+@keyframes sb-dialog-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+.sb-dialog__title {
+  font-family: var(--hd);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.6rem;
+  letter-spacing: 0.2px;
+}
+.sb-dialog__body {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text2);
+  margin: 0 0 1.1rem;
+}
+.sb-dialog__input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.9rem;
+  font-family: var(--bd);
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-bottom: 1.2rem;
+  transition: border-color var(--transition);
+}
+.sb-dialog__input::placeholder { color: var(--text3); }
+.sb-dialog__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(229, 254, 64, 0.12);
+}
+.sb-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+.sb-dialog__actions .btn { padding: 0.55rem 1.2rem; font-size: 0.82rem; }
+
+@media (max-width: 480px) {
+  .sb-dialog { padding: 1rem; }
+  .sb-dialog__card { padding: 1.2rem 1.1rem 1rem; }
+  .sb-dialog__actions { flex-direction: column-reverse; }
+  .sb-dialog__actions .btn { width: 100%; justify-content: center; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Custom checkbox — visually-hides the native input (for
+   keyboard + screen-reader support) and renders a styled
+   square. Tick is a pseudo-element so we don't need an SVG
+   round-trip. Drop-in: just wrap <input type=checkbox> in
+   <label class="sb-check"> and add a sibling <span class="sb-check__box"></span>.
+   ════════════════════════════════════════════════════════════ */
+.sb-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.sb-check input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.sb-check__box {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: border-color var(--transition), background var(--transition);
+}
+.sb-check__box::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
+  border: solid var(--bg);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform 0.12s ease-out;
+}
+.sb-check input[type="checkbox"]:checked ~ .sb-check__box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.sb-check input[type="checkbox"]:checked ~ .sb-check__box::after {
+  transform: rotate(45deg) scale(1);
+}
+.sb-check input[type="checkbox"]:focus-visible ~ .sb-check__box {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.sb-check:hover .sb-check__box { border-color: var(--accent); }
+
+/* Override legacy `.admin-grant-form__checkbox span { display:inline !important }`
+   so the custom box keeps its dimensions when nested in admin grant form. */
+.admin-grant-form__checkbox.sb-check .sb-check__box {
+  display: inline-block !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+}

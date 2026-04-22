@@ -2709,8 +2709,9 @@
                                                 <span>Max API keys</span>
                                                 <input type="number" min="1" max="50" step="1" x-model.number="adminGrantForm.maxKeys">
                                             </label>
-                                            <label class="admin-grant-form__checkbox">
+                                            <label class="admin-grant-form__checkbox sb-check">
                                                 <input type="checkbox" x-model="adminGrantForm.allowExport">
+                                                <span class="sb-check__box" aria-hidden="true"></span>
                                                 <span>Allow bulk export</span>
                                             </label>
                                         </div>
@@ -2850,6 +2851,44 @@
 <datalist id="all-family-tags-dl">
     <template x-for="f in allFamilyTags" :key="'fdl-' + f"><option :value="f"></option></template>
 </datalist>
+
+<!-- ═══════════════════════════════════════
+     CUSTOM DIALOG
+     One element backs both confirm() and prompt(). The Alpine
+     methods sbConfirm() / sbPrompt() return Promises, so call
+     sites read like: `if (!await this.sbConfirm({...})) return;`
+     ═══════════════════════════════════════ -->
+<div class="sb-dialog"
+     x-show="sbDialog.open"
+     x-cloak
+     x-transition.opacity
+     role="dialog"
+     aria-modal="true"
+     :aria-label="sbDialog.title"
+     @keydown.escape.window="sbDialog.open && sbDialogCancel()">
+    <div class="sb-dialog__backdrop" @click="sbDialogCancel()"></div>
+    <div class="sb-dialog__card" @click.stop>
+        <h3 class="sb-dialog__title" x-text="sbDialog.title"></h3>
+        <p class="sb-dialog__body" x-show="sbDialog.body" x-text="sbDialog.body"></p>
+        <template x-if="sbDialog.kind === 'prompt'">
+            <input class="sb-dialog__input"
+                   type="text"
+                   x-model="sbDialog.value"
+                   :placeholder="sbDialog.placeholder"
+                   @keydown.enter.prevent="sbDialog.value && sbDialog.value.trim() && sbDialogConfirm()"
+                   x-effect="if (sbDialog.open && sbDialog.kind === 'prompt') $nextTick(() => $el.focus())">
+        </template>
+        <div class="sb-dialog__actions">
+            <button type="button" class="btn btn-outline btn-sm" @click="sbDialogCancel()" x-text="sbDialog.cancelLabel"></button>
+            <button type="button"
+                    class="btn btn-sm"
+                    :class="sbDialog.danger ? 'btn-danger' : ''"
+                    @click="sbDialogConfirm()"
+                    :disabled="sbDialog.kind === 'prompt' && !(sbDialog.value || '').trim()"
+                    x-text="sbDialog.confirmLabel"></button>
+        </div>
+    </div>
+</div>
 
 <!-- ═══════════════════════════════════════
      COOKIE / STORAGE NOTICE

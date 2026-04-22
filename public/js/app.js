@@ -960,7 +960,13 @@ function supraBench() {
     },
     async adminRevokeTier() {
       if (!this.user?.isAdmin || !this.adminSelected || this.adminBusy) return;
-      if (!confirm("Remove this user's granted tier AND revoke all their active API keys?")) return;
+      const ok = await this.sbConfirm({
+        title: "Revoke granted tier?",
+        body: "This removes the user's Partner / Enterprise+ tier AND revokes every active API key tied to it. Their integrations will stop working immediately.",
+        confirmLabel: "Revoke tier",
+        danger: true,
+      });
+      if (!ok) return;
       this.adminBusy = true;
       try {
         const { client, api } = window.sbConvex;
@@ -991,7 +997,13 @@ function supraBench() {
     },
     async adminRevokeAdmin() {
       if (!this.user?.isPrimaryAdmin || !this.adminSelected || this.adminBusy) return;
-      if (!confirm("Remove this user's admin role?")) return;
+      const ok = await this.sbConfirm({
+        title: "Revoke admin role?",
+        body: "The user keeps their account but loses access to /admin and every admin-only mutation.",
+        confirmLabel: "Revoke admin",
+        danger: true,
+      });
+      if (!ok) return;
       this.adminBusy = true;
       try {
         const { client, api } = window.sbConvex;
@@ -1027,7 +1039,13 @@ function supraBench() {
     },
     async adminRevokeKey(keyId) {
       if (!this.user?.isAdmin || this.adminBusy) return;
-      if (!confirm("Revoke this key? The owner won't be able to use it anymore.")) return;
+      const ok = await this.sbConfirm({
+        title: "Revoke this API key?",
+        body: "The owner's app will stop working the moment we revoke. This action cannot be undone — they'll need a new key.",
+        confirmLabel: "Revoke key",
+        danger: true,
+      });
+      if (!ok) return;
       this.adminBusy = true;
       try {
         const { client, api } = window.sbConvex;
@@ -1096,6 +1114,67 @@ function supraBench() {
       }
     },
 
+    // ── Custom dialog (replaces window.confirm + window.prompt) ──
+    //
+    // Both methods return a Promise that resolves when the user
+    // confirms or cancels. One <div class="sb-dialog"> in the
+    // template renders both kinds; the `kind` field switches
+    // between confirm-only and prompt-with-text-input.
+    //
+    //   if (!await this.sbConfirm({ title: "Revoke key?", body: "…" })) return;
+    //   const name = await this.sbPrompt({ title: "Name this key" });
+    //
+    // The native confirm/prompt blocks the JS thread; this one is
+    // async, but the call sites are already async (they await
+    // Convex mutations next), so the change is mechanical.
+    sbDialog: {
+      open: false,
+      kind: "confirm",
+      title: "",
+      body: "",
+      placeholder: "",
+      value: "",
+      confirmLabel: "Confirm",
+      cancelLabel: "Cancel",
+      danger: false,
+      _resolve: null,
+    },
+    sbConfirm({ title, body = "", confirmLabel = "Confirm", cancelLabel = "Cancel", danger = false } = {}) {
+      return new Promise((resolve) => {
+        this.sbDialog = {
+          open: true, kind: "confirm",
+          title, body, value: "", placeholder: "",
+          confirmLabel, cancelLabel, danger,
+          _resolve: resolve,
+        };
+      });
+    },
+    sbPrompt({ title, body = "", placeholder = "", confirmLabel = "OK", cancelLabel = "Cancel" } = {}) {
+      return new Promise((resolve) => {
+        this.sbDialog = {
+          open: true, kind: "prompt",
+          title, body, value: "", placeholder,
+          confirmLabel, cancelLabel, danger: false,
+          _resolve: resolve,
+        };
+      });
+    },
+    sbDialogConfirm() {
+      const dlg = this.sbDialog;
+      if (!dlg.open) return;
+      const out = dlg.kind === "prompt" ? (dlg.value || "").trim() : true;
+      if (dlg.kind === "prompt" && !out) return; // require non-empty
+      this.sbDialog = { ...dlg, open: false, _resolve: null };
+      if (dlg._resolve) dlg._resolve(out);
+    },
+    sbDialogCancel() {
+      const dlg = this.sbDialog;
+      if (!dlg.open) return;
+      const out = dlg.kind === "prompt" ? null : false;
+      this.sbDialog = { ...dlg, open: false, _resolve: null };
+      if (dlg._resolve) dlg._resolve(out);
+    },
+
     // Lightweight toast — used by waitlist + future API actions.
     // Only one toast at a time; replacing the prior one is fine.
     showToast(message, type = "info") {
@@ -1122,8 +1201,8 @@ function supraBench() {
     //   subscribe(tier)         → Convex createCheckout → redirect to Stripe
     //   Stripe redirects back   → _handleStripeReturn in init() toasts + refetches
     //   manageBilling()         → Convex createBillingPortalSession → redirect
-    //   openCreateKeyModal()    → prompt(name) → Convex createKey → show plaintext once
-    //   revokeApiKey(id)        → confirm() → Convex revokeKey → refetch list
+    //   openCreateKeyModal()    → sbPrompt(name) → Convex createKey → show plaintext once
+    //   revokeApiKey(id)        → sbConfirm() → Convex revokeKey → refetch list
     //
     // Upgrade/downgrade is intentionally routed through the Stripe
     // Billing Portal rather than a new Checkout: Stripe handles the
@@ -1192,14 +1271,17 @@ function supraBench() {
         this.showToast("Subscribe to a tier first.", "info");
         return;
       }
-      // Browser prompt() is the MVP — it's the 5-keys-per-year kind of
-      // action, so a pure-Alpine modal is over-engineering. Trim keeps
-      // stray whitespace out of the display name. Skipping the server
-      // call on empty input means the user can hit Cancel without
-      // triggering a "name required" toast.
-      const name = (window.prompt(
-        "Name for this API key (e.g. 'My laptop', 'Production'):",
-      ) || "").trim();
+      // Custom in-style prompt — see sbPrompt() for the dialog
+      // contract. Cancel resolves to null, an empty/whitespace-only
+      // name is rejected by the disabled-confirm-button rule, so by
+      // the time we land here `name` is a non-empty trimmed string
+      // (or null on cancel).
+      const name = await this.sbPrompt({
+        title: "Name this API key",
+        body: "A short label so you can recognise it later in the dashboard.",
+        placeholder: "e.g. My laptop, Production, CI/CD",
+        confirmLabel: "Create key",
+      });
       if (!name) return;
       if (this.apiBusy) return;
       this.apiBusy = true;
@@ -1264,9 +1346,13 @@ function supraBench() {
         return;
       }
       if (!apiKeyId) return;
-      if (!window.confirm(
-        "Revoke this key? Any app using it will stop working immediately.",
-      )) return;
+      const ok = await this.sbConfirm({
+        title: "Revoke this API key?",
+        body: "Any app or script still using this key will stop working immediately. You can mint a fresh one right after.",
+        confirmLabel: "Revoke key",
+        danger: true,
+      });
+      if (!ok) return;
       if (this.apiBusy) return;
       this.apiBusy = true;
       try {
@@ -1865,7 +1951,7 @@ function supraBench() {
         else await this._loadModelDetail();
       } catch (e) {
         console.error("Tag vote failed:", e);
-        alert(e.message || "Tag vote failed");
+        this.showToast(e.message || "Tag vote failed", "error");
       }
     },
 
@@ -1888,7 +1974,7 @@ function supraBench() {
         else await this._loadModelDetail();
       } catch (e) {
         console.error("Entity vote failed:", e);
-        alert(e.message || "Entity vote failed");
+        this.showToast(e.message || "Entity vote failed", "error");
       }
     },
 
@@ -1911,7 +1997,7 @@ function supraBench() {
         await this._loadBenchDetail();
       } catch (e) {
         console.error("Rating failed:", e);
-        alert(e.message || "Rating failed");
+        this.showToast(e.message || "Rating failed", "error");
       }
     },
 
