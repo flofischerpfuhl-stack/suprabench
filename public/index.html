@@ -120,10 +120,6 @@
         <li class="nav-item" :class="{'active': view==='benchmarks'}" @click="navigate('benches'); mobileMenuOpen = false">Benchmarks</li>
         <li class="nav-item" :class="{'active': view==='submit'}" @click="navigate('submit'); mobileMenuOpen = false">Contribute</li>
         <li class="nav-item" :class="{'active': view==='about'}" @click="navigate('about'); mobileMenuOpen = false">About</li>
-        <li class="nav-item nav-item--admin"
-            x-show="user && user.isAdmin"
-            :class="{'active': view==='admin'}"
-            @click="navigate('admin'); mobileMenuOpen = false">Admin</li>
     </ul>
 
     <!-- Auth block: logged in → avatar + name + logout; logged out → sign-in button -->
@@ -1969,6 +1965,13 @@
                         :aria-selected="profileTab==='api'">
                     API &amp; Billing <span class="badge-soon">Demand-gated</span>
                 </button>
+                <button class="profile-tab profile-tab--admin"
+                        x-show="user && user.isAdmin"
+                        :class="{'is-active': profileTab==='admin'}"
+                        @click="profileTab='admin'" role="tab"
+                        :aria-selected="profileTab==='admin'">
+                    Admin <span class="badge-soon" x-show="user && user.isPrimaryAdmin">Primary</span>
+                </button>
             </nav>
 
             <!-- ── TAB: Activity ── -->
@@ -2315,38 +2318,23 @@
                     </template>
                 </div>
             </div><!-- /tab api -->
-        </div>
-    </template>
-</div>
 
-
-<!-- ═══════════════════════════════════════
-     VIEW: ADMIN BOARD
-     Visible only when user.isAdmin === true. Search for any user,
-     grant/revoke admin or partner/enterprise_plus tier, mint & revoke
-     API keys, inspect monthly usage. Backend enforces every permission
-     check — the x-show gate is cosmetic.
-     ═══════════════════════════════════════ -->
-<div x-show="view==='admin'" x-transition.opacity>
-    <template x-if="!user">
-        <div class="empty-state">Sign in to access the admin board.</div>
-    </template>
-    <template x-if="user && !user.isAdmin">
-        <div class="empty-state">You don't have admin access.</div>
-    </template>
-    <template x-if="user && user.isAdmin">
+            <!-- ── TAB: Admin ──
+                 Visible only when user.isAdmin === true. Search for any user,
+                 grant/revoke admin or partner/enterprise_plus tier, mint &
+                 revoke API keys, inspect monthly usage. Backend re-asserts
+                 every permission check — the x-show gate is cosmetic. -->
+            <div x-show="profileTab==='admin' && user && user.isAdmin" x-transition.opacity>
         <div class="admin-board">
-            <h1 class="page-title">Admin<br>Board</h1>
             <p class="admin-intro">
                 Search accounts by name or email. Grant
                 <strong>partner</strong> or <strong>enterprise+</strong>
                 with custom limits, or mint keys for them here.
-                <template x-if="user.isPrimaryAdmin">
+                <template x-if="user && user.isPrimaryAdmin">
                     <span>As primary admin, you can also promote other admins.</span>
                 </template>
             </p>
 
-            <!-- Flash messages -->
             <template x-if="adminFlash">
                 <div class="admin-flash" :class="'admin-flash--'+adminFlash.kind"
                      x-text="adminFlash.msg"></div>
@@ -2561,7 +2549,6 @@
                         </div>
                     </section>
 
-                    <!-- Monthly usage -->
                     <section class="admin-section">
                         <h3>Monthly usage</h3>
                         <div class="admin-usage" x-show="adminSelected.usage && adminSelected.usage.length > 0">
@@ -2590,6 +2577,9 @@
                     </section>
                 </div>
             </template>
+        </div>
+            </div><!-- /tab admin -->
+
         </div>
     </template>
 </div>

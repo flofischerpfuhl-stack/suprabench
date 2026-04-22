@@ -652,14 +652,27 @@ function supraBench() {
         this.$nextTick && this.$nextTick(() => this.renderAboutMath());
       } else if (parts[0] === "profile") {
         this.view = "profile";
-        this._loadProfile();
-      } else if (parts[0] === "admin") {
-        this.view = "admin";
-        // Any signed-in user can land on #admin, but the section
-        // itself is gated with x-show on `user?.isAdmin`. Non-admins
-        // just see an empty page — backend rejects every call.
+        // Support deep-linking to a specific profile tab: #profile/api,
+        // #profile/admin. Default is "activity". Invalid tab names
+        // collapse to "activity" so copy-pasted bad URLs don't 404.
+        const allowedTabs = ["activity", "api", "admin"];
+        if (parts[1] && allowedTabs.includes(parts[1])) {
+          this.profileTab = parts[1];
+        } else {
+          this.profileTab = "activity";
+        }
         this.adminNewKey = null;
         this.adminFlash = null;
+        this._loadProfile();
+      } else if (parts[0] === "admin") {
+        // Legacy deep-link: #admin redirects to #profile/admin so the
+        // admin board is reachable from bookmarks even after the move
+        // from standalone view to profile tab.
+        this.view = "profile";
+        this.profileTab = "admin";
+        this.adminNewKey = null;
+        this.adminFlash = null;
+        this._loadProfile();
       }
     },
 

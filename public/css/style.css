@@ -2871,11 +2871,13 @@ ol.about-list li::before {
    ADMIN BOARD
    ════════════════════════════════════════════════════════════ */
 
-.nav-item--admin {
+.profile-tab--admin {
   color: var(--accent);
+  border-color: transparent;
 }
-.nav-item--admin.active {
+.profile-tab--admin.is-active {
   color: var(--accent);
+  border-color: var(--accent);
 }
 
 .admin-board {
