@@ -338,4 +338,43 @@ export default defineSchema({
     type: v.string(),
     processedAt: v.number(),
   }).index("by_event_id", ["stripeEventId"]),
+
+  // ════════════════════════════════════════════════════════════
+  // USER ROLES — admin board (convex/admin.ts)
+  //
+  // `users` comes from @convex-dev/auth's authTables and we don't
+  // extend it (would require forking authTables). Instead each
+  // promoted user gets a `userRoles` row.
+  //
+  //   • role === "admin"   → can use the admin board. All admins
+  //                          have the same abilities EXCEPT only the
+  //                          primary admin (PRIMARY_ADMIN_EMAIL in
+  //                          convex/admin.ts) can promote/demote
+  //                          other admins.
+  //   • grantedTier set    → user is authorised to own API keys of
+  //                          that tier. `grantedLimits` are copied
+  //                          onto every key minted for them.
+  //
+  // Absence of a row = regular user (no admin, no granted tier).
+  // Both `role` and `grantedTier` are independent — a user can be
+  // admin without having a granted API tier, and vice versa.
+  // ════════════════════════════════════════════════════════════
+  userRoles: defineTable({
+    userId: v.id("users"),
+    role: v.optional(v.literal("admin")),
+    grantedTier: v.optional(
+      v.union(v.literal("partner"), v.literal("enterprise_plus"))
+    ),
+    grantedLimits: v.optional(
+      v.object({
+        monthlyQuota: v.number(),
+        rpmLimit: v.number(),
+        maxKeys: v.number(),
+        allowExport: v.boolean(),
+      })
+    ),
+    grantedBy: v.optional(v.id("users")),
+    grantedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
 });

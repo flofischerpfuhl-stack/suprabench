@@ -1,6 +1,7 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { PRIMARY_ADMIN_EMAIL } from "./admin";
 
 export const viewer = query({
   args: {},
@@ -9,11 +10,31 @@ export const viewer = query({
     if (!userId) return null;
     const user = await ctx.db.get(userId);
     if (!user) return null;
+    const email = (user as any).email ?? null;
+    const isPrimaryAdmin = email === PRIMARY_ADMIN_EMAIL;
+    let isAdmin = isPrimaryAdmin;
+    if (!isAdmin) {
+      const role = await ctx.db
+        .query("userRoles")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .first();
+      isAdmin = role?.role === "admin";
+    }
+    // Also expose the viewer's own granted tier/limits so the
+    // Profile→API page can render "You're a partner, limits X/Y".
+    const myRole = await ctx.db
+      .query("userRoles")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
     return {
       _id: user._id,
       name: (user as any).name ?? null,
-      email: (user as any).email ?? null,
+      email,
       image: (user as any).image ?? null,
+      isAdmin,
+      isPrimaryAdmin,
+      grantedTier: myRole?.grantedTier ?? null,
+      grantedLimits: myRole?.grantedLimits ?? null,
     };
   },
 });

@@ -372,6 +372,25 @@ function supraBench() {
     // Default: first question open so the page isn't a wall of buttons.
     aboutOpen: new Set(["q1"]),
 
+    // ── Admin Board ──
+    // Visible only when `user.isAdmin` is true. The primary admin
+    // (user.isPrimaryAdmin) additionally sees the admin-promote/demote
+    // controls — delegated admins can only grant tiers, not admins.
+    adminQuery: "",
+    adminResults: [],
+    adminSelected: null,      // full user-detail object from getUserDetail
+    adminBusy: false,
+    adminFlash: null,         // toast-lite: { kind: 'ok'|'err', msg: string }
+    adminNewKey: null,        // plaintext once after mintKeyForUser
+    adminKeyName: "",
+    adminGrantForm: {
+      tier: "partner",
+      monthlyQuota: 100000,
+      rpmLimit: 60,
+      maxKeys: 3,
+      allowExport: true,
+    },
+
     // ── Auth ──
     user: null,
 
@@ -634,6 +653,13 @@ function supraBench() {
       } else if (parts[0] === "profile") {
         this.view = "profile";
         this._loadProfile();
+      } else if (parts[0] === "admin") {
+        this.view = "admin";
+        // Any signed-in user can land on #admin, but the section
+        // itself is gated with x-show on `user?.isAdmin`. Non-admins
+        // just see an empty page — backend rejects every call.
+        this.adminNewKey = null;
+        this.adminFlash = null;
       }
     },
 
@@ -754,6 +780,190 @@ function supraBench() {
           console.warn("[api] subscription/keys load failed:", e);
         }
       }
+    },
+
+    // ── Admin Board ──────────────────────────────────────────────────
+    // All mutations go through convex/admin.ts. The backend reasserts
+    // every permission check; the frontend's `user.isAdmin` flag is
+    // for display gating only.
+    async adminSearch() {
+      if (!this.user?.isAdmin) return;
+      const q = (this.adminQuery || "").trim();
+      if (q.length < 2) { this.adminResults = []; return; }
+      const { client, api } = window.sbConvex;
+      try {
+        this.adminResults = await client.query(api.admin.searchUsers, { query: q });
+      } catch (e) {
+        console.error("[admin] search failed:", e);
+        this._adminFlash("err", e.message || "Search failed");
+      }
+    },
+    async adminSelect(userId) {
+      if (!this.user?.isAdmin) return;
+      const { client, api } = window.sbConvex;
+      try {
+        this.adminSelected = await client.query(api.admin.getUserDetail, { userId });
+        this.adminNewKey = null;
+        this.adminKeyName = "";
+        // Prime the grant form from the current grant so edits feel
+        // like an update, not a wipe.
+        if (this.adminSelected?.grantedLimits) {
+          this.adminGrantForm = {
+            tier: this.adminSelected.grantedTier || "partner",
+            ...this.adminSelected.grantedLimits,
+          };
+        } else {
+          this.adminGrantForm = {
+            tier: "partner",
+            monthlyQuota: 100000,
+            rpmLimit: 60,
+            maxKeys: 3,
+            allowExport: true,
+          };
+        }
+      } catch (e) {
+        console.error("[admin] getUserDetail failed:", e);
+        this._adminFlash("err", e.message || "Load failed");
+      }
+    },
+    async adminRefreshSelected() {
+      if (this.adminSelected?._id) await this.adminSelect(this.adminSelected._id);
+      await this.adminSearch();
+    },
+    async adminGrantTier() {
+      if (!this.user?.isAdmin || !this.adminSelected || this.adminBusy) return;
+      const f = this.adminGrantForm;
+      const limits = {
+        monthlyQuota: Math.floor(Number(f.monthlyQuota) || 0),
+        rpmLimit: Math.floor(Number(f.rpmLimit) || 0),
+        maxKeys: Math.floor(Number(f.maxKeys) || 0),
+        allowExport: !!f.allowExport,
+      };
+      if (limits.monthlyQuota < 1000 || limits.rpmLimit < 10 || limits.maxKeys < 1) {
+        this._adminFlash("err", "Limits below minimum (quota ≥ 1000, rpm ≥ 10, keys ≥ 1)");
+        return;
+      }
+      this.adminBusy = true;
+      try {
+        const { client, api } = window.sbConvex;
+        await client.mutation(api.admin.grantTier, {
+          userId: this.adminSelected._id,
+          tier: f.tier,
+          limits,
+        });
+        this._adminFlash("ok", `Granted ${f.tier} tier`);
+        await this.adminRefreshSelected();
+      } catch (e) {
+        this._adminFlash("err", e.message || "Grant failed");
+      } finally {
+        this.adminBusy = false;
+      }
+    },
+    async adminRevokeTier() {
+      if (!this.user?.isAdmin || !this.adminSelected || this.adminBusy) return;
+      if (!confirm("Remove this user's granted tier AND revoke all their active API keys?")) return;
+      this.adminBusy = true;
+      try {
+        const { client, api } = window.sbConvex;
+        const res = await client.mutation(api.admin.revokeTier, {
+          userId: this.adminSelected._id,
+        });
+        this._adminFlash("ok", `Tier revoked — ${res.revokedKeys} key(s) auto-revoked`);
+        await this.adminRefreshSelected();
+      } catch (e) {
+        this._adminFlash("err", e.message || "Revoke failed");
+      } finally {
+        this.adminBusy = false;
+      }
+    },
+    async adminGrantAdmin() {
+      if (!this.user?.isPrimaryAdmin || !this.adminSelected || this.adminBusy) return;
+      this.adminBusy = true;
+      try {
+        const { client, api } = window.sbConvex;
+        await client.mutation(api.admin.grantAdmin, { userId: this.adminSelected._id });
+        this._adminFlash("ok", "Admin role granted");
+        await this.adminRefreshSelected();
+      } catch (e) {
+        this._adminFlash("err", e.message || "Grant admin failed");
+      } finally {
+        this.adminBusy = false;
+      }
+    },
+    async adminRevokeAdmin() {
+      if (!this.user?.isPrimaryAdmin || !this.adminSelected || this.adminBusy) return;
+      if (!confirm("Remove this user's admin role?")) return;
+      this.adminBusy = true;
+      try {
+        const { client, api } = window.sbConvex;
+        await client.mutation(api.admin.revokeAdmin, { userId: this.adminSelected._id });
+        this._adminFlash("ok", "Admin role revoked");
+        await this.adminRefreshSelected();
+      } catch (e) {
+        this._adminFlash("err", e.message || "Revoke admin failed");
+      } finally {
+        this.adminBusy = false;
+      }
+    },
+    async adminMintKey() {
+      if (!this.user?.isAdmin || !this.adminSelected || this.adminBusy) return;
+      const name = (this.adminKeyName || "").trim();
+      if (!name) { this._adminFlash("err", "Key name required"); return; }
+      this.adminBusy = true;
+      try {
+        const { client, api } = window.sbConvex;
+        const res = await client.mutation(api.admin.mintKeyForUser, {
+          userId: this.adminSelected._id,
+          name,
+        });
+        this.adminNewKey = res;   // shown once, plaintext field is rendered highlighted
+        this.adminKeyName = "";
+        this._adminFlash("ok", "Key minted — copy plaintext now");
+        await this.adminRefreshSelected();
+      } catch (e) {
+        this._adminFlash("err", e.message || "Mint failed");
+      } finally {
+        this.adminBusy = false;
+      }
+    },
+    async adminRevokeKey(keyId) {
+      if (!this.user?.isAdmin || this.adminBusy) return;
+      if (!confirm("Revoke this key? The owner won't be able to use it anymore.")) return;
+      this.adminBusy = true;
+      try {
+        const { client, api } = window.sbConvex;
+        await client.mutation(api.admin.revokeKey, { apiKeyId: keyId });
+        this._adminFlash("ok", "Key revoked");
+        await this.adminRefreshSelected();
+      } catch (e) {
+        this._adminFlash("err", e.message || "Revoke failed");
+      } finally {
+        this.adminBusy = false;
+      }
+    },
+    async adminCopyKey() {
+      if (!this.adminNewKey?.plaintext) return;
+      try {
+        await navigator.clipboard.writeText(this.adminNewKey.plaintext);
+        this._adminFlash("ok", "Copied to clipboard");
+      } catch {
+        this._adminFlash("err", "Copy failed — select manually");
+      }
+    },
+    adminDismissNewKey() {
+      this.adminNewKey = null;
+    },
+    _adminFlash(kind, msg) {
+      this.adminFlash = { kind, msg };
+      setTimeout(() => {
+        if (this.adminFlash && this.adminFlash.msg === msg) this.adminFlash = null;
+      }, 4000);
+    },
+    adminFormatMonth(yyyymm) {
+      if (!yyyymm) return "";
+      const [y, m] = yyyymm.split("-");
+      const names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      return `${names[parseInt(m, 10) - 1]} ${y}`;
     },
 
     // ── API & Billing tab ────────────────────────────────────────────
