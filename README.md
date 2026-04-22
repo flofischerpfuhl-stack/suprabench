@@ -40,7 +40,9 @@ For a model $m$, with valid normalised per-bench medians $\mu_{m,b}$ over its
 evaluated benches $\mathcal{B}_m$:
 
 ```
-SupraScore(m)   = Σ_b μ(m,b) · BenchScore(b)  /  Σ_b BenchScore(b)
+weightedMean(m) = Σ_b μ(m,b) · BenchScore(b)  /  W(m)
+W(m)            = Σ_b BenchScore(b)                 ← accumulated coverage
+SupraScore(m)   = weightedMean(m) · √(W(m) / W*)    ← W* = max over non-hidden models
 BenchScore(b)   = Q(b) · D(b) · H(b)          ∈ [0, 100]
 ```
 
@@ -58,6 +60,13 @@ BenchScore(b)   = Q(b) · D(b) · H(b)          ∈ [0, 100]
   never disappear.
 - **Per-(model, bench) score** $\mu_{m,b}$ — median of all valid (net-positive
   vote) normalised submissions, robust to a single outlier.
+- **Coverage share** $W(m)/W^\star$ — the fraction of the best-covered model's
+  accumulated Bench-Score weight that $m$ has been evaluated against. The
+  $\sqrt{\cdot}$ shape mirrors the $1/\sqrt{N}$ standard-error falloff of a
+  sample mean — halving coverage shrinks the score by $\sqrt{2}$, not by 2.
+  Zero hyperparameters: $W^\star$ comes from the DB, not a prior. The
+  best-covered model has share $=1$ and no self-penalty. Hidden models are
+  excluded from $W^\star$.
 
 Worked example, full math, and trajectory tables: [About page on the live site](https://suprabench.ai/#about).
 
@@ -190,7 +199,10 @@ suprabench/
 - **One submission can't carry a score** — per-(model, bench) median needs
   multiple submissions to move
 - **One bench can't carry a model** — SupraScore averages across all benches
-  weighted by trust × difficulty × headroom
+  weighted by trust × difficulty × headroom, then shrinks the result by the
+  coverage-share factor $\sqrt{W(m)/W^\star}$. A model with only 1 bench loses
+  roughly $\sqrt{1/N^\star}$ of its score versus the best-covered rival;
+  bench-maxing via a single vanity bench is mathematically impossible.
 - **Difficulty uses median** — single inflated rater can't fake difficulty
 - **Saturation auto-detected** — pumping a saturated bench gives diminishing
   returns by construction

@@ -209,9 +209,9 @@
                 <th style="width:50px">#</th>
                 <th>Model / Model-Family</th>
                 <th>Provider</th>
-                <th>SupraScore</th>
+                <th title="Bench-weighted mean of the model's per-bench medians, shrunk by √(coverage share) so a model tested on only a fraction of the available benches cannot outrank a well-covered rival. See About for the full formula.">SupraScore</th>
                 <th x-show="activeTags.length > 0">Filtered Score</th>
-                <th>Coverage</th>
+                <th title="Number of distinct benches this model has a net-positive score on. More coverage → the SupraScore's √(coverage-share) factor moves closer to 1 (the best-covered model has factor = 1 and no self-penalty).">Coverage</th>
             </tr>
         </thead>
         <tbody>
@@ -1711,9 +1711,13 @@
             <p class="helper-text">Quality is on $[0,100]$; difficulty and headroom are both on $[0,1]$, so the Bench Score is naturally on $[0,100]$ — same scale as the per-model scores. It's also the headline number shown on every bench page and in the benchmarks list.</p>
 
             <h4 class="qa-subheader">5. The SupraScore</h4>
-            <p>A Bench-Score-weighted average of the per-bench medians, over all benches $\mathcal{B}_m$ the model has been evaluated on:</p>
-            <p class="math-block">$$\operatorname{SupraScore}(m) \;=\; \frac{\displaystyle \sum_{b \in \mathcal{B}_m} \mu_{m,b} \cdot \operatorname{BenchScore}(b)}{\displaystyle \sum_{b \in \mathcal{B}_m} \operatorname{BenchScore}(b)}$$</p>
+            <p>Two steps. First, the model's <em>weighted mean</em> — a Bench-Score-weighted average of its per-bench medians, over all benches $\mathcal{B}_m$ the model has been evaluated on:</p>
+            <p class="math-block">$$\bar{\mu}_m \;=\; \frac{\displaystyle \sum_{b \in \mathcal{B}_m} \mu_{m,b} \cdot \operatorname{BenchScore}(b)}{\displaystyle \sum_{b \in \mathcal{B}_m} \operatorname{BenchScore}(b)}$$</p>
             <p class="helper-text">Benches with $\operatorname{BenchScore}(b)=0$ (e.g. zero difficulty, zero quality) are excluded from both numerator and denominator.</p>
+            <p>Second, a <em>coverage-share</em> factor that protects the ranking from models tested on only a tiny slice of the benchmarks. Let $W_m = \sum_{b \in \mathcal{B}_m} \operatorname{BenchScore}(b)$ be the model's accumulated Bench-Score weight, and $W^\star = \max_{m'} W_{m'}$ the maximum over every non-hidden model. The final score shrinks $\bar{\mu}_m$ by the square root of the model's share of that maximum:</p>
+            <p class="math-block">$$\operatorname{SupraScore}(m) \;=\; \bar{\mu}_m \cdot \sqrt{\frac{W_m}{W^\star}}$$</p>
+            <p class="helper-text">The $\sqrt{\cdot}$ mirrors the statistical $1/\sqrt{N}$ shape of standard-error falloff — halving your coverage doesn't halve your score, it shrinks it by $\sqrt{2}$. The best-covered model always has share $=1$ and therefore no self-penalty. Hidden models are excluded from the maximum so a mothballed giant can't permanently squash fresh entrants.</p>
+            <p class="helper-text">This does mean a model's score can move when <em>other</em> models gain coverage (a well-tested new flagship raising $W^\star$ shifts everyone else proportionally). That's deliberate: "coverage" is a relative concept — it only exists in comparison to what else has been tested.</p>
         </div>
     </div>
 
@@ -1793,12 +1797,16 @@
                     <tr><td><strong>Σ</strong></td><td></td><td></td><td></td><td></td><td></td><td></td><td><strong>56.5</strong></td><td><strong>4 132</strong></td></tr>
                 </tbody>
             </table>
-            <p class="math-block">$$\operatorname{SupraScore}(\text{Claude X}) \;=\; \frac{4\,132}{56.5} \;\approx\; 73.1$$</p>
-            <p>Three takeaways from this:</p>
+            <p class="math-block">$$\bar{\mu}_{\text{Claude X}} \;=\; \frac{4\,132}{56.5} \;\approx\; 73.1$$</p>
+            <p>That's the weighted mean. Now apply the coverage-share step. Suppose the best-covered model in the table has $W^\star = 100$; Claude X has $W_m = 56.5$, so its share is $0.565$ and the shrinkage factor is $\sqrt{0.565} \approx 0.752$:</p>
+            <p class="math-block">$$\operatorname{SupraScore}(\text{Claude X}) \;=\; 73.1 \cdot \sqrt{\tfrac{56.5}{100}} \;\approx\; 55.0$$</p>
+            <p>If Claude X <em>were</em> the most-covered model ($W^\star = W_m = 56.5$), the factor would be $1$ and the SupraScore would equal the weighted mean $73.1$ exactly.</p>
+            <p>Four takeaways from this:</p>
             <ul class="about-list">
                 <li>The <strong>frontier bench</strong> dominates ($w = 52.5$) because it's hard, trustworthy, and not yet saturated.</li>
                 <li>The <strong>saturated bench</strong> still counts a little ($w = 4$) but contributes less than 10 % of the total weight.</li>
                 <li>The <strong>trivial bench</strong> is silently filtered out by $D = 0$ — scoring 99 % on it earns the model exactly nothing.</li>
+                <li>The <strong>coverage-share step</strong> means a model that's been tested on only a small fraction of the bench pool can't beat a well-covered rival just by cherry-picking one favourable bench.</li>
             </ul>
         </div>
     </div>
@@ -1839,7 +1847,7 @@
             <p>Adversarial robustness is built into the formula at every layer:</p>
             <ul class="about-list">
                 <li><strong>One submission can't carry a score</strong> — per-(model, bench) median needs multiple submissions to move; a single fake doesn't shift it.</li>
-                <li><strong>One bench can't carry a model</strong> — the SupraScore is averaged across <em>all</em> benches a model has scores on, weighted by trust × difficulty × headroom. You can't bench-max your way to the top with a few vanity benches.</li>
+                <li><strong>One bench can't carry a model</strong> — the SupraScore is averaged across <em>all</em> benches a model has scores on, weighted by trust × difficulty × headroom, and then further shrunk by a coverage-share factor $\sqrt{W_m/W^\star}$. A model tested on only one bench loses $\approx\!\sqrt{1/N^\star}$ of its score versus the best-covered rival, so bench-maxing your way to the top with a single vanity bench is literally impossible.</li>
                 <li><strong>Difficulty uses median, not mean</strong> — a single 5-star rater on a trivial bench can't fake difficulty.</li>
                 <li><strong>Saturation auto-detected</strong> — pumping a saturated bench gives diminishing returns by construction.</li>
                 <li><strong>Engagement-aware hide threshold</strong> — small voting cliques can't take down established entries.</li>
@@ -1905,7 +1913,7 @@
             <p>Common suffixes you'll see: <code>(low)</code> / <code>(med)</code> / <code>(high)</code> / <code>(xhigh)</code>, <code>(thinking)</code>, <code>(max)</code>, <code>(128k)</code> / <code>(200k)</code> / <code>(1M)</code> for context-length SKUs, <code>(instruct)</code> / <code>(chat)</code> / <code>(base)</code> for open-weight post-training variants.</p>
 
             <h4 class="qa-subheader">Family ranking &ne; average of member models</h4>
-            <p>When you click a family tag in the rankings table, we rebuild the SupraScore from the <em>union</em> of the family's member models per bench: for each bench any member scored on, we take the family's median-of-medians and weight it by the bench's own weight, exactly as we do for individual models. A family with more variants doesn't automatically win — the per-bench median is still robust to one outlier variant.</p>
+            <p>When you click a family tag in the rankings table, we rebuild the SupraScore from the <em>union</em> of the family's member models per bench: for each bench any member scored on, we take the family's median-of-medians and weight it by the bench's own weight, exactly as we do for individual models. The coverage-share step then uses the max over all families (not over all models) as denominator so family scores stay on the same $[0,100]$ scale. A family with more variants doesn't automatically win — the per-bench median is still robust to one outlier variant.</p>
 
             <h4 class="qa-subheader">What if the community disagrees with a grouping?</h4>
             <p>Anyone signed in can edit a model's <code>familyTag</code> via the model-detail page. Rankings refresh on the next tick. There's no canonical list and no admin curation — if the community thinks "GPT-5.3 Codex (high)" is actually a separate model from "(low)", they can split it off by assigning a new family tag to the "(high)" variant.</p>

@@ -15,10 +15,11 @@
 //   • "the family as a whole" is what a user browsing for "which GPT
 //     family should I use?" actually wants — median tracks that.
 //
-// Then the family's supraScore uses the SAME bench-weight formula as
-// individual models (quality × difficulty × headroom, floor 0.1).
-// This makes family / model scores directly comparable — a family
-// can't game the score by having a larger model roster.
+// Then the family's supraScore is the bench-weighted mean of those
+// family medians, scaled by √(family_totalWeight / max_family_totalWeight)
+// exactly like the per-model SupraScore. Coverage-share is computed
+// within the family scale (max over all families, not over all models)
+// so the leaderboard's top family always has share=1.
 //
 // ── What counts as a family ─────────────────────────────────
 // Models with `familyTag === undefined` or empty string are NOT
@@ -59,115 +60,200 @@ function normalizeFamilyKey(familyTag: string | undefined | null): string | null
   return t.length === 0 ? null : t;
 }
 
-// Compute + upsert a single family's ranking row.
-// If `provider` is specified and no matching models exist (e.g.
-// because the last model was deleted), the existing row is marked
-// hidden rather than deleted — preserves referential integrity for
-// any cached link we might have shipped out.
-async function recomputeOneFamily(
+// Compute the raw aggregate (weightedMean + totalWeight + benchCount +
+// tags + hidden-flag) for one (familyTag, provider) group. Does NOT
+// write anything — caller composes all aggregates, finds max
+// totalWeight across families, then writes familyRankings rows in a
+// second pass so the coverage-share denominator is global.
+async function aggregateFamilyProvider(
   ctx: any,
+  members: any[],
   familyTag: string,
-  provider: string | null = null
-) {
-  // Find all models in this family. We scan the table — family size
-  // is small (< 100 models per family in practice) so a scan is
-  // cheap and avoids adding a by_family index.
-  const allModels = await ctx.db.query("models").collect();
-  const members = allModels.filter(
-    (m: any) =>
-      normalizeFamilyKey(m.familyTag) === familyTag &&
-      (provider === null || m.provider === provider)
-  );
+  provider: string
+): Promise<{
+  familyTag: string;
+  provider: string;
+  weightedMean: number;
+  totalWeight: number;
+  benchCount: number;
+  modelCount: number;
+  tags: string[];
+  hidden: boolean;
+} | null> {
+  const familyMembers = members.filter((m: any) => m.provider === provider);
+  if (familyMembers.length === 0) return null;
+  const visible = familyMembers.filter((m: any) => !m.hidden);
+  const isAllHidden = visible.length === 0 && familyMembers.length > 0;
 
-  // Distinct providers inside the family. Usually 1 (GPT-4 is all
-  // OpenAI) but occasionally 2+ (e.g. a lab + their fine-tuner); we
-  // emit one row per (familyTag, provider) to keep them separate on
-  // the UI.
-  const providers = new Set<string>(members.map((m: any) => m.provider));
-  const resultRows: any[] = [];
-
-  for (const p of providers) {
-    const familyMembers = members.filter((m: any) => m.provider === p);
-    const visible = familyMembers.filter((m: any) => !m.hidden);
-    const isAllHidden = visible.length === 0 && familyMembers.length > 0;
-
-    // Collect every valid score from every visible member, grouped by bench.
-    // perBench[benchId] = array of per-member medians on that bench.
-    const perBench: Record<string, number[]> = {};
-    for (const m of visible) {
-      const scores = await ctx.db
-        .query("modelScores")
-        .withIndex("by_model", (q: any) => q.eq("modelId", m._id))
-        .collect();
-      const byBench: Record<string, number[]> = {};
-      for (const s of scores) {
-        if (s.upvotes > s.downvotes) {
-          const k = s.benchId as string;
-          (byBench[k] ??= []).push(s.normalizedScore);
-        }
-      }
-      for (const [benchId, vals] of Object.entries(byBench)) {
-        const med = median(vals);
-        (perBench[benchId] ??= []).push(med);
+  // Collect every valid score from every visible member, grouped by bench.
+  // perBench[benchId] = array of per-member medians on that bench.
+  const perBench: Record<string, number[]> = {};
+  for (const m of visible) {
+    const scores = await ctx.db
+      .query("modelScores")
+      .withIndex("by_model", (q: any) => q.eq("modelId", m._id))
+      .collect();
+    const byBench: Record<string, number[]> = {};
+    for (const s of scores) {
+      if (s.upvotes > s.downvotes) {
+        const k = s.benchId as string;
+        (byBench[k] ??= []).push(s.normalizedScore);
       }
     }
-
-    let weightedSum = 0;
-    let weightTotal = 0;
-    let benchCount = 0;
-
-    for (const [benchId, memberMedians] of Object.entries(perBench)) {
-      const familyMedian = median(memberMedians);
-      const w = await getBenchWeights(ctx, benchId as Id<"benches">);
-      if (w.weight <= 0) continue;
-      weightedSum += w.weight * familyMedian;
-      weightTotal += w.weight;
-      benchCount++;
+    for (const [benchId, vals] of Object.entries(byBench)) {
+      const med = median(vals);
+      (perBench[benchId] ??= []).push(med);
     }
-
-    const supraScore = weightTotal > 0 ? weightedSum / weightTotal : 0;
-
-    // Union of member tags — useful for the tag-filter UX, same as
-    // modelRankings.tags.
-    const tagSet = new Set<string>();
-    for (const m of visible) for (const t of (m.tags ?? [])) tagSet.add(t);
-
-    const data = {
-      familyTag,
-      provider: p,
-      supraScore: Math.round(supraScore * 10) / 10,
-      benchCount,
-      modelCount: visible.length,
-      tags: Array.from(tagSet),
-      updatedAt: Date.now(),
-      hidden: isAllHidden,
-    };
-
-    const existing = await ctx.db
-      .query("familyRankings")
-      .withIndex("by_family_provider", (q: any) =>
-        q.eq("familyTag", familyTag).eq("provider", p)
-      )
-      .first();
-
-    if (existing) await ctx.db.patch(existing._id, data);
-    else await ctx.db.insert("familyRankings", data);
-    resultRows.push(data);
   }
 
-  return resultRows;
+  let weightedSum = 0;
+  let weightTotal = 0;
+  let benchCount = 0;
+
+  for (const [benchId, memberMedians] of Object.entries(perBench)) {
+    const familyMedian = median(memberMedians);
+    const w = await getBenchWeights(ctx, benchId as Id<"benches">);
+    if (w.weight <= 0) continue;
+    weightedSum += w.weight * familyMedian;
+    weightTotal += w.weight;
+    benchCount++;
+  }
+
+  const weightedMean = weightTotal > 0 ? weightedSum / weightTotal : 0;
+
+  const tagSet = new Set<string>();
+  for (const m of visible) for (const t of (m.tags ?? [])) tagSet.add(t);
+
+  return {
+    familyTag,
+    provider,
+    weightedMean,
+    totalWeight: weightTotal,
+    benchCount,
+    modelCount: visible.length,
+    tags: Array.from(tagSet),
+    hidden: isAllHidden,
+  };
+}
+
+async function writeFamilyRow(
+  ctx: any,
+  agg: {
+    familyTag: string;
+    provider: string;
+    weightedMean: number;
+    totalWeight: number;
+    benchCount: number;
+    modelCount: number;
+    tags: string[];
+    hidden: boolean;
+  },
+  maxFamilyTotalWeight: number
+) {
+  const share =
+    maxFamilyTotalWeight > 0
+      ? Math.min(1, agg.totalWeight / maxFamilyTotalWeight)
+      : 0;
+  const supraScore = agg.weightedMean * Math.sqrt(share);
+
+  const data = {
+    familyTag: agg.familyTag,
+    provider: agg.provider,
+    supraScore: Math.round(supraScore * 10) / 10,
+    benchCount: agg.benchCount,
+    modelCount: agg.modelCount,
+    tags: agg.tags,
+    updatedAt: Date.now(),
+    hidden: agg.hidden,
+  };
+
+  const existing = await ctx.db
+    .query("familyRankings")
+    .withIndex("by_family_provider", (q: any) =>
+      q.eq("familyTag", agg.familyTag).eq("provider", agg.provider)
+    )
+    .first();
+
+  if (existing) await ctx.db.patch(existing._id, data);
+  else await ctx.db.insert("familyRankings", data);
+}
+
+async function recomputeAllImpl(ctx: any) {
+  // 1. Enumerate every live (familyTag, provider) pair from models.
+  const allModels = await ctx.db.query("models").collect();
+  const liveFamilies = new Set<string>();
+  const pairs = new Map<string, { familyTag: string; provider: string }>();
+  for (const m of allModels) {
+    const k = normalizeFamilyKey(m.familyTag);
+    if (!k) continue;
+    liveFamilies.add(k);
+    pairs.set(`${k}\u0000${m.provider}`, { familyTag: k, provider: m.provider });
+  }
+
+  // 2. Purge rows whose (familyTag, provider) no longer exists
+  //    (happens after model rename / family-tag change / delete).
+  const existingRows = await ctx.db.query("familyRankings").collect();
+  let deleted = 0;
+  for (const r of existingRows) {
+    const key = `${r.familyTag}\u0000${r.provider}`;
+    if (!pairs.has(key)) {
+      await ctx.db.delete(r._id);
+      deleted++;
+    }
+  }
+
+  // 3. Pass 1: compute raw aggregates for every (family, provider).
+  const aggregates: NonNullable<
+    Awaited<ReturnType<typeof aggregateFamilyProvider>>
+  >[] = [];
+  const membersByFamily = new Map<string, any[]>();
+  for (const m of allModels) {
+    const k = normalizeFamilyKey(m.familyTag);
+    if (!k) continue;
+    const list = membersByFamily.get(k) ?? [];
+    list.push(m);
+    membersByFamily.set(k, list);
+  }
+  for (const { familyTag, provider } of pairs.values()) {
+    const members = membersByFamily.get(familyTag) ?? [];
+    const agg = await aggregateFamilyProvider(ctx, members, familyTag, provider);
+    if (agg) aggregates.push(agg);
+  }
+
+  // 4. Max totalWeight across all non-hidden families — denominator
+  //    for the √(coverageShare) factor. Hidden families don't count
+  //    (same rationale as per-model: a mothballed giant shouldn't
+  //    permanently squash everyone else).
+  let maxFamilyTotalWeight = 0;
+  for (const a of aggregates) {
+    if (a.hidden) continue;
+    if (a.totalWeight > maxFamilyTotalWeight) maxFamilyTotalWeight = a.totalWeight;
+  }
+
+  // 5. Pass 2: write rows.
+  for (const a of aggregates) {
+    await writeFamilyRow(ctx, a, maxFamilyTotalWeight);
+  }
+
+  return {
+    liveFamilies: liveFamilies.size,
+    rowsWritten: aggregates.length,
+    rowsDeleted: deleted,
+  };
 }
 
 // ── Public internal mutations ──
 
 // Recompute a single family (identified by familyTag, and optionally
-// a specific provider). Called by rankings.recomputeModel when a
-// model with that familyTag changes.
+// a specific provider). Because the coverage-share factor compares
+// this family's totalWeight against the max over ALL families, a
+// single-family update isn't actually local — we full-rebuild. Kept
+// under the old name so existing callers don't change.
 export const recomputeFamily = internalMutation({
   args: { familyTag: v.string(), provider: v.optional(v.string()) },
-  handler: async (ctx, { familyTag, provider }) => {
-    const rows = await recomputeOneFamily(ctx, familyTag, provider ?? null);
-    return { rows: rows.length };
+  handler: async (ctx) => {
+    const r = await recomputeAllImpl(ctx);
+    return { rows: r.rowsWritten };
   },
 });
 
@@ -179,34 +265,6 @@ export const recomputeFamily = internalMutation({
 export const recomputeAll = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // 1. Purge rows whose familyTag no longer exists on any model
-    //    (happens after a model rename / family-tag change).
-    const allModels = await ctx.db.query("models").collect();
-    const liveFamilies = new Set<string>();
-    for (const m of allModels) {
-      const k = normalizeFamilyKey(m.familyTag);
-      if (k) liveFamilies.add(k);
-    }
-    const existingRows = await ctx.db.query("familyRankings").collect();
-    let deleted = 0;
-    for (const r of existingRows) {
-      if (!liveFamilies.has(r.familyTag)) {
-        await ctx.db.delete(r._id);
-        deleted++;
-      }
-    }
-
-    // 2. Recompute every live family.
-    let touched = 0;
-    for (const f of liveFamilies) {
-      const rows = await recomputeOneFamily(ctx, f, null);
-      touched += rows.length;
-    }
-
-    return {
-      liveFamilies: liveFamilies.size,
-      rowsWritten: touched,
-      rowsDeleted: deleted,
-    };
+    return await recomputeAllImpl(ctx);
   },
 });

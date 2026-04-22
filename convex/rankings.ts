@@ -3,6 +3,28 @@ import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 
+// ── SupraScore = weightedMean × √(coverageShare) ──
+//
+// A model's SupraScore is its bench-weighted mean (quality × difficulty ×
+// headroom per bench), multiplied by √(its totalWeight / max totalWeight
+// across all models). This coverage-share factor penalises models that
+// have only been tested on a small slice of the available benches, so a
+// single favourable data point can't vault a sparse model past well-
+// tested competitors.
+//
+// Properties:
+//   • score stays in [0, 100]
+//   • zero hyperparameters — max totalWeight comes straight from the DB
+//   • √-shape mirrors the statistical √N standard-error falloff
+//   • monotonic in the model's own scores and coverage
+//   • top-covered model always has share=1 (no self-penalty)
+//   • IIA is intentionally violated: a new well-tested model moving the
+//     max shifts every other model's score proportionally. We accept
+//     this because "coverage" is only meaningful relative to the rest
+//     of the table.
+//
+// Everything below is the per-bench weight math — unchanged from before.
+//
 // ── Bench weight = quality × difficulty × headroom ──
 //
 // quality       : 0-100, mean of the four trust dimensions × 20
@@ -121,9 +143,13 @@ export async function getBenchWeights(
   };
 }
 
-async function recomputeOne(ctx: any, modelId: Id<"models">) {
+// Compute {weightedMean, totalWeight, benchCount} for ONE model.
+// Does NOT write anything — caller composes the per-model aggregates
+// from every model, finds max totalWeight, then writes modelRankings
+// in a second pass.
+async function computeAggregate(ctx: any, modelId: Id<"models">) {
   const model = await ctx.db.get(modelId);
-  if (!model) return;
+  if (!model) return null;
 
   const scores = await ctx.db
     .query("modelScores")
@@ -155,85 +181,120 @@ async function recomputeOne(ctx: any, modelId: Id<"models">) {
     benchCount++;
   }
 
-  const supraScore = weightTotal > 0 ? weightedSum / weightTotal : 0;
+  const weightedMean = weightTotal > 0 ? weightedSum / weightTotal : 0;
+
+  return {
+    modelId,
+    model,
+    weightedMean,
+    totalWeight: weightTotal,
+    benchCount,
+  };
+}
+
+// Upsert the modelRankings row for ONE model given the pre-computed
+// aggregate + the global maxTotalWeight. coverageShare = 1 when the
+// model IS the max — no self-penalty at the top.
+async function writeRanking(
+  ctx: any,
+  agg: {
+    modelId: Id<"models">;
+    model: any;
+    weightedMean: number;
+    totalWeight: number;
+    benchCount: number;
+  },
+  maxTotalWeight: number
+) {
+  const share =
+    maxTotalWeight > 0 ? Math.min(1, agg.totalWeight / maxTotalWeight) : 0;
+  const supraScore = agg.weightedMean * Math.sqrt(share);
 
   const existing = await ctx.db
     .query("modelRankings")
-    .withIndex("by_model", (q: any) => q.eq("modelId", modelId))
+    .withIndex("by_model", (q: any) => q.eq("modelId", agg.modelId))
     .first();
 
   const data = {
-    modelId,
-    name: (model as any).name,
-    provider: (model as any).provider,
-    slug: (model as any).slug,
-    familyTag: (model as any).familyTag,
-    tags: (model as any).tags,
+    modelId: agg.modelId,
+    name: agg.model.name,
+    provider: agg.model.provider,
+    slug: agg.model.slug,
+    familyTag: agg.model.familyTag,
+    tags: agg.model.tags,
     supraScore: Math.round(supraScore * 10) / 10,
-    benchCount,
+    benchCount: agg.benchCount,
     updatedAt: Date.now(),
     // Mirror models.hidden so listRanked never has to do an N×db.get loop.
-    hidden: (model as any).hidden ?? false,
+    hidden: agg.model.hidden ?? false,
   };
 
   if (existing) await ctx.db.patch(existing._id, data);
   else await ctx.db.insert("modelRankings", data);
 }
 
+// The one function that actually re-ranks everything. Called by
+// recomputeAll, recomputeModel, and recomputeForBench because every
+// score / bench change potentially shifts maxTotalWeight, and
+// maxTotalWeight appears in every model's SupraScore — so a fully
+// correct update requires a full-table pass.
+//
+// For the scales we're at (< 1k models, < 100 benches) this is fine;
+// if we ever outgrow it, the right optimisation is to cache the
+// aggregate per model and only re-aggregate the changed ones.
+async function recomputeAllImpl(ctx: any) {
+  const models = await ctx.db.query("models").collect();
+
+  const aggregates: Awaited<ReturnType<typeof computeAggregate>>[] = [];
+  for (const m of models) {
+    const agg = await computeAggregate(ctx, m._id);
+    if (agg) aggregates.push(agg);
+  }
+
+  // Hidden models don't influence the coverage denominator — otherwise
+  // a single mothballed flagship with huge coverage would permanently
+  // squash every real entrant.
+  let maxTotalWeight = 0;
+  for (const a of aggregates) {
+    if (a!.model.hidden) continue;
+    if (a!.totalWeight > maxTotalWeight) maxTotalWeight = a!.totalWeight;
+  }
+
+  for (const a of aggregates) {
+    await writeRanking(ctx, a!, maxTotalWeight);
+  }
+}
+
 export const recomputeModel = internalMutation({
   args: { modelId: v.id("models") },
-  handler: async (ctx, { modelId }) => {
-    await recomputeOne(ctx, modelId);
-    // If this model has a familyTag, roll the family ranking forward
-    // too. Scheduling rather than direct-calling keeps this cheap on
-    // hot-path mutations and keeps each mutation's footprint small.
-    const m = await ctx.db.get(modelId);
-    const fam = (m as any)?.familyTag?.trim?.();
-    if (fam) {
-      await ctx.scheduler.runAfter(0, internal.familyRankings.recomputeFamily, {
-        familyTag: fam,
-        provider: (m as any).provider,
-      });
-    }
+  handler: async (ctx) => {
+    // Coverage-share couples every model's score to every other
+    // model's totalWeight, so even a single-model update triggers a
+    // full re-rank. Cheaper than you'd think at current scale.
+    await recomputeAllImpl(ctx);
+    // Cascade to family rankings. We intentionally schedule rather
+    // than run inline so the mutation's transaction stays small.
+    await ctx.scheduler.runAfter(0, internal.familyRankings.recomputeAll, {});
   },
 });
 
 export const recomputeAll = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const models = await ctx.db.query("models").collect();
-    for (const m of models) {
-      await recomputeOne(ctx, m._id);
-    }
-    // Full family rebuild after a full model rebuild. Called inline
-    // (not scheduled) so a single `recomputeAll` invocation leaves the
-    // DB in a consistent state on return — migrations rely on that.
+    await recomputeAllImpl(ctx);
+    // Inline (not scheduled) so a single recomputeAll call leaves the
+    // DB in a fully consistent state on return — migrations rely on it.
     await ctx.runMutation(internal.familyRankings.recomputeAll, {});
   },
 });
 
 export const recomputeForBench = internalMutation({
   args: { benchId: v.id("benches") },
-  handler: async (ctx, { benchId }) => {
-    const scores = await ctx.db
-      .query("modelScores")
-      .withIndex("by_bench", (q: any) => q.eq("benchId", benchId))
-      .collect();
-    const seen = new Set<string>();
-    for (const s of scores) seen.add(s.modelId as string);
-    const touchedFamilies = new Set<string>();
-    for (const id of seen) {
-      await recomputeOne(ctx, id as Id<"models">);
-      const m = await ctx.db.get(id as Id<"models">);
-      const fam = (m as any)?.familyTag?.trim?.();
-      if (fam) touchedFamilies.add(`${fam}\u0000${(m as any).provider}`);
-    }
-    for (const key of touchedFamilies) {
-      const [familyTag, provider] = key.split("\u0000");
-      await ctx.scheduler.runAfter(0, internal.familyRankings.recomputeFamily, {
-        familyTag,
-        provider,
-      });
-    }
+  handler: async (ctx) => {
+    // Bench-weight changes (quality ratings, headroom recomputation,
+    // etc.) shift totalWeight for every model that's been tested on
+    // that bench — so again we do a full re-rank, same as recomputeAll.
+    await recomputeAllImpl(ctx);
+    await ctx.scheduler.runAfter(0, internal.familyRankings.recomputeAll, {});
   },
 });
