@@ -139,6 +139,53 @@ export const myKeyUsage = query({
   },
 });
 
+/** Usage summary for the calling user, aggregated across ALL of
+ *  their keys: the current month's call count vs the largest
+ *  monthly quota across the user's keys, plus the last 6 months
+ *  totals so the Profile→API dashboard can render a tiny trend
+ *  table. Used by the partner / enterprise+ self-service view. */
+export const myUsageSummary = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const keys = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_owner", (q) => q.eq("ownerUserId", userId))
+      .collect();
+    if (keys.length === 0) {
+      return { thisMonth: 0, monthlyQuota: 0, byMonth: [] };
+    }
+    const totalsByMonth: Record<string, number> = {};
+    for (const k of keys) {
+      const rows = await ctx.db
+        .query("apiUsage")
+        .withIndex("by_key_month", (q) => q.eq("apiKeyId", k._id))
+        .collect();
+      for (const r of rows) {
+        totalsByMonth[r.yyyymm] = (totalsByMonth[r.yyyymm] ?? 0) + r.count;
+      }
+    }
+    // Quota shown is the per-tier quota — across multiple keys at the
+    // same tier they share the same monthlyQuota number, so picking
+    // the max is equivalent to "the tier's quota" for any single key.
+    const monthlyQuota = keys.reduce(
+      (m, k) => (k.monthlyQuota > m ? k.monthlyQuota : m),
+      0
+    );
+    const thisMonthKey = new Date().toISOString().slice(0, 7);
+    const byMonth = Object.entries(totalsByMonth)
+      .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+      .slice(0, 6)
+      .map(([yyyymm, calls]) => ({ yyyymm, calls }));
+    return {
+      thisMonth: totalsByMonth[thisMonthKey] ?? 0,
+      monthlyQuota,
+      byMonth,
+    };
+  },
+});
+
 // Create a new key. Requires an active subscription for the requested tier.
 // Non-public tiers (partner, enterprise_plus) are hard-rejected here and
 // can only be minted via the CLI — partner via

@@ -2572,6 +2572,120 @@ ol.about-list li::before {
 .api-banner__title { font-family: var(--hd); font-weight: 600; margin: 0 0 0.25rem; color: var(--text); }
 .api-banner__text  { color: var(--text2); font-size: 0.85rem; margin: 0; }
 
+/* ─── Partner / Enterprise+ self-service dashboard ─── */
+.api-dashboard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+.api-dashboard__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.api-dashboard__subtitle {
+  color: var(--text3);
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0;
+}
+.tier-badge {
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--hd);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tier-badge--partner {
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+.tier-badge--entplus {
+  background: rgba(168, 85, 247, 0.12);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+.api-dashboard__limits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.api-stat {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.85rem;
+}
+.api-stat__label {
+  font-size: 0.72rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.api-stat__value {
+  font-family: var(--hd);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0.2rem 0;
+  line-height: 1.1;
+}
+.api-stat__hint {
+  font-size: 0.72rem;
+  color: var(--text3);
+}
+.api-dashboard__usage {
+  margin-bottom: 1.5rem;
+}
+.api-usage__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text2);
+  margin-bottom: 0.4rem;
+}
+.api-usage__bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.api-usage__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #ff8a5b);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.api-dashboard__section {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.api-dashboard__h3 {
+  font-family: var(--hd);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: var(--text);
+}
+.api-dashboard__footnote {
+  margin: 1.25rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.78rem;
+  color: var(--text3);
+}
+
 .tier-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -3029,6 +3143,35 @@ ol.about-list li::before {
   border-bottom: 1px solid var(--border);
   margin-bottom: 1.25rem;
 }
+/* Header doubles as a button — strip default <button> chrome and
+   make the whole row clickable. The chevron flips via .open. */
+.admin-detail__toggle {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0 0 1rem;
+  margin-bottom: 1.25rem;
+}
+.admin-detail__toggle:hover .admin-detail__chevron {
+  color: var(--text1);
+}
+.admin-detail.is-collapsed .admin-detail__toggle {
+  margin-bottom: 0;
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.admin-detail__chevron {
+  margin-left: auto;
+  color: var(--text3);
+  transition: transform 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+.admin-detail__chevron.open { transform: rotate(180deg); }
 .admin-detail__avatar {
   width: 48px; height: 48px;
   border-radius: 50%;

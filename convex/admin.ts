@@ -191,6 +191,113 @@ export const searchUsers = query({
   },
 });
 
+/** Lists every account that already has elevated privileges:
+ *  role === "admin", grantedTier === "partner", or
+ *  grantedTier === "enterprise_plus". Used by the admin board to
+ *  populate the result list when the search box is empty — the
+ *  default view should answer "who already has special access?" so
+ *  the operator doesn't have to remember and search by name.
+ *
+ *  Sorted: primary admin first, then admins, then partners, then
+ *  enterprise_plus, alphabetised by name within each group.
+ *
+ *  Same row shape as `searchUsers` so the frontend can render either
+ *  result set with one template. */
+export const listElevatedAccounts = query({
+  args: {},
+  handler: async (ctx) => {
+    await assertAdmin(ctx);
+
+    // Single full scan of userRoles (small table — only rows for
+    // promoted/granted accounts exist). Plus one extra fetch for
+    // the primary admin, who never gets a userRoles row.
+    const roles = await ctx.db.query("userRoles").collect();
+    const elevatedRoles = roles.filter(
+      (r) =>
+        r.role === "admin" ||
+        r.grantedTier === "partner" ||
+        r.grantedTier === "enterprise_plus"
+    );
+
+    type Row = {
+      _id: Id<"users">;
+      name: string | null;
+      email: string | null;
+      image: string | null;
+      role: string | null;
+      grantedTier: string | null;
+      isPrimaryAdmin: boolean;
+      activeKeyCount: number;
+      totalKeyCount: number;
+    };
+    const out: Row[] = [];
+    const seen = new Set<string>();
+
+    for (const r of elevatedRoles) {
+      const u = await ctx.db.get(r.userId);
+      if (!u) continue;
+      seen.add(r.userId);
+      const keys = await ctx.db
+        .query("apiKeys")
+        .withIndex("by_owner", (q) => q.eq("ownerUserId", r.userId))
+        .collect();
+      out.push({
+        _id: u._id,
+        name: (u as any).name ?? null,
+        email: (u as any).email ?? null,
+        image: (u as any).image ?? null,
+        role: r.role ?? null,
+        grantedTier: r.grantedTier ?? null,
+        isPrimaryAdmin: (u as any).email === PRIMARY_ADMIN_EMAIL,
+        activeKeyCount: keys.filter((k) => !k.revokedAt).length,
+        totalKeyCount: keys.length,
+      });
+    }
+
+    // Ensure the primary admin is in the list even if they never got
+    // a userRoles row (the by-email check is the source of truth for
+    // primary-admin status).
+    const all = await ctx.db.query("users").take(5000);
+    const primary = all.find(
+      (u: any) => (u.email ?? "") === PRIMARY_ADMIN_EMAIL
+    );
+    if (primary && !seen.has(primary._id)) {
+      const keys = await ctx.db
+        .query("apiKeys")
+        .withIndex("by_owner", (q) => q.eq("ownerUserId", primary._id))
+        .collect();
+      out.push({
+        _id: primary._id,
+        name: (primary as any).name ?? null,
+        email: (primary as any).email ?? null,
+        image: (primary as any).image ?? null,
+        role: "admin",
+        grantedTier: null,
+        isPrimaryAdmin: true,
+        activeKeyCount: keys.filter((k) => !k.revokedAt).length,
+        totalKeyCount: keys.length,
+      });
+    }
+
+    // Stable, useful ordering: primary admin → admins → partners →
+    // enterprise_plus, alphabetic within each group.
+    const rank = (r: Row) => {
+      if (r.isPrimaryAdmin) return 0;
+      if (r.role === "admin") return 1;
+      if (r.grantedTier === "partner") return 2;
+      if (r.grantedTier === "enterprise_plus") return 3;
+      return 9;
+    };
+    out.sort((a, b) => {
+      const dr = rank(a) - rank(b);
+      if (dr !== 0) return dr;
+      return (a.name ?? a.email ?? "").localeCompare(b.name ?? b.email ?? "");
+    });
+
+    return out;
+  },
+});
+
 /** Full detail view for one user: profile + role + API keys + the
  *  last 12 months of usage aggregated across their keys. Used by
  *  the admin board's user-detail panel. */

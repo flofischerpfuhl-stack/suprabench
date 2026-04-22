@@ -2122,6 +2122,149 @@
                  ════════════════════════════════════ -->
             <div x-show="profileTab==='api'" x-transition.opacity>
 
+                <!-- ════════════════════════════════════════════════
+                     PARTNER / ENTERPRISE+ SELF-SERVICE DASHBOARD.
+                     Renders only for users with an active grantedTier.
+                     Their tier is LIVE today — the /v1/ HTTP routes
+                     accept their keys, only the paid Stripe-backed
+                     tiers are still demand-gated. Keys are minted by
+                     an admin (admin board → "API keys" section, or
+                     `npx convex run partners:createPartnerKey` for
+                     CLI flows), so this panel is read-only for the
+                     mint side and self-serve for revoke + usage.
+                     ════════════════════════════════════════════════ -->
+                <template x-if="user && user.grantedTier">
+                    <div class="api-dashboard">
+                        <div class="api-dashboard__header">
+                            <div>
+                                <h2 class="section-header" style="margin:0">Your API access</h2>
+                                <p class="api-dashboard__subtitle">
+                                    Tier is active &mdash; ready to call
+                                    <code>https://suprabench.com/v1/</code> with any of the keys below.
+                                </p>
+                            </div>
+                            <span class="tier-badge"
+                                  :class="user.grantedTier === 'partner' ? 'tier-badge--partner' : 'tier-badge--entplus'"
+                                  x-text="user.grantedTier === 'partner' ? 'Partner' : 'Enterprise+'"></span>
+                        </div>
+
+                        <!-- Limits card -->
+                        <div class="api-dashboard__limits" x-show="user.grantedLimits">
+                            <div class="api-stat">
+                                <div class="api-stat__label">Monthly quota</div>
+                                <div class="api-stat__value" x-text="user.grantedLimits ? user.grantedLimits.monthlyQuota.toLocaleString() : '—'"></div>
+                                <div class="api-stat__hint">requests / month</div>
+                            </div>
+                            <div class="api-stat">
+                                <div class="api-stat__label">Rate limit</div>
+                                <div class="api-stat__value" x-text="user.grantedLimits ? user.grantedLimits.rpmLimit : '—'"></div>
+                                <div class="api-stat__hint">requests / minute</div>
+                            </div>
+                            <div class="api-stat">
+                                <div class="api-stat__label">API keys</div>
+                                <div class="api-stat__value">
+                                    <span x-text="myApiKeys.filter(k => !k.revoked).length"></span>
+                                    <span style="color:var(--text3);font-weight:400"> / </span>
+                                    <span x-text="user.grantedLimits ? user.grantedLimits.maxKeys : '—'"></span>
+                                </div>
+                                <div class="api-stat__hint">active / max</div>
+                            </div>
+                            <div class="api-stat">
+                                <div class="api-stat__label">Bulk export</div>
+                                <div class="api-stat__value"
+                                     x-text="user.grantedLimits && user.grantedLimits.allowExport ? 'Yes' : 'No'"></div>
+                                <div class="api-stat__hint"><code>/v1/export.json</code></div>
+                            </div>
+                        </div>
+
+                        <!-- This-month usage bar -->
+                        <template x-if="myUsageSummary && myUsageSummary.monthlyQuota > 0">
+                            <div class="api-dashboard__usage">
+                                <div class="api-usage__row">
+                                    <span>This month</span>
+                                    <span>
+                                        <strong x-text="myUsageSummary.thisMonth.toLocaleString()"></strong>
+                                        <span style="color:var(--text3)">
+                                            /
+                                            <span x-text="myUsageSummary.monthlyQuota.toLocaleString()"></span>
+                                            calls
+                                            (<span x-text="((myUsageSummary.thisMonth / myUsageSummary.monthlyQuota) * 100).toFixed(1)"></span>%)
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="api-usage__bar">
+                                    <div class="api-usage__fill"
+                                         :style="'width:' + Math.min(100, (myUsageSummary.thisMonth / myUsageSummary.monthlyQuota) * 100) + '%'"></div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Key list -->
+                        <div class="api-dashboard__section">
+                            <h3 class="api-dashboard__h3">API keys</h3>
+                            <div class="api-key-list" x-show="myApiKeys.length > 0">
+                                <template x-for="k in myApiKeys" :key="k._id">
+                                    <div class="api-key-row">
+                                        <span class="api-key-row__name" x-text="k.name"></span>
+                                        <span class="api-key-row__hint">
+                                            <code x-text="k.prefix + '…'"></code>
+                                        </span>
+                                        <span class="api-key-row__date">
+                                            created <span x-text="formatDate(k.createdAt)"></span>
+                                            <template x-if="k.lastUsedAt">
+                                                <span> · last used <span x-text="formatDate(k.lastUsedAt)"></span></span>
+                                            </template>
+                                            <template x-if="!k.lastUsedAt">
+                                                <span> · never used</span>
+                                            </template>
+                                        </span>
+                                        <button class="btn btn-sm btn-outline btn-danger"
+                                                @click="revokeApiKey(k._id)"
+                                                :disabled="apiBusy || k.revoked">
+                                            <span x-text="k.revoked ? 'Revoked' : 'Revoke'"></span>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="api-empty" x-show="myApiKeys.length === 0">
+                                No keys minted yet. Email
+                                <a href="mailto:suprabench.editor887@passmail.com?subject=Partner%20API%20key%20mint%20request"
+                                   style="color:var(--accent)">suprabench.editor887@passmail.com</a>
+                                and we'll provision one. Partner / enterprise+ keys are admin-minted &mdash; you can't self-serve them, by design.
+                            </div>
+                        </div>
+
+                        <!-- Recent months -->
+                        <template x-if="myUsageSummary && myUsageSummary.byMonth && myUsageSummary.byMonth.length > 0">
+                            <div class="api-dashboard__section">
+                                <h3 class="api-dashboard__h3">Recent months</h3>
+                                <table class="admin-usage__table">
+                                    <thead>
+                                        <tr><th>Month</th><th>API calls</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="row in myUsageSummary.byMonth" :key="row.yyyymm">
+                                            <tr>
+                                                <td x-text="row.yyyymm"></td>
+                                                <td x-text="row.calls.toLocaleString()"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+
+                        <p class="api-dashboard__footnote">
+                            Need more capacity, additional keys, or to swap a key?
+                            <a href="mailto:suprabench.editor887@passmail.com?subject=Partner%20API%20-%20limits%20change"
+                               style="color:var(--accent)">Email us</a>
+                            and we'll re-provision. Read the
+                            <a href="/docs/api/" style="color:var(--accent)">full API docs</a>
+                            for endpoints, schemas and rate-limit headers.
+                        </p>
+                    </div>
+                </template>
+
                 <div class="api-banner">
                     <span class="api-banner__icon" aria-hidden="true">⚡</span>
                     <div>
@@ -2370,16 +2513,28 @@
                      x-text="adminFlash.msg"></div>
             </template>
 
-            <!-- Search box -->
+            <!-- Search box. With an empty query the list defaults to
+                 every account that already has elevated privileges
+                 (admin / partner / enterprise+) — see app.js
+                 `adminSearch`. -->
             <div class="admin-search">
                 <input type="text" x-model="adminQuery"
                        @input.debounce.300ms="adminSearch()"
                        placeholder="Search by name or email (min 2 chars)…"
                        aria-label="Search users">
-                <span class="admin-search__count" x-text="adminResults.length + ' match' + (adminResults.length === 1 ? '' : 'es')"></span>
+                <span class="admin-search__count"
+                      x-text="adminResults.length + (adminResultsAreElevated ? ' elevated account' : ' match') + (adminResults.length === 1 ? '' : (adminResultsAreElevated ? 's' : 'es'))"></span>
             </div>
 
-            <!-- Result list -->
+            <!-- Result list. Hides itself when there are zero rows; the
+                 empty-state below covers that case for the searching
+                 path. For the default elevated-list path, an empty list
+                 just means no one's been promoted yet — also covered. -->
+            <p class="admin-section__hint"
+               x-show="adminResultsAreElevated && adminResults.length > 0"
+               style="margin: 0 0 .5rem">
+                Showing all accounts with elevated privileges. Type to search the full user table.
+            </p>
             <div class="admin-results" x-show="adminResults.length > 0">
                 <template x-for="u in adminResults" :key="u._id">
                     <div class="admin-result-row"
@@ -2413,11 +2568,20 @@
             <div class="empty-state" x-show="adminQuery.length >= 2 && adminResults.length === 0" style="padding:1rem">
                 No matches.
             </div>
+            <div class="empty-state" x-show="adminQuery.length < 2 && adminResults.length === 0" style="padding:1rem">
+                No accounts with elevated privileges yet. Type a name or email above to search.
+            </div>
 
-            <!-- Selected user detail -->
+            <!-- Selected user detail. The header doubles as a collapse
+                 toggle (chevron on the right). Default: expanded on first
+                 select, collapses back on click — same pattern as the
+                 bench-score breakdown elsewhere on the site. -->
             <template x-if="adminSelected">
-                <div class="admin-detail">
-                    <header class="admin-detail__header">
+                <div class="admin-detail" :class="{'is-collapsed': !adminDetailExpanded}">
+                    <button class="admin-detail__header admin-detail__toggle"
+                            type="button"
+                            :aria-expanded="adminDetailExpanded"
+                            @click="adminDetailExpanded = !adminDetailExpanded">
                         <img class="admin-detail__avatar" :src="adminSelected.image" x-show="adminSelected.image" :alt="adminSelected.name">
                         <div class="admin-detail__identity">
                             <h2 x-text="adminSelected.name || '(no name)'"></h2>
@@ -2437,7 +2601,12 @@
                                 </template>
                             </div>
                         </div>
-                    </header>
+                        <span class="expand-icon admin-detail__chevron"
+                              :class="{'open': adminDetailExpanded}"
+                              aria-hidden="true">▼</span>
+                    </button>
+
+                    <div x-show="adminDetailExpanded" x-transition>
 
                     <!-- Role (admin) management — primary-admin only -->
                     <section class="admin-section" x-show="user.isPrimaryAdmin">
@@ -2605,6 +2774,8 @@
                             No usage recorded yet.
                         </div>
                     </section>
+
+                    </div><!-- /collapsible body -->
                 </div>
             </template>
         </div>

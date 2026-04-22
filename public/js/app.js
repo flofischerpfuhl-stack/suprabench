@@ -362,6 +362,11 @@ function supraBench() {
     // the commented-out api.api.myKeys + stripe.mySubscription queries.
     mySubscription: null,
     myApiKeys: [],
+    // Usage roll-up across all of the caller's keys: { thisMonth,
+    // monthlyQuota, byMonth: [{ yyyymm, calls }] }. Populated for
+    // any user who currently holds an elevated tier (partner /
+    // enterprise+) — those tiers are LIVE pre-launch.
+    myUsageSummary: null,
     // Display-only — derived from mySubscription.tier via TIER_MAX_KEYS.
     // Default 3 (Pro) so the UI text makes sense on first paint for
     // users without a sub (they see "0 / 3" which reads fine).
@@ -379,6 +384,7 @@ function supraBench() {
     adminQuery: "",
     adminResults: [],
     adminSelected: null,      // full user-detail object from getUserDetail
+    adminDetailExpanded: true, // collapse-toggle for the user-detail panel
     adminBusy: false,
     adminFlash: null,         // toast-lite: { kind: 'ok'|'err', msg: string }
     adminNewKey: null,        // plaintext once after mintKeyForUser
@@ -798,6 +804,33 @@ function supraBench() {
         } catch (e) {
           console.warn("[api] subscription/keys load failed:", e);
         }
+      } else if (this.user?.grantedTier) {
+        // Partner / enterprise+ users get a real API dashboard even
+        // pre-launch: their tier is LIVE (their keys are minted by
+        // an admin via the admin board / CLI, and the /v1/ HTTP
+        // routes accept those keys today). Pull keys + usage; skip
+        // Stripe (no subscription rows for granted tiers).
+        try {
+          const [keys, usage] = await Promise.all([
+            client.query(api.api.myKeys, {}),
+            client.query(api.api.myUsageSummary, {}),
+          ]);
+          this.myApiKeys = keys || [];
+          this.myUsageSummary = usage || null;
+        } catch (e) {
+          console.warn("[api] partner keys/usage load failed:", e);
+        }
+      }
+      // Pre-load the elevated-accounts list for the admin tab so the
+      // panel isn't empty on first open. Cheap: small table, only
+      // fires for actual admins.
+      if (this.user?.isAdmin) {
+        try {
+          this.adminResults = await client.query(api.admin.listElevatedAccounts, {});
+          this.adminResultsAreElevated = true;
+        } catch (e) {
+          console.warn("[admin] elevated-accounts preload failed:", e);
+        }
       }
     },
 
@@ -805,13 +838,33 @@ function supraBench() {
     // All mutations go through convex/admin.ts. The backend reasserts
     // every permission check; the frontend's `user.isAdmin` flag is
     // for display gating only.
+    // True when the current adminResults set was loaded via
+    // listElevatedAccounts (i.e. the search box is empty). Lets the
+    // template show different empty-state copy for "no matches" vs
+    // "no elevated accounts yet".
+    adminResultsAreElevated: false,
+
     async adminSearch() {
       if (!this.user?.isAdmin) return;
       const q = (this.adminQuery || "").trim();
-      if (q.length < 2) { this.adminResults = []; return; }
       const { client, api } = window.sbConvex;
+      // Empty / too-short query: show the standing list of every
+      // account that already has elevated privileges (admin /
+      // partner / enterprise+). This is the default "who has
+      // access?" view for the admin board.
+      if (q.length < 2) {
+        try {
+          this.adminResults = await client.query(api.admin.listElevatedAccounts, {});
+          this.adminResultsAreElevated = true;
+        } catch (e) {
+          console.error("[admin] listElevatedAccounts failed:", e);
+          this._adminFlash("err", e.message || "Load failed");
+        }
+        return;
+      }
       try {
         this.adminResults = await client.query(api.admin.searchUsers, { query: q });
+        this.adminResultsAreElevated = false;
       } catch (e) {
         console.error("[admin] search failed:", e);
         this._adminFlash("err", e.message || "Search failed");
@@ -824,6 +877,10 @@ function supraBench() {
         this.adminSelected = await client.query(api.admin.getUserDetail, { userId });
         this.adminNewKey = null;
         this.adminKeyName = "";
+        // Always expand on a fresh selection — collapsing only makes
+        // sense as an "I'm done editing this user" gesture, not as the
+        // default for a user you just clicked into.
+        this.adminDetailExpanded = true;
         // Prime the grant form from the current grant so edits feel
         // like an update, not a wipe.
         if (this.adminSelected?.grantedLimits) {
@@ -1143,7 +1200,12 @@ function supraBench() {
     },
 
     async revokeApiKey(apiKeyId) {
-      if (!this.apiLive) {
+      // Partner / enterprise+ keys are minted by an admin but the
+      // user can still revoke their own — same `api.api.revokeKey`
+      // mutation, gated by `getAuthUserId()` ownership check on the
+      // backend. So skip the apiLive gate when the user already
+      // holds elevated tier.
+      if (!this.apiLive && !this.user?.grantedTier) {
         this.showToast("API not yet live — join the waitlist!", "info");
         return;
       }
