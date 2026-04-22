@@ -55,21 +55,35 @@ const TTL = {
 };
 
 // Standard JSON response with cache headers and CORS.
-function json(data: unknown, opts: { status?: number; ttl?: number } = {}) {
-  const { status = 200, ttl = 0 } = opts;
-  return new Response(JSON.stringify(data, null, 2), {
-    status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": ttl > 0 ? `public, max-age=${ttl}` : "no-store",
-      "access-control-allow-origin": "*",
-      "vary": "authorization",
-    },
-  });
+//
+// `extraHeaders` is the rate-limit / quota / Retry-After bag that
+// the auth middleware fills in. We merge it into the base header
+// set rather than letting handlers ferry it around — every public
+// response should carry the same envelope the docs promise
+// (rate-limits.html lists six X-* headers as universal).
+function json(
+  data: unknown,
+  opts: { status?: number; ttl?: number; extraHeaders?: Record<string, string> } = {},
+) {
+  const { status = 200, ttl = 0, extraHeaders } = opts;
+  const headers: Record<string, string> = {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": ttl > 0 ? `public, max-age=${ttl}` : "no-store",
+    "access-control-allow-origin": "*",
+    "vary": "authorization",
+    ...(extraHeaders ?? {}),
+  };
+  return new Response(JSON.stringify(data, null, 2), { status, headers });
 }
 
-function err(status: number, code: string, message: string, hint?: string) {
-  return json({ error: { code, message, hint } }, { status });
+function err(
+  status: number,
+  code: string,
+  message: string,
+  hint?: string,
+  extraHeaders?: Record<string, string>,
+) {
+  return json({ error: { code, message, hint } }, { status, extraHeaders });
 }
 
 // ════════════════════════════════════════════════════════════
@@ -322,39 +336,60 @@ export const findKeyByHash = internalQuery({
   },
 });
 
+// Returns the unix timestamp (seconds) of the first second of next
+// month in UTC — used for X-Quota-Reset headers per docs/rate-limits.
+function nextMonthStartUnixSec(now = new Date()): number {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0));
+  return Math.floor(d.getTime() / 1000);
+}
+
 // Atomically increment the monthly quota bucket.
-// Returns the post-increment count, or null if the user is over quota.
+//   { allowed: true,  used, limit, resetAt }  → request goes through
+//   { allowed: false, used, limit, resetAt }  → quota exceeded (return 429)
+//
+// `used` is the post-increment count when allowed, the unchanged
+// count when denied — so the response headers always advertise the
+// bucket level the client just observed.
 export const consumeQuota = internalMutation({
   args: { apiKeyId: v.id("apiKeys"), yyyymm: v.string() },
   handler: async (ctx, { apiKeyId, yyyymm }) => {
     const key = await ctx.db.get(apiKeyId);
-    if (!key) return null;
+    if (!key) return { allowed: false, used: 0, limit: 0, resetAt: nextMonthStartUnixSec() };
     const bucket = await ctx.db.query("apiUsage")
       .withIndex("by_key_month", q => q.eq("apiKeyId", apiKeyId).eq("yyyymm", yyyymm))
       .first();
     const cur = bucket?.count ?? 0;
-    if (cur >= key.monthlyQuota) return null;
+    const resetAt = nextMonthStartUnixSec();
+    if (cur >= key.monthlyQuota) {
+      return { allowed: false, used: cur, limit: key.monthlyQuota, resetAt };
+    }
     if (bucket) await ctx.db.patch(bucket._id, { count: cur + 1, lastIncrementAt: Date.now() });
     else        await ctx.db.insert("apiUsage", { apiKeyId, yyyymm, count: 1, lastIncrementAt: Date.now() });
     await ctx.db.patch(apiKeyId, { lastUsedAt: Date.now() });
-    return cur + 1;
+    return { allowed: true, used: cur + 1, limit: key.monthlyQuota, resetAt };
   },
 });
 
 // Sliding-window rate limit. One row per (key, minute-bucket).
-// Returns true if request is allowed.
+//   { allowed: true,  used, limit, resetAt }  → request goes through
+//   { allowed: false, used, limit, resetAt }  → throttled (return 429)
+//
+// `resetAt` is the unix timestamp (seconds) when the current
+// minute window rolls over — one second past the end of the
+// minute we just measured.
 export const checkRateLimit = internalMutation({
   args: { apiKeyId: v.id("apiKeys"), rpmLimit: v.number() },
   handler: async (ctx, { apiKeyId, rpmLimit }) => {
     const minute = Math.floor(Date.now() / 60_000);
+    const resetAt = (minute + 1) * 60;
     const bucket = await ctx.db.query("apiRateLimits")
       .withIndex("by_key_bucket", q => q.eq("apiKeyId", apiKeyId).eq("minuteBucket", minute))
       .first();
     const cur = bucket?.count ?? 0;
-    if (cur >= rpmLimit) return false;
+    if (cur >= rpmLimit) return { allowed: false, used: cur, limit: rpmLimit, resetAt };
     if (bucket) await ctx.db.patch(bucket._id, { count: cur + 1 });
     else        await ctx.db.insert("apiRateLimits", { apiKeyId, minuteBucket: minute, count: 1 });
-    return true;
+    return { allowed: true, used: cur + 1, limit: rpmLimit, resetAt };
   },
 });
 
@@ -500,8 +535,38 @@ export const publicExport = internalQuery({
 // ─── 6. HTTP ROUTES (register from convex/http.ts) ─────────
 // ════════════════════════════════════════════════════════════
 
-// Shared auth middleware. Returns the validated apiKey doc on success
-// or a Response on failure (caller short-circuits with `return`).
+// Build the X-RateLimit-* / X-Quota-* / Retry-After header bag from
+// the (rate, quota) state captured by checkRateLimit + consumeQuota.
+// Docs (rate-limits.html) commit to all six X-* headers being
+// present on every successful response — and the same headers (plus
+// Retry-After) on a 429.
+function makeRateHeaders(
+  rate: { used: number; limit: number; resetAt: number } | null,
+  quota: { used: number; limit: number; resetAt: number } | null,
+  retryAfter?: number,
+): Record<string, string> {
+  const h: Record<string, string> = {};
+  if (rate) {
+    h["X-RateLimit-Limit"]     = String(rate.limit);
+    h["X-RateLimit-Remaining"] = String(Math.max(0, rate.limit - rate.used));
+    h["X-RateLimit-Reset"]     = String(rate.resetAt);
+  }
+  if (quota) {
+    h["X-Quota-Limit"]     = String(quota.limit);
+    h["X-Quota-Remaining"] = String(Math.max(0, quota.limit - quota.used));
+    h["X-Quota-Reset"]     = String(quota.resetAt);
+  }
+  if (retryAfter !== undefined) {
+    h["Retry-After"] = String(retryAfter);
+  }
+  return h;
+}
+
+// Shared auth middleware. Returns the validated apiKey doc + the
+// rate-limit / quota state on success, or a fully-formed Response
+// on failure (caller short-circuits with `return`). Failure
+// responses include rate-limit headers when known so a polite
+// client can back off without a second probe.
 async function authenticate(ctx: any, request: Request) {
   const auth = request.headers.get("authorization") ?? "";
   const m = auth.match(/^Bearer\s+(\S+)$/i);
@@ -527,25 +592,49 @@ async function authenticate(ctx: any, request: Request) {
                        "Update payment method at https://suprabench.com/#api") };
   }
 
-  const allowed = await ctx.runMutation(internal.api.checkRateLimit, {
+  const rate = await ctx.runMutation(internal.api.checkRateLimit, {
     apiKeyId: key._id, rpmLimit: key.rpmLimit,
   });
-  if (!allowed) return { resp: err(429, "rate_limited",
-                                   `> ${key.rpmLimit} req/min`, "Slow down or upgrade tier.") };
+  if (!rate.allowed) {
+    const retryAfter = Math.max(1, rate.resetAt - Math.floor(Date.now() / 1000));
+    return {
+      resp: err(429, "rate_limited", `> ${key.rpmLimit} req/min`, "Slow down or upgrade tier.",
+                makeRateHeaders(rate, null, retryAfter)),
+    };
+  }
 
   const yyyymm = new Date().toISOString().slice(0, 7);
-  const used = await ctx.runMutation(internal.api.consumeQuota, { apiKeyId: key._id, yyyymm });
-  if (used === null) return { resp: err(429, "quota_exceeded",
-                                        `Monthly quota of ${key.monthlyQuota} reached`,
-                                        "Upgrade tier or wait until next month.") };
+  const quota = await ctx.runMutation(internal.api.consumeQuota, { apiKeyId: key._id, yyyymm });
+  if (!quota.allowed) {
+    // Retry-After in seconds until 1st of next month at 00:00 UTC.
+    const retryAfter = Math.max(1, quota.resetAt - Math.floor(Date.now() / 1000));
+    return {
+      resp: err(429, "quota_exceeded", `Monthly quota of ${key.monthlyQuota} reached`,
+                "Upgrade tier or wait until next month.",
+                makeRateHeaders(rate, quota, retryAfter)),
+    };
+  }
 
-  return { key, used };
+  return { key, rate, quota };
 }
 
 function clientIp(request: Request) {
   return request.headers.get("cf-connecting-ip")
       ?? request.headers.get("x-forwarded-for")?.split(",")[0].trim()
       ?? undefined;
+}
+
+// Re-build a Response with the rate-limit / quota headers merged
+// in. The Web Response object's headers are mutable via the
+// .headers property, so we just .set() each one — no clone needed.
+// `Vary: authorization` is already on every json() response; we
+// add `Vary: Accept-Encoding` belt-and-braces because Cloudflare
+// in front compresses based on it.
+function withRateHeaders(resp: Response, extra: Record<string, string>): Response {
+  for (const [k, v] of Object.entries(extra)) {
+    resp.headers.set(k, v);
+  }
+  return resp;
 }
 
 // Simple wrapper that handles auth, logging, errors uniformly.
@@ -568,6 +657,11 @@ function endpoint(name: string, ttl: number, handler: (ctx: any, request: Reques
       console.error(`[api] ${name} threw:`, e);
       resp = err(500, "internal", "Something blew up on our side");
     }
+    // Universal rate-limit / quota envelope — promised by
+    // docs/api/rate-limits.html for "every successful response".
+    // Also attached to the 5xx fallback so a thrashing client
+    // can still see how close it is to the cliff.
+    resp = withRateHeaders(resp, makeRateHeaders(auth.rate, auth.quota));
     const ms = Date.now() - t0;
     // Fire-and-forget logging (don't block the response).
     ctx.runMutation(internal.api.logRequest, {
@@ -663,6 +757,36 @@ export function registerApiRoutes(http: ReturnType<typeof httpRouter>) {
       return json(data, { ttl: TTL.export });
     }),
   });
+
+  // ── Catch-all for /v1/* ──────────────────────────────────────
+  //
+  // Convex's default for an unmatched (path, method) is a plain
+  // text "No matching routes found" 404 — that breaks the
+  // promise in docs/api/errors.html that every error response
+  // is a `{ error: { code, message } }` JSON envelope. We
+  // register one prefix handler per common method so:
+  //
+  //   • unknown GET /v1/foo  → 404 JSON not_found
+  //   • POST/PUT/PATCH/DELETE on any /v1/* → 405 JSON
+  //     method_not_allowed (the API is read-only)
+  //
+  // Specific paths registered above take precedence over these
+  // prefix matches, so /v1/models still routes to listModels.
+  const unknownGet = httpAction(async (_ctx, request): Promise<Response> => {
+    const path = new URL(request.url).pathname;
+    return err(404, "not_found", `No such endpoint: ${path}`,
+      "See https://suprabench.com/docs/api for the list of routes.");
+  });
+  const methodNotAllowed = httpAction(async (_ctx, request): Promise<Response> => {
+    return err(405, "method_not_allowed",
+      `Method ${request.method} not supported on this endpoint`,
+      "The SupraBench public API is read-only — all routes accept GET only.");
+  });
+  http.route({ pathPrefix: "/v1/", method: "GET",    handler: unknownGet });
+  http.route({ pathPrefix: "/v1/", method: "POST",   handler: methodNotAllowed });
+  http.route({ pathPrefix: "/v1/", method: "PUT",    handler: methodNotAllowed });
+  http.route({ pathPrefix: "/v1/", method: "PATCH",  handler: methodNotAllowed });
+  http.route({ pathPrefix: "/v1/", method: "DELETE", handler: methodNotAllowed });
 }
 
 function clampInt(s: string | null, min: number, max: number, dflt: number): number {
