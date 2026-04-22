@@ -2535,32 +2535,227 @@
                style="margin: 0 0 .5rem">
                 Showing all accounts with elevated privileges. Type to search the full user table.
             </p>
+            <!-- Each row is the entire user UI: clicking the header
+                 expands the detail view inline, clicking again
+                 collapses it. The detail content lives INSIDE the
+                 row (not in a separate panel) so the visual model
+                 stays "one card per user, click to expand". -->
             <div class="admin-results" x-show="adminResults.length > 0">
                 <template x-for="u in adminResults" :key="u._id">
                     <div class="admin-result-row"
-                         :class="{'is-selected': adminSelected && adminSelected._id === u._id}"
-                         @click="adminSelect(u._id)">
-                        <img class="admin-result-row__avatar" :src="u.image" x-show="u.image" :alt="u.name">
-                        <div class="admin-result-row__body">
-                            <div class="admin-result-row__name" x-text="u.name || '(no name)'"></div>
-                            <div class="admin-result-row__email" x-text="u.email || '(no email)'"></div>
-                        </div>
-                        <div class="admin-result-row__badges">
-                            <template x-if="u.isPrimaryAdmin">
-                                <span class="admin-badge admin-badge--primary">primary admin</span>
+                         :class="{'is-selected': adminSelected && adminSelected._id === u._id}">
+                        <button class="admin-result-row__header"
+                                type="button"
+                                :aria-expanded="adminSelected && adminSelected._id === u._id"
+                                @click="adminToggleSelect(u._id)">
+                            <img class="admin-result-row__avatar" :src="u.image" x-show="u.image" :alt="u.name">
+                            <div class="admin-result-row__body">
+                                <div class="admin-result-row__name" x-text="u.name || '(no name)'"></div>
+                                <div class="admin-result-row__email" x-text="u.email || '(no email)'"></div>
+                            </div>
+                            <div class="admin-result-row__badges">
+                                <template x-if="u.isPrimaryAdmin">
+                                    <span class="admin-badge admin-badge--primary">primary admin</span>
+                                </template>
+                                <template x-if="!u.isPrimaryAdmin && u.role === 'admin'">
+                                    <span class="admin-badge admin-badge--admin">admin</span>
+                                </template>
+                                <template x-if="u.grantedTier === 'partner'">
+                                    <span class="admin-badge admin-badge--partner">partner</span>
+                                </template>
+                                <template x-if="u.grantedTier === 'enterprise_plus'">
+                                    <span class="admin-badge admin-badge--entplus">enterprise+</span>
+                                </template>
+                                <span class="admin-badge admin-badge--keys"
+                                      x-show="u.activeKeyCount > 0"
+                                      x-text="u.activeKeyCount + ' key' + (u.activeKeyCount === 1 ? '' : 's')"></span>
+                            </div>
+                            <span class="expand-icon admin-result-row__chevron"
+                                  :class="{'open': adminSelected && adminSelected._id === u._id}"
+                                  aria-hidden="true">▼</span>
+                        </button>
+
+                        <!-- Inline detail. Renders only for the selected
+                             row, and only after `getUserDetail` has
+                             populated `adminSelected`. All sections below
+                             reference `adminSelected` — the lookup is by
+                             userId equality, not row position, so this
+                             can never paint stale data for the wrong row. -->
+                        <div class="admin-result-row__detail"
+                             x-show="adminSelected && adminSelected._id === u._id"
+                             x-transition>
+                            <template x-if="adminSelected && adminSelected._id === u._id">
+                                <div>
+
+                                <!-- Role (admin) management — primary-admin only -->
+                                <section class="admin-section" x-show="user.isPrimaryAdmin">
+                                    <h3>Admin role</h3>
+                                    <p class="admin-section__hint" x-show="!adminSelected.isPrimaryAdmin">
+                                        Only the primary admin can promote or demote other admins.
+                                    </p>
+                                    <template x-if="adminSelected.isPrimaryAdmin">
+                                        <p class="admin-section__hint">This account is the primary admin and cannot be demoted.</p>
+                                    </template>
+                                    <template x-if="!adminSelected.isPrimaryAdmin && adminSelected.role !== 'admin'">
+                                        <button class="btn btn-outline" :disabled="adminBusy" @click="adminGrantAdmin()">
+                                            Promote to admin
+                                        </button>
+                                    </template>
+                                    <template x-if="!adminSelected.isPrimaryAdmin && adminSelected.role === 'admin'">
+                                        <button class="btn btn-outline btn-danger" :disabled="adminBusy" @click="adminRevokeAdmin()">
+                                            Revoke admin role
+                                        </button>
+                                    </template>
+                                </section>
+
+                                <!-- Tier grant -->
+                                <section class="admin-section">
+                                    <h3>Granted tier</h3>
+                                    <template x-if="adminSelected.grantedTier">
+                                        <div class="admin-grant-current">
+                                            <div>
+                                                <strong x-text="adminSelected.grantedTier === 'partner' ? 'Partner' : 'Enterprise+'"></strong>
+                                                <span class="admin-grant-current__since"
+                                                      x-show="adminSelected.grantedAt"
+                                                      x-text="'granted ' + new Date(adminSelected.grantedAt).toLocaleDateString()"></span>
+                                            </div>
+                                            <button class="btn btn-outline btn-danger btn-sm" :disabled="adminBusy"
+                                                    @click="adminRevokeTier()">
+                                                Revoke tier &amp; all keys
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                    <form class="admin-grant-form" @submit.prevent="adminGrantTier()">
+                                        <div class="admin-grant-form__row">
+                                            <label>
+                                                <span>Tier</span>
+                                                <select x-model="adminGrantForm.tier">
+                                                    <option value="partner">Partner (free)</option>
+                                                    <option value="enterprise_plus">Enterprise+ (billed offline)</option>
+                                                </select>
+                                            </label>
+                                        </div>
+                                        <div class="admin-grant-form__row admin-grant-form__row--grid">
+                                            <label>
+                                                <span>Monthly quota (calls)</span>
+                                                <input type="number" min="1000" max="100000000" step="1000" x-model.number="adminGrantForm.monthlyQuota">
+                                            </label>
+                                            <label>
+                                                <span>Rate limit (req/min)</span>
+                                                <input type="number" min="10" max="100000" step="10" x-model.number="adminGrantForm.rpmLimit">
+                                            </label>
+                                            <label>
+                                                <span>Max API keys</span>
+                                                <input type="number" min="1" max="50" step="1" x-model.number="adminGrantForm.maxKeys">
+                                            </label>
+                                            <label class="admin-grant-form__checkbox">
+                                                <input type="checkbox" x-model="adminGrantForm.allowExport">
+                                                <span>Allow bulk export</span>
+                                            </label>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary" :disabled="adminBusy">
+                                            <span x-text="adminSelected.grantedTier ? 'Update tier &amp; limits' : 'Grant tier'"></span>
+                                        </button>
+                                    </form>
+                                </section>
+
+                                <!-- Key management (only when user has grantedTier) -->
+                                <section class="admin-section" x-show="adminSelected.grantedTier">
+                                    <h3>API keys</h3>
+
+                                    <template x-if="adminNewKey">
+                                        <div class="admin-newkey">
+                                            <div class="admin-newkey__title">Plaintext key — shown once. Copy now.</div>
+                                            <code class="admin-newkey__value" x-text="adminNewKey.plaintext"></code>
+                                            <div class="admin-newkey__actions">
+                                                <button class="btn btn-sm btn-primary" @click="adminCopyKey()">Copy</button>
+                                                <button class="btn btn-sm btn-outline" @click="adminDismissNewKey()">Dismiss</button>
+                                            </div>
+                                            <small>The backend stores only the SHA-256 hash. If you lose this value, revoke the key and mint a new one.</small>
+                                        </div>
+                                    </template>
+
+                                    <form class="admin-mint-form" @submit.prevent="adminMintKey()">
+                                        <label>
+                                            <span>Key name (for the owner to identify it)</span>
+                                            <input type="text" x-model="adminKeyName" placeholder="e.g. production-api-key">
+                                        </label>
+                                        <button type="submit" class="btn btn-primary btn-sm" :disabled="adminBusy || !adminKeyName.trim()">
+                                            Mint new key
+                                        </button>
+                                    </form>
+
+                                    <div class="admin-keys" x-show="adminSelected.keys && adminSelected.keys.length > 0">
+                                        <table class="admin-keys__table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Prefix</th>
+                                                    <th>Tier</th>
+                                                    <th>Created</th>
+                                                    <th>Last used</th>
+                                                    <th>Status</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template x-for="k in adminSelected.keys" :key="k._id">
+                                                    <tr :class="{'is-revoked': k.revokedAt}">
+                                                        <td x-text="k.name"></td>
+                                                        <td><code x-text="k.prefix"></code></td>
+                                                        <td x-text="k.tier"></td>
+                                                        <td x-text="new Date(k.createdAt).toLocaleDateString()"></td>
+                                                        <td x-text="k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleDateString() : '—'"></td>
+                                                        <td>
+                                                            <span x-show="!k.revokedAt" class="admin-key-status admin-key-status--active">active</span>
+                                                            <span x-show="k.revokedAt" class="admin-key-status admin-key-status--revoked">revoked</span>
+                                                        </td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-outline btn-danger"
+                                                                    x-show="!k.revokedAt"
+                                                                    :disabled="adminBusy"
+                                                                    @click="adminRevokeKey(k._id)">Revoke</button>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="empty-state" x-show="!adminSelected.keys || adminSelected.keys.length === 0" style="padding:.75rem">
+                                        No keys minted yet.
+                                    </div>
+                                </section>
+
+                                <section class="admin-section">
+                                    <h3>Monthly usage</h3>
+                                    <div class="admin-usage" x-show="adminSelected.usage && adminSelected.usage.length > 0">
+                                        <table class="admin-usage__table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>API calls</th>
+                                                    <th>Active keys</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template x-for="row in adminSelected.usage" :key="row.yyyymm">
+                                                    <tr>
+                                                        <td x-text="adminFormatMonth(row.yyyymm)"></td>
+                                                        <td x-text="row.calls.toLocaleString()"></td>
+                                                        <td x-text="row.keys"></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="empty-state" x-show="!adminSelected.usage || adminSelected.usage.length === 0" style="padding:.75rem">
+                                        No usage recorded yet.
+                                    </div>
+                                </section>
+
+                                </div>
                             </template>
-                            <template x-if="!u.isPrimaryAdmin && u.role === 'admin'">
-                                <span class="admin-badge admin-badge--admin">admin</span>
-                            </template>
-                            <template x-if="u.grantedTier === 'partner'">
-                                <span class="admin-badge admin-badge--partner">partner</span>
-                            </template>
-                            <template x-if="u.grantedTier === 'enterprise_plus'">
-                                <span class="admin-badge admin-badge--entplus">enterprise+</span>
-                            </template>
-                            <span class="admin-badge admin-badge--keys"
-                                  x-show="u.activeKeyCount > 0"
-                                  x-text="u.activeKeyCount + ' key' + (u.activeKeyCount === 1 ? '' : 's')"></span>
                         </div>
                     </div>
                 </template>
@@ -2572,212 +2767,6 @@
                 No accounts with elevated privileges yet. Type a name or email above to search.
             </div>
 
-            <!-- Selected user detail. The header doubles as a collapse
-                 toggle (chevron on the right). Default: expanded on first
-                 select, collapses back on click — same pattern as the
-                 bench-score breakdown elsewhere on the site. -->
-            <template x-if="adminSelected">
-                <div class="admin-detail" :class="{'is-collapsed': !adminDetailExpanded}">
-                    <button class="admin-detail__header admin-detail__toggle"
-                            type="button"
-                            :aria-expanded="adminDetailExpanded"
-                            @click="adminDetailExpanded = !adminDetailExpanded">
-                        <img class="admin-detail__avatar" :src="adminSelected.image" x-show="adminSelected.image" :alt="adminSelected.name">
-                        <div class="admin-detail__identity">
-                            <h2 x-text="adminSelected.name || '(no name)'"></h2>
-                            <div class="admin-detail__email" x-text="adminSelected.email || '(no email)'"></div>
-                            <div class="admin-detail__badges">
-                                <template x-if="adminSelected.isPrimaryAdmin">
-                                    <span class="admin-badge admin-badge--primary">primary admin</span>
-                                </template>
-                                <template x-if="!adminSelected.isPrimaryAdmin && adminSelected.role === 'admin'">
-                                    <span class="admin-badge admin-badge--admin">admin</span>
-                                </template>
-                                <template x-if="adminSelected.grantedTier === 'partner'">
-                                    <span class="admin-badge admin-badge--partner">partner</span>
-                                </template>
-                                <template x-if="adminSelected.grantedTier === 'enterprise_plus'">
-                                    <span class="admin-badge admin-badge--entplus">enterprise+</span>
-                                </template>
-                            </div>
-                        </div>
-                        <span class="expand-icon admin-detail__chevron"
-                              :class="{'open': adminDetailExpanded}"
-                              aria-hidden="true">▼</span>
-                    </button>
-
-                    <div x-show="adminDetailExpanded" x-transition>
-
-                    <!-- Role (admin) management — primary-admin only -->
-                    <section class="admin-section" x-show="user.isPrimaryAdmin">
-                        <h3>Admin role</h3>
-                        <p class="admin-section__hint" x-show="!adminSelected.isPrimaryAdmin">
-                            Only the primary admin can promote or demote other admins.
-                        </p>
-                        <template x-if="adminSelected.isPrimaryAdmin">
-                            <p class="admin-section__hint">This account is the primary admin and cannot be demoted.</p>
-                        </template>
-                        <template x-if="!adminSelected.isPrimaryAdmin && adminSelected.role !== 'admin'">
-                            <button class="btn btn-outline" :disabled="adminBusy" @click="adminGrantAdmin()">
-                                Promote to admin
-                            </button>
-                        </template>
-                        <template x-if="!adminSelected.isPrimaryAdmin && adminSelected.role === 'admin'">
-                            <button class="btn btn-outline btn-danger" :disabled="adminBusy" @click="adminRevokeAdmin()">
-                                Revoke admin role
-                            </button>
-                        </template>
-                    </section>
-
-                    <!-- Tier grant -->
-                    <section class="admin-section">
-                        <h3>Granted tier</h3>
-                        <template x-if="adminSelected.grantedTier">
-                            <div class="admin-grant-current">
-                                <div>
-                                    <strong x-text="adminSelected.grantedTier === 'partner' ? 'Partner' : 'Enterprise+'"></strong>
-                                    <span class="admin-grant-current__since"
-                                          x-show="adminSelected.grantedAt"
-                                          x-text="'granted ' + new Date(adminSelected.grantedAt).toLocaleDateString()"></span>
-                                </div>
-                                <button class="btn btn-outline btn-danger btn-sm" :disabled="adminBusy"
-                                        @click="adminRevokeTier()">
-                                    Revoke tier &amp; all keys
-                                </button>
-                            </div>
-                        </template>
-
-                        <form class="admin-grant-form" @submit.prevent="adminGrantTier()">
-                            <div class="admin-grant-form__row">
-                                <label>
-                                    <span>Tier</span>
-                                    <select x-model="adminGrantForm.tier">
-                                        <option value="partner">Partner (free)</option>
-                                        <option value="enterprise_plus">Enterprise+ (billed offline)</option>
-                                    </select>
-                                </label>
-                            </div>
-                            <div class="admin-grant-form__row admin-grant-form__row--grid">
-                                <label>
-                                    <span>Monthly quota (calls)</span>
-                                    <input type="number" min="1000" max="100000000" step="1000" x-model.number="adminGrantForm.monthlyQuota">
-                                </label>
-                                <label>
-                                    <span>Rate limit (req/min)</span>
-                                    <input type="number" min="10" max="100000" step="10" x-model.number="adminGrantForm.rpmLimit">
-                                </label>
-                                <label>
-                                    <span>Max API keys</span>
-                                    <input type="number" min="1" max="50" step="1" x-model.number="adminGrantForm.maxKeys">
-                                </label>
-                                <label class="admin-grant-form__checkbox">
-                                    <input type="checkbox" x-model="adminGrantForm.allowExport">
-                                    <span>Allow bulk export</span>
-                                </label>
-                            </div>
-                            <button type="submit" class="btn btn-primary" :disabled="adminBusy">
-                                <span x-text="adminSelected.grantedTier ? 'Update tier &amp; limits' : 'Grant tier'"></span>
-                            </button>
-                        </form>
-                    </section>
-
-                    <!-- Key management (only when user has grantedTier) -->
-                    <section class="admin-section" x-show="adminSelected.grantedTier">
-                        <h3>API keys</h3>
-
-                        <template x-if="adminNewKey">
-                            <div class="admin-newkey">
-                                <div class="admin-newkey__title">Plaintext key — shown once. Copy now.</div>
-                                <code class="admin-newkey__value" x-text="adminNewKey.plaintext"></code>
-                                <div class="admin-newkey__actions">
-                                    <button class="btn btn-sm btn-primary" @click="adminCopyKey()">Copy</button>
-                                    <button class="btn btn-sm btn-outline" @click="adminDismissNewKey()">Dismiss</button>
-                                </div>
-                                <small>The backend stores only the SHA-256 hash. If you lose this value, revoke the key and mint a new one.</small>
-                            </div>
-                        </template>
-
-                        <form class="admin-mint-form" @submit.prevent="adminMintKey()">
-                            <label>
-                                <span>Key name (for the owner to identify it)</span>
-                                <input type="text" x-model="adminKeyName" placeholder="e.g. production-api-key">
-                            </label>
-                            <button type="submit" class="btn btn-primary btn-sm" :disabled="adminBusy || !adminKeyName.trim()">
-                                Mint new key
-                            </button>
-                        </form>
-
-                        <div class="admin-keys" x-show="adminSelected.keys && adminSelected.keys.length > 0">
-                            <table class="admin-keys__table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Prefix</th>
-                                        <th>Tier</th>
-                                        <th>Created</th>
-                                        <th>Last used</th>
-                                        <th>Status</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template x-for="k in adminSelected.keys" :key="k._id">
-                                        <tr :class="{'is-revoked': k.revokedAt}">
-                                            <td x-text="k.name"></td>
-                                            <td><code x-text="k.prefix"></code></td>
-                                            <td x-text="k.tier"></td>
-                                            <td x-text="new Date(k.createdAt).toLocaleDateString()"></td>
-                                            <td x-text="k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleDateString() : '—'"></td>
-                                            <td>
-                                                <span x-show="!k.revokedAt" class="admin-key-status admin-key-status--active">active</span>
-                                                <span x-show="k.revokedAt" class="admin-key-status admin-key-status--revoked">revoked</span>
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-sm btn-outline btn-danger"
-                                                        x-show="!k.revokedAt"
-                                                        :disabled="adminBusy"
-                                                        @click="adminRevokeKey(k._id)">Revoke</button>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="empty-state" x-show="!adminSelected.keys || adminSelected.keys.length === 0" style="padding:.75rem">
-                            No keys minted yet.
-                        </div>
-                    </section>
-
-                    <section class="admin-section">
-                        <h3>Monthly usage</h3>
-                        <div class="admin-usage" x-show="adminSelected.usage && adminSelected.usage.length > 0">
-                            <table class="admin-usage__table">
-                                <thead>
-                                    <tr>
-                                        <th>Month</th>
-                                        <th>API calls</th>
-                                        <th>Active keys</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template x-for="row in adminSelected.usage" :key="row.yyyymm">
-                                        <tr>
-                                            <td x-text="adminFormatMonth(row.yyyymm)"></td>
-                                            <td x-text="row.calls.toLocaleString()"></td>
-                                            <td x-text="row.keys"></td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="empty-state" x-show="!adminSelected.usage || adminSelected.usage.length === 0" style="padding:.75rem">
-                            No usage recorded yet.
-                        </div>
-                    </section>
-
-                    </div><!-- /collapsible body -->
-                </div>
-            </template>
         </div>
             </div><!-- /tab admin -->
 

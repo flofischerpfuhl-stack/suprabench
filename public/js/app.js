@@ -383,8 +383,10 @@ function supraBench() {
     // controls — delegated admins can only grant tiers, not admins.
     adminQuery: "",
     adminResults: [],
-    adminSelected: null,      // full user-detail object from getUserDetail
-    adminDetailExpanded: true, // collapse-toggle for the user-detail panel
+    adminSelected: null,      // full user-detail object from getUserDetail.
+                              // Doubles as the "expanded row" indicator —
+                              // a row is expanded iff adminSelected._id
+                              // matches it (see adminToggleSelect).
     adminBusy: false,
     adminFlash: null,         // toast-lite: { kind: 'ok'|'err', msg: string }
     adminNewKey: null,        // plaintext once after mintKeyForUser
@@ -870,6 +872,21 @@ function supraBench() {
         this._adminFlash("err", e.message || "Search failed");
       }
     },
+    /** Click handler for an admin-result row. Acts as an
+     *  expand/collapse toggle: clicking the already-selected row
+     *  collapses it (clears `adminSelected`), clicking a different
+     *  row switches selection. The detail UI lives inside the row
+     *  itself, so "selected" === "expanded". */
+    async adminToggleSelect(userId) {
+      if (!this.user?.isAdmin) return;
+      if (this.adminSelected && this.adminSelected._id === userId) {
+        this.adminSelected = null;
+        this.adminNewKey = null;
+        this.adminKeyName = "";
+        return;
+      }
+      await this.adminSelect(userId);
+    },
     async adminSelect(userId) {
       if (!this.user?.isAdmin) return;
       const { client, api } = window.sbConvex;
@@ -877,10 +894,6 @@ function supraBench() {
         this.adminSelected = await client.query(api.admin.getUserDetail, { userId });
         this.adminNewKey = null;
         this.adminKeyName = "";
-        // Always expand on a fresh selection — collapsing only makes
-        // sense as an "I'm done editing this user" gesture, not as the
-        // default for a user you just clicked into.
-        this.adminDetailExpanded = true;
         // Prime the grant form from the current grant so edits feel
         // like an update, not a wipe.
         if (this.adminSelected?.grantedLimits) {
