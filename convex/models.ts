@@ -189,6 +189,31 @@ export const listProviders = query({
   },
 });
 
+// Ranked FAMILIES from the denormalized familyRankings cache.
+// Mirrors listRanked's shape but one row = one (familyTag, provider)
+// pair. Used when the leaderboard UI is in "families" mode.
+export const listRankedFamilies = query({
+  args: {},
+  handler: async (ctx) => {
+    const rankings = await ctx.db
+      .query("familyRankings")
+      .withIndex("by_score")
+      .order("desc")
+      .collect();
+    // Filter out families where every member is hidden. Cache field is
+    // optional (backfill-compat) — treat undefined as "not hidden".
+    const visible = rankings.filter((r) => !(r.hidden ?? false));
+    return visible.map((r) => ({
+      familyTag: r.familyTag,
+      provider: r.provider,
+      supraScore: r.supraScore,
+      benchCount: r.benchCount,
+      modelCount: r.modelCount,
+      tags: r.tags,
+    }));
+  },
+});
+
 // Distinct family-tags list — same idea, prevents typo splits.
 export const listFamilyTags = query({
   args: {},

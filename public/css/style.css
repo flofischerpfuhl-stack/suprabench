@@ -521,6 +521,23 @@ tr.clickable-row {
   margin-right: 0.3rem;
 }
 
+/* Clickable family-tag chip inside a model row. Visually identical to
+   .tag-sm at rest but with hover + active states so users discover it's
+   interactive. Used on the models list to filter the table by the
+   clicked family — see toggleFamilyFilter in public/js/app.js. */
+.family-tag-click {
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.family-tag-click:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.family-tag-click.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+
 /* ── Badges ── */
 .badge {
   display: inline-block;
@@ -2593,6 +2610,54 @@ ol.about-list li::before {
   font-size: 0.78rem;
   color: var(--text3);
   margin-top: 0.5rem;
+}
+
+/* Partner tier: visually set apart from the paid tiers so it reads
+   as "this is a different category, not a fifth price point". Dashed
+   border + desaturated badge colour. Full-span behaviour below keeps
+   it from crowding the 4-card grid on wide screens. */
+.tier-card--partner {
+  border-style: dashed;
+  border-color: var(--text3);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 5%, var(--surface)) 0%,
+    var(--surface) 60%
+  );
+}
+.tier-card--partner:hover {
+  border-color: var(--accent);
+  border-style: solid;
+}
+.tier-card__badge--free {
+  background: color-mix(in srgb, var(--accent) 35%, var(--surface));
+  color: var(--text);
+  border: 1px solid var(--accent);
+}
+/* On wide layouts the partner card spans the full row under the four
+   paid tiers, making the "different category" intent visually obvious
+   without changing the card's own proportions at narrower widths. */
+@media (min-width: 960px) {
+  .tier-grid { grid-template-columns: repeat(4, 1fr); }
+  .tier-card--partner {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .tier-card--partner .tier-card__name { flex: 0 0 auto; }
+  .tier-card--partner .tier-card__price { flex: 0 0 auto; margin: 0; font-size: 1.25rem; }
+  .tier-card--partner .tier-card__quota { flex: 0 0 auto; margin: 0; }
+  .tier-card--partner .tier-card__features {
+    flex: 1 1 320px;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0 1rem;
+  }
+  .tier-card--partner .tier-card__features li { border-top: none; padding: 0.15rem 0; }
+  .tier-card--partner .btn { flex: 0 0 auto; width: auto; }
 }
 
 .api-key-list {

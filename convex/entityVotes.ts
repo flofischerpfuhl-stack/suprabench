@@ -83,6 +83,15 @@ async function applyHiddenState(
         internal.cache.recomputeBenchAggregatesForModel,
         { modelId: id }
       );
+      // A family-ranking row also needs to forget hidden members.
+      const fam = (m as any).familyTag?.trim?.();
+      if (fam) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.familyRankings.recomputeFamily,
+          { familyTag: fam, provider: (m as any).provider }
+        );
+      }
     }
   } else {
     const id = entityId as Id<"benches">;

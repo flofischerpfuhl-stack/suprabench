@@ -209,11 +209,40 @@ func main() {
     <div class="code-block">
       <div class="code-tabs">
         <button class="code-tab active" data-lang="curl"><span class="lang-icon"></span>curl</button>
+        <button class="code-tab" data-lang="python"><span class="lang-icon"></span>Python</button>
+        <button class="code-tab" data-lang="js"><span class="lang-icon"></span>JavaScript</button>
+        <button class="code-tab" data-lang="go"><span class="lang-icon"></span>Go</button>
       </div>
       <div class="code-pane active" data-lang="curl">
         <button class="code-copy">Copy</button>
 <pre><code>curl "https://api.suprabench.com/v1/models?tag=coding&amp;limit=10" \
   -H "Authorization: Bearer $SUPRABENCH_KEY"</code></pre>
+      </div>
+      <div class="code-pane" data-lang="python">
+        <button class="code-copy">Copy</button>
+<pre><code>coding = requests.get(
+    f"{API}/models",
+    params={"tag": "coding", "limit": 10},
+    headers={"Authorization": f"Bearer {KEY}"},
+).json()</code></pre>
+      </div>
+      <div class="code-pane" data-lang="js">
+        <button class="code-copy">Copy</button>
+<pre><code>const params = new URLSearchParams({ tag: "coding", limit: "10" });
+const r = await fetch(`${API}/models?${params}`, {
+  headers: { Authorization: `Bearer ${KEY}` },
+});
+const coding = await r.json();</code></pre>
+      </div>
+      <div class="code-pane" data-lang="go">
+        <button class="code-copy">Copy</button>
+<pre><code>req, _ := http.NewRequest("GET",
+    "https://api.suprabench.com/v1/models?tag=coding&limit=10", nil)
+req.Header.Set("Authorization", "Bearer "+os.Getenv("SUPRABENCH_KEY"))
+resp, _ := http.DefaultClient.Do(req)
+defer resp.Body.Close()
+var coding []Model
+json.NewDecoder(resp.Body).Decode(&amp;coding)</code></pre>
       </div>
     </div>
 
@@ -223,11 +252,52 @@ func main() {
     <div class="code-block">
       <div class="code-tabs">
         <button class="code-tab active" data-lang="curl"><span class="lang-icon"></span>curl</button>
+        <button class="code-tab" data-lang="python"><span class="lang-icon"></span>Python</button>
+        <button class="code-tab" data-lang="js"><span class="lang-icon"></span>JavaScript</button>
+        <button class="code-tab" data-lang="go"><span class="lang-icon"></span>Go</button>
       </div>
       <div class="code-pane active" data-lang="curl">
         <button class="code-copy">Copy</button>
 <pre><code>curl https://api.suprabench.com/v1/models/claude-opus-4-7 \
   -H "Authorization: Bearer $SUPRABENCH_KEY"</code></pre>
+      </div>
+      <div class="code-pane" data-lang="python">
+        <button class="code-copy">Copy</button>
+<pre><code>detail = requests.get(
+    f"{API}/models/claude-opus-4-7",
+    headers={"Authorization": f"Bearer {KEY}"},
+).json()
+for s in detail["scores"]:
+    print(f"{s['benchName']:25s} {s['normalizedScore']:6.2f}")</code></pre>
+      </div>
+      <div class="code-pane" data-lang="js">
+        <button class="code-copy">Copy</button>
+<pre><code>const r = await fetch(`${API}/models/claude-opus-4-7`, {
+  headers: { Authorization: `Bearer ${KEY}` },
+});
+const detail = await r.json();
+for (const s of detail.scores) {
+  console.log(`${s.benchName.padEnd(25)} ${s.normalizedScore.toFixed(2)}`);
+}</code></pre>
+      </div>
+      <div class="code-pane" data-lang="go">
+        <button class="code-copy">Copy</button>
+<pre><code>req, _ := http.NewRequest("GET",
+    "https://api.suprabench.com/v1/models/claude-opus-4-7", nil)
+req.Header.Set("Authorization", "Bearer "+os.Getenv("SUPRABENCH_KEY"))
+resp, _ := http.DefaultClient.Do(req)
+defer resp.Body.Close()
+
+var detail struct {
+    Scores []struct {
+        BenchName       string  `json:"benchName"`
+        NormalizedScore float64 `json:"normalizedScore"`
+    } `json:"scores"`
+}
+json.NewDecoder(resp.Body).Decode(&amp;detail)
+for _, s := range detail.Scores {
+    fmt.Printf("%-25s %6.2f\n", s.BenchName, s.NormalizedScore)
+}</code></pre>
       </div>
     </div>
 

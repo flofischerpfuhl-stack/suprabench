@@ -152,6 +152,34 @@ export default defineSchema({
     .index("by_model", ["modelId"])
     .index("by_score", ["supraScore"]),
 
+  // Denormalized family rankings cache — recomputed alongside
+  // modelRankings. One row per distinct (familyTag, provider) pair
+  // across non-hidden models. A model without a familyTag is NOT
+  // counted anywhere (we don't invent a pseudo-family from the
+  // model's own name — that creates noise in the ranking table).
+  //
+  // supraScore here is the FAMILY score:
+  //   • rebuilt from the constituent models' per-bench medians
+  //   • same weighting formula as individual models (bench weight =
+  //     quality × difficulty × headroom)
+  //   • in plain words: "take every bench any family-member scored
+  //     on, compute the family's median score on that bench from the
+  //     members' own bench-medians, then weight-aggregate."
+  // See rankings.recomputeFamily for the implementation.
+  familyRankings: defineTable({
+    familyTag: v.string(),
+    provider: v.string(),
+    supraScore: v.number(),
+    benchCount: v.number(),     // # distinct benches ≥ 1 family-member has a valid score on
+    modelCount: v.number(),     // # non-hidden models in the family
+    tags: v.array(v.string()),  // union of member models' tags (for tag-filter)
+    updatedAt: v.number(),
+    hidden: v.optional(v.boolean()), // true when every member model is hidden
+  })
+    .index("by_family", ["familyTag"])
+    .index("by_family_provider", ["familyTag", "provider"])
+    .index("by_score", ["supraScore"]),
+
   // Global tag-count cache. Maintained incrementally by tagVotes.
   // Replaces the O(M+B) full-collect previously done on every tags.listAll
   // subscription update. Optional table — queries fall back to live compute
@@ -178,19 +206,34 @@ export default defineSchema({
     .index("by_tier", ["tier"]),
 
   // ════════════════════════════════════════════════════════════
-  // PUBLIC API + STRIPE BILLING — not yet active.
+  // PUBLIC API + STRIPE BILLING
   //
-  // The tables below back the future paid public API (see
-  // docs/api-roadmap.md, convex/api.future.ts, convex/stripe.future.ts).
-  // They're kept commented so we don't pay for indexes / storage on
-  // empty tables before the API ships.
+  // Backing tables for the public `/v1/*` API (see convex/api.ts,
+  // convex/partners.ts, docs/api-roadmap.md) and for the dormant
+  // Stripe integration (convex/stripe.future.ts).
   //
-  // To activate: uncomment this block, run `npx convex deploy --yes`,
-  // then uncomment the matching code in convex/api.future.ts and
-  // convex/stripe.future.ts (and rename them to drop the `.future`).
+  // Activation status (April 2026):
+  //   • api.ts + partners.ts        → LIVE. `/v1/*` answers requests
+  //     on the production deployment, partner keys minted via
+  //     `npx convex run partners:createPartnerKey` are fully
+  //     functional.
+  //   • stripe.future.ts            → still behind a .future fence.
+  //     No Stripe routes registered, no webhook, no env secrets set.
+  //     Paid tiers (starter/pro/enterprise) therefore cannot be
+  //     self-subscribed yet — the Profile→API cards show "Join
+  //     waitlist". This is deliberate; see ACTIVATION.md for the
+  //     rest of the flip.
+  //
+  // The Stripe tables (stripeCustomers, stripeSubscriptions,
+  // stripeEvents) ARE uncommented even though stripe.future.ts is
+  // dormant, because api.ts's `createKey` mutation references
+  // `stripeSubscriptions` in its subscription-liveness check. Storing
+  // a few empty tables costs essentially nothing, and having them in
+  // the schema means the eventual Stripe flip is purely an
+  // uncomment-and-deploy (no schema migration). Partner and
+  // enterprise_plus keys skip the subscription check entirely.
   // ════════════════════════════════════════════════════════════
 
-  /*
   // Hashed API tokens. The plaintext key is shown to the user ONCE on
   // creation and never persisted; we only ever look up by hash.
   apiKeys: defineTable({
@@ -206,6 +249,12 @@ export default defineSchema({
       v.literal("pro"),
       v.literal("enterprise"),
       v.literal("enterprise_plus"),
+      // Invite-only free tier for whitelisted partner sites. Keys are
+      // minted exclusively via the CLI mutation
+      // `partners:createPartnerKey` (see convex/partners.future.ts) and
+      // carry NO Stripe subscription — the auth middleware skips the
+      // subscription check for this tier.
+      v.literal("partner"),
     ),
     monthlyQuota: v.number(),
     rpmLimit: v.number(),               // sliding-window per minute
@@ -289,5 +338,4 @@ export default defineSchema({
     type: v.string(),
     processedAt: v.number(),
   }).index("by_event_id", ["stripeEventId"]),
-  */
 });

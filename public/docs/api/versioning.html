@@ -133,14 +133,45 @@
     </p>
 
     <div class="code-block">
-      <div class="code-tabs"><button class="code-tab active" data-lang="python"><span class="lang-icon"></span>Python</button></div>
-      <div class="code-pane active" data-lang="python">
+      <div class="code-tabs">
+        <button class="code-tab active" data-lang="curl"><span class="lang-icon"></span>curl</button>
+        <button class="code-tab" data-lang="python"><span class="lang-icon"></span>Python</button>
+        <button class="code-tab" data-lang="js"><span class="lang-icon"></span>JavaScript</button>
+        <button class="code-tab" data-lang="go"><span class="lang-icon"></span>Go</button>
+      </div>
+      <div class="code-pane active" data-lang="curl">
+        <button class="code-copy">Copy</button>
+<pre><code># Print every response header so you can grep for Sunset / Deprecation
+# in your monitoring pipeline.
+curl -sSI https://api.suprabench.com/v1/models \
+  -H "Authorization: Bearer $SUPRABENCH_KEY" | grep -Ei 'sunset|deprecation|link'</code></pre>
+      </div>
+      <div class="code-pane" data-lang="python">
         <button class="code-copy">Copy</button>
 <pre><code>r = requests.get(...)
 sunset = r.headers.get("Sunset")
 if sunset:
     log.warning("SupraBench endpoint deprecated; sunset=%s, see %s",
                 sunset, r.headers.get("Link"))</code></pre>
+      </div>
+      <div class="code-pane" data-lang="js">
+        <button class="code-copy">Copy</button>
+<pre><code>const r = await fetch(url, { headers: { Authorization: `Bearer ${KEY}` } });
+const sunset = r.headers.get("Sunset");
+if (sunset) {
+  console.warn(
+    `SupraBench endpoint deprecated; sunset=${sunset}, see ${r.headers.get("Link")}`
+  );
+}</code></pre>
+      </div>
+      <div class="code-pane" data-lang="go">
+        <button class="code-copy">Copy</button>
+<pre><code>resp, _ := http.DefaultClient.Do(req)
+defer resp.Body.Close()
+if sunset := resp.Header.Get("Sunset"); sunset != "" {
+    log.Printf("SupraBench endpoint deprecated; sunset=%s, see %s",
+        sunset, resp.Header.Get("Link"))
+}</code></pre>
       </div>
     </div>
 

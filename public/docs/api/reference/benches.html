@@ -117,11 +117,53 @@
 
     <h3 id="example">Example</h3>
     <div class="code-block">
-      <div class="code-tabs"><button class="code-tab active" data-lang="curl"><span class="lang-icon"></span>curl</button></div>
+      <div class="code-tabs">
+        <button class="code-tab active" data-lang="curl"><span class="lang-icon"></span>curl</button>
+        <button class="code-tab" data-lang="python"><span class="lang-icon"></span>Python</button>
+        <button class="code-tab" data-lang="js"><span class="lang-icon"></span>JavaScript</button>
+        <button class="code-tab" data-lang="go"><span class="lang-icon"></span>Go</button>
+      </div>
       <div class="code-pane active" data-lang="curl">
         <button class="code-copy">Copy</button>
 <pre><code>curl "https://api.suprabench.com/v1/benches?limit=2" \
   -H "Authorization: Bearer $SUPRABENCH_KEY"</code></pre>
+      </div>
+      <div class="code-pane" data-lang="python">
+        <button class="code-copy">Copy</button>
+<pre><code>benches = requests.get(
+    "https://api.suprabench.com/v1/benches",
+    params={"limit": 2},
+    headers={"Authorization": f"Bearer {KEY}"},
+).json()
+for b in benches:
+    print(f"{b['name']:25s} weight={b['effectiveWeight']:.1f}")</code></pre>
+      </div>
+      <div class="code-pane" data-lang="js">
+        <button class="code-copy">Copy</button>
+<pre><code>const r = await fetch("https://api.suprabench.com/v1/benches?limit=2", {
+  headers: { Authorization: `Bearer ${KEY}` },
+});
+const benches = await r.json();
+for (const b of benches) {
+  console.log(`${b.name.padEnd(25)} weight=${b.effectiveWeight.toFixed(1)}`);
+}</code></pre>
+      </div>
+      <div class="code-pane" data-lang="go">
+        <button class="code-copy">Copy</button>
+<pre><code>req, _ := http.NewRequest("GET",
+    "https://api.suprabench.com/v1/benches?limit=2", nil)
+req.Header.Set("Authorization", "Bearer "+os.Getenv("SUPRABENCH_KEY"))
+resp, _ := http.DefaultClient.Do(req)
+defer resp.Body.Close()
+
+var benches []struct {
+    Name            string  `json:"name"`
+    EffectiveWeight float64 `json:"effectiveWeight"`
+}
+json.NewDecoder(resp.Body).Decode(&amp;benches)
+for _, b := range benches {
+    fmt.Printf("%-25s weight=%.1f\n", b.Name, b.EffectiveWeight)
+}</code></pre>
       </div>
     </div>
 

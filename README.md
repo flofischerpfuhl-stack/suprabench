@@ -74,6 +74,33 @@ Worked example, full math, and trajectory tables: [About page on the live site](
 5. **Anti-resurrection** — re-submitting your own community-removed entries
    under the same name is blocked.
 
+### Model families
+
+A **family** is one specific lab release — not a vendor, not a
+generation. `Claude Opus 4.6` and `Claude Opus 4.7` are separate
+families, `Claude` on its own is not a family.
+
+Variants of the same release (different sampling / reasoning effort,
+context-window SKUs, fine-tune modes) stay in the same family and
+disambiguate via a parenthetical suffix on the model's display name:
+
+| Family              | Members                                                                |
+| ------------------- | ---------------------------------------------------------------------- |
+| `Claude Opus 4.7`   | `Claude Opus 4.7`, `Claude Opus 4.7 (max)`                             |
+| `GPT-5.3 Codex`     | `GPT-5.3 Codex (low)`, `… (med)`, `… (high)`, `… (xhigh)`              |
+| `Gemini 3.1`        | `Gemini 3.1`, `Gemini 3.1 (thinking)`                                  |
+
+Common suffixes: `(low)` / `(med)` / `(high)` / `(xhigh)`,
+`(thinking)`, `(max)`, `(128k)` / `(200k)` / `(1M)`, `(instruct)` /
+`(chat)` / `(base)`. A one-off release with no variants has
+`familyTag == name` and a family ranking with `modelCount: 1`.
+
+Users can edit `familyTag` on any model they have permission for and
+the [`familyRankings`](convex/familyRankings.ts) cache refreshes on
+the next mutation tick — there is no canonical list and no admin
+curation. The full rationale and worked examples live in the About
+page Q9b on the live site.
+
 ### Official vs Community sources
 
 Submissions from a curated whitelist of academic, lab, and dedicated

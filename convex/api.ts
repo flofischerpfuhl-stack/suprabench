@@ -1,39 +1,35 @@
 // ════════════════════════════════════════════════════════════
-// Public HTTP API — PLACEHOLDER, NOT WIRED UP.
+// Public HTTP API — LIVE on /v1/*.
 //
-// All real code lives inside one big block-comment below. The file
-// itself only exports an empty namespace so Convex's "every file must
-// be a module" check passes and so we don't accidentally expose
-// endpoints during normal `npx convex deploy`.
+// What this module does:
+//   • User-facing mutations / queries on the Profile→API dashboard
+//     (`myKeys`, `myKeyUsage`, `createKey`, `revokeKey`).
+//   • Internal helpers used by the HTTP auth middleware
+//     (`findKeyByHash`, `consumeQuota`, `checkRateLimit`, `logRequest`,
+//     `cleanupOldData`).
+//   • Internal `publicListModels / publicModelDetail / publicListBenches
+//     / publicTagList / publicExport` queries. They're `internalQuery`
+//     (not `query`) because the ONLY way to reach them is through the
+//     HTTP routes below, which gate on a valid API key. If you expose
+//     one of these as a public `query` you bypass the auth / quota
+//     layer — don't.
+//   • HTTP route registration via `registerApiRoutes(http)`, called
+//     from convex/http.ts.
 //
-// ──────────────────────────────────────────────────────────────
-// HOW TO ACTIVATE (when there's demand):
-//
-//   1. Uncomment the `apiKeys`, `apiUsage`, `apiRateLimits`,
-//      `apiRequestLog` tables in convex/schema.ts.
-//      (Stripe tables get activated separately via stripe.future.ts.)
-//   2. Move the code blocks below out of comments and split into:
-//        convex/api.ts       — the queries / mutations / helpers
-//        convex/apiHttp.ts   — the HTTP routes
-//      (Or just rename this file to convex/api.ts and add the
-//      route registrations to convex/http.ts — see step 4.)
-//   3. Drop the `export {};` at the top.
-//   4. In convex/http.ts add:
-//        import { registerApiRoutes } from "./apiHttp";
-//        registerApiRoutes(http);
-//   5. Run `npx convex deploy --yes` to publish.
-//   6. Wire up the user-facing dashboard:
-//        - /#api in the SPA → list keys, create/revoke, show usage chart
-//        - "Subscribe" button → calls stripe.future.ts:createCheckout
+// Activation status of the tiers that can reach this module:
+//   • partner       → LIVE. Keys minted via `npx convex run
+//     partners:createPartnerKey`. Auth skips the Stripe subscription
+//     check for this tier (and for enterprise_plus).
+//   • starter / pro / enterprise
+//                   → the code is wired but `createKey` for these
+//     tiers requires an active Stripe subscription, and Stripe is
+//     still dormant (convex/stripe.future.ts has not been activated,
+//     no webhook is registered, no env secrets set). So until Stripe
+//     is flipped on, only partner keys actually exist in `apiKeys`.
+//     See ACTIVATION.md for the rest of the sequence.
 //
 // Roadmap, pricing, design rationale: see docs/api-roadmap.md.
 // ════════════════════════════════════════════════════════════
-
-export {};
-
-/* ════════════════════════════════════════════════════════════
-   ─── 1. CONSTANTS ──────────────────────────────────────────
-   ════════════════════════════════════════════════════════════
 
 import { v } from "convex/values";
 import { internalQuery, internalMutation, mutation, query, httpAction } from "./_generated/server";
@@ -43,8 +39,10 @@ import { Id } from "./_generated/dataModel";
 import { getAuthUserId } from "@convex-dev/auth/server";
 // Tier pricing / quotas live in convex/tiers.ts (single source of
 // truth — see header comment there for the list of files that must
-// be kept in sync, and the lint script that enforces it).
-import { TIERS, type Tier } from "./tiers";
+// be kept in sync, and the lint script that enforces it). We import
+// PUBLIC_TIERS separately so createKey() can reject attempts to
+// self-mint a partner key (those are CLI-only via convex/partners.ts).
+import { TIERS, PUBLIC_TIERS, type Tier } from "./tiers";
 
 const KEY_PREFIX = "sb_live_";
 // Cache TTLs (per docs/api-roadmap.md). Sent as Cache-Control headers
@@ -142,6 +140,10 @@ export const myKeyUsage = query({
 });
 
 // Create a new key. Requires an active subscription for the requested tier.
+// Non-public tiers (partner, enterprise_plus) are hard-rejected here and
+// can only be minted via the CLI — partner via
+// `partners:createPartnerKey`, enterprise_plus via a separate admin
+// mutation (not yet written).
 export const createKey = mutation({
   args: { name: v.string(), tier: v.string() },
   handler: async (ctx, { name, tier }) => {
@@ -149,17 +151,25 @@ export const createKey = mutation({
     if (!userId) throw new Error("not signed in");
     if (!(tier in TIERS)) throw new Error("unknown tier");
 
-    // Enforce subscription state. enterprise_plus keys are minted
-    // manually (see comment in stripe.future.ts); admins do it via
-    // npx convex run api:adminCreateEnterprisePlusKey.
-    if (tier !== "enterprise_plus") {
-      const sub = await ctx.db.query("stripeSubscriptions")
-        .withIndex("by_user", q => q.eq("userId", userId))
-        .filter(q => q.eq(q.field("tier"), tier))
-        .filter(q => q.eq(q.field("status"), "active"))
-        .first();
-      if (!sub) throw new Error(`no active ${tier} subscription`);
+    // Block self-mint of non-public tiers. Partner keys live in the
+    // same apiKeys table but are exclusively created via the
+    // internalMutation partners:createPartnerKey (CLI-only).
+    if (!(PUBLIC_TIERS as readonly string[]).includes(tier)) {
+      throw new Error(`tier "${tier}" is not publicly subscribable`);
     }
+
+    // Enforce subscription state. All PUBLIC_TIERS require an active
+    // Stripe sub — but Stripe is currently dormant (see header of this
+    // file), so this branch always throws for now. That's the intended
+    // behaviour: paid tiers stay on "Join waitlist" until Stripe is
+    // activated. Partner / enterprise_plus bypass this entirely (they
+    // were rejected above).
+    const sub = await ctx.db.query("stripeSubscriptions")
+      .withIndex("by_user", q => q.eq("userId", userId))
+      .filter(q => q.eq(q.field("tier"), tier))
+      .filter(q => q.eq(q.field("status"), "active"))
+      .first();
+    if (!sub) throw new Error(`no active ${tier} subscription`);
 
     // Cap key count per user to the per-tier maxKeys.
     const cfg = TIERS[tier as Tier];
@@ -401,7 +411,12 @@ async function authenticate(ctx: any, request: Request) {
   const key = await ctx.runQuery(internal.api.findKeyByHash, { hash });
   if (!key) return { resp: err(401, "invalid_token", "Unknown or revoked key") };
   if (key.revokedAt) return { resp: err(401, "revoked", "This key was revoked") };
-  if (key.stripeSubscriptionStatus &&
+  // Partner-tier and enterprise_plus keys are minted manually and
+  // deliberately have no Stripe subscription attached. Skip the
+  // subscription liveness check for them — everything else (rate
+  // limit, monthly quota, audit log) still applies.
+  const needsSubCheck = key.tier !== "partner" && key.tier !== "enterprise_plus";
+  if (needsSubCheck && key.stripeSubscriptionStatus &&
       !["active", "trialing"].includes(key.stripeSubscriptionStatus)) {
     return { resp: err(402, "subscription_inactive",
                        `Subscription is ${key.stripeSubscriptionStatus}`,
@@ -431,12 +446,16 @@ function clientIp(request: Request) {
 
 // Simple wrapper that handles auth, logging, errors uniformly.
 function endpoint(name: string, ttl: number, handler: (ctx: any, request: Request, key: any) => Promise<Response>) {
-  return httpAction(async (ctx, request) => {
+  // Explicit Promise<Response> return annotation — httpAction's
+  // parameter type is strict about never returning undefined, and
+  // TS can't always narrow a try/catch+let-var pattern tightly
+  // enough without the hint.
+  return httpAction(async (ctx, request): Promise<Response> => {
     const t0 = Date.now();
     const auth = await authenticate(ctx, request);
     if ("resp" in auth) {
       // Don't log unauthenticated traffic — would let attackers fill the log.
-      return auth.resp;
+      return auth.resp as Response;
     }
     let resp: Response;
     try {
@@ -548,5 +567,3 @@ function clampInt(s: string | null, min: number, max: number, dflt: number): num
   if (Number.isNaN(n)) return dflt;
   return Math.min(max, Math.max(min, n));
 }
-
-   ════════════════════════════════════════════════════════════ */

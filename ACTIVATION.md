@@ -1,19 +1,38 @@
 # API + Billing activation runbook
 
-Everything needed to take the public `/v1/*` API + Stripe billing from
-**dormant-but-wired** to **live** on suprabench.com. Intended to be
+Everything needed to take **Stripe-backed paid tiers** of the public
+`/v1/*` API from dormant to live. The `/v1/*` endpoints themselves and
+the invite-only Partner tier are **already live** (as of the "partner
+tier activation" commit) — see *State today* below. Intended to be
 followed top-to-bottom in one sitting; each step is idempotent enough
 to re-run if something fails mid-flight.
 
 ## State today
 
-### ✅ Fully written and shipping now
+### ✅ Already live
 
-- **Tier grid** (Starter / Pro / Enterprise / Enterprise+) renders at
-  `/#profile` → API & Billing tab with `TBD` pricing, `tierAction()`
-  dispatcher, and `tierButtonLabel()` that switches between `Join
-  waitlist` / `Subscribe` / `Current plan` / `Upgrade` / `Downgrade`
-  depending on `apiLive` + `mySubscription`.
+- **`/v1/*` endpoints** all answer requests on the production
+  deployment (list models, model detail, benches, tags, best-by-tag,
+  export). Routes registered in `convex/http.ts` via
+  `registerApiRoutes`.
+- **Partner tier** fully operational. Keys are minted via
+  `npx convex run --prod partners:createPartnerKey` and work
+  identically to paid-tier keys except that the auth middleware
+  skips the Stripe subscription-liveness check for them. Partner
+  tier is rendered on `/#profile` → API & Billing as a "Negotiated /
+  Apply" card that opens a mailto: application.
+- **Schema tables** `apiKeys`, `apiUsage`, `apiRateLimits`,
+  `apiRequestLog`, `stripeCustomers`, `stripeSubscriptions`,
+  `stripeEvents` are all uncommented in `convex/schema.ts`. The
+  Stripe ones are empty because Stripe is still dormant, but they
+  exist so `api.ts`'s `createKey` mutation (which references
+  `stripeSubscriptions`) typechecks. Storage cost of empty tables
+  is negligible.
+- **Tier grid** (Starter / Pro / Enterprise / Enterprise+ / Partner)
+  renders at `/#profile` → API & Billing tab with `TBD` pricing,
+  `tierAction()` dispatcher, and `tierButtonLabel()` that switches
+  between `Join waitlist` / `Subscribe` / `Current plan` / `Upgrade`
+  / `Downgrade` depending on `apiLive` + `mySubscription`.
 - **Frontend subscription dashboard** (HTML in `public/index.html`,
   gated behind `x-show="apiLive"`): "Your subscription" card, cancel-at-
   period-end banner, "Manage billing →" button, API-key list with
@@ -35,51 +54,54 @@ to re-run if something fails mid-flight.
   recurring Price IDs are already embedded in
   [`convex/stripe.future.ts`](convex/stripe.future.ts) under
   `PRICE_IDS`.
-- **Backend implementations** fully written and code-reviewed — every
-  endpoint in `/docs/api/`, the rate limiter, the quota enforcer, the
-  auth layer, Checkout, Billing-Portal, webhook signature-verification,
-  event fan-out, sub↔key cascade, `mySubscription` query — but sit
-  inside `/* ... */` block comments in `convex/api.future.ts` and
-  `convex/stripe.future.ts`.
+- **Stripe-backed paid-tier flow** fully written and code-reviewed —
+  Checkout, Billing-Portal, webhook signature-verification,
+  event fan-out, sub↔key cascade, `mySubscription` query — but sits
+  inside a `/* ... */` block comment in `convex/stripe.future.ts`.
 - **Waitlist flow** (backend + frontend) works end-to-end independently
-  of `apiLive`.
+  of `apiLive`. Paid-tier cards show "Join waitlist" until `apiLive`
+  is flipped true (step 3 below).
 
-### ❌ Deliberately not shipping until activation
+### ❌ Deliberately not shipping until paid-tier activation
 
-- **Schema tables**: `apiKeys`, `apiUsage`, `apiRateLimits`,
-  `apiRequestLog`, `stripeCustomers`, `stripeSubscriptions`,
-  `stripeEvents` are commented out in `convex/schema.ts`. Convex
-  therefore cannot store any of this yet.
-- **HTTP routes**: `convex/http.ts` only registers `auth`. No `/v1/*`
-  endpoints and no `/stripe/webhook` endpoint exist.
+- **`convex/stripe.future.ts`** still dormant (export is `{}`, code
+  inside block comment). No Stripe module loads.
+- **Stripe HTTP routes**: `convex/http.ts` registers auth + API but
+  not `registerStripeRoutes`. No `/stripe/webhook` endpoint exists,
+  no `/stripe/checkout` HTTP action.
 - **Webhook registration**: not created in Stripe. No Stripe events
   flow anywhere.
-- **`apiLive` flag** in `public/js/app.js` is `false`.
+- **`apiLive` flag** in `public/js/app.js` is `false`. While this is
+  false, `_loadProfile()` does not fetch `api.stripe.mySubscription`
+  (which doesn't exist yet anyway), paid-tier cards show "Join
+  waitlist" instead of "Subscribe", and the subscription dashboard
+  is hidden. Partner keys still work end-to-end; they just don't
+  surface in the UI (partners manage keys via email / CLI for now).
 - **Environment**: `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`
   are not set on prod.
 
-Net effect: nobody can subscribe and nobody can call `/v1/*`. Four
-independent locks are closed (frontend flag, commented code, missing
-schema, missing webhook). Each must be unlocked deliberately.
+Net effect: `/v1/*` answers authenticated partner requests, but
+nobody can self-subscribe to Starter / Pro / Enterprise — three
+independent locks remain (stripe.future.ts dormant, frontend flag
+off, Stripe webhook unregistered). Each must be unlocked
+deliberately for the paid-tier launch.
 
-## Activation steps
+## Activation steps (paid tiers only; `/v1/*` and partner tier are already live)
 
-### 1. Uncomment the backend (≈3 min)
+### 1. Uncomment Stripe (≈2 min)
 
-Three files, mechanical:
+Only one file left:
 
-- **`convex/schema.ts`** — uncomment the `apiKeys`, `apiUsage`,
-  `apiRateLimits`, `apiRequestLog`, `stripeCustomers`,
-  `stripeSubscriptions`, `stripeEvents` tables. Grep for `// API` and
-  `// Stripe` section headers.
-- **`convex/api.future.ts`** — delete the top `export {};`, delete the
-  outer `/* */` fence around the code, rename the file to
-  `convex/api.ts`.
-- **`convex/stripe.future.ts`** — same, rename to `convex/stripe.ts`.
+- **`convex/stripe.future.ts`** — delete the top `export {};`, delete
+  the outer `/* */` fence around the code, rename the file to
+  `convex/stripe.ts`.
 
-### 2. Register HTTP routes (≈1 min)
+(`convex/api.ts` and `convex/partners.ts` are already live and have
+no `.future.ts` counterpart anymore.)
 
-Edit `convex/http.ts`:
+### 2. Register Stripe HTTP routes (≈1 min)
+
+Edit `convex/http.ts` — add the stripe import + call:
 
 ```ts
 import { httpRouter } from "convex/server";
@@ -90,7 +112,7 @@ import { registerStripeRoutes } from "./stripe";
 const http = httpRouter();
 auth.addHttpRoutes(http);
 registerApiRoutes(http);
-registerStripeRoutes(http);
+registerStripeRoutes(http);   // ← add this line
 export default http;
 ```
 
@@ -175,6 +197,27 @@ Stripe dashboard → **Developers** → **Webhooks** → **Add endpoint**:
    dashboard should show `cancelAtPeriodEnd: true`.
 6. Click **Revoke** on the key — confirms, then moves to `Revoked`.
 7. Enterprise+ button should still say `Join waitlist`.
+8. **Partner tier smoke test** (optional, only if you have another
+   site to plug in):
+
+   ```bash
+   # Mint a partner key for your own dashboard:
+   npx convex run --prod partners:createPartnerKey \
+     '{"name":"mysite.com","ownerEmail":"me@mysite.com"}'
+
+   # Copy the printed `plaintext`, save it in the partner site's
+   # env (e.g. SUPRABENCH_API_KEY), then:
+   curl -H "authorization: Bearer <that-key>" \
+        https://<deployment>.convex.site/v1/models | head
+
+   # Partner keys have no Stripe sub — should return 200 without
+   # ever touching Stripe. If you see a 402 "subscription_inactive"
+   # something wasn't un-commented correctly in api.future.ts.
+
+   # Revoke when done testing:
+   npx convex run --prod partners:listPartnerKeys
+   npx convex run --prod partners:revokePartnerKey '{"apiKeyId":"<id>"}'
+   ```
 
 ### 8. Update the public docs (≈2 min)
 

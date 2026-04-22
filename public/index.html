@@ -194,12 +194,20 @@
                aria-label="Search models">
     </div>
 
+    <!-- Active family-tag filter pill. Appears when a user has clicked
+         a family tag inside the table; click again to clear. -->
+    <div class="list-search" x-show="activeFamilyFilter" style="padding-top:0">
+        <span class="tag active" @click="clearFamilyFilter()" style="cursor:pointer">
+            Family: <span x-text="activeFamilyFilter"></span> ×
+        </span>
+    </div>
+
     <!-- Models Table -->
     <table x-show="filteredRankedModels.length > 0" class="models-list">
         <thead>
             <tr>
                 <th style="width:50px">#</th>
-                <th>Model</th>
+                <th>Model / Model-Family</th>
                 <th>Provider</th>
                 <th>SupraScore</th>
                 <th x-show="activeTags.length > 0">Filtered Score</th>
@@ -213,7 +221,12 @@
                     <td class="m-name">
                         <a href="#" @click.prevent x-text="m.name" style="font-weight:500"></a>
                         <template x-if="m.familyTag">
-                            <span class="tag-sm" x-text="m.familyTag" style="margin-left:0.5rem"></span>
+                            <span class="tag-sm family-tag-click"
+                                  :class="{'active': activeFamilyFilter === m.familyTag}"
+                                  @click.stop="toggleFamilyFilter(m.familyTag)"
+                                  :title="'Filter by family: ' + m.familyTag"
+                                  x-text="m.familyTag"
+                                  style="margin-left:0.5rem;cursor:pointer"></span>
                         </template>
                     </td>
                     <td class="m-provider" style="color:var(--text2)" x-text="m.provider"></td>
@@ -1866,6 +1879,40 @@
         </div>
     </div>
 
+    <!-- Q9b — Model-family taxonomy convention. Lives here because the
+         "Model / Model-Family" header in the rankings table makes users
+         wonder what counts as a family and why Claude 4.6 is separate
+         from Claude 4.7. Short answer: one release = one family. -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q9b')" @click="aboutToggle('q9b')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q9b')}">▼</span>
+            <span>What counts as a "model family"?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q9b')" x-transition>
+            <p>A <strong>family</strong> is one specific lab release — <em>not</em> a vendor, a generation or an architecture line. "Claude Opus 4.6" and "Claude Opus 4.7" are separate families. "Claude" is not a family at all; it's a brand.</p>
+            <p>The reason is practical: a 0.1 version bump at a frontier lab usually means a different training run, different parameter count and measurably different benchmark behaviour. Grouping them defeats the point of a family ranking.</p>
+
+            <h4 class="qa-subheader">Variants go in the model name, not the family</h4>
+            <p>When a lab ships the same release at different effort levels — sampling temperature, reasoning mode, context window, fine-tune — we keep them in the same family and disambiguate with a parenthetical suffix on the model's display name:</p>
+            <table class="qa-table">
+                <thead><tr><th>Family</th><th>Variants (model name)</th><th>What the suffix means</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Claude Opus 4.7</code></td><td><code>Claude Opus 4.7</code>, <code>Claude Opus 4.7 (max)</code></td><td>Lab-branded "best-effort" sampling</td></tr>
+                    <tr><td><code>GPT-5.3 Codex</code></td><td><code>… (low)</code>, <code>(med)</code>, <code>(high)</code>, <code>(xhigh)</code></td><td>Reasoning-effort level</td></tr>
+                    <tr><td><code>Gemini 3.1</code></td><td><code>Gemini 3.1</code>, <code>Gemini 3.1 (thinking)</code></td><td>Explicit reasoning mode on/off</td></tr>
+                </tbody>
+            </table>
+            <p>Common suffixes you'll see: <code>(low)</code> / <code>(med)</code> / <code>(high)</code> / <code>(xhigh)</code>, <code>(thinking)</code>, <code>(max)</code>, <code>(128k)</code> / <code>(200k)</code> / <code>(1M)</code> for context-length SKUs, <code>(instruct)</code> / <code>(chat)</code> / <code>(base)</code> for open-weight post-training variants.</p>
+
+            <h4 class="qa-subheader">Family ranking &ne; average of member models</h4>
+            <p>When you click a family tag in the rankings table, we rebuild the SupraScore from the <em>union</em> of the family's member models per bench: for each bench any member scored on, we take the family's median-of-medians and weight it by the bench's own weight, exactly as we do for individual models. A family with more variants doesn't automatically win — the per-bench median is still robust to one outlier variant.</p>
+
+            <h4 class="qa-subheader">What if the community disagrees with a grouping?</h4>
+            <p>Anyone signed in can edit a model's <code>familyTag</code> via the model-detail page. Rankings refresh on the next tick. There's no canonical list and no admin curation — if the community thinks "GPT-5.3 Codex (high)" is actually a separate model from "(low)", they can split it off by assigning a new family tag to the "(high)" variant.</p>
+            <p class="helper-text">A one-off release with no variants and no expected follow-ups is fine to have <code>familyTag == name</code> — the family ranking then shows it with <code>modelCount: 1</code>.</p>
+        </div>
+    </div>
+
     <!-- Q10 — API teaser. Lives in About so SEO/crawlers index it
          and so curious users discover the planned API even if they
          never sign in to the profile page. -->
@@ -1873,13 +1920,14 @@
         <button class="qa-question" :aria-expanded="aboutOpen.has('q10')" @click="aboutToggle('q10')">
             <span class="expand-icon" :class="{'open': aboutOpen.has('q10')}">▼</span>
             <span>Is there a public API?
-                <span class="badge-soon" style="background:var(--surface);color:var(--text3);font-size:.62rem;padding:.1rem .4rem;border-radius:999px;margin-left:.4rem;font-family:var(--bd);font-weight:400">Demand-gated</span>
+                <span class="badge-soon" style="background:var(--surface);color:var(--text3);font-size:.62rem;padding:.1rem .4rem;border-radius:999px;margin-left:.4rem;font-family:var(--bd);font-weight:400">Partner live · paid demand-gated</span>
             </span>
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q10')" x-transition>
-            <p>Not yet &mdash; the contract is final, the implementation is built, the docs are live. We just don't flip the public <code>/v1/</code> endpoints on until enough developers are actually waiting for it; running Stripe + a dedicated edge cache for an API nobody uses isn't free. Pricing is <strong>TBD until launch</strong> &mdash; the waitlist is how we figure out what each tier should actually cost. Enterprise plans are always custom. Billing will be handled by Stripe (EU VAT collected automatically).</p>
-            <p>Read the full <a href="/docs/api/" style="color:var(--accent)"><strong>API documentation</strong></a> &mdash; every endpoint, error code, rate-limit and example is already there. Then <strong>join the waitlist</strong> for the tier you'd actually subscribe to: <a href="#profile" @click.prevent="navigate('profile'); $nextTick(() => profileTab='api')">Profile → API &amp; Billing</a>. When the queue hits launch threshold we ship and email everyone in signup order.</p>
-            <p class="helper-text">Have a specific use case (research, dashboard, leaderboard mirror)? Tell us via a GitLab issue &mdash; high-signal asks weigh more than passive signups.</p>
+            <p><strong>Yes &mdash; partially.</strong> The <code>/v1/*</code> endpoints are live and answering requests today, but the only keys we mint right now are <strong>free Partner keys</strong> for non-profit, research and open-source projects we explicitly approve. Paid self-serve tiers (Starter / Pro / Enterprise) stay on a <strong>waitlist</strong> until enough developers are actually queued for them &mdash; running Stripe + a dedicated edge cache for an API nobody uses isn't free. Pricing is <strong>TBD until that launch</strong>, the waitlist is how we figure out what each tier should actually cost. Enterprise plans are always custom. Billing will be handled by Stripe (EU VAT collected automatically).</p>
+            <p>Read the full <a href="/docs/api/" style="color:var(--accent)"><strong>API documentation</strong></a> &mdash; every endpoint, error code, rate-limit and example is already there. For paid tiers, <strong>join the waitlist</strong> for the one you'd actually subscribe to: <a href="#profile" @click.prevent="navigate('profile'); $nextTick(() => profileTab='api')">Profile → API &amp; Billing</a>. When the queue hits launch threshold we ship and email everyone in signup order.</p>
+            <p>Running a non-profit, research or open-source project that could genuinely use the API today? <a href="mailto:suprabench.editor887@passmail.com?subject=SupraBench%20Partner%20API%20application">Pitch us for a Partner key</a> &mdash; free, negotiated quota, live right now. The <em>Apply to become a partner</em> button at the bottom of the pricing grid opens a pre-filled form with the bits we need to evaluate.</p>
+            <p class="helper-text">Have a specific use case (dashboard, leaderboard mirror, evaluation tooling)? Tell us via a GitLab issue or the partner mailto &mdash; high-signal asks weigh more than passive signups.</p>
         </div>
     </div>
 </div>
@@ -2045,12 +2093,20 @@
                             Programmatic access to SupraBench data (rankings, models,
                             benchmarks, submissions). The contract is final, the
                             <a href="/docs/api/" style="color:var(--accent);text-decoration:underline">full developer documentation</a>
-                            is live, the implementation is built &mdash; we just don't
-                            flip <code>/v1/</code> on until enough developers are waiting
-                            for it to justify the recurring infra and Stripe overhead.
-                            Join the waitlist on the tier you'd actually subscribe to;
-                            once the queue hits launch threshold we ship and email
-                            everyone in signup order.
+                            is live, the implementation is built. Paid tiers are
+                            <strong>demand-gated</strong> &mdash; we don't flip
+                            <code>/v1/</code> on for them until enough developers
+                            are waiting to justify the recurring Stripe + edge-cache
+                            overhead. Join the waitlist on the tier you'd actually
+                            subscribe to; once the queue hits launch threshold we
+                            ship and email everyone in signup order.
+                        </p>
+                        <p class="api-banner__text" style="margin-top:.5rem">
+                            Running a non-profit, research or open-source project
+                            that could genuinely use the API? The <strong>Partner
+                            tier is live right now</strong>, free, and sits at the
+                            bottom of the pricing grid &mdash; pitch us and we'll
+                            mint you a key with a negotiated quota.
                         </p>
                     </div>
                 </div>
@@ -2138,6 +2194,39 @@
                         <button class="btn btn-sm btn-outline" :disabled="tierButtonDisabled('enterprise_plus')"
                                 @click="tierAction('enterprise_plus')"
                                 x-text="tierButtonLabel('enterprise_plus')"></button>
+                    </div>
+
+                    <!-- ═══════ PARTNER TIER ═══════
+                         Invite-only free tier for non-profit / open-source /
+                         research projects the maintainer personally approves.
+                         Unlike the paid tiers this one is LIVE from day one
+                         (see api.ts / partners.ts). Keys are minted exclusively
+                         via `npx convex run partners:createPartnerKey` — the
+                         button here routes to a mailto: application, NOT to
+                         self-serve key creation. Quotas are negotiated per
+                         partner (enterprise+ style), so we deliberately don't
+                         print hard numbers on this card. -->
+                    <div class="tier-card tier-card--partner" :class="{'is-current': apiLive && mySubscription?.tier === 'partner' && mySubscription?.status === 'active'}">
+                        <span class="tier-card__badge" x-show="apiLive && mySubscription?.tier === 'partner' && mySubscription?.status === 'active'">Your plan</span>
+                        <span class="tier-card__badge tier-card__badge--free" x-show="!(apiLive && mySubscription?.tier === 'partner' && mySubscription?.status === 'active')">Free · invite-only</span>
+                        <h3 class="tier-card__name">Partner</h3>
+                        <p class="tier-card__price">Sponsored <small>by the project</small></p>
+                        <p class="tier-card__quota">Negotiated case-by-case</p>
+                        <ul class="tier-card__features">
+                            <li>Full API access (read + bulk export)</li>
+                            <li>For non-profit, research &amp; open-source projects</li>
+                            <li>Hobby / friend-of-the-project sites welcome too</li>
+                            <li>Quota &amp; rate limit set per partner</li>
+                            <li>Attribution expected (<code>Powered by SupraBench</code> footer link)</li>
+                        </ul>
+                        <!-- Pre-filled mailto: deliberately asks for the things
+                             we actually need to evaluate the pitch (URL, what
+                             the integration does, expected request volume).
+                             Saves a back-and-forth. -->
+                        <a class="btn btn-sm btn-outline"
+                           href="mailto:suprabench.editor887@passmail.com?subject=SupraBench%20Partner%20API%20application&body=Hi%20SupraBench%20team%2C%0A%0AI%27d%20like%20to%20apply%20for%20a%20free%20Partner%20API%20key%20for%3A%0A%0A-%20Project%20name%3A%20%0A-%20Website%20%2F%20GitHub%3A%20%0A-%20What%20the%20integration%20does%3A%20%0A-%20Why%20it%27s%20non-profit%20%2F%20open-source%20%2F%20research%3A%20%0A-%20Rough%20expected%20request%20volume%20%28per%20day%29%3A%20%0A%0AHappy%20to%20add%20a%20%60Powered%20by%20SupraBench%60%20credit%20in%20the%20footer.%0A%0AThanks%21">
+                            Apply to become a partner →
+                        </a>
                     </div>
                 </div>
 

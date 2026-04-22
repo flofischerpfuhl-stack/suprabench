@@ -110,6 +110,8 @@
       <div class="code-tabs">
         <button class="code-tab active" data-lang="curl"><span class="lang-icon"></span>curl</button>
         <button class="code-tab" data-lang="python"><span class="lang-icon"></span>Python</button>
+        <button class="code-tab" data-lang="js"><span class="lang-icon"></span>JavaScript</button>
+        <button class="code-tab" data-lang="go"><span class="lang-icon"></span>Go</button>
       </div>
       <div class="code-pane active" data-lang="curl">
         <button class="code-copy">Copy</button>
@@ -126,6 +128,32 @@
 
 for m in top_coding:
     print(m["name"], m["supraScore"])</code></pre>
+      </div>
+      <div class="code-pane" data-lang="js">
+        <button class="code-copy">Copy</button>
+<pre><code>const params = new URLSearchParams({ tag: "coding", limit: "5" });
+const r = await fetch(`https://api.suprabench.com/v1/best?${params}`, {
+  headers: { Authorization: `Bearer ${KEY}` },
+});
+const top = await r.json();
+for (const m of top) console.log(m.name, m.supraScore);</code></pre>
+      </div>
+      <div class="code-pane" data-lang="go">
+        <button class="code-copy">Copy</button>
+<pre><code>req, _ := http.NewRequest("GET",
+    "https://api.suprabench.com/v1/best?tag=coding&limit=5", nil)
+req.Header.Set("Authorization", "Bearer "+os.Getenv("SUPRABENCH_KEY"))
+resp, _ := http.DefaultClient.Do(req)
+defer resp.Body.Close()
+
+var top []struct {
+    Name       string  `json:"name"`
+    SupraScore float64 `json:"supraScore"`
+}
+json.NewDecoder(resp.Body).Decode(&amp;top)
+for _, m := range top {
+    fmt.Println(m.Name, m.SupraScore)
+}</code></pre>
       </div>
     </div>
 

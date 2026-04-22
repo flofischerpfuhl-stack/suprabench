@@ -11,6 +11,7 @@
 // ════════════════════════════════════════════════════════════
 
 import { internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import {
   recomputeBenchAggregatesInline,
   syncModelRankingHiddenInline,
@@ -144,6 +145,20 @@ export const recomputeBenchIsOfficial = internalMutation({
   },
 });
 
+// 6. Build the familyRankings cache from scratch.
+//
+// Run after the family-rankings feature first lands, and any time
+// `migrations:backfillAll` would be run. Idempotent.
+//
+// Usage:
+//   npx convex run --prod migrations:backfillFamilyRankings
+export const backfillFamilyRankings = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.runMutation(internal.familyRankings.recomputeAll, {});
+  },
+});
+
 // All-in-one runner. Inlines the four backfills into a single
 // transaction. Convex mutations are bounded to ~4s wall-clock and
 // limited mutation-result sizes; if any one of these starts timing
@@ -208,11 +223,19 @@ export const backfillAll = internalMutation({
       await applyTagDeltaInline(ctx, "model", [], m.tags ?? []);
     }
 
+    // 5. familyRankings — delegate to the feature module so the logic
+    //    stays in one place.
+    const familyStats = await ctx.runMutation(
+      internal.familyRankings.recomputeAll,
+      {}
+    );
+
     return {
       modelRankingHidden: { models: models.length, patched: hiddenPatched },
       benchAggregates: { benches: benches.length },
       submitterIdentity: { scores: scores.length, patched: submitterPatched },
       tagCounts: { benches: benches.length, models: models.length },
+      familyRankings: familyStats,
     };
   },
 });

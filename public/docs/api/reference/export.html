@@ -107,6 +107,8 @@
       <div class="code-tabs">
         <button class="code-tab active" data-lang="curl"><span class="lang-icon"></span>curl</button>
         <button class="code-tab" data-lang="python"><span class="lang-icon"></span>Python</button>
+        <button class="code-tab" data-lang="js"><span class="lang-icon"></span>JavaScript</button>
+        <button class="code-tab" data-lang="go"><span class="lang-icon"></span>Go</button>
       </div>
       <div class="code-pane active" data-lang="curl">
         <button class="code-copy">Copy</button>
@@ -128,6 +130,49 @@ print(f"snapshot generated {snapshot['generatedAt']}")
 print(f"  {len(snapshot['models'])} models")
 print(f"  {len(snapshot['benches'])} benches")
 print(f"  {len(snapshot['tags'])} tags")</code></pre>
+      </div>
+      <div class="code-pane" data-lang="js">
+        <button class="code-copy">Copy</button>
+<pre><code>import { writeFile } from "node:fs/promises";
+
+const r = await fetch("https://api.suprabench.com/v1/export.json", {
+  headers: { Authorization: `Bearer ${process.env.SUPRABENCH_KEY}` },
+});
+if (!r.ok) throw new Error(`API ${r.status}`);
+const snapshot = await r.json();
+
+const day = new Date().toISOString().slice(0, 10);
+await writeFile(`suprabench-${day}.json`, JSON.stringify(snapshot));
+console.log(
+  `${snapshot.models.length} models, ${snapshot.benches.length} benches, `
+  + `${snapshot.tags.length} tags`,
+);</code></pre>
+      </div>
+      <div class="code-pane" data-lang="go">
+        <button class="code-copy">Copy</button>
+<pre><code>package main
+
+import (
+    "fmt"
+    "io"
+    "net/http"
+    "os"
+    "time"
+)
+
+func main() {
+    req, _ := http.NewRequest("GET",
+        "https://api.suprabench.com/v1/export.json", nil)
+    req.Header.Set("Authorization", "Bearer "+os.Getenv("SUPRABENCH_KEY"))
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil { panic(err) }
+    defer resp.Body.Close()
+
+    name := fmt.Sprintf("suprabench-%s.json", time.Now().UTC().Format("2006-01-02"))
+    f, _ := os.Create(name)
+    defer f.Close()
+    io.Copy(f, resp.Body)
+}</code></pre>
       </div>
     </div>
 

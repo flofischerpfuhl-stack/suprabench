@@ -1,0 +1,13 @@
+{
+  "name": "suprabench-api-integration-js",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Node.js end-to-end tests for the SupraBench public API. Uses the built-in node:test runner and global fetch (Node ≥ 20 only) — zero extra dependencies.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-reporter=spec test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

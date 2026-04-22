@@ -62,11 +62,51 @@ the part of the tier shape that's locked.
 | **Pro** | TBD | 100 000 | 300 | 3 | + `/export.json` daily | small AI startup |
 | **Enterprise** | TBD | 1 000 000 | 1 200 | 10 | + priority queue (planned) | observability vendor |
 | **Enterprise+** | custom | custom | custom | 50+ | + SLA, on-prem snapshot drops | hyperscaler / lab |
+| **Partner** *(invite-only)* | **$0** | Negotiated | Negotiated | 1 | all read endpoints + `/export.json` | my own other web properties, friendly OSS / non-profit / research projects |
 
 Billing currency at launch will be USD (global default for developer APIs).
 Stripe Tax adds EU VAT automatically at checkout for B2C / non-VAT-ID
 customers; B2B reverse-charge is supported when the buyer provides a
 valid VAT-ID.
+
+## Partner tier (invite-only, free)
+
+I run more than one website that integrates SupraBench data, and
+friends / OSS maintainers occasionally want read access for a small
+dashboard. Paying myself through Stripe just to get at my own API is
+silly, and carving out per-IP exceptions at the CDN would drift
+quickly. The `partner` tier is the clean solution:
+
+- **Appears in the public tier grid** as a separate "Negotiated /
+  Apply" card with a mailto: CTA, *but* `PUBLIC_TIERS` in
+  `convex/tiers.ts` excludes it, and the public `createKey` mutation
+  hard-rejects requests with `tier === "partner"` (see `convex/api.ts`,
+  `isPubliclySubscribable === false`). A signed-in user hitting the
+  Apply button gets an email draft, not a self-mint form.
+- **Keys are minted only via CLI** — `npx convex run partners:createPartnerKey
+  '{"name":"mysite.com"}'` (see `convex/partners.ts`). That requires
+  Convex deployment credentials, so nothing on the public internet
+  can provision one.
+- **Auth middleware skips the Stripe check** for partner keys (the
+  tier has no subscription attached). Rate limiting + monthly quota
+  + audit log all still apply — a leaked partner key can't run away
+  because it hits the per-minute sliding window.
+- **Quota and rate limit are negotiated case-by-case**, not
+  advertised. The tier card deliberately prints "Negotiated" instead
+  of numbers. `PARTNER_DEFAULTS` in `convex/tiers.ts` (100 k/month,
+  300 rpm, 1 key) is only a fallback used when the CLI mints a key
+  without explicit `--quota` / `--rpm` flags. Hard cap is 1 M/month;
+  beyond that the partner should apply for `enterprise_plus`
+  instead.
+- **Revocation** is the same soft-revoke as paid keys:
+  `partners:revokePartnerKey`. The apiKeys row is kept with
+  `revokedAt` set, so the audit log still points back to a real row.
+
+This deliberately does NOT implement origin binding (i.e. "key only
+works when Referer matches partner.example.com"). Origin spoofing is
+trivial from any non-browser client, so enforcing it would give a
+false sense of security without slowing down real abuse. If a key
+gets leaked, we revoke and re-issue — same response as for paid keys.
 
 ## Payment: Stripe
 

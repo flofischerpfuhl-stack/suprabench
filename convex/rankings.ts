@@ -1,6 +1,7 @@
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 // ── Bench weight = quality × difficulty × headroom ──
 //
@@ -183,6 +184,17 @@ export const recomputeModel = internalMutation({
   args: { modelId: v.id("models") },
   handler: async (ctx, { modelId }) => {
     await recomputeOne(ctx, modelId);
+    // If this model has a familyTag, roll the family ranking forward
+    // too. Scheduling rather than direct-calling keeps this cheap on
+    // hot-path mutations and keeps each mutation's footprint small.
+    const m = await ctx.db.get(modelId);
+    const fam = (m as any)?.familyTag?.trim?.();
+    if (fam) {
+      await ctx.scheduler.runAfter(0, internal.familyRankings.recomputeFamily, {
+        familyTag: fam,
+        provider: (m as any).provider,
+      });
+    }
   },
 });
 
@@ -193,6 +205,10 @@ export const recomputeAll = internalMutation({
     for (const m of models) {
       await recomputeOne(ctx, m._id);
     }
+    // Full family rebuild after a full model rebuild. Called inline
+    // (not scheduled) so a single `recomputeAll` invocation leaves the
+    // DB in a consistent state on return — migrations rely on that.
+    await ctx.runMutation(internal.familyRankings.recomputeAll, {});
   },
 });
 
@@ -205,6 +221,19 @@ export const recomputeForBench = internalMutation({
       .collect();
     const seen = new Set<string>();
     for (const s of scores) seen.add(s.modelId as string);
-    for (const id of seen) await recomputeOne(ctx, id as Id<"models">);
+    const touchedFamilies = new Set<string>();
+    for (const id of seen) {
+      await recomputeOne(ctx, id as Id<"models">);
+      const m = await ctx.db.get(id as Id<"models">);
+      const fam = (m as any)?.familyTag?.trim?.();
+      if (fam) touchedFamilies.add(`${fam}\u0000${(m as any).provider}`);
+    }
+    for (const key of touchedFamilies) {
+      const [familyTag, provider] = key.split("\u0000");
+      await ctx.scheduler.runAfter(0, internal.familyRankings.recomputeFamily, {
+        familyTag,
+        provider,
+      });
+    }
   },
 });

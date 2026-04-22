@@ -1,0 +1,20 @@
+{
+  "name": "suprabench-api-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Unit + integration tests for the SupraBench /v1/* public API. Uses convex-test to spin up the Convex runtime in-process so tests hit real query/mutation/httpAction code paths without needing a live deployment.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^3.2.0",
+    "convex-test": "^0.0.35",
+    "vitest": "^2.1.5",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "convex": "^1.35.1"
+  }
+}

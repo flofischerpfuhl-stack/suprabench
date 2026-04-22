@@ -47,6 +47,20 @@ import { query } from "./_generated/server";
 // Keeping them separate avoids URL-encoding headaches for the "+"
 // character — the key is what goes into the DB / API responses, the
 // label is what users see.
+// Fallback defaults the CLI uses when a partner key is minted
+// without explicit --quota / --rpm flags. These are NOT the
+// advertised numbers for the partner tier (there are none —
+// every partner is negotiated individually, see the partner entry
+// below). They exist so `partners:createPartnerKey --name=foo`
+// without further arguments produces a usable key instead of
+// crashing on null.
+export const PARTNER_DEFAULTS = {
+  monthlyQuota: 100_000,   // Pro-equivalent
+  rpmLimit:     300,
+  allowExport:  true,
+  maxKeys:      1,
+} as const;
+
 export const TIERS = {
   starter: {
     priceUsd:     null,             // TBD — set when launching
@@ -54,6 +68,7 @@ export const TIERS = {
     rpmLimit:     60,
     allowExport:  false,
     maxKeys:      1,
+    isPubliclySubscribable: true,
   },
   pro: {
     priceUsd:     null,             // TBD — set when launching
@@ -61,6 +76,7 @@ export const TIERS = {
     rpmLimit:     300,
     allowExport:  true,
     maxKeys:      3,
+    isPubliclySubscribable: true,
   },
   enterprise: {
     priceUsd:     null,             // TBD — set when launching
@@ -68,6 +84,7 @@ export const TIERS = {
     rpmLimit:     1_200,
     allowExport:  true,
     maxKeys:      10,
+    isPubliclySubscribable: true,
   },
   enterprise_plus: {
     priceUsd:     null,             // always negotiated
@@ -75,15 +92,69 @@ export const TIERS = {
     rpmLimit:     6_000,
     allowExport:  true,
     maxKeys:      50,
+    isPubliclySubscribable: false,  // contract-only; no self-serve
+  },
+  // ─── INVITE-ONLY FREE TIER FOR PARTNER SITES ─────────────────────
+  // Free API access for whitelisted partner projects (my other
+  // properties, friendly non-profit / open-source projects I
+  // explicitly approve). Quotas are **negotiated individually** —
+  // the CLI mutation `partners:createPartnerKey` accepts --quota
+  // and --rpm overrides per key and falls back to PARTNER_DEFAULTS
+  // (see above) when omitted.
+  //
+  // Public UI behaviour: the tier IS rendered in the pricing grid
+  // (the user wanted it visible so partners know to apply) but with
+  // a "Negotiated / Apply" CTA instead of a subscribe button. Self-mint
+  // via `api.createKey` is still blocked — `isPubliclySubscribable:
+  // false` keeps `createKey` from accepting `tier: "partner"` from an
+  // ordinary signed-in user.
+  //
+  // The auth middleware in `convex/api.ts` skips the Stripe
+  // subscription check for `tier === "partner"`; everything else
+  // (rate limit, per-key monthly quota, audit log) behaves
+  // identically to the paid tiers.
+  //
+  // The monthlyQuota / rpmLimit numbers below are **display
+  // fallbacks** used only when the CLI mints a partner key without
+  // override flags; the tier-card doesn't render them (see the card
+  // rendering in public/index.html).
+  partner: {
+    priceUsd:     0,
+    monthlyQuota: PARTNER_DEFAULTS.monthlyQuota,
+    rpmLimit:     PARTNER_DEFAULTS.rpmLimit,
+    allowExport:  PARTNER_DEFAULTS.allowExport,
+    maxKeys:      PARTNER_DEFAULTS.maxKeys,
+    isPubliclySubscribable: false,  // invite-only; CLI-minted
   },
 } as const;
+
+// Tiers the `api.createKey` mutation will accept as input from a
+// normal signed-in user. `enterprise_plus` and `partner` are both
+// excluded because they're minted manually (enterprise_plus through
+// Stripe-then-CLI with an account manager; partner through
+// `partners:createPartnerKey` only).
+export const PUBLIC_TIERS = [
+  "starter",
+  "pro",
+  "enterprise",
+] as const;
+export type PublicTier = (typeof PUBLIC_TIERS)[number];
 
 export type Tier = keyof typeof TIERS;
 
 // Public query the frontend can subscribe to so the tier-grid in
-// /#api always reflects this file. Not used yet (the cards are
-// still hand-rolled HTML — see comment at top); wiring the cards
-// to this query is the next step in eliminating drift.
+// /#api reflects this file. The frontend iterates this list and
+// renders a card per tier; it uses `isPubliclySubscribable` to pick
+// between a "Subscribe / Join waitlist" CTA and a contact-us CTA
+// (used for enterprise_plus and partner).
+//
+// We return ALL tiers here — including partner — because the user
+// explicitly wants the partner option visible on the pricing page as
+// a "hey, got a non-profit project? apply to be a SupraBench partner"
+// invitation. The frontend is responsible for rendering a key-creation
+// button only when `isPubliclySubscribable === true`. Server-side
+// enforcement still happens in `api.createKey` (it hard-rejects
+// non-public tiers regardless of what the frontend sent).
 export const listTiers = query({
   args: {},
   handler: async () => {

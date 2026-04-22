@@ -44,11 +44,22 @@ const TIER_MAX_KEYS = {
   pro: 3,
   enterprise: 10,
   enterprise_plus: 50,
+  // Partner keys default to 1 each; the CLI mutation can override
+  // per key. This is only a fallback for the profile UI cap check
+  // and deliberately matches PARTNER_DEFAULTS.maxKeys in convex/
+  // tiers.ts — if you bump one, bump the other and the lint script
+  // will catch the drift.
+  partner: 1,
 };
 
 // Used by tier-card buttons to decide which tier is "up" vs "down"
 // when an already-subscribed user clicks another tier. Stripe itself
-// doesn't know this ordering — we do.
+// doesn't know this ordering — we do. Partner is intentionally NOT
+// in this list: it's a separate category (invite-only, no self-serve),
+// so clicking other tier cards while on partner shouldn't read as an
+// "upgrade" or "downgrade" — tierButtonLabel falls through to
+// "Subscribe" and tierAction short-circuits into the mailto path via
+// the card's own <a href="mailto:…"> anchor.
 const TIER_ORDER = ["starter", "pro", "enterprise", "enterprise_plus"];
 
 function todayIsoDate() {
@@ -307,6 +318,12 @@ function supraBench() {
     allProviders: [],
     allFamilyTags: [],
     activeTags: [],
+    // Active family-tag filter (string or "" / null). When set, the
+    // models table filters to that family client-side via
+    // filteredRankedModels. Separate from activeTags so it doesn't
+    // clutter the tag-pill bar: a family is conceptually a "which
+    // lineage of this lab's models" pick, not a capability filter.
+    activeFamilyFilter: "",
     tagSearch: "",
     modelListSearch: "",
     benchListSearch: "",
@@ -936,6 +953,15 @@ function supraBench() {
     // is contract-based and never hits self-serve checkout.
 
     async tierAction(tier) {
+      // Partner is invite-only. The card renders a <a mailto:> anchor
+      // instead of the usual button, so this branch is defence-in-depth:
+      // if a future refactor ever wires the partner card's CTA to this
+      // method, we want it to fail safe by opening the application
+      // mailto instead of silently calling subscribe() or toggleWaitlist().
+      if (tier === "partner") {
+        window.location.href = "mailto:suprabench.editor887@passmail.com?subject=SupraBench%20Partner%20API%20application";
+        return;
+      }
       if (tier === "enterprise_plus") return this.toggleWaitlist(tier);
       if (!this.apiLive) return this.toggleWaitlist(tier);
       if (!this.user) { this.login(); return; }
@@ -1041,6 +1067,22 @@ function supraBench() {
       this._loadFilteredModels();
     },
 
+    // ═══ FAMILY FILTERING (model list) ═══
+    // Clicking a family-tag chip inside a model row: toggle it as the
+    // sole active family filter. Clicking the same one again clears;
+    // clicking a different one replaces the previous pick (a model
+    // belongs to exactly one family, so multi-select would be odd).
+    // This is pure client-side filtering over `rankedModels`, no
+    // extra Convex query — scales fine up to a few thousand models.
+    toggleFamilyFilter(family) {
+      if (!family) return;
+      this.activeFamilyFilter =
+        this.activeFamilyFilter === family ? "" : family;
+    },
+    clearFamilyFilter() {
+      this.activeFamilyFilter = "";
+    },
+
     async _loadFilteredModels() {
       if (this.activeTags.length === 0) return;
       const { client, api } = window.sbConvex;
@@ -1104,11 +1146,16 @@ function supraBench() {
 
     get filteredRankedModels() {
       const q = this.modelListSearch.trim().toLowerCase();
-      if (!q) return this.rankedModels;
-      return this.rankedModels.filter(m =>
+      const famFilter = this.activeFamilyFilter;
+      let list = this.rankedModels;
+      if (famFilter) {
+        list = list.filter((m) => m.familyTag === famFilter);
+      }
+      if (!q) return list;
+      return list.filter((m) =>
         m.name.toLowerCase().includes(q) ||
         (m.provider || "").toLowerCase().includes(q) ||
-        (m.tags || []).some(t => t.includes(q))
+        (m.tags || []).some((t) => t.includes(q))
       );
     },
 
