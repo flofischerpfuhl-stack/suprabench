@@ -3,7 +3,11 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
-import { syncModelRankingHiddenInline, applyTagDeltaInline } from "./cache";
+import {
+  syncModelRankingHiddenInline,
+  applyTagDeltaInline,
+  recomputeBenchNetUpvotesInline,
+} from "./cache";
 
 const ENTITY = v.union(v.literal("model"), v.literal("bench"));
 
@@ -102,6 +106,10 @@ async function applyHiddenState(
       if (hidden) await applyTagDeltaInline(ctx, "bench", tags, []);
       else await applyTagDeltaInline(ctx, "bench", [], tags);
     }
+    // Always refresh the cached net-upvote count, even when the
+    // hidden flag didn't flip. Coverage-share math reads this on
+    // every SupraScore + bench-leaderboard recompute.
+    if (b) await recomputeBenchNetUpvotesInline(ctx, id);
   }
 }
 
@@ -118,6 +126,13 @@ export async function seedCreatorEntityVote(
     userId,
     value: 1,
   });
+  // Bench cache reads `cachedNetUpvotes` directly — keep it in sync
+  // from the creator's seed +1 onward, otherwise a brand-new bench
+  // has 0 cached upvotes until someone else votes on it and the
+  // SupraScore math treats it as if no one had endorsed it.
+  if (entityType === "bench") {
+    await recomputeBenchNetUpvotesInline(ctx, entityId as Id<"benches">);
+  }
 }
 
 // Returns score + my vote for an entity.

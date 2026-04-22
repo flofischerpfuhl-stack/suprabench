@@ -3,14 +3,50 @@ import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 
-// ── SupraScore = weightedMean × √(coverageShare) ──
+// ── SupraScore: three √-coverage factors stacked ──
 //
-// A model's SupraScore is its bench-weighted mean (quality × difficulty ×
-// headroom per bench), multiplied by √(its totalWeight / max totalWeight
-// across all models). This coverage-share factor penalises models that
-// have only been tested on a small slice of the available benches, so a
-// single favourable data point can't vault a sparse model past well-
-// tested competitors.
+//   per-bench:  effectiveWeight(b) = Q·D·H · √(u_b/U*) · √(N_b/N*)
+//   per-model:  SupraScore(m)      = weightedMean(m)  · √(W_m/W*)
+//
+// Each √ defends against a distinct, intuitive attack:
+//
+// • U* = max `cachedNetUpvotes` across non-hidden benches. The
+//   upvote-share defends "create a vanity bench, self-rate it
+//   5/5/5/5, ranks #1 on the bench leaderboard". Scale-invariant
+//   (works on a 5-bench platform exactly as well as on a 500-bench
+//   one), so it has to be enforced even at small scale.
+//
+// • N* = max `cachedModelCount` across non-hidden benches. The
+//   model-count-share encodes "how widely is this bench used to
+//   evaluate models?" — a bench tested by 1 model gives almost no
+//   comparative information; one tested by 30 models gives strong
+//   signal. Defends "spawn a community bench and test only your
+//   own model on it" without needing any heuristic tuning. Modality
+//   asymmetry (image benches naturally cover fewer models than text
+//   benches) is intentional: those benches genuinely tell us less
+//   about the broader model population.
+//
+// • W* = max W_m across non-hidden models, where W_m is the model's
+//   accumulated bench-weight (already including BOTH per-bench
+//   √-factors above). The model-side √ kills the original Sonnet
+//   bug where a model tested on a single favourable bench could
+//   outrank well-covered competitors.
+//
+// Properties of the joint formula:
+//   • score stays in [0, 100]
+//   • zero hyperparameters — U*, N*, W* all come straight from the DB
+//   • √-shape mirrors the 1/√N standard-error falloff
+//   • monotonic in the model's own scores and coverage
+//   • top-covered model always has W_m/W* = 1 (no self-penalty)
+//   • top-upvoted bench always has u_b/U* = 1 (no self-penalty)
+//   • most-tested bench always has N_b/N* = 1 (no self-penalty)
+//   • IIA is intentionally violated on every axis: the table is a
+//     relative comparison, so "coverage" only exists in comparison
+//     to what else exists.
+//
+// The catalog of attacks the formula is *meant* to defend against
+// is enumerated in tests/convex/adversarial-robustness.test.ts and
+// is verified end-to-end on every CI run.
 //
 // Properties:
 //   • score stays in [0, 100]
@@ -143,11 +179,109 @@ export async function getBenchWeights(
   };
 }
 
-// Compute {weightedMean, totalWeight, benchCount} for ONE model.
+// Per-bench coverage snapshot used by every consumer of the
+// SupraScore math (rankings, familyRankings, benches.listRanked,
+// benches.getBySlug). Single source of truth — guarantees the bench
+// leaderboard's headline number matches what the bench actually
+// contributes to a model's SupraScore.
+//
+// Two axes per bench:
+//   • net upvotes u_b  (defends self-rated vanity bench attacks)
+//   • distinct model count N_b  (defends single-model vanity bench
+//     attacks AND surfaces whether a bench is "actually used")
+//
+// Both have a max-across-non-hidden-benches denominator (U*, N*),
+// which is why this snapshot is built once and reused — otherwise
+// different consumers could disagree about U* / N* and the leader
+// row could come back inconsistent.
+//
+// Pre-migration rows fall back to safe defaults:
+//   • cachedNetUpvotes  → 1 (the auto-seeded creator vote)
+//   • cachedModelCount  → live-counted from modelScores
+// so a deployment that hasn't backfilled the bench cache yet still
+// gets correct math, just slower.
+export interface BenchCoverageIndex {
+  upvoteMap: Map<string, number>;
+  upvoteMax: number;
+  modelCountMap: Map<string, number>;
+  modelCountMax: number;
+}
+
+export async function getBenchCoverageIndex(
+  ctx: any
+): Promise<BenchCoverageIndex> {
+  const benches = await ctx.db.query("benches").collect();
+  const upvoteMap = new Map<string, number>();
+  const modelCountMap = new Map<string, number>();
+  let upvoteMax = 0;
+  let modelCountMax = 0;
+  for (const b of benches) {
+    const u =
+      typeof (b as any).cachedNetUpvotes === "number"
+        ? (b as any).cachedNetUpvotes
+        : 1;
+    let n: number;
+    if (typeof (b as any).cachedModelCount === "number") {
+      n = (b as any).cachedModelCount;
+    } else {
+      // Live fallback — count distinct models with net-positive
+      // submissions, same definition cache.recomputeBenchAggregates
+      // would write. Only triggers on un-backfilled benches.
+      const scores = await ctx.db
+        .query("modelScores")
+        .withIndex("by_bench", (q: any) => q.eq("benchId", b._id))
+        .collect();
+      const valid = new Set<string>();
+      for (const s of scores) {
+        if (s.upvotes > s.downvotes) valid.add(s.modelId as string);
+      }
+      n = valid.size;
+    }
+    upvoteMap.set(b._id as string, u);
+    modelCountMap.set(b._id as string, n);
+    if (!(b as any).hidden) {
+      if (u > upvoteMax) upvoteMax = u;
+      if (n > modelCountMax) modelCountMax = n;
+    }
+  }
+  return { upvoteMap, upvoteMax, modelCountMap, modelCountMax };
+}
+
+// Pure fn: per-bench √((u_b/U*) · (N_b/N*)) shrinkage applied to
+// the raw Q·D·H weight.
+//
+// Bootstrap behaviour: if a denominator is 0 (no benches have
+// votes / no benches have any scored model) that axis is disabled
+// for everybody — otherwise BenchScore would collapse to 0 across
+// the board on a brand-new deployment. Each axis is bootstrapped
+// independently so a young deployment with votes-but-no-scores
+// still gets the upvote defence.
+export function effectiveBenchWeight(
+  rawWeight: number,
+  upvotes: number,
+  upvoteMax: number,
+  modelCount: number,
+  modelCountMax: number
+): number {
+  const uShare =
+    upvoteMax > 0 ? Math.min(1, Math.max(0, upvotes) / upvoteMax) : 1;
+  const nShare =
+    modelCountMax > 0
+      ? Math.min(1, Math.max(0, modelCount) / modelCountMax)
+      : 1;
+  return rawWeight * Math.sqrt(uShare * nShare);
+}
+
+// Compute {weightedMean, totalWeight, benchCount} for ONE model with
+// the per-bench √(u_b/U*) shrinkage already folded into the weights.
 // Does NOT write anything — caller composes the per-model aggregates
 // from every model, finds max totalWeight, then writes modelRankings
 // in a second pass.
-async function computeAggregate(ctx: any, modelId: Id<"models">) {
+async function computeAggregate(
+  ctx: any,
+  modelId: Id<"models">,
+  cov: BenchCoverageIndex
+) {
   const model = await ctx.db.get(modelId);
   if (!model) return null;
 
@@ -176,8 +310,18 @@ async function computeAggregate(ctx: any, modelId: Id<"models">) {
         ? (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2
         : vals[Math.floor(vals.length / 2)];
     const w = await getBenchWeights(ctx, benchId as Id<"benches">);
-    weightedSum += w.weight * median;
-    weightTotal += w.weight;
+    const u = cov.upvoteMap.get(benchId) ?? 1;
+    const n = cov.modelCountMap.get(benchId) ?? 0;
+    const effective = effectiveBenchWeight(
+      w.weight,
+      u,
+      cov.upvoteMax,
+      n,
+      cov.modelCountMax
+    );
+    if (effective <= 0) continue;
+    weightedSum += effective * median;
+    weightTotal += effective;
     benchCount++;
   }
 
@@ -245,9 +389,14 @@ async function writeRanking(
 async function recomputeAllImpl(ctx: any) {
   const models = await ctx.db.query("models").collect();
 
+  // U*, N* and per-bench coverage maps — single snapshot used by
+  // every per-model aggregate so the math is internally consistent
+  // (no chance of one model seeing a different U* than another).
+  const cov = await getBenchCoverageIndex(ctx);
+
   const aggregates: Awaited<ReturnType<typeof computeAggregate>>[] = [];
   for (const m of models) {
-    const agg = await computeAggregate(ctx, m._id);
+    const agg = await computeAggregate(ctx, m._id, cov);
     if (agg) aggregates.push(agg);
   }
 

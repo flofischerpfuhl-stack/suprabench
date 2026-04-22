@@ -40,17 +40,22 @@ For a model $m$, with valid normalised per-bench medians $\mu_{m,b}$ over its
 evaluated benches $\mathcal{B}_m$:
 
 ```
+BenchScore(b)   = Q(b) · D(b) · H(b) · √(u(b)/U*) · √(N(b)/N*)
+                                  ↑              ↑              ↑
+                          quality·diff·headroom  upvote-share   model-count-share
+                                              U* = max u over non-hidden benches
+                                              N* = max N over non-hidden benches
 weightedMean(m) = Σ_b μ(m,b) · BenchScore(b)  /  W(m)
-W(m)            = Σ_b BenchScore(b)                 ← accumulated coverage
-SupraScore(m)   = weightedMean(m) · √(W(m) / W*)    ← W* = max over non-hidden models
-BenchScore(b)   = Q(b) · D(b) · H(b)          ∈ [0, 100]
+W(m)            = Σ_b BenchScore(b)                   ← accumulated coverage
+SupraScore(m)   = weightedMean(m) · √(W(m) / W*)      ← W* = max over non-hidden models
+                                              ∈ [0, 100]
 ```
 
 - **Bench Score** $\operatorname{BenchScore}(b) \in [0,100]$ — the bench's
   contribution to a model's SupraScore, and the headline number shown for
-  each bench in the UI. It's the multiplicative product of the three factors
-  below; the natural range is $[0,100]$ because difficulty and headroom are
-  both already on $[0,1]$.
+  each bench in the UI. Multiplicative product of the five factors below;
+  the natural range is $[0,100]$ because difficulty, headroom, and both
+  coverage-share factors are all on $[0,1]$.
 - **Quality** $Q(b) \in [0,100]$ — mean of community ratings on relevance,
   contamination resistance, discriminability, reproducibility, then ×20.
 - **Difficulty** $D(b) \in [0,1]$ — median rater difficulty, scaled
@@ -58,12 +63,31 @@ BenchScore(b)   = Q(b) · D(b) · H(b)          ∈ [0, 100]
 - **Headroom** $H(b) \in [0.1,1]$ — automatic saturation penalty: shrinks as
   the top-K models converge on 100 %, with a floor at 0.1 so historic benches
   never disappear.
+- **Upvote-coverage share** $\sqrt{u(b)/U^\star}$ — every bench has a net
+  entityVote count $u(b) = \max(0, \text{ups} - \text{downs})$, and $U^\star$
+  is the maximum across non-hidden benches. The same $\sqrt{\cdot}$ shrinkage
+  used on the model side is applied here so a one-account vanity bench can't
+  appear at #1 on the bench leaderboard with a self-rated $Q\!=\!100$. The
+  most-upvoted bench has share $=1$ (no self-penalty); $U^\star = 0$ disables
+  the factor on a fresh deployment.
+- **Model-count-coverage share** $\sqrt{N(b)/N^\star}$ — $N(b)$ is the number
+  of distinct (non-hidden) models with a net-positive submission on $b$, and
+  $N^\star$ is the maximum across non-hidden benches. Encodes "how widely is
+  this bench used to rank models?" — a bench tested by 1 model gives almost
+  no comparative information; one tested by 30 models gives strong signal.
+  Defends "spawn a community bench and test only your own model on it"
+  cleanly: such a bench has $N(b)=1$ and so contributes $\sqrt{1/N^\star}$
+  of the weight an established bench at the same Q·D·H would. Modality
+  asymmetry (image benches naturally cover fewer models than text benches)
+  is intentional — those benches genuinely tell us less about the broader
+  model population. Most-tested bench has share $=1$; $N^\star = 0$ disables
+  the factor on a fresh deployment.
 - **Per-(model, bench) score** $\mu_{m,b}$ — median of all valid (net-positive
   vote) normalised submissions, robust to a single outlier.
-- **Coverage share** $W(m)/W^\star$ — the fraction of the best-covered model's
-  accumulated Bench-Score weight that $m$ has been evaluated against. The
-  $\sqrt{\cdot}$ shape mirrors the $1/\sqrt{N}$ standard-error falloff of a
-  sample mean — halving coverage shrinks the score by $\sqrt{2}$, not by 2.
+- **Model coverage share** $W(m)/W^\star$ — the fraction of the best-covered
+  model's accumulated Bench-Score weight that $m$ has been evaluated against.
+  The $\sqrt{\cdot}$ shape mirrors the $1/\sqrt{N}$ standard-error falloff of
+  a sample mean — halving coverage shrinks the score by $\sqrt{2}$, not by 2.
   Zero hyperparameters: $W^\star$ comes from the DB, not a prior. The
   best-covered model has share $=1$ and no self-penalty. Hidden models are
   excluded from $W^\star$.
@@ -203,6 +227,29 @@ suprabench/
   coverage-share factor $\sqrt{W(m)/W^\star}$. A model with only 1 bench loses
   roughly $\sqrt{1/N^\star}$ of its score versus the best-covered rival;
   bench-maxing via a single vanity bench is mathematically impossible.
+- **One user can't carry a bench** — every Bench Score is also multiplied by
+  $\sqrt{u(b)/U^\star}$ where $u(b)$ is the bench's net entityVote count and
+  $U^\star$ is the leader's. A self-rated 100/100 vanity bench from a single
+  account is worth $\sqrt{1/U^\star}$ of an established bench at the same
+  Q·D·H — you'd need $U^\star$ separate accounts upvoting your bench just to
+  tie. Same defence applies to the bench leaderboard ordering and to the
+  bench's contribution to any model's SupraScore, so spawning a custom
+  bench to pump one model is also blocked.
+- **Single-model vanity benches don't count** — every Bench Score is
+  *additionally* multiplied by $\sqrt{N(b)/N^\star}$ where $N(b)$ is the
+  number of distinct models scored on the bench. A "community bench" used
+  to test only the attacker's own model has $N(b)=1$ and thus contributes
+  $\sqrt{1/N^\star}$ of the weight a well-used bench would. Combined with
+  the upvote-share, a 1-rater + 1-model vanity bench is worth
+  $\sqrt{1/(U^\star \!\cdot\! N^\star)}$ of an established peer — for an
+  ecosystem with $U^\star = N^\star = 10$, that's $\approx 10\,\%$ of an
+  established bench's weight.
+- **Verifiable robustness** — every defensive claim above is encoded
+  as an executable test in
+  [`tests/convex/adversarial-robustness.test.ts`](tests/convex/adversarial-robustness.test.ts);
+  see [Adversarial robustness harness](#adversarial-robustness-harness)
+  below for the full invariant + attack catalog and what each one
+  defends against.
 - **Difficulty uses median** — single inflated rater can't fake difficulty
 - **Saturation auto-detected** — pumping a saturated bench gives diminishing
   returns by construction
@@ -214,6 +261,107 @@ suprabench/
 - **One quality rating per user per benchmark** (upsert)
 - **Score range validation** against the bench's declared scale
 - **Source URL required** for every submission
+
+## Adversarial robustness harness
+
+Every claim in [Anti-Gaming Rules](#anti-gaming-rules) is encoded as an
+executable test in
+[`tests/convex/adversarial-robustness.test.ts`](tests/convex/adversarial-robustness.test.ts).
+The whole suite runs in **~1.5 s on CI** (66 tests total, 14 of them
+adversarial). When the math regresses, a named test fails with a
+descriptive message — instead of someone discovering the regression
+on the production leaderboard.
+
+```bash
+npm test -- adversarial-robustness
+```
+
+The harness has three layers, each adding a different kind of
+guarantee:
+
+### Layer 1 — Invariants
+
+Properties that **must hold for every valid ecosystem, ever**. They
+get checked on a hand-crafted baseline, after every attack scenario,
+and against every fuzz seed. If a new feature ever breaks one, the
+exact invariant id + the data that violates it is reported.
+
+| ID  | Invariant                                                                        |
+| --- | -------------------------------------------------------------------------------- |
+| I1  | Every SupraScore is a finite number in $[0, 100]$                                |
+| I2  | Every BenchScore (`effectiveWeight`) is finite in $[0, 100]$                     |
+| I3  | The bench at the maximum on **both** axes ($u_b\!=\!U^\star$ and $N_b\!=\!N^\star$) has `effectiveWeight == rawWeight` (no self-penalty) |
+| I4  | Rankings table is sorted by `supraScore` (no row outranks the leader)            |
+| I5  | Hidden benches do not appear in the public `listRanked` payload                  |
+| I6  | Every model with at least one bench has `supraScore > 0`                         |
+| I7  | Every BenchScore equals `rawWeight × √((u/U*)·(N/N*))` exactly (formula sanity)  |
+
+### Layer 2 — Attack catalog
+
+Each entry is a **concrete adversarial scenario** with a setup
+function (seeds the dataset) and an `expect` predicate (asserts the
+attacker's outcome). Every attack scenario also has to satisfy every
+Layer-1 invariant — an attack that succeeds *and* breaks an invariant
+counts as two regressions, not one.
+
+| ID          | Scenario                                                                           | Status                |
+| ----------- | ---------------------------------------------------------------------------------- | --------------------- |
+| A1          | Self-rated vanity bench tries to claim **#1 on the bench leaderboard** (1 upvote, single account, $Q\!=\!100$)         | Defended by upvote √-share |
+| A2          | Vanity bench used to vault attacker's model into top SupraScore (single self-scored bench)                              | Defended by both √-shares |
+| A3          | **3-bench vanity stack** — 3 self-rated benches, all testing only the attacker's model, vs frontier-class legit ecosystem | Defended by combined math |
+| A3-extreme  | **8-bench industrial vanity farm** — same shape, scaled up                          | **DOCUMENTED LIMITATION** — pure math overwhelmed; blocked operationally by rate-limit, community downvotes, anti-resurrection, moderation |
+| A4          | Sockpuppet upvote attack — 3 fake accounts upvoting a vanity bench against an ecosystem with 8 legit voters per bench    | Defended (sockpuppet count $\ll U^\star$) |
+| A5          | Single-bench peak attack — model with one $\mu\!=\!100$ vs a model with three $\mu\!=\!80$                              | Defended by model-side $\sqrt{W_m/W^\star}$ |
+| A6          | Hidden vanity bench tries to leak its high `cachedNetUpvotes` into $U^\star$ / $N^\star$                                  | Defended (hidden benches excluded from maxima) |
+
+`A3-extreme` deserves a closer look: the test **asserts the
+limitation exists** (i.e. the attacker *does* outscore the top legit
+model). If the math is ever strengthened enough to defeat 8-bench
+vanity farms, this test fails with a message asking the next engineer
+to either delete the case or raise its bench-count threshold and
+re-document the new bound. We chose not to over-engineer the math
+here because the same attack would require:
+
+1. Creating 8 benches under one account (highly visible to moderation).
+2. Submitting 8+ self-scores in 24 h — under the 30/day rate limit
+   but still highly visible.
+3. Hoping no one notices and downvotes them. As soon as $\geq 5$
+   downvotes land, the bench is hidden and excluded from $U^\star$,
+   $N^\star$, $W^\star$, and the leaderboard — the attack collapses.
+4. Anti-resurrection then prevents re-creating the same benches under
+   the same name.
+
+The cost-benefit clearly favours legitimate contribution; the math
+just doesn't have to do *all* the work.
+
+### Layer 3 — Seeded fuzz
+
+A deterministic [`mulberry32`](https://en.wikipedia.org/wiki/Permuted_congruential_generator) PRNG generates
+random ecosystems (2–4 owners, 3–10 voters, 2–6 benches, 3–8 models,
+random ratings + upvote subsets + score subsets), runs the full
+recompute pipeline, and verifies **every Layer-1 invariant** holds.
+Six pinned seeds (`1, 7, 42, 100, 314, 9001`) are checked on every
+CI run; failures report the exact seed so the failing ecosystem can
+be reproduced locally with one line of code.
+
+Adding a new pinned seed is a one-line change. If a future fuzz seed
+ever exposes a regression, **never delete the seed** — leave it in
+the suite as a permanent guard against that class of bug.
+
+### Adding a new attack or invariant
+
+The harness is structured to make defensive claims **cheap to add and
+hard to lose**. To document a new attack you suspect:
+
+1. Add an entry to `ATTACKS` in `adversarial-robustness.test.ts` with
+   a `setup` that seeds the scenario and an `expect` predicate that
+   formalises "the attacker doesn't win".
+2. Run the suite. Either the math defends it (great, you have a new
+   regression test) or the math doesn't (now you know — either
+   strengthen the math or document the limitation like `A3-extreme`).
+
+Same for invariants: a new entry in `INVARIANTS` is automatically
+checked on the baseline, every attack scenario, and every fuzz seed.
 
 ## PWA
 

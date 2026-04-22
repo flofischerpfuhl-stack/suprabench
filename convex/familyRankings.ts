@@ -42,7 +42,12 @@
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { getBenchWeights } from "./rankings";
+import {
+  getBenchWeights,
+  getBenchCoverageIndex,
+  effectiveBenchWeight,
+  type BenchCoverageIndex,
+} from "./rankings";
 
 // ── Helpers ──
 
@@ -69,7 +74,8 @@ async function aggregateFamilyProvider(
   ctx: any,
   members: any[],
   familyTag: string,
-  provider: string
+  provider: string,
+  cov: BenchCoverageIndex
 ): Promise<{
   familyTag: string;
   provider: string;
@@ -113,9 +119,18 @@ async function aggregateFamilyProvider(
   for (const [benchId, memberMedians] of Object.entries(perBench)) {
     const familyMedian = median(memberMedians);
     const w = await getBenchWeights(ctx, benchId as Id<"benches">);
-    if (w.weight <= 0) continue;
-    weightedSum += w.weight * familyMedian;
-    weightTotal += w.weight;
+    const u = cov.upvoteMap.get(benchId) ?? 1;
+    const n = cov.modelCountMap.get(benchId) ?? 0;
+    const effective = effectiveBenchWeight(
+      w.weight,
+      u,
+      cov.upvoteMax,
+      n,
+      cov.modelCountMax
+    );
+    if (effective <= 0) continue;
+    weightedSum += effective * familyMedian;
+    weightTotal += effective;
     benchCount++;
   }
 
@@ -179,6 +194,11 @@ async function writeFamilyRow(
 }
 
 async function recomputeAllImpl(ctx: any) {
+  // Same coverage snapshot as the per-model side — no chance of
+  // family aggregates and individual aggregates seeing different
+  // U* / N*.
+  const cov = await getBenchCoverageIndex(ctx);
+
   // 1. Enumerate every live (familyTag, provider) pair from models.
   const allModels = await ctx.db.query("models").collect();
   const liveFamilies = new Set<string>();
@@ -216,7 +236,13 @@ async function recomputeAllImpl(ctx: any) {
   }
   for (const { familyTag, provider } of pairs.values()) {
     const members = membersByFamily.get(familyTag) ?? [];
-    const agg = await aggregateFamilyProvider(ctx, members, familyTag, provider);
+    const agg = await aggregateFamilyProvider(
+      ctx,
+      members,
+      familyTag,
+      provider,
+      cov
+    );
     if (agg) aggregates.push(agg);
   }
 

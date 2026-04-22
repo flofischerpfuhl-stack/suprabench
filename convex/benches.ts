@@ -7,7 +7,11 @@ import {
   assertNotResurrectingOwnHidden,
 } from "./entityVotes";
 import { isOfficialUrl } from "./urls";
-import { getBenchWeights } from "./rankings";
+import {
+  getBenchWeights,
+  getBenchCoverageIndex,
+  effectiveBenchWeight,
+} from "./rankings";
 
 function generateSlug(name: string): string {
   return name
@@ -20,6 +24,13 @@ export const listRanked = query({
   args: {},
   handler: async (ctx) => {
     const benches = await ctx.db.query("benches").collect();
+
+    // Two coverage axes (upvotes + distinct model count) folded
+    // into the displayed Bench Score, same denominators (U*, N*)
+    // and same √-shape as the per-model SupraScore aggregate. So
+    // the headline number on the bench leaderboard is exactly what
+    // the bench actually contributes to a model's SupraScore.
+    const cov = await getBenchCoverageIndex(ctx);
 
     const results = [];
     for (const bench of benches) {
@@ -89,15 +100,32 @@ export const listRanked = query({
         qualityScore = Math.round(qualityScore * 10) / 10;
       }
 
-      // Bench Score = quality × difficulty × headroom (the bench's actual
-      // weight in the SupraScore). Range is [0, 100] because difficulty and
-      // headroom are both already normalised to [0, 1] in cache.ts.
-      // Fallback to qualityScore for benches that haven't been backfilled
-      // yet so the list never shows a misleading 0.
-      const effectiveWeight =
+      // Raw weight = quality × difficulty × headroom. This is the
+      // bench's intrinsic Q·D·H product without any community-trust
+      // shrinkage. Fallback to qualityScore for benches that haven't
+      // been backfilled yet so the list never shows a misleading 0.
+      const rawWeight =
         typeof bench.cachedEffectiveWeight === "number"
           ? bench.cachedEffectiveWeight
           : qualityScore;
+
+      // Coverage-adjusted weight: apply √((u_b/U*)·(N_b/N*)) so a
+      // freshly-created bench can't claim #1 with a self-rated 100,
+      // and so a "tested by only my own model" community bench
+      // can't either.
+      const u = cov.upvoteMap.get(bench._id as string) ?? 1;
+      const nForCov =
+        cov.modelCountMap.get(bench._id as string) ?? modelCount;
+      const effectiveWeight =
+        Math.round(
+          effectiveBenchWeight(
+            rawWeight,
+            u,
+            cov.upvoteMax,
+            nForCov,
+            cov.modelCountMax
+          ) * 10
+        ) / 10;
 
       results.push({
         _id: bench._id,
@@ -111,6 +139,14 @@ export const listRanked = query({
         scaleMax: bench.scaleMax,
         qualityScore,
         effectiveWeight,
+        // Pre-shrinkage Q·D·H so the UI can show "intrinsic 60 →
+        // effective 19 because only 1 community endorsement and 2
+        // models tested vs the leader's 80 / 30".
+        rawWeight: Math.round(rawWeight * 10) / 10,
+        netUpvotes: u,
+        maxNetUpvotes: cov.upvoteMax,
+        modelCountForCoverage: nForCov,
+        maxModelCountForCoverage: cov.modelCountMax,
         dimensions,
         modelCount,
         raterCount,
@@ -203,6 +239,25 @@ export const getBySlug = query({
       effectiveWeight = Math.round(w.weight * 10) / 10;
     }
 
+    // Apply the per-bench √((u/U*)·(N/N*)) coverage shrinkage on
+    // top of the raw Q·D·H so the detail page shows the same
+    // "effective in SupraScore" number as the leaderboard.
+    const cov = await getBenchCoverageIndex(ctx);
+    const netUpvotes = cov.upvoteMap.get(bench._id as string) ?? 1;
+    const nForCov =
+      cov.modelCountMap.get(bench._id as string) ?? modelCount;
+    const rawWeight = effectiveWeight;
+    effectiveWeight =
+      Math.round(
+        effectiveBenchWeight(
+          effectiveWeight,
+          netUpvotes,
+          cov.upvoteMax,
+          nForCov,
+          cov.modelCountMax
+        ) * 10
+      ) / 10;
+
     // All submissions for this bench
     const allScores = await ctx.db
       .query("modelScores")
@@ -292,6 +347,11 @@ export const getBySlug = query({
       headroom,
       difficultyMultiplier,
       effectiveWeight,
+      rawWeight: Math.round(rawWeight * 10) / 10,
+      netUpvotes,
+      maxNetUpvotes: cov.upvoteMax,
+      modelCountForCoverage: nForCov,
+      maxModelCountForCoverage: cov.modelCountMax,
       saturated: modelCount >= 3 && frontierMean >= 90,
       saturationDampened: modelCount < 3,
     };

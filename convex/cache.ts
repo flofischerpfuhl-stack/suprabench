@@ -171,6 +171,31 @@ export const recomputeBenchAggregates = internalMutation({
   },
 });
 
+// Recompute just the net-upvote count for a bench. Cheap; called from
+// entityVotes.cast on every vote change. Floored at 0 because a bench
+// with negative net is either already hidden by shouldHide() or about
+// to be — either way it shouldn't push down the SupraScore math by
+// going negative.
+export async function recomputeBenchNetUpvotesInline(
+  ctx: any,
+  benchId: Id<"benches">
+): Promise<void> {
+  const votes = await ctx.db
+    .query("entityVotes")
+    .withIndex("by_entity", (q: any) =>
+      q.eq("entityType", "bench").eq("entityId", benchId as string)
+    )
+    .collect();
+  let ups = 0;
+  let downs = 0;
+  for (const v of votes) {
+    if (v.value === 1) ups++;
+    else downs++;
+  }
+  const net = Math.max(0, ups - downs);
+  await ctx.db.patch(benchId, { cachedNetUpvotes: net });
+}
+
 // Bulk recompute for all benches that have at least one score from
 // the given model. Used when a model toggles hidden state — its
 // scores' contribution to the per-bench frontier mean changes.

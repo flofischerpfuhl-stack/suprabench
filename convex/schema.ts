@@ -52,6 +52,14 @@ export default defineSchema({
     cachedEffectiveWeight: v.optional(v.number()),    // quality × difficulty × headroom
     cachedTopK: v.optional(v.number()),
     cachedAggregatesAt: v.optional(v.number()),       // last refresh timestamp
+    // Net entityVotes (ups - downs, floored at 0). Used as the
+    // coverage metric for the bench-side √(u_b / U*) shrinkage that
+    // keeps a freshly-created vanity bench from showing up at the
+    // top of the bench leaderboard. Updated by entityVotes.cast →
+    // applyHiddenState. Optional for migration: queries treat
+    // undefined as 1 (the auto-seeded creator vote, the safe
+    // assumption that lets pre-migration benches still show up).
+    cachedNetUpvotes: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
     .index("by_added_by", ["addedBy"])

@@ -487,7 +487,7 @@
                 <th style="width:50px">#</th>
                 <th class="sort-btn" @click="toggleBenchSort('name')">Benchmark</th>
                 <th>Type</th>
-                <th class="sort-btn" @click="toggleBenchSort('score')" title="Bench Score = quality × difficulty × headroom. The bench's actual contribution to a model's SupraScore. Range 0–100.">Bench Score</th>
+                <th class="sort-btn" @click="toggleBenchSort('score')" title="Bench Score = quality × difficulty × headroom × √(net-upvotes / max net-upvotes) × √(distinct models scored / max distinct models). The bench's actual contribution to a model's SupraScore. The two √ shares block 'self-rated vanity bench appears at #1' (upvote share) and 'community bench tested only by my own model' (model-count share) attacks. Range 0–100.">Bench Score</th>
                 <th>Dimensions</th>
                 <th>Tags</th>
                 <th>Models</th>
@@ -628,7 +628,7 @@
                     <span class="quality-rater-count" x-text="currentBench.raterCount + ' ratings'" style="margin-left:auto"></span>
                 </div>
                 <p style="color:var(--text3);font-size:.78rem;margin:0 0 1.4rem;line-height:1.5">
-                    Bench Score = Quality × Difficulty × Headroom — the bench's actual contribution to a model's SupraScore. Range 0–100.
+                    Bench Score = Quality × Difficulty × Headroom × √(net-upvotes / max net-upvotes) × √(distinct models scored / max distinct models) — the bench's actual contribution to a model's SupraScore. Upvote √-share blocks self-rated vanity benches from claiming #1; model-count √-share blocks "community bench tested only by my own model" attacks. Range 0–100.
                 </p>
 
                 <!-- Dimension Rows -->
@@ -736,7 +736,7 @@
                 <div class="weight-breakdown" x-show="currentBench.raterCount > 0">
                     <div class="weight-breakdown__header">
                         Bench Score breakdown
-                        <span class="dim-help" tabindex="0" data-tip="Bench Score = quality × difficulty × headroom. It's the bench's contribution to a model's SupraScore. Headroom = saturation penalty: shrinks as the mean of the top-K models on this bench approaches 100. Below 3 evaluated models the penalty is dampened to 1.0 (not enough signal yet).">?</span>
+                        <span class="dim-help" tabindex="0" data-tip="Bench Score = quality × difficulty × headroom × √(net-upvotes / max net-upvotes) × √(distinct models scored / max distinct models). It's the bench's contribution to a model's SupraScore. Headroom = saturation penalty: shrinks as the mean of the top-K models on this bench approaches 100. Below 3 evaluated models headroom is dampened to 1.0 (not enough signal yet). The two √-shares prevent (a) self-rated vanity benches from claiming #1 and (b) 'community bench tested by only my own model' attacks.">?</span>
                     </div>
                     <div class="weight-breakdown__row">
                         <span>Quality</span>
@@ -759,6 +759,22 @@
                                       x-text="'(N=' + currentBench.modelCount + ' &lt; 3, dampened to 1.0)'"></span>
                             </template>
                             <span class="badge badge-disputed" x-show="currentBench.saturated" style="margin-left:.4rem">Saturated</span>
+                        </span>
+                    </div>
+                    <div class="weight-breakdown__row" x-show="currentBench.maxNetUpvotes > 0">
+                        <span>× √(upvote share)</span>
+                        <span>
+                            <span x-text="Math.sqrt(Math.min(1, currentBench.netUpvotes / Math.max(1, currentBench.maxNetUpvotes))).toFixed(2)"></span>
+                            <span style="color:var(--text3);font-size:.75rem"
+                                  x-text="'(u=' + currentBench.netUpvotes + ', U*=' + currentBench.maxNetUpvotes + ')'"></span>
+                        </span>
+                    </div>
+                    <div class="weight-breakdown__row" x-show="currentBench.maxModelCountForCoverage > 0">
+                        <span>× √(model-count share)</span>
+                        <span>
+                            <span x-text="Math.sqrt(Math.min(1, currentBench.modelCountForCoverage / Math.max(1, currentBench.maxModelCountForCoverage))).toFixed(2)"></span>
+                            <span style="color:var(--text3);font-size:.75rem"
+                                  x-text="'(N=' + currentBench.modelCountForCoverage + ', N*=' + currentBench.maxModelCountForCoverage + ')'"></span>
                         </span>
                     </div>
                     <div class="weight-breakdown__row weight-breakdown__total">
@@ -1706,12 +1722,14 @@
             <p>Median, not mean — one outlier submission cannot shift the result.</p>
 
             <h4 class="qa-subheader">4. Compute the Bench Score</h4>
-            <p>Three independent factors. <strong>Quality</strong> (trust), <strong>difficulty</strong> (intelligence demand), <strong>headroom</strong> (saturation):</p>
-            <p class="math-block">$$\operatorname{BenchScore}(b) \;=\; \underbrace{Q(b)}_{\text{quality}} \;\cdot\; \underbrace{D(b)}_{\text{difficulty}} \;\cdot\; \underbrace{H(b)}_{\text{headroom}}$$</p>
-            <p class="helper-text">Quality is on $[0,100]$; difficulty and headroom are both on $[0,1]$, so the Bench Score is naturally on $[0,100]$ — same scale as the per-model scores. It's also the headline number shown on every bench page and in the benchmarks list.</p>
+            <p>Five independent factors. <strong>Quality</strong> (trust), <strong>difficulty</strong> (intelligence demand), <strong>headroom</strong> (saturation), and two community <strong>coverage-share</strong> factors — one on the bench's net upvotes, one on how many distinct models have actually been scored on it:</p>
+            <p class="math-block">$$\operatorname{BenchScore}(b) \;=\; \underbrace{Q(b)}_{\text{quality}} \;\cdot\; \underbrace{D(b)}_{\text{difficulty}} \;\cdot\; \underbrace{H(b)}_{\text{headroom}} \;\cdot\; \underbrace{\sqrt{u_b / U^\star}}_{\text{upvote share}} \;\cdot\; \underbrace{\sqrt{N_b / N^\star}}_{\text{model-count share}}$$</p>
+            <p class="helper-text">$u_b$ is the bench's net entityVotes (ups − downs, floored at 0) and $U^\star$ is the maximum across every non-hidden bench. Without this factor, anyone could mint a brand-new bench, self-rate it 5/5/5/5, and immediately appear at #1 on the bench leaderboard. With it, a 1-upvote vanity bench at $u_b = 1$ against an established $U^\star = 100$ shrinks to $\sqrt{1/100} = 10\,\%$. The most-upvoted bench always sits at share = 1 (no self-penalty); $U^\star = 0$ disables the factor on a fresh deployment.</p>
+            <p class="helper-text">$N_b$ is the number of distinct (non-hidden) models with a net-positive submission on $b$, and $N^\star$ is the maximum across non-hidden benches. This second share encodes "how widely is this bench actually used to rank models?" — a bench tested by 1 model gives almost no comparative information; one tested by 30 models gives strong signal. Defends "spawn a community bench and test only your own model on it": $N_b = 1$ means $\sqrt{1/N^\star}$ shrinkage on top of the upvote-share. Modality asymmetry (image benches naturally cover fewer models than text benches) is intentional — they genuinely tell us less about the broader model population.</p>
+            <p class="helper-text">Quality is on $[0,100]$; difficulty, headroom, and both coverage-share factors are all on $[0,1]$, so the Bench Score stays naturally on $[0,100]$ — same scale as the per-model scores. It's also the headline number shown on every bench page and in the benchmarks list.</p>
 
             <h4 class="qa-subheader">5. The SupraScore</h4>
-            <p>Two steps. First, the model's <em>weighted mean</em> — a Bench-Score-weighted average of its per-bench medians, over all benches $\mathcal{B}_m$ the model has been evaluated on:</p>
+            <p>Two steps, both already using the five-factor Bench Score from step 4 (so the two bench-side coverage defences flow straight through). First, the model's <em>weighted mean</em> — a Bench-Score-weighted average of its per-bench medians, over all benches $\mathcal{B}_m$ the model has been evaluated on:</p>
             <p class="math-block">$$\bar{\mu}_m \;=\; \frac{\displaystyle \sum_{b \in \mathcal{B}_m} \mu_{m,b} \cdot \operatorname{BenchScore}(b)}{\displaystyle \sum_{b \in \mathcal{B}_m} \operatorname{BenchScore}(b)}$$</p>
             <p class="helper-text">Benches with $\operatorname{BenchScore}(b)=0$ (e.g. zero difficulty, zero quality) are excluded from both numerator and denominator.</p>
             <p>Second, a <em>coverage-share</em> factor that protects the ranking from models tested on only a tiny slice of the benchmarks. Let $W_m = \sum_{b \in \mathcal{B}_m} \operatorname{BenchScore}(b)$ be the model's accumulated Bench-Score weight, and $W^\star = \max_{m'} W_{m'}$ the maximum over every non-hidden model. The final score shrinks $\bar{\mu}_m$ by the square root of the model's share of that maximum:</p>
@@ -1848,13 +1866,15 @@
             <ul class="about-list">
                 <li><strong>One submission can't carry a score</strong> — per-(model, bench) median needs multiple submissions to move; a single fake doesn't shift it.</li>
                 <li><strong>One bench can't carry a model</strong> — the SupraScore is averaged across <em>all</em> benches a model has scores on, weighted by trust × difficulty × headroom, and then further shrunk by a coverage-share factor $\sqrt{W_m/W^\star}$. A model tested on only one bench loses $\approx\!\sqrt{1/N^\star}$ of its score versus the best-covered rival, so bench-maxing your way to the top with a single vanity bench is literally impossible.</li>
+                <li><strong>One user can't carry a bench</strong> — the same $\sqrt{\cdot}$ shape is also applied to the bench side: every bench's contribution to its own headline score and to any model's SupraScore is shrunk by $\sqrt{u_b/U^\star}$ where $u_b$ is its net upvote count and $U^\star$ is the leader's. A self-rated 100/100 vanity bench from a single account is worth $\sqrt{1/U^\star}$ of an established bench at the same Q·D·H — you'd need $U^\star$ separate accounts upvoting it to even tie. Same defence works on the bench leaderboard <em>and</em> in the SupraScore aggregate, so you can't spawn a bench just to pump one model.</li>
+                <li><strong>Single-model vanity benches don't count</strong> — every Bench Score is <em>additionally</em> shrunk by $\sqrt{N_b/N^\star}$, where $N_b$ is the number of distinct models that have actually been scored on the bench and $N^\star$ is the maximum across non-hidden benches. A "community bench" used to test only the attacker's own model has $N_b = 1$ and so contributes $\sqrt{1/N^\star}$ of the weight a well-used bench would. Combined with the upvote-share, a 1-rater + 1-model vanity bench is worth $\sqrt{1/(U^\star \!\cdot\! N^\star)}$ of an established peer.</li>
                 <li><strong>Difficulty uses median, not mean</strong> — a single 5-star rater on a trivial bench can't fake difficulty.</li>
                 <li><strong>Saturation auto-detected</strong> — pumping a saturated bench gives diminishing returns by construction.</li>
                 <li><strong>Engagement-aware hide threshold</strong> — small voting cliques can't take down established entries.</li>
                 <li><strong>Anti-resurrection</strong> — re-submitting your own removed entries under the same name is blocked.</li>
                 <li><strong>Rate limiting</strong> — submissions are capped at 30 individual scores per 24 h per user.</li>
             </ul>
-            <p>None of these is bulletproof on its own. Together they make systemic gaming expensive enough that legitimate contribution is the cheaper path.</p>
+            <p>None of these is bulletproof on its own. Together they make systemic gaming expensive enough that legitimate contribution is the cheaper path. <strong>Every defensive claim above is encoded as an executable invariant or attack scenario in <code>tests/convex/adversarial-robustness.test.ts</code></strong> — the harness has three layers (invariants, an attack catalog, and a deterministic-PRNG fuzzer) and runs on every CI build, so a regression in the math fails a test instead of going unnoticed. One scenario (`A3-extreme`, an industrial-scale 8+ vanity bench farm) explicitly documents an attack that the pure math does <em>not</em> defend against — those are blocked operationally by the rate-limit, downvote, anti-resurrection and moderation rules above.</p>
         </div>
     </div>
 
