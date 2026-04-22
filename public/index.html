@@ -2199,9 +2199,48 @@
                             </div>
                         </template>
 
-                        <!-- Key list -->
+                        <!-- Key list + self-serve mint form. The admin
+                             provisioned the tier (with a maxKeys cap);
+                             the user mints individual keys themselves
+                             so they get to see the plaintext at the
+                             one moment we're allowed to show it. -->
                         <div class="api-dashboard__section">
                             <h3 class="api-dashboard__h3">API keys</h3>
+
+                            <!-- Plaintext shown ONCE after a successful
+                                 mint. Lives inline (no modal overlay) so
+                                 the user can click straight from copy →
+                                 paste-into-app without losing context. -->
+                            <template x-if="newKeyJustCreated">
+                                <div class="admin-newkey">
+                                    <div class="admin-newkey__title">Plaintext key &mdash; shown once. Copy it now.</div>
+                                    <code class="admin-newkey__value" x-text="newKeyJustCreated"></code>
+                                    <div class="admin-newkey__actions">
+                                        <button class="btn btn-sm btn-primary" @click="copyNewKey()">Copy</button>
+                                        <button class="btn btn-sm btn-outline" @click="newKeyJustCreated=null">Dismiss</button>
+                                    </div>
+                                    <small>The backend stores only the SHA-256 hash. If you lose this value, revoke the key and mint a new one.</small>
+                                </div>
+                            </template>
+
+                            <form class="admin-mint-form"
+                                  @submit.prevent="mintMyKey()"
+                                  x-show="user.grantedLimits && myApiKeys.filter(k => !k.revoked).length < user.grantedLimits.maxKeys">
+                                <label>
+                                    <span>Key name (so you remember which app uses it)</span>
+                                    <input type="text" x-model="myKeyName" placeholder="e.g. production, mobile-app, local-dev">
+                                </label>
+                                <button type="submit" class="btn btn-primary btn-sm"
+                                        :disabled="apiBusy || !myKeyName.trim()">
+                                    Mint new key
+                                </button>
+                            </form>
+                            <div class="empty-state"
+                                 x-show="user.grantedLimits && myApiKeys.filter(k => !k.revoked).length >= user.grantedLimits.maxKeys"
+                                 style="padding:.6rem .8rem;font-size:.8rem">
+                                You're at the max of <span x-text="user.grantedLimits.maxKeys"></span> active keys for your tier &mdash; revoke an existing key to mint a new one.
+                            </div>
+
                             <div class="api-key-list" x-show="myApiKeys.length > 0">
                                 <template x-for="k in myApiKeys" :key="k._id">
                                     <div class="api-key-row">
@@ -2226,11 +2265,9 @@
                                     </div>
                                 </template>
                             </div>
-                            <div class="api-empty" x-show="myApiKeys.length === 0">
-                                No keys minted yet. Email
-                                <a href="mailto:suprabench.editor887@passmail.com?subject=Partner%20API%20key%20mint%20request"
-                                   style="color:var(--accent)">suprabench.editor887@passmail.com</a>
-                                and we'll provision one. Partner / enterprise+ keys are admin-minted &mdash; you can't self-serve them, by design.
+                            <div class="api-empty" x-show="myApiKeys.length === 0 && !newKeyJustCreated">
+                                No keys yet &mdash; mint one above to start calling
+                                <code>https://suprabench.com/v1/</code>.
                             </div>
                         </div>
 
@@ -2264,6 +2301,27 @@
                         </p>
                     </div>
                 </template>
+
+                <!-- For users WITHOUT an elevated tier, the banner +
+                     plans grid are the primary content. For users who
+                     already have a granted tier, both get tucked behind
+                     a "View other plans" toggle so the dashboard up top
+                     stays the focus. -->
+                <template x-if="user && user.grantedTier">
+                    <button class="weight-breakdown__toggle plans-toggle"
+                            type="button"
+                            :aria-expanded="plansExpanded"
+                            @click="plansExpanded = !plansExpanded">
+                        <span class="expand-icon" :class="{'open': plansExpanded}">▼</span>
+                        Browse other plans
+                        <span style="color:var(--text3);font-weight:400;font-size:.8rem">
+                            (Starter / Pro / Enterprise are demand-gated waitlist;
+                            Enterprise+ is contract-only)
+                        </span>
+                    </button>
+                </template>
+
+                <div x-show="!(user && user.grantedTier) || plansExpanded" x-transition>
 
                 <div class="api-banner">
                     <span class="api-banner__icon" aria-hidden="true">⚡</span>
@@ -2421,6 +2479,8 @@
                     See <a href="/legal/terms#api">Terms § API</a> for cancellation,
                     refund and uptime details.
                 </p>
+
+                </div><!-- /collapsible plans wrapper -->
 
                 <!-- ════════════════════════════════════════════════
                      SUBSCRIPTION PANEL — gated by apiLive JS flag.

@@ -241,6 +241,63 @@ export const createKey = mutation({
   },
 });
 
+/** Self-mint for partner / enterprise+ users. The admin has
+ *  already provisioned them via `admin:grantTier` (which writes the
+ *  per-user quota / rpm / maxKeys / allowExport into
+ *  `userRoles.grantedLimits`); from there it would be silly to
+ *  require a second admin step to mint each key — the user already
+ *  has the privilege, the limits are baked in. Two checks gate this:
+ *
+ *    1. Caller must hold a `grantedTier` (partner / enterprise+).
+ *       Stripe-backed tiers (starter / pro / enterprise) keep going
+ *       through `createKey`, which enforces an active subscription.
+ *    2. Caller's active key count must be below `grantedLimits.maxKeys`.
+ *
+ *  Returns the plaintext ONCE — same contract as `createKey` /
+ *  `admin:mintKeyForUser`. We never persist or re-derive the
+ *  plaintext; the user must save it on first display. */
+export const createMyKey = mutation({
+  args: { name: v.string() },
+  handler: async (ctx, { name }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("not signed in");
+    if (!name.trim()) throw new Error("name is required");
+
+    const role = await ctx.db
+      .query("userRoles")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    if (!role?.grantedTier || !role.grantedLimits)
+      throw new Error(
+        "no granted tier — Partner / Enterprise+ access must be granted by an admin first"
+      );
+
+    const existing = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_owner", (q) => q.eq("ownerUserId", userId))
+      .collect();
+    const activeCount = existing.filter((k) => !k.revokedAt).length;
+    if (activeCount >= role.grantedLimits.maxKeys) {
+      throw new Error(
+        `Already at the max of ${role.grantedLimits.maxKeys} active key(s) for your tier — revoke an existing key first.`
+      );
+    }
+
+    const { plaintext, hash, prefix } = await generateApiKey();
+    await ctx.db.insert("apiKeys", {
+      hash,
+      prefix,
+      name: name.trim(),
+      ownerUserId: userId,
+      tier: role.grantedTier,
+      monthlyQuota: role.grantedLimits.monthlyQuota,
+      rpmLimit: role.grantedLimits.rpmLimit,
+      createdAt: Date.now(),
+    });
+    return { plaintext, prefix };
+  },
+});
+
 // Soft-revoke. We never hard-delete so audit trail survives.
 export const revokeKey = mutation({
   args: { apiKeyId: v.id("apiKeys") },

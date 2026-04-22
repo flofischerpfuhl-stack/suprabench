@@ -372,6 +372,13 @@ function supraBench() {
     // users without a sub (they see "0 / 3" which reads fine).
     apiKeyLimit: 3,
     newKeyJustCreated: null,
+    // Self-serve mint form (partner / enterprise+ users only).
+    // Submitted by `mintMyKey()` to api:createMyKey.
+    myKeyName: "",
+    // Toggle for the "Browse other plans" section that appears when
+    // the user already has a granted tier — keeps the dashboard
+    // up top as the focus, plans grid one click away.
+    plansExpanded: false,
 
     // About-page Q&A: a Set of question-IDs that are currently expanded.
     // Default: first question open so the page isn't a wall of buttons.
@@ -808,10 +815,10 @@ function supraBench() {
         }
       } else if (this.user?.grantedTier) {
         // Partner / enterprise+ users get a real API dashboard even
-        // pre-launch: their tier is LIVE (their keys are minted by
-        // an admin via the admin board / CLI, and the /v1/ HTTP
-        // routes accept those keys today). Pull keys + usage; skip
-        // Stripe (no subscription rows for granted tiers).
+        // pre-launch: their tier is LIVE (the /v1/ HTTP routes accept
+        // those keys today; they self-serve mint via api:createMyKey
+        // within the limits an admin granted). Pull keys + usage;
+        // skip Stripe (no subscription rows for granted tiers).
         try {
           const [keys, usage] = await Promise.all([
             client.query(api.api.myKeys, {}),
@@ -819,6 +826,9 @@ function supraBench() {
           ]);
           this.myApiKeys = keys || [];
           this.myUsageSummary = usage || null;
+          if (this.user.grantedLimits?.maxKeys) {
+            this.apiKeyLimit = this.user.grantedLimits.maxKeys;
+          }
         } catch (e) {
           console.warn("[api] partner keys/usage load failed:", e);
         }
@@ -1212,12 +1222,43 @@ function supraBench() {
       }
     },
 
+    /** Self-serve mint for partner / enterprise+ users. The admin
+     *  set the tier + per-user limits via grantTier; from there the
+     *  user mints individual keys themselves so the plaintext is
+     *  shown directly to the person who's going to use it (no
+     *  insecure hand-off step). Reuses the same `newKeyJustCreated`
+     *  state + Copy button as the paid-tier flow. */
+    async mintMyKey() {
+      if (!this.user?.grantedTier) {
+        this.showToast("No granted tier — ask an admin to provision one first.", "info");
+        return;
+      }
+      const name = (this.myKeyName || "").trim();
+      if (!name) return;
+      if (this.apiBusy) return;
+      this.apiBusy = true;
+      try {
+        const { client, api } = window.sbConvex;
+        const { plaintext } = await client.mutation(api.api.createMyKey, { name });
+        this.newKeyJustCreated = plaintext;
+        this.myKeyName = "";
+        // Re-pull the key list so the new row appears below the
+        // plaintext panel without a page refresh.
+        this.myApiKeys = await client.query(api.api.myKeys, {});
+      } catch (e) {
+        console.error("[api] createMyKey failed:", e);
+        this.showToast(e?.message || "Could not mint key.", "error");
+      } finally {
+        this.apiBusy = false;
+      }
+    },
+
     async revokeApiKey(apiKeyId) {
-      // Partner / enterprise+ keys are minted by an admin but the
-      // user can still revoke their own — same `api.api.revokeKey`
-      // mutation, gated by `getAuthUserId()` ownership check on the
-      // backend. So skip the apiLive gate when the user already
-      // holds elevated tier.
+      // Partner / enterprise+ keys are minted by the user themselves
+      // (api:createMyKey) but still revoked through the same
+      // `api.revokeKey` mutation — backend gates on
+      // `getAuthUserId()` ownership. Skip the apiLive gate when the
+      // user already holds an elevated tier.
       if (!this.apiLive && !this.user?.grantedTier) {
         this.showToast("API not yet live — join the waitlist!", "info");
         return;

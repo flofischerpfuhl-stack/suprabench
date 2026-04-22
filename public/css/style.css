@@ -723,6 +723,19 @@ tr.clickable-row {
 .weight-breakdown__toggle .expand-icon {
   font-size: 0.55rem;
 }
+/* Same toggle visual, but in the API page it sits between two
+   blocks instead of leading a card body — needs its own breathing
+   room and a visible affordance that you can click it. */
+.plans-toggle {
+  margin: 0.5rem 0 1.25rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  font-size: 0.78rem;
+}
+.plans-toggle:hover {
+  border-color: var(--text2);
+}
 .weight-breakdown__row {
   display: flex;
   justify-content: space-between;
