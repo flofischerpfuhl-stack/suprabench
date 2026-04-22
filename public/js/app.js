@@ -436,6 +436,11 @@ function supraBench() {
     // off the first viewport on a phone.
     benchDescExpanded: false,
 
+    // Bench Score breakdown collapsed by default — the headline number
+    // and the "?" tooltip on the breakdown header are usually enough;
+    // power users can expand for the live Q/D/H/√(u/U*)/√(N/N*) split.
+    benchBreakdownExpanded: false,
+
     // ── Sort ──
     benchSortField: "score",
     benchSortAsc: false,
@@ -718,6 +723,7 @@ function supraBench() {
       try {
         this.benchDetailTab = "scores";
         this.benchDescExpanded = false;
+        this.benchBreakdownExpanded = false;
         this.currentBench = await client.query(api.benches.getBySlug, { slug: this.currentBenchSlug });
         if (this.currentBench) {
           this.currentBenchTagVotes = await client.query(api.tagVotes.listForEntity, {

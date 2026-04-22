@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260422-98f267f">
+    <link rel="stylesheet" href="css/style.css?v=20260422-ec78daa">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -90,7 +90,7 @@
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
     <script src="js/convex.js?v=20260418m"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260422-98f267f"></script>
+    <script src="js/app.js?v=20260422-ec78daa"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -627,10 +627,6 @@
                     <span style="font-family:var(--hd);font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Bench Score</span>
                     <span class="quality-rater-count" x-text="currentBench.raterCount + ' ratings'" style="margin-left:auto"></span>
                 </div>
-                <p style="color:var(--text3);font-size:.78rem;margin:0 0 1.4rem;line-height:1.5">
-                    Bench Score = Quality × Difficulty × Headroom × √(net-upvotes / max net-upvotes) × √(distinct models scored / max distinct models) — the bench's actual contribution to a model's SupraScore. Upvote √-share blocks self-rated vanity benches from claiming #1; model-count √-share blocks "community bench tested only by my own model" attacks. Range 0–100.
-                </p>
-
                 <!-- Dimension Rows -->
                 <div class="quality-dimension-row">
                     <span class="quality-dim-label">
@@ -732,54 +728,60 @@
                     </template>
                 </div>
 
-                <!-- Bench Score breakdown -->
+                <!-- Bench Score breakdown (collapsible, default collapsed) -->
                 <div class="weight-breakdown" x-show="currentBench.raterCount > 0">
-                    <div class="weight-breakdown__header">
+                    <button class="weight-breakdown__header weight-breakdown__toggle"
+                            type="button"
+                            :aria-expanded="benchBreakdownExpanded"
+                            @click="benchBreakdownExpanded = !benchBreakdownExpanded">
+                        <span class="expand-icon" :class="{'open': benchBreakdownExpanded}">▼</span>
                         Bench Score breakdown
-                        <span class="dim-help" tabindex="0" data-tip="Bench Score = quality × difficulty × headroom × √(net-upvotes / max net-upvotes) × √(distinct models scored / max distinct models). It's the bench's contribution to a model's SupraScore. Headroom = saturation penalty: shrinks as the mean of the top-K models on this bench approaches 100. Below 3 evaluated models headroom is dampened to 1.0 (not enough signal yet). The two √-shares prevent (a) self-rated vanity benches from claiming #1 and (b) 'community bench tested by only my own model' attacks.">?</span>
-                    </div>
-                    <div class="weight-breakdown__row">
-                        <span>Quality</span>
-                        <span x-text="currentBench.qualityScore.toFixed(0) + ' / 100'"></span>
-                    </div>
-                    <div class="weight-breakdown__row">
-                        <span>× Difficulty</span>
-                        <span x-text="currentBench.difficultyMultiplier.toFixed(2) + ' (avg ' + currentBench.dimensions.difficulty.toFixed(1) + ' / 5)'"></span>
-                    </div>
-                    <div class="weight-breakdown__row">
-                        <span>× Headroom</span>
-                        <span>
-                            <span x-text="currentBench.headroom.toFixed(2)"></span>
-                            <template x-if="currentBench.modelCount >= 3">
+                        <span class="dim-help" tabindex="0" @click.stop data-tip="Bench Score = quality × difficulty × headroom × √(net-upvotes / max net-upvotes) × √(distinct models scored / max distinct models). It's the bench's contribution to a model's SupraScore. Headroom = saturation penalty: shrinks as the mean of the top-K models on this bench approaches 100. Below 3 evaluated models headroom is dampened to 1.0 (not enough signal yet). The two √-shares prevent (a) self-rated vanity benches from claiming #1 and (b) 'community bench tested by only my own model' attacks.">?</span>
+                    </button>
+                    <div x-show="benchBreakdownExpanded" x-transition>
+                        <div class="weight-breakdown__row">
+                            <span>Quality</span>
+                            <span x-text="currentBench.qualityScore.toFixed(0) + ' / 100'"></span>
+                        </div>
+                        <div class="weight-breakdown__row">
+                            <span>× Difficulty</span>
+                            <span x-text="currentBench.difficultyMultiplier.toFixed(2) + ' (avg ' + currentBench.dimensions.difficulty.toFixed(1) + ' / 5)'"></span>
+                        </div>
+                        <div class="weight-breakdown__row">
+                            <span>× Headroom</span>
+                            <span>
+                                <span x-text="currentBench.headroom.toFixed(2)"></span>
+                                <template x-if="currentBench.modelCount >= 3">
+                                    <span style="color:var(--text3);font-size:.75rem"
+                                          x-text="'(top-' + currentBench.topK + ' mean ' + currentBench.frontierMean.toFixed(0) + ' / 100, N=' + currentBench.modelCount + ')'"></span>
+                                </template>
+                                <template x-if="currentBench.modelCount < 3">
+                                    <span style="color:var(--text3);font-size:.75rem"
+                                          x-text="'(N=' + currentBench.modelCount + ' &lt; 3, dampened to 1.0)'"></span>
+                                </template>
+                                <span class="badge badge-disputed" x-show="currentBench.saturated" style="margin-left:.4rem">Saturated</span>
+                            </span>
+                        </div>
+                        <div class="weight-breakdown__row" x-show="currentBench.maxNetUpvotes > 0">
+                            <span>× √(upvote share)</span>
+                            <span>
+                                <span x-text="Math.sqrt(Math.min(1, currentBench.netUpvotes / Math.max(1, currentBench.maxNetUpvotes))).toFixed(2)"></span>
                                 <span style="color:var(--text3);font-size:.75rem"
-                                      x-text="'(top-' + currentBench.topK + ' mean ' + currentBench.frontierMean.toFixed(0) + ' / 100, N=' + currentBench.modelCount + ')'"></span>
-                            </template>
-                            <template x-if="currentBench.modelCount < 3">
+                                      x-text="'(u=' + currentBench.netUpvotes + ', U*=' + currentBench.maxNetUpvotes + ')'"></span>
+                            </span>
+                        </div>
+                        <div class="weight-breakdown__row" x-show="currentBench.maxModelCountForCoverage > 0">
+                            <span>× √(model-count share)</span>
+                            <span>
+                                <span x-text="Math.sqrt(Math.min(1, currentBench.modelCountForCoverage / Math.max(1, currentBench.maxModelCountForCoverage))).toFixed(2)"></span>
                                 <span style="color:var(--text3);font-size:.75rem"
-                                      x-text="'(N=' + currentBench.modelCount + ' &lt; 3, dampened to 1.0)'"></span>
-                            </template>
-                            <span class="badge badge-disputed" x-show="currentBench.saturated" style="margin-left:.4rem">Saturated</span>
-                        </span>
-                    </div>
-                    <div class="weight-breakdown__row" x-show="currentBench.maxNetUpvotes > 0">
-                        <span>× √(upvote share)</span>
-                        <span>
-                            <span x-text="Math.sqrt(Math.min(1, currentBench.netUpvotes / Math.max(1, currentBench.maxNetUpvotes))).toFixed(2)"></span>
-                            <span style="color:var(--text3);font-size:.75rem"
-                                  x-text="'(u=' + currentBench.netUpvotes + ', U*=' + currentBench.maxNetUpvotes + ')'"></span>
-                        </span>
-                    </div>
-                    <div class="weight-breakdown__row" x-show="currentBench.maxModelCountForCoverage > 0">
-                        <span>× √(model-count share)</span>
-                        <span>
-                            <span x-text="Math.sqrt(Math.min(1, currentBench.modelCountForCoverage / Math.max(1, currentBench.maxModelCountForCoverage))).toFixed(2)"></span>
-                            <span style="color:var(--text3);font-size:.75rem"
-                                  x-text="'(N=' + currentBench.modelCountForCoverage + ', N*=' + currentBench.maxModelCountForCoverage + ')'"></span>
-                        </span>
-                    </div>
-                    <div class="weight-breakdown__row weight-breakdown__total">
-                        <span>= Bench Score</span>
-                        <span x-text="currentBench.effectiveWeight.toFixed(1)"></span>
+                                      x-text="'(N=' + currentBench.modelCountForCoverage + ', N*=' + currentBench.maxModelCountForCoverage + ')'"></span>
+                            </span>
+                        </div>
+                        <div class="weight-breakdown__row weight-breakdown__total">
+                            <span>= Bench Score</span>
+                            <span x-text="currentBench.effectiveWeight.toFixed(1)"></span>
+                        </div>
                     </div>
                 </div>
 

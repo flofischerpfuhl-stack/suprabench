@@ -701,6 +701,28 @@ tr.clickable-row {
   font-size: 0.75rem;
   margin-bottom: 0.6rem;
 }
+.weight-breakdown__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 0 0.2rem;
+  cursor: pointer;
+  font: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text2);
+  text-align: left;
+}
+.weight-breakdown__toggle:hover {
+  color: var(--text);
+}
+.weight-breakdown__toggle .expand-icon {
+  font-size: 0.55rem;
+}
 .weight-breakdown__row {
   display: flex;
   justify-content: space-between;
