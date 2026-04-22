@@ -1,0 +1,2271 @@
+[
+  {
+    "name": "SWE-bench Verified",
+    "description": "A human-validated subset of 500 real GitHub-issue instances from SWE-bench. Models must produce a patch that passes the repo's unit tests. These scores are from the bash-only leaderboard (mini-SWE-agent v2.0.0 scaffold), which standardises the harness so the model weights are the primary variable. Metric: % of instances resolved.",
+    "url": "https://www.swebench.com/verified.html",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "coding",
+      "agentic",
+      "software-engineering"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "Claude 4.5 Opus (high)",
+          "provider": "Anthropic",
+          "familyTag": "Claude 4.5 Opus",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 76.8,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3 Flash (high)",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Flash",
+          "tags": [
+            "proprietary",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 75.8,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "MiniMax M2.5 (high)",
+          "provider": "MiniMax",
+          "familyTag": "MiniMax M2.5",
+          "tags": [
+            "open-weights",
+            "reasoning"
+          ]
+        },
+        "rawScore": 75.8,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 75.6,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5-2 Codex",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5-2 Codex",
+          "tags": [
+            "proprietary",
+            "coding",
+            "reasoning"
+          ]
+        },
+        "rawScore": 72.8,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GLM-5 (high)",
+          "provider": "Zhipu AI",
+          "familyTag": "GLM-5",
+          "tags": [
+            "open-weights",
+            "reasoning"
+          ]
+        },
+        "rawScore": 72.8,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Sonnet 4.6 (high)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Sonnet 4.6",
+          "tags": [
+            "proprietary",
+            "frontier"
+          ]
+        },
+        "rawScore": 71.4,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Kimi K2.5 (high)",
+          "provider": "Moonshot AI",
+          "familyTag": "Kimi K2.5",
+          "tags": [
+            "open-weights",
+            "reasoning"
+          ]
+        },
+        "rawScore": 70.8,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "DeepSeek V3.2 (high)",
+          "provider": "DeepSeek",
+          "familyTag": "DeepSeek V3.2",
+          "tags": [
+            "open-weights",
+            "reasoning"
+          ]
+        },
+        "rawScore": 70.0,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 69.6,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude 4 Opus",
+          "provider": "Anthropic",
+          "familyTag": "Claude 4 Opus",
+          "tags": [
+            "proprietary",
+            "frontier"
+          ]
+        },
+        "rawScore": 67.6,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude 4.5 Haiku (high)",
+          "provider": "Anthropic",
+          "familyTag": "Claude 4.5 Haiku",
+          "tags": [
+            "proprietary",
+            "small"
+          ]
+        },
+        "rawScore": 66.6,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude 4 Sonnet",
+          "provider": "Anthropic",
+          "familyTag": "Claude 4 Sonnet",
+          "tags": [
+            "proprietary"
+          ]
+        },
+        "rawScore": 64.93,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Kimi K2 (thinking)",
+          "provider": "Moonshot AI",
+          "familyTag": "Kimi K2",
+          "tags": [
+            "open-weights",
+            "reasoning"
+          ]
+        },
+        "rawScore": 63.4,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "DeepSeek V3.2 (thinking)",
+          "provider": "DeepSeek",
+          "familyTag": "DeepSeek V3.2",
+          "tags": [
+            "open-weights",
+            "reasoning"
+          ]
+        },
+        "rawScore": 60.0,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o3",
+          "provider": "OpenAI",
+          "familyTag": "o3",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 58.4,
+        "sourceUrl": "https://www.swebench.com/",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "Aider Polyglot",
+    "description": "225 Exercism coding exercises across C++, Go, Java, JavaScript, Python and Rust. The model must read the spec and existing files, edit them to pass the unit tests, and express its edits in Aider's diff format. Reported metric is Pass rate 2 (% of tests passing after up to two attempts).",
+    "url": "https://aider.chat/2024/12/21/polyglot.html",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "coding",
+      "tool-use"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "GPT-5 (high)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 88.0,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5 (med)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 86.7,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o3-pro (high)",
+          "provider": "OpenAI",
+          "familyTag": "o3-pro",
+          "tags": [
+            "proprietary",
+            "reasoning",
+            "frontier"
+          ]
+        },
+        "rawScore": 84.9,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 2.5 Pro (thinking)",
+          "provider": "Google",
+          "familyTag": "Gemini 2.5 Pro",
+          "tags": [
+            "proprietary",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 83.1,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5 (low)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 81.3,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o3 (high)",
+          "provider": "OpenAI",
+          "familyTag": "o3",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 81.3,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Grok 4 (high)",
+          "provider": "xAI",
+          "familyTag": "Grok 4",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 79.6,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o3",
+          "provider": "OpenAI",
+          "familyTag": "o3",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 76.9,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "DeepSeek V3.2 (thinking)",
+          "provider": "DeepSeek",
+          "familyTag": "DeepSeek V3.2",
+          "tags": [
+            "open-weights",
+            "reasoning"
+          ]
+        },
+        "rawScore": 74.2,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude 4 Opus (thinking)",
+          "provider": "Anthropic",
+          "familyTag": "Claude 4 Opus",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 72.0,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o4-mini (high)",
+          "provider": "OpenAI",
+          "familyTag": "o4-mini",
+          "tags": [
+            "proprietary",
+            "reasoning",
+            "small"
+          ]
+        },
+        "rawScore": 72.0,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "DeepSeek R1",
+          "provider": "DeepSeek",
+          "familyTag": "DeepSeek R1",
+          "tags": [
+            "open-weights",
+            "reasoning"
+          ]
+        },
+        "rawScore": 71.4,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude 3.7 Sonnet (thinking)",
+          "provider": "Anthropic",
+          "familyTag": "Claude 3.7 Sonnet",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 64.9,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o1 (high)",
+          "provider": "OpenAI",
+          "familyTag": "o1",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 61.7,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Kimi K2",
+          "provider": "Moonshot AI",
+          "familyTag": "Kimi K2",
+          "tags": [
+            "open-weights"
+          ]
+        },
+        "rawScore": 59.1,
+        "sourceUrl": "https://aider.chat/docs/leaderboards/",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "Humanity's Last Exam",
+    "description": "2,500 graduate-level, subject-diverse questions from nearly 1,000 expert contributors, spanning mathematics, humanities, and natural sciences. Designed so that frontier LLMs still score far below expert humans. Score is % accuracy on the public set.",
+    "url": "https://agi.safe.ai/",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "knowledge",
+      "reasoning",
+      "science"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "Gemini 3.1 (thinking)",
+          "provider": "Google",
+          "familyTag": "Gemini 3.1",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 46.44,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.4 Pro",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 44.32,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Muse Spark",
+          "provider": "Inception Labs",
+          "familyTag": "Muse Spark",
+          "tags": [
+            "proprietary",
+            "frontier"
+          ]
+        },
+        "rawScore": 40.56,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 37.52,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.4 (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 36.24,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6 (max)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 34.44,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5 Pro",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 31.64,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.2",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 27.8,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 25.32,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude 4.5 Opus (thinking)",
+          "provider": "Anthropic",
+          "familyTag": "Claude 4.5 Opus",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 25.2,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Kimi K2.5",
+          "provider": "Moonshot AI",
+          "familyTag": "Kimi K2.5",
+          "tags": [
+            "open-weights",
+            "reasoning"
+          ]
+        },
+        "rawScore": 24.37,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.1",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.1",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 23.68,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 2.5 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 2.5 Pro",
+          "tags": [
+            "proprietary",
+            "multimodal"
+          ]
+        },
+        "rawScore": 21.64,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o3 (high)",
+          "provider": "OpenAI",
+          "familyTag": "o3",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 20.32,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o3 (med)",
+          "provider": "OpenAI",
+          "familyTag": "o3",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 19.2,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 19.0,
+        "sourceUrl": "https://scale.com/leaderboard/humanitys_last_exam",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "GPQA Diamond",
+    "description": "198 multiple-choice PhD-level science questions (biology, chemistry, physics) where domain experts answer correctly but non-experts, even with unrestricted Google access, typically cannot. Random baseline is 25%. Scores here are from Epoch AI's independent re-evaluations.",
+    "url": "https://arxiv.org/abs/2311.12022",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "reasoning",
+      "knowledge",
+      "science"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "Gemini 3.1",
+          "provider": "Google",
+          "familyTag": "Gemini 3.1",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal"
+          ]
+        },
+        "rawScore": 94.1,
+        "sourceUrl": "https://epoch.ai/benchmarks/gpqa-diamond",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 92.6,
+        "sourceUrl": "https://epoch.ai/benchmarks/gpqa-diamond",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.2 (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 91.4,
+        "sourceUrl": "https://epoch.ai/benchmarks/gpqa-diamond",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6 (thinking)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 90.5,
+        "sourceUrl": "https://epoch.ai/benchmarks/gpqa-diamond",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Grok 4",
+          "provider": "xAI",
+          "familyTag": "Grok 4",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 87.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/gpqa-diamond",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "FrontierMath",
+    "description": "A hidden set of hundreds of original, expert-level mathematics problems crafted and vetted by professional mathematicians, spanning undergraduate through research-level mathematics. Models get a Python tool and must submit a callable answer. Solutions are graded by exact-match to a rubric. Score is % correct (over Tiers 1-3 unless noted).",
+    "url": "https://arxiv.org/abs/2411.04872",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "math",
+      "reasoning"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "GPT-5.4 Pro (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 50.0,
+        "sourceUrl": "https://epoch.ai/frontiermath",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.4 (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 47.6,
+        "sourceUrl": "https://epoch.ai/frontiermath",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6 (max)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 40.7,
+        "sourceUrl": "https://epoch.ai/frontiermath",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.2 (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 40.7,
+        "sourceUrl": "https://epoch.ai/frontiermath",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.2 (high)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 40.3,
+        "sourceUrl": "https://epoch.ai/frontiermath",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 38.0,
+        "sourceUrl": "https://epoch.ai/frontiermath",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "SimpleBench",
+    "description": "200+ multiple-choice \"trick\" questions that require common-sense reasoning, spatio-temporal reasoning, and linguistic-adversarial robustness. Non-specialist humans score ~84% baseline; frontier LLMs still lag. Score is averaged accuracy (AVG@5) in MCQ mode.",
+    "url": "https://simple-bench.com/",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "reasoning",
+      "knowledge"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "Gemini 3.1",
+          "provider": "Google",
+          "familyTag": "Gemini 3.1",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal"
+          ]
+        },
+        "rawScore": 79.6,
+        "sourceUrl": "https://simple-bench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 76.4,
+        "sourceUrl": "https://simple-bench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.4 Pro",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 74.1,
+        "sourceUrl": "https://simple-bench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 67.6,
+        "sourceUrl": "https://simple-bench.com/",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.7",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.7",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 62.9,
+        "sourceUrl": "https://simple-bench.com/",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "OTIS Mock AIME 2024-2025",
+    "description": "45 integer-answer problems drawn from the unofficial OTIS Mock AIME exams (2024 & 2025), written by Olympiad Training for Individual Study participants. Harder than MATH-Level-5 but easier than FrontierMath; answers are integers 0-999. Scores from Epoch AI's independent evaluation.",
+    "url": "https://epoch.ai/benchmarks/otis-mock-aime-2024-2025",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "math",
+      "reasoning"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "GPT-5.2 (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 96.1,
+        "sourceUrl": "https://epoch.ai/benchmarks/otis-mock-aime-2024-2025",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.2 (high)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 96.1,
+        "sourceUrl": "https://epoch.ai/benchmarks/otis-mock-aime-2024-2025",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3.1",
+          "provider": "Google",
+          "familyTag": "Gemini 3.1",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal"
+          ]
+        },
+        "rawScore": 95.6,
+        "sourceUrl": "https://epoch.ai/benchmarks/otis-mock-aime-2024-2025",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6 (thinking)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 94.4,
+        "sourceUrl": "https://epoch.ai/benchmarks/otis-mock-aime-2024-2025",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.2 (med)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 93.9,
+        "sourceUrl": "https://epoch.ai/benchmarks/otis-mock-aime-2024-2025",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Grok 4",
+          "provider": "xAI",
+          "familyTag": "Grok 4",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 84.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/otis-mock-aime-2024-2025",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "MATH Level 5",
+    "description": "The 1,324 hardest problems from Hendrycks et al.'s MATH dataset (competition math from AMC/AIME etc.). Scored via a combination of normalised string match, symbolic equivalence, and model-graded equivalence. Scores here are Epoch AI's independent evaluations.",
+    "url": "https://arxiv.org/abs/2103.03874",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "math",
+      "reasoning"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "GPT-5 (high)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 98.1,
+        "sourceUrl": "https://epoch.ai/benchmarks/math-level-5",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5 (med)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 97.9,
+        "sourceUrl": "https://epoch.ai/benchmarks/math-level-5",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o4-mini (high)",
+          "provider": "OpenAI",
+          "familyTag": "o4-mini",
+          "tags": [
+            "proprietary",
+            "reasoning",
+            "small"
+          ]
+        },
+        "rawScore": 97.8,
+        "sourceUrl": "https://epoch.ai/benchmarks/math-level-5",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o3 (high)",
+          "provider": "OpenAI",
+          "familyTag": "o3",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 97.8,
+        "sourceUrl": "https://epoch.ai/benchmarks/math-level-5",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude 4.5 Sonnet",
+          "provider": "Anthropic",
+          "familyTag": "Claude 4.5 Sonnet",
+          "tags": [
+            "proprietary",
+            "frontier"
+          ]
+        },
+        "rawScore": 97.7,
+        "sourceUrl": "https://epoch.ai/benchmarks/math-level-5",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "Terminal-Bench 2.0",
+    "description": "Agents use a real bash terminal to complete tasks: editing files, running commands, debugging code. Each submission pairs a model with a scaffold (Claude Code, Codex CLI, Terminus 2, Goose, ForgeCode, ...). We record the best agent-model combination per model. Score is % tasks completed over repeated runs.",
+    "url": "https://www.tbench.ai/leaderboard/terminal-bench/2.0",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "agentic",
+      "tool-use",
+      "coding"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "GPT-5.4",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4",
+          "tags": [
+            "proprietary",
+            "frontier"
+          ]
+        },
+        "rawScore": 81.8,
+        "sourceUrl": "https://www.tbench.ai/leaderboard/terminal-bench/2.0",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3.1",
+          "provider": "Google",
+          "familyTag": "Gemini 3.1",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal"
+          ]
+        },
+        "rawScore": 80.2,
+        "sourceUrl": "https://www.tbench.ai/leaderboard/terminal-bench/2.0",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 79.8,
+        "sourceUrl": "https://www.tbench.ai/leaderboard/terminal-bench/2.0",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.3 Codex",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.3 Codex",
+          "tags": [
+            "proprietary",
+            "coding",
+            "reasoning"
+          ]
+        },
+        "rawScore": 78.4,
+        "sourceUrl": "https://www.tbench.ai/leaderboard/terminal-bench/2.0",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 69.4,
+        "sourceUrl": "https://www.tbench.ai/leaderboard/terminal-bench/2.0",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5-2 Codex",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5-2 Codex",
+          "tags": [
+            "proprietary",
+            "coding",
+            "reasoning"
+          ]
+        },
+        "rawScore": 66.5,
+        "sourceUrl": "https://www.tbench.ai/leaderboard/terminal-bench/2.0",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.2",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 64.9,
+        "sourceUrl": "https://www.tbench.ai/leaderboard/terminal-bench/2.0",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "WeirdML v2",
+    "description": "Models write PyTorch code to train ML models on non-standard tasks (shape recognition, digit classification, chess outcome prediction, \u2026). Each task is run \u226515 times in an isolated Docker/GPU sandbox; each run gets up to 5 iterations with execution feedback. Score is mean best-accuracy per task, averaged across tasks.",
+    "url": "https://htihle.github.io/weirdml.html",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "coding",
+      "agentic",
+      "tool-use"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "GPT-5.3 Codex",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.3 Codex",
+          "tags": [
+            "proprietary",
+            "coding",
+            "reasoning"
+          ]
+        },
+        "rawScore": 79.3,
+        "sourceUrl": "https://epoch.ai/benchmarks/weirdml",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.2 (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 72.2,
+        "sourceUrl": "https://epoch.ai/benchmarks/weirdml",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3.1",
+          "provider": "Google",
+          "familyTag": "Gemini 3.1",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal"
+          ]
+        },
+        "rawScore": 72.1,
+        "sourceUrl": "https://epoch.ai/benchmarks/weirdml",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 69.9,
+        "sourceUrl": "https://epoch.ai/benchmarks/weirdml",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 65.9,
+        "sourceUrl": "https://epoch.ai/benchmarks/weirdml",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "BALROG",
+    "description": "A suite of text-based games of varying difficulty (e.g. Hades, Keplar, NetHack-style). Scores are the percentage of games completed successfully, averaged across repeated runs.",
+    "url": "https://balrogai.com/",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "agentic",
+      "reasoning"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "Gemini 3 Flash",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Flash",
+          "tags": [
+            "proprietary",
+            "multimodal"
+          ]
+        },
+        "rawScore": 48.1,
+        "sourceUrl": "https://epoch.ai/benchmarks/balrog",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Grok 4",
+          "provider": "xAI",
+          "familyTag": "Grok 4",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 43.6,
+        "sourceUrl": "https://epoch.ai/benchmarks/balrog",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 2.5 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 2.5 Pro",
+          "tags": [
+            "proprietary",
+            "multimodal"
+          ]
+        },
+        "rawScore": 40.4,
+        "sourceUrl": "https://epoch.ai/benchmarks/balrog",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "DeepSeek R1",
+          "provider": "DeepSeek",
+          "familyTag": "DeepSeek R1",
+          "tags": [
+            "open-weights",
+            "reasoning"
+          ]
+        },
+        "rawScore": 34.9,
+        "sourceUrl": "https://epoch.ai/benchmarks/balrog",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 2.5 Flash",
+          "provider": "Google",
+          "familyTag": "Gemini 2.5 Flash",
+          "tags": [
+            "proprietary",
+            "multimodal",
+            "small"
+          ]
+        },
+        "rawScore": 33.5,
+        "sourceUrl": "https://epoch.ai/benchmarks/balrog",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "Fiction.liveBench",
+    "description": "Tests long-context comprehension: models answer recall questions about long serialised stories hosted on Fiction.live. Questions probe events, characters, and chronological order across the full story context. Score is % correct.",
+    "url": "https://fiction.live/stories/Fiction-liveBench-Feb-21-2025/oQdzQvKHw8JyXbN87",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "long-context",
+      "reasoning"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "o3 (med)",
+          "provider": "OpenAI",
+          "familyTag": "o3",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 100.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/fictionlivebench",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Grok 4",
+          "provider": "xAI",
+          "familyTag": "Grok 4",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 96.9,
+        "sourceUrl": "https://epoch.ai/benchmarks/fictionlivebench",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5 (med)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 96.9,
+        "sourceUrl": "https://epoch.ai/benchmarks/fictionlivebench",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 2.5 Pro (thinking)",
+          "provider": "Google",
+          "familyTag": "Gemini 2.5 Pro",
+          "tags": [
+            "proprietary",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 90.6,
+        "sourceUrl": "https://epoch.ai/benchmarks/fictionlivebench",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o3-pro",
+          "provider": "OpenAI",
+          "familyTag": "o3-pro",
+          "tags": [
+            "proprietary",
+            "reasoning",
+            "frontier"
+          ]
+        },
+        "rawScore": 88.9,
+        "sourceUrl": "https://epoch.ai/benchmarks/fictionlivebench",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "WebDev Arena",
+    "description": "Bradley-Terry ELO-style leaderboard where two models each build a website for the same prompt and human voters rate which is better on aesthetics and function. Score is the resulting rating (higher is better).",
+    "url": "https://web.lmarena.ai/leaderboard",
+    "scaleMin": 800,
+    "scaleMax": 1600,
+    "tags": [
+      "coding",
+      "agentic"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "Claude 4.5 Opus (thinking)",
+          "provider": "Anthropic",
+          "familyTag": "Claude 4.5 Opus",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 1512.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/webdev-arena",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.2 (high)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 1480.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/webdev-arena",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude 4.5 Opus",
+          "provider": "Anthropic",
+          "familyTag": "Claude 4.5 Opus",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 1479.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/webdev-arena",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5 (high)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 1477.5,
+        "sourceUrl": "https://epoch.ai/benchmarks/webdev-arena",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude 4.1 Opus",
+          "provider": "Anthropic",
+          "familyTag": "Claude 4.1 Opus",
+          "tags": [
+            "proprietary",
+            "frontier"
+          ]
+        },
+        "rawScore": 1472.4,
+        "sourceUrl": "https://epoch.ai/benchmarks/webdev-arena",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "VPCT (Visual Physics Comprehension Test)",
+    "description": "Each problem shows an image of a ramp with buckets; the model must predict into which bucket a ball will land. Probes basic multimodal understanding of gravity, trajectory, and geometry.",
+    "url": "https://epoch.ai/benchmarks/vpct",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "multimodal",
+      "reasoning"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "Gemini 3 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 91.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/vpct",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.2 (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 84.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/vpct",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3 Flash",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Flash",
+          "tags": [
+            "proprietary",
+            "multimodal"
+          ]
+        },
+        "rawScore": 72.6,
+        "sourceUrl": "https://epoch.ai/benchmarks/vpct",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.2 (high)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.2",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 67.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/vpct",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5 (high)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 66.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/vpct",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "GeoBench",
+    "description": "GeoGuessr-style multimodal benchmark: given 100 street-level photos (sampled from five community maps), models must guess the country and lat/long coordinates. Score combines geographic distance with country accuracy (higher is better; practical range 0-5000).",
+    "url": "https://epoch.ai/benchmarks/geobench",
+    "scaleMin": 0,
+    "scaleMax": 5000,
+    "tags": [
+      "multimodal",
+      "knowledge"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "Gemini 3 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 3893.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/geobench",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 2.0 Flash (thinking)",
+          "provider": "Google",
+          "familyTag": "Gemini 2.0 Flash",
+          "tags": [
+            "proprietary",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 3873.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/geobench",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 2.5 Pro (thinking)",
+          "provider": "Google",
+          "familyTag": "Gemini 2.5 Pro",
+          "tags": [
+            "proprietary",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 3871.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/geobench",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 2.5 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 2.5 Pro",
+          "tags": [
+            "proprietary",
+            "multimodal"
+          ]
+        },
+        "rawScore": 3836.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/geobench",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "o3 (high)",
+          "provider": "OpenAI",
+          "familyTag": "o3",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 3789.0,
+        "sourceUrl": "https://epoch.ai/benchmarks/geobench",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "Factorio Learning Environment",
+    "description": "Agents control Factorio to build factories across lab-play tasks (e.g. craft 100 transport belts) and open-play factory construction. Score is a composite game-progress metric (higher is better; typical range 0-50).",
+    "url": "https://arxiv.org/abs/2503.09617",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": [
+      "agentic",
+      "tool-use",
+      "reasoning"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "Claude 3.7 Sonnet",
+          "provider": "Anthropic",
+          "familyTag": "Claude 3.7 Sonnet",
+          "tags": [
+            "proprietary"
+          ]
+        },
+        "rawScore": 29.1,
+        "sourceUrl": "https://epoch.ai/benchmarks/factorio-learning-environment",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude 3.5 Sonnet",
+          "provider": "Anthropic",
+          "familyTag": "Claude 3.5 Sonnet",
+          "tags": [
+            "proprietary"
+          ]
+        },
+        "rawScore": 28.1,
+        "sourceUrl": "https://epoch.ai/benchmarks/factorio-learning-environment",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 2.5 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 2.5 Pro",
+          "tags": [
+            "proprietary",
+            "multimodal"
+          ]
+        },
+        "rawScore": 18.4,
+        "sourceUrl": "https://epoch.ai/benchmarks/factorio-learning-environment",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-4o",
+          "provider": "OpenAI",
+          "familyTag": "GPT-4o",
+          "tags": [
+            "proprietary",
+            "multimodal"
+          ]
+        },
+        "rawScore": 16.6,
+        "sourceUrl": "https://epoch.ai/benchmarks/factorio-learning-environment",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "DeepSeek V3",
+          "provider": "DeepSeek",
+          "familyTag": "DeepSeek V3",
+          "tags": [
+            "open-weights"
+          ]
+        },
+        "rawScore": 15.1,
+        "sourceUrl": "https://epoch.ai/benchmarks/factorio-learning-environment",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "ARC-AGI-1",
+    "description": "ARC-AGI (Abstraction and Reasoning Corpus) v1, semi-private evaluation set. Each task is a set of input\u2192output grid pairs; the model must infer the transformation rule from 2-3 demos and apply it to a test input. Measures abstract/fluid reasoning. Score is the fraction solved (random baseline ~0).",
+    "url": "https://arcprize.org/arc-agi",
+    "scaleMin": 0,
+    "scaleMax": 1,
+    "tags": [
+      "reasoning",
+      "agentic"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "Gemini 3.1",
+          "provider": "Google",
+          "familyTag": "Gemini 3.1",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal"
+          ]
+        },
+        "rawScore": 0.98,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3 Deep Think",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Deep Think",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.96,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.4 Pro (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.945,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6 (thinking)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.94,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.4 (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.9367,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.7 (high)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.7",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.935,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6 (max)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.93,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.4 (high)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.9267,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.7 (max)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.7",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.92,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Grok 4.20",
+          "provider": "xAI",
+          "familyTag": "Grok 4.20",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.895,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Sonnet 4.6 (high)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Sonnet 4.6",
+          "tags": [
+            "proprietary",
+            "frontier"
+          ]
+        },
+        "rawScore": 0.865,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      }
+    ]
+  },
+  {
+    "name": "ARC-AGI-2",
+    "description": "The 2024/25 successor to ARC-AGI, harder and still targeting abstract reasoning the way v1 did \u2014 but with tasks specifically selected to resist the test-time-search tricks that saturated v1. Semi-private eval, score is fraction solved.",
+    "url": "https://arcprize.org/arc-agi-2",
+    "scaleMin": 0,
+    "scaleMax": 1,
+    "tags": [
+      "reasoning",
+      "agentic"
+    ],
+    "scores": [
+      {
+        "model": {
+          "name": "Gemini 3 Deep Think",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Deep Think",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.8458,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.4 Pro (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4 Pro",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.8333,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3.1",
+          "provider": "Google",
+          "familyTag": "Gemini 3.1",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "multimodal"
+          ]
+        },
+        "rawScore": 0.7708,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.7 (max)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.7",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.7583,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.4 (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.7395,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6 (thinking)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.6917,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.6 (max)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.6",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.6875,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Opus 4.7 (high)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.7",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.6833,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.4 (high)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4",
+          "tags": [
+            "proprietary",
+            "frontier",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.675,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Grok 4.20",
+          "provider": "xAI",
+          "familyTag": "Grok 4.20",
+          "tags": [
+            "proprietary",
+            "reasoning"
+          ]
+        },
+        "rawScore": 0.6514,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      },
+      {
+        "model": {
+          "name": "Claude Sonnet 4.6 (high)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Sonnet 4.6",
+          "tags": [
+            "proprietary",
+            "frontier"
+          ]
+        },
+        "rawScore": 0.6042,
+        "sourceUrl": "https://arcprize.org/leaderboard",
+        "accessedAt": 1776211200000
+      }
+    ]
+  }
+]

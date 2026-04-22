@@ -11,7 +11,7 @@ describe("GET /v1/models", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/models`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/models`, { key }));
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("application/json");
     const rows = await res.json();
@@ -33,7 +33,7 @@ describe("GET /v1/models", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/models`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/models`, { key }));
     const rows = await res.json();
     for (let i = 1; i < rows.length; i++) {
       expect(rows[i - 1].supraScore).toBeGreaterThanOrEqual(rows[i].supraScore);
@@ -45,17 +45,17 @@ describe("GET /v1/models", () => {
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
 
-    const r1 = await t.fetch(buildRequest(`${BASE}/v1/models?limit=1`, { key }));
+    const r1 = await t.fetch(...buildRequest(`${BASE}/v1/models?limit=1`, { key }));
     expect((await r1.json()).length).toBe(1);
 
-    const rNeg = await t.fetch(buildRequest(`${BASE}/v1/models?limit=-5`, { key }));
+    const rNeg = await t.fetch(...buildRequest(`${BASE}/v1/models?limit=-5`, { key }));
     // Clamp to min 1 — so you still get at least 1 row when data exists.
     expect((await rNeg.json()).length).toBeGreaterThanOrEqual(1);
 
-    const rHuge = await t.fetch(buildRequest(`${BASE}/v1/models?limit=99999`, { key }));
+    const rHuge = await t.fetch(...buildRequest(`${BASE}/v1/models?limit=99999`, { key }));
     expect((await rHuge.json()).length).toBeLessThanOrEqual(500);
 
-    const rNaN = await t.fetch(buildRequest(`${BASE}/v1/models?limit=abc`, { key }));
+    const rNaN = await t.fetch(...buildRequest(`${BASE}/v1/models?limit=abc`, { key }));
     // Non-numeric → default 100.
     expect(rNaN.status).toBe(200);
   });
@@ -64,8 +64,7 @@ describe("GET /v1/models", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(
-      buildRequest(`${BASE}/v1/models?tag=reasoning`, { key })
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/models?tag=reasoning`, { key })
     );
     const rows = await res.json();
     expect(rows.length).toBeGreaterThan(0);
@@ -78,8 +77,7 @@ describe("GET /v1/models", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(
-      buildRequest(`${BASE}/v1/models?tag=definitely-does-not-exist`, { key })
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/models?tag=definitely-does-not-exist`, { key })
     );
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual([]);
@@ -91,8 +89,7 @@ describe("GET /v1/models/{slug}", () => {
     const t = setupTestDb();
     const { modelIds } = await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(
-      buildRequest(`${BASE}/v1/models/${modelIds[0].slug}`, { key })
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/models/${modelIds[0].slug}`, { key })
     );
     expect(res.status).toBe(200);
     const detail = await res.json();
@@ -114,8 +111,7 @@ describe("GET /v1/models/{slug}", () => {
   test("unknown slug → 404 not_found", async () => {
     const t = setupTestDb();
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(
-      buildRequest(`${BASE}/v1/models/this-model-does-not-exist`, { key })
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/models/this-model-does-not-exist`, { key })
     );
     expect(res.status).toBe(404);
     expect((await res.json()).error.code).toBe("not_found");
@@ -124,7 +120,7 @@ describe("GET /v1/models/{slug}", () => {
   test("empty slug → 400 bad_request", async () => {
     const t = setupTestDb();
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/models/`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/models/`, { key }));
     // Convex path-prefix routing may or may not strip the trailing slash
     // — either a 400 or a 404 is documented-correct behavior. Both
     // surface as "no such model" to the caller.
@@ -137,7 +133,7 @@ describe("GET /v1/benches", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/benches`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/benches`, { key }));
     expect(res.status).toBe(200);
     const rows = await res.json();
     expect(Array.isArray(rows)).toBe(true);
@@ -156,7 +152,7 @@ describe("GET /v1/benches", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/benches`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/benches`, { key }));
     const rows = await res.json();
     for (let i = 1; i < rows.length; i++) {
       const prev = rows[i - 1].effectiveWeight ?? 0;
@@ -171,7 +167,7 @@ describe("GET /v1/tags", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/tags`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/tags`, { key }));
     expect(res.status).toBe(200);
     const rows = await res.json();
     expect(Array.isArray(rows)).toBe(true);
@@ -187,7 +183,7 @@ describe("GET /v1/tags", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/tags`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/tags`, { key }));
     const cc = res.headers.get("cache-control") ?? "";
     const match = cc.match(/max-age=(\d+)/);
     expect(match).not.toBeNull();
@@ -199,7 +195,7 @@ describe("GET /v1/best", () => {
   test("requires ?tag=", async () => {
     const t = setupTestDb();
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/best`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/best`, { key }));
     expect(res.status).toBe(400);
     expect((await res.json()).error.code).toBe("bad_request");
   });
@@ -209,14 +205,12 @@ describe("GET /v1/best", () => {
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
 
-    const r1 = await t.fetch(
-      buildRequest(`${BASE}/v1/best?tag=reasoning&limit=1`, { key })
+    const r1 = await t.fetch(...buildRequest(`${BASE}/v1/best?tag=reasoning&limit=1`, { key })
     );
     const rows1 = await r1.json();
     expect(rows1.length).toBe(1);
 
-    const rHuge = await t.fetch(
-      buildRequest(`${BASE}/v1/best?tag=reasoning&limit=9999`, { key })
+    const rHuge = await t.fetch(...buildRequest(`${BASE}/v1/best?tag=reasoning&limit=9999`, { key })
     );
     const rowsH = await rHuge.json();
     expect(rowsH.length).toBeLessThanOrEqual(100);
@@ -228,7 +222,7 @@ describe("GET /v1/export.json", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "starter", subStatus: "active" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/export.json`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/export.json`, { key }));
     expect(res.status).toBe(403);
     expect((await res.json()).error.code).toBe("tier_forbidden");
   });
@@ -237,7 +231,7 @@ describe("GET /v1/export.json", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "pro", subStatus: "active" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/export.json`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/export.json`, { key }));
     expect(res.status).toBe(200);
     const j = await res.json();
     expect(typeof j.generatedAt).toBe("number");
@@ -250,7 +244,7 @@ describe("GET /v1/export.json", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "partner" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/export.json`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/export.json`, { key }));
     expect(res.status).toBe(200);
   });
 
@@ -258,7 +252,7 @@ describe("GET /v1/export.json", () => {
     const t = setupTestDb();
     await seedBaseDataset(t);
     const key = await seedKey(t, { tier: "pro", subStatus: "active" });
-    const res = await t.fetch(buildRequest(`${BASE}/v1/export.json`, { key }));
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/export.json`, { key }));
     const cc = res.headers.get("cache-control") ?? "";
     const match = cc.match(/max-age=(\d+)/);
     expect(Number(match![1])).toBeGreaterThanOrEqual(86400);

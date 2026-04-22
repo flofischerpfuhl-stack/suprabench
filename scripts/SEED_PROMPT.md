@@ -37,10 +37,26 @@ cost us your credibility for the rest of the task.
 
 ### 1. What you're building
 
-An initial seed of AI-model benchmark scores covering the 15 – 20
-most-cited public AI benchmarks of the last ~5 years, plus every
-model on each benchmark's official leaderboard that you can verify
-from a reputable source.
+An initial seed of AI-model benchmark scores covering 15 – 20 of the
+most-cited public AI benchmarks that are still being actively updated
+in 2025/2026, plus every model on each benchmark's official
+leaderboard that you can verify from a reputable source.
+
+Two taste rules for this seed:
+
+- **Prefer modern benches over historical ones.** If you have to
+  choose between two benches covering similar territory, pick the
+  one whose leaderboard is still getting new submissions in 2025-26
+  (e.g. SWE-bench Verified over HumanEval, MMLU-Pro over MMLU,
+  GPQA Diamond over ARC-Challenge). The SupraScore algorithm handles
+  bench saturation on its own — so you don't need to hand-filter
+  ancient benches, just don't *seek them out* if a newer alternative
+  covers the same skill.
+- **Model labs are not impartial about their own models.** OpenAI
+  publishing GPT-5's own benchmark scores is like a restaurant
+  writing its own Yelp review. See §5 — the short version is: for a
+  lab's own model, use the bench author's leaderboard, not the
+  lab's blog post.
 
 Minimum requirements:
 
@@ -210,74 +226,79 @@ omit the field unless the lab's own naming is genuinely non-committal
 
 ### 4. Which benchmarks to include
 
-A strong default portfolio for the 15-20 slots, ordered roughly by
-how well-known they are in the community:
+A strong 2025/26 portfolio — pick 15-20, substitute freely if a
+bench is too sparse on neutral sources:
 
-1. **MMLU** (knowledge + reasoning, saturated but historically important)
-2. **MMLU-Pro** (harder successor, still active)
-3. **GPQA / GPQA Diamond** (graduate-level science QA)
-4. **HumanEval** (code completion, saturated)
-5. **SWE-bench** (real GitHub issues, agentic coding)
-6. **SWE-bench Verified** (OpenAI's curated subset — pick this over raw
-   SWE-bench if you can verify both)
-7. **HellaSwag** (common-sense reasoning, older)
-8. **ARC-Challenge** or **ARC-AGI / ARC-AGI 2** (depending on recency;
-   ARC-AGI is the active frontier)
-9. **BIG-Bench Hard**
-10. **MATH** / **MATH-500** (competition math)
-11. **AIME 2024** / **AIME 2025** (olympiad math, the o-series bench of choice)
-12. **GSM8K** (grade-school math, saturated)
-13. **TruthfulQA** (factuality)
-14. **WinoGrande** (common-sense reasoning)
-15. **DROP** (reading comprehension)
-16. **LiveCodeBench** (recent code gen, actively maintained)
-17. **Aider Polyglot Coding Benchmark** (edit-based coding)
-18. **SimpleBench** (community-curated, humans solve easily)
-19. **Humanity's Last Exam** (HLE — frontier, Nature paper)
-20. **LMArena / Chatbot Arena** (ELO leaderboard)
-21. **Tau-bench** (agentic tool use)
-22. **OSWorld** (GUI agentic)
+- **GPQA Diamond** — graduate-level science QA.
+- **MMLU-Pro** — TIGER-Lab, harder successor to MMLU.
+- **SWE-bench Verified** — agentic coding on real GitHub issues
+  (swebench.com leaderboard).
+- **LiveCodeBench** — contamination-resistant code gen.
+- **Aider Polyglot** — edit-based coding.
+- **BigCodeBench** — bigcode-bench.github.io.
+- **AIME 2024** / **AIME 2025** — olympiad math (MathArena has
+  third-party reproductions).
+- **MATH-500** — competition math.
+- **FrontierMath** — Epoch AI, expert-level math.
+- **ARC-AGI** / **ARC-AGI-2** — arcprize.org.
+- **Humanity's Last Exam (HLE)** — agi.safe.ai.
+- **SimpleBench** — simple-bench.com.
+- **LMArena / Chatbot Arena** — crowdsourced ELO.
+- **LiveBench** — live-rotated bench.
+- **Tau-bench** / **τ²-bench** — agentic tool use.
+- **OSWorld** — GUI-agent.
+- **WebArena** — web-agent.
+- **MMMU** / **MMMU-Pro** — multimodal understanding.
+- **HELM** (crfm.stanford.edu/helm) — academic, neutral, covers many
+  sub-benches.
+- **RULER** — long-context.
+- **BFCL** (Berkeley Function Calling) — tool use.
 
-You may substitute if you find a bench is obsolete or data is too
-sparse to verify. You may ADD benches if you find a popular one
-missing — prefer academic + lab-official sources.
+Older saturated benches (MMLU, HumanEval, HellaSwag, GSM8K,
+TruthfulQA, ARC-Challenge, WinoGrande, DROP) are fine to include if
+you genuinely find a neutral 2025-era leaderboard entry for modern
+models — SupraScore handles saturation on its own — but don't
+*seek them out* as primary choices. Prefer the newer alternatives
+above.
 
-### 5. Sources — authoritative only
+**Not benchmarks** — do not include as bench entries:
 
-Use ONLY these tiers of sources. Our schema has a whitelist of
-"official" domains (see `convex/urls.ts`) — URLs from these domains
-get an "Official source" badge. Stick to them.
+- Aggregator composites like "Artificial Analysis Intelligence
+  Index" — they're weighted averages of other benches and cause
+  double counting.
+- Any "composite score" a lab publishes for its own model.
 
-**Tier 1 (preferred):**
-- The paper itself on `arxiv.org`, `openreview.net`, or
-  `nature.com` / `science.org` when a benchmark appears there.
-- The official benchmark project site (`arcprize.org`, `swebench.com`,
-  `agi.safe.ai`, `epoch.ai`, `lmarena.ai`, `livebench.ai`,
-  `livecodebench.github.io`, `aider.chat`, `simple-bench.com`,
-  `osworld.ai`, etc.)
-- Official model-lab reports / blog posts / model cards
-  (`openai.com`, `anthropic.com`, `deepmind.google`, `x.ai`,
-  `ai.meta.com`, `mistral.ai`, `qwenlm.github.io`, `deepseek.com`,
-  `moonshot.cn`, …).
-- `paperswithcode.com` leaderboard pages when they cite the primary
-  source.
+### 5. Sources — no lab self-reporting
 
-**Tier 2 (acceptable when nothing else has it):**
-- `huggingface.co` leaderboards (OpenLLM Leaderboard)
-- `artificialanalysis.ai` (they aggregate reproducibly)
-- `scale.com` (their SEAL leaderboards)
-- `kaggle.com` when the bench lives on Kaggle
+**The single non-obvious rule:** a model lab is not an impartial
+source for its own model's score. Do not use `openai.com`,
+`anthropic.com`, `blog.google` / `deepmind.google`, `ai.meta.com`,
+`x.ai` / `grok.com`, or a lab's arXiv "technical report" as the
+`sourceUrl` for that same lab's own model.
 
-**Not acceptable:**
-- News sites, Twitter/X posts, random blog posts that aren't the lab's
-  own blog.
-- LinkedIn, Reddit, YouTube.
-- Any site that doesn't show you the actual score.
+Everything else from the old whitelist is still fine:
 
-If a bench has BOTH a leaderboard page and a paper, prefer the
-leaderboard for the bench's `url` (users click to see rankings) and
-the **paper** for individual scores IF the paper reports the exact
-score. Otherwise use the leaderboard URL for both.
+- **Preferred** — the benchmark authors' own leaderboard
+  (`swebench.com`, `livecodebench.github.io`,
+  `aider.chat/docs/leaderboards`, `arcprize.org`, `agi.safe.ai`,
+  `simple-bench.com`, `lmarena.ai`, `livebench.ai`,
+  `os-world.github.io`, `mmmu-benchmark.github.io`,
+  `bigcode-bench.github.io`, `epoch.ai`,
+  `crfm.stanford.edu/helm`, `gorilla.cs.berkeley.edu`, etc.), or
+  the benchmark's own arXiv paper.
+- **Fine** — `paperswithcode.com` when it cites the bench authors'
+  leaderboard, `huggingface.co` official leaderboards,
+  `artificialanalysis.ai`, `scale.com` SEAL leaderboards, academic
+  reproduction papers on arxiv/openreview by a lab other than the
+  one being benchmarked.
+- **OK for** *other* **labs' models** — e.g. Meta's Llama paper can
+  cite its own measurement of GPT-4 (Meta isn't grading Meta there).
+- **Never** — news sites, Twitter/X, LinkedIn, Reddit, YouTube, any
+  page that doesn't show you the score.
+
+If the only place a model-bench pair exists is the model's own lab's
+blog, skip that row. Eight verified rows beats fifteen with half
+self-reported.
 
 ### 6. Numeric conventions
 
@@ -325,16 +346,23 @@ score. Otherwise use the leaderboard URL for both.
 
 ### 8. What you are NOT allowed to do
 
+- ❌ Use a model lab's own publication as the `sourceUrl` for that
+  lab's own model's score. See §5.
+- ❌ Include aggregator composites ("Intelligence Index", etc.) as
+  if they were benchmarks. See §4.
 - ❌ Estimate a score because you "remember" it. Every number needs
   a URL you can open.
 - ❌ Invent synthetic "placeholder" scores.
 - ❌ Attribute a score to a model it's not from ("close enough"
   reasoning — e.g. citing GPT-4's score for GPT-4-Turbo).
+- ❌ Encode a prompting harness or pipeline as a model (no
+  `"CodeT + GPT-3.5"`, no `"ReAct + Claude"`). The model is the
+  weights. If the harness materially changes the score, note it in
+  the bench's `description`.
 - ❌ Convert scales silently (e.g. mixing 0-1 and 0-100 in the same
   `scores[]`).
 - ❌ Add upvote/downvote counts to the JSON. The loader always sets
-  `upvotes: 1, downvotes: 0` automatically. Adding counts in the JSON
-  is a red-flag signal that you're inventing social-proof data.
+  `upvotes: 1, downvotes: 0` automatically.
 - ❌ Create bench entries with fewer than 5 verified scores — if you
   can only find 3 real scores, skip the bench and pick a different
   one.
@@ -343,12 +371,13 @@ score. Otherwise use the leaderboard URL for both.
 
 Report back to the operator with:
 - a one-line summary (`N benches, M model-scores, X unique models`)
-- a list of any benches you intended to include but couldn't
-  ("skipped: X because only 3 scores were findable on official
-  sources")
-- any taxonomy ambiguities you resolved with a guess (so the human
-  can override — e.g. "put both gpt-4 and gpt-4-turbo in familyTag
-  GPT-4, fork if you disagree")
+- a source-domain tally (`sourceUrl` domain → count). If a
+  lab-first-party domain (`openai.com`, `anthropic.com`,
+  `deepmind.google` / `blog.google`, `ai.meta.com`, `x.ai`) appears
+  as a source for a model from that same lab, that's a bug —
+  re-verify.
+- any benches you intended to include but skipped, and why
+- any taxonomy ambiguities you resolved with a guess
 
 Do NOT push to Convex yourself. The operator runs `node scripts/
 run-seed.mjs` after spot-checking.

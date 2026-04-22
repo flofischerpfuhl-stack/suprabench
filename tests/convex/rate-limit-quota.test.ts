@@ -17,7 +17,7 @@ describe("rate limit (rpm)", () => {
     let blockedCode: string | null = null;
 
     for (let i = 0; i < rpm + 3; i++) {
-      const r = await t.fetch(buildRequest(`${BASE}/v1/models`, { key }));
+      const r = await t.fetch(...buildRequest(`${BASE}/v1/models`, { key }));
       if (r.status === 200) successes.push(r.status);
       else {
         blockedCode = (await r.json()).error?.code ?? null;
@@ -45,7 +45,7 @@ describe("monthly quota", () => {
     let lastStatus = 0;
     let lastCode: string | null = null;
     for (let i = 0; i < quota + 2; i++) {
-      const r = await t.fetch(buildRequest(`${BASE}/v1/models`, { key }));
+      const r = await t.fetch(...buildRequest(`${BASE}/v1/models`, { key }));
       lastStatus = r.status;
       if (r.status === 200) ok++;
       else {

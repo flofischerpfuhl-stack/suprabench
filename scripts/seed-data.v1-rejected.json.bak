@@ -1,0 +1,1184 @@
+[
+  {
+    "name": "MMLU",
+    "description": "Massive Multitask Language Understanding — 57 subjects as 4-choice questions. Table 4 reports 5-shot accuracy for closed- and open-weight baselines (GPT-3.5, GPT-4, PaLM, PaLM-2-L, Llama 2 70B).",
+    "url": "https://arxiv.org/abs/2009.03300",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning", "knowledge"],
+    "scores": [
+      {
+        "model": {
+          "name": "GPT-3.5",
+          "provider": "OpenAI",
+          "familyTag": "GPT-3.5",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 70.0,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-4",
+          "provider": "OpenAI",
+          "familyTag": "GPT-4",
+          "tags": ["proprietary", "frontier"]
+        },
+        "rawScore": 86.4,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "PaLM 540B",
+          "provider": "Google",
+          "familyTag": "PaLM 540B",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 69.3,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "PaLM-2-L",
+          "provider": "Google",
+          "familyTag": "PaLM-2-L",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 78.3,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 68.9,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "MMLU-Pro",
+    "description": "Harder multi-task MCQ benchmark with 10 options per question. Paper Table 2 lists overall accuracy (direct answer, 5-shot except as noted) for leading closed-source models.",
+    "url": "https://arxiv.org/abs/2406.01574",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning", "knowledge"],
+    "scores": [
+      {
+        "model": {
+          "name": "GPT-4o",
+          "provider": "OpenAI",
+          "familyTag": "GPT-4o",
+          "tags": ["proprietary", "frontier"]
+        },
+        "rawScore": 72.6,
+        "sourceUrl": "https://arxiv.org/pdf/2406.01574.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Gemini 1.5 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 1.5 Pro",
+          "tags": ["proprietary", "multimodal"]
+        },
+        "rawScore": 69.0,
+        "sourceUrl": "https://arxiv.org/pdf/2406.01574.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Claude 3 Opus",
+          "provider": "Anthropic",
+          "familyTag": "Claude 3 Opus",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 68.5,
+        "sourceUrl": "https://arxiv.org/pdf/2406.01574.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-4 Turbo",
+          "provider": "OpenAI",
+          "familyTag": "GPT-4-Turbo",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 63.7,
+        "sourceUrl": "https://arxiv.org/pdf/2406.01574.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Gemini 1.5 Flash",
+          "provider": "Google",
+          "familyTag": "Gemini 1.5 Flash",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 59.1,
+        "sourceUrl": "https://arxiv.org/pdf/2406.01574.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Yi-Large",
+          "provider": "01.AI",
+          "familyTag": "Yi-Large",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 58.1,
+        "sourceUrl": "https://arxiv.org/pdf/2406.01574.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Claude 3 Sonnet",
+          "provider": "Anthropic",
+          "familyTag": "Claude 3 Sonnet",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 56.8,
+        "sourceUrl": "https://arxiv.org/pdf/2406.01574.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "GSM8K",
+    "description": "Grade-school math word problems (8-shot in this table). Table 4 compares GPT-3.5, GPT-4, PaLM, PaLM-2-L, and Llama 2 70B on solve rate.",
+    "url": "https://arxiv.org/abs/2110.14168",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["math", "reasoning"],
+    "scores": [
+      {
+        "model": {
+          "name": "GPT-3.5",
+          "provider": "OpenAI",
+          "familyTag": "GPT-3.5",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 57.1,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-4",
+          "provider": "OpenAI",
+          "familyTag": "GPT-4",
+          "tags": ["proprietary", "frontier"]
+        },
+        "rawScore": 92.0,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "PaLM 540B",
+          "provider": "Google",
+          "familyTag": "PaLM 540B",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 56.5,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "PaLM-2-L",
+          "provider": "Google",
+          "familyTag": "PaLM-2-L",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 80.7,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 56.8,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "HumanEval",
+    "description": "Python function synthesis; pass@1 with 0-shot for GPT rows and external scaffold where noted. Combines OpenAI GPT-4 report Table 2 with PaLM / Llama 2 70B from Llama 2 Table 4.",
+    "url": "https://arxiv.org/abs/2107.03374",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["coding"],
+    "scores": [
+      {
+        "model": {
+          "name": "GPT-4",
+          "provider": "OpenAI",
+          "familyTag": "GPT-4",
+          "tags": ["proprietary", "coding"]
+        },
+        "rawScore": 67.0,
+        "sourceUrl": "https://cdn.openai.com/papers/gpt-4.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-3.5",
+          "provider": "OpenAI",
+          "familyTag": "GPT-3.5",
+          "tags": ["proprietary", "coding"]
+        },
+        "rawScore": 48.1,
+        "sourceUrl": "https://cdn.openai.com/papers/gpt-4.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "PaLM 540B",
+          "provider": "Google",
+          "familyTag": "PaLM 540B",
+          "tags": ["proprietary", "coding"]
+        },
+        "rawScore": 26.2,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "CodeT + GPT-3.5",
+          "provider": "Microsoft",
+          "familyTag": "CodeT + GPT-3.5",
+          "tags": ["proprietary", "coding"]
+        },
+        "rawScore": 65.8,
+        "sourceUrl": "https://cdn.openai.com/papers/gpt-4.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights", "coding"]
+        },
+        "rawScore": 29.9,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "Humanity's Last Exam",
+    "description": "Expert-level closed-book academic benchmark (2,500 public questions). Site table reports accuracy (%) and calibration error; scores here are Accuracy (%) with judge o3-mini and dataset updated April 3, 2025.",
+    "url": "https://agi.safe.ai/",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning", "knowledge"],
+    "scores": [
+      {
+        "model": {
+          "name": "Gemini 3 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 3 Pro",
+          "tags": ["proprietary", "multimodal", "frontier"]
+        },
+        "rawScore": 38.3,
+        "sourceUrl": "https://agi.safe.ai/",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-5",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5",
+          "tags": ["proprietary", "frontier"]
+        },
+        "rawScore": 25.3,
+        "sourceUrl": "https://agi.safe.ai/",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Grok 4",
+          "provider": "xAI",
+          "familyTag": "Grok 4",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 24.5,
+        "sourceUrl": "https://agi.safe.ai/",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Gemini 2.5 Pro",
+          "provider": "Google",
+          "familyTag": "Gemini 2.5 Pro",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 21.6,
+        "sourceUrl": "https://agi.safe.ai/",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-5 mini",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5 mini",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 19.4,
+        "sourceUrl": "https://agi.safe.ai/",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Claude 4.5 Sonnet",
+          "provider": "Anthropic",
+          "familyTag": "Claude 4.5 Sonnet",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 13.7,
+        "sourceUrl": "https://agi.safe.ai/",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Gemini 2.5 Flash",
+          "provider": "Google",
+          "familyTag": "Gemini 2.5 Flash",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 12.1,
+        "sourceUrl": "https://agi.safe.ai/",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "DeepSeek-R1",
+          "provider": "DeepSeek",
+          "familyTag": "DeepSeek-R1",
+          "tags": ["open-weights", "reasoning"]
+        },
+        "rawScore": 8.5,
+        "sourceUrl": "https://agi.safe.ai/",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "o1",
+          "provider": "OpenAI",
+          "familyTag": "o1",
+          "tags": ["proprietary", "reasoning"]
+        },
+        "rawScore": 8.0,
+        "sourceUrl": "https://agi.safe.ai/",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-4o",
+          "provider": "OpenAI",
+          "familyTag": "GPT-4o",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 2.7,
+        "sourceUrl": "https://agi.safe.ai/",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "GPQA Diamond",
+    "description": "GPQA diamond subset (198 questions). Scores are closed-book accuracy (%) on the Diamond column; prompting variants follow Table 6 labels (few-shot vs zero-shot chain-of-thought).",
+    "url": "https://arxiv.org/abs/2311.12022",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning", "knowledge"],
+    "scores": [
+      {
+        "model": {
+          "name": "Llama 2 70B Chat (few-shot CoT)",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 28.1,
+        "sourceUrl": "https://arxiv.org/pdf/2311.12022.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-3.5 Turbo 16k (few-shot CoT)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-3.5",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 29.6,
+        "sourceUrl": "https://arxiv.org/pdf/2311.12022.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-4 (few-shot CoT)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-4",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 38.8,
+        "sourceUrl": "https://arxiv.org/pdf/2311.12022.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B Chat (zero-shot CoT)",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 31.1,
+        "sourceUrl": "https://arxiv.org/pdf/2311.12022.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-4 (few-shot)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-4",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 35.7,
+        "sourceUrl": "https://arxiv.org/pdf/2311.12022.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "MATH",
+    "description": "Competition-style mathematics. Table 3 reports greedy / single-sample accuracy (first numeric column per model block, not majority-vote). Models are PaLM and Minerva at 8B, 62B, and 540B.",
+    "url": "https://arxiv.org/abs/2103.03874",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["math", "reasoning"],
+    "scores": [
+      {
+        "model": {
+          "name": "PaLM 8B",
+          "provider": "Google",
+          "familyTag": "PaLM 8B",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 1.5,
+        "sourceUrl": "https://arxiv.org/pdf/2206.14858.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Minerva 8B",
+          "provider": "Google",
+          "familyTag": "Minerva 8B",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 14.1,
+        "sourceUrl": "https://arxiv.org/pdf/2206.14858.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "PaLM 62B",
+          "provider": "Google",
+          "familyTag": "PaLM 62B",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 4.4,
+        "sourceUrl": "https://arxiv.org/pdf/2206.14858.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Minerva 62B",
+          "provider": "Google",
+          "familyTag": "Minerva 62B",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 27.6,
+        "sourceUrl": "https://arxiv.org/pdf/2206.14858.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "PaLM 540B",
+          "provider": "Google",
+          "familyTag": "PaLM 540B",
+          "tags": ["proprietary"]
+        },
+        "rawScore": 8.8,
+        "sourceUrl": "https://arxiv.org/pdf/2206.14858.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "ARC-Challenge",
+    "description": "AI2 Reasoning Challenge (science MCQ). Llama 2 Table 19 lists 5-shot accuracy for ARC-c on open baselines (MPT, Falcon, Llama 1 65B, Llama 2 7B/70B).",
+    "url": "https://arxiv.org/abs/1803.05457",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning", "knowledge"],
+    "scores": [
+      {
+        "model": {
+          "name": "MPT 7B",
+          "provider": "MosaicML",
+          "familyTag": "MPT 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 42.6,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Falcon 7B",
+          "provider": "TII",
+          "familyTag": "Falcon 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 42.4,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 1 65B",
+          "provider": "Meta",
+          "familyTag": "Llama 1 65B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 63.4,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 7B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 45.9,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 57.4,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "HellaSwag",
+    "description": "Commonsense completion around everyday events. Llama 2 Table 19 appendix reports multi-task scores including the HellaSwag column (five-shot block; see table caption in paper).",
+    "url": "https://rowanzellers.com/hellaswag/",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning"],
+    "scores": [
+      {
+        "model": {
+          "name": "MPT 7B",
+          "provider": "MosaicML",
+          "familyTag": "MPT 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 76.4,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Falcon 7B",
+          "provider": "TII",
+          "familyTag": "Falcon 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 74.1,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 1 65B",
+          "provider": "Meta",
+          "familyTag": "Llama 1 65B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 84.2,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 7B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 77.2,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 85.3,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "WinoGrande",
+    "description": "Commonsense pronoun resolution. Table 19 lists 5-shot accuracy for open baselines on the WinoGrande column.",
+    "url": "https://arxiv.org/abs/1907.10641",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning"],
+    "scores": [
+      {
+        "model": {
+          "name": "MPT 7B",
+          "provider": "MosaicML",
+          "familyTag": "MPT 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 68.3,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Falcon 7B",
+          "provider": "TII",
+          "familyTag": "Falcon 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 66.3,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 1 65B",
+          "provider": "Meta",
+          "familyTag": "Llama 1 65B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 77.0,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 7B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 69.2,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 80.2,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "PIQA",
+    "description": "Physical interaction QA. Table 19 reports 0-shot accuracy on PIQA for open baselines.",
+    "url": "https://arxiv.org/abs/1912.13318",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning"],
+    "scores": [
+      {
+        "model": {
+          "name": "MPT 7B",
+          "provider": "MosaicML",
+          "familyTag": "MPT 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 80.6,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Falcon 7B",
+          "provider": "TII",
+          "familyTag": "Falcon 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 76.7,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 1 65B",
+          "provider": "Meta",
+          "familyTag": "Llama 1 65B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 82.8,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 7B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 78.8,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 82.8,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "BoolQ",
+    "description": "Yes/no reading comprehension (BoolQ). Table 19 reports 0-shot accuracy.",
+    "url": "https://arxiv.org/abs/1905.10044",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["factuality", "knowledge"],
+    "scores": [
+      {
+        "model": {
+          "name": "MPT 7B",
+          "provider": "MosaicML",
+          "familyTag": "MPT 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 75.0,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Falcon 7B",
+          "provider": "TII",
+          "familyTag": "Falcon 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 67.5,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 1 65B",
+          "provider": "Meta",
+          "familyTag": "Llama 1 65B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 85.3,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 7B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 77.4,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 85.0,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "OpenBookQA",
+    "description": "OpenBookQA multiple-choice science questions. Table 19 lists 5-shot accuracy (OBQA column) for open baselines.",
+    "url": "https://arxiv.org/abs/1809.02789",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning", "knowledge"],
+    "scores": [
+      {
+        "model": {
+          "name": "MPT 7B",
+          "provider": "MosaicML",
+          "familyTag": "MPT 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 51.4,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Falcon 7B",
+          "provider": "TII",
+          "familyTag": "Falcon 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 51.6,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 1 65B",
+          "provider": "Meta",
+          "familyTag": "Llama 1 65B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 60.2,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 7B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 58.6,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 60.2,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "SIQA",
+    "description": "Social interaction QA. Table 19 reports 0-shot accuracy on SIQA.",
+    "url": "https://arxiv.org/abs/1904.09728",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning"],
+    "scores": [
+      {
+        "model": {
+          "name": "MPT 7B",
+          "provider": "MosaicML",
+          "familyTag": "MPT 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 48.5,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Falcon 7B",
+          "provider": "TII",
+          "familyTag": "Falcon 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 47.2,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 1 65B",
+          "provider": "Meta",
+          "familyTag": "Llama 1 65B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 52.3,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 7B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 48.3,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 50.7,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "AGI Eval",
+    "description": "English subset average from AGI Eval (3–5 shot per task family). Table 3 aggregates scores across helpfulness/safety-related academic groupings; values here are the AGI Eval column for each listed model size.",
+    "url": "https://arxiv.org/abs/2304.04370",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning", "knowledge"],
+    "scores": [
+      {
+        "model": {
+          "name": "MPT 7B",
+          "provider": "MosaicML",
+          "familyTag": "MPT 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 23.5,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Falcon 7B",
+          "provider": "TII",
+          "familyTag": "Falcon 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 21.2,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 1 65B",
+          "provider": "Meta",
+          "familyTag": "Llama 1 65B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 47.6,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 7B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 7B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 29.3,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights"]
+        },
+        "rawScore": 54.2,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "MBPP",
+    "description": "Mostly Basic Python Problems — 3-shot pass@1 in Llama 2 Table 21 (pass@1 uses temperature 0.1, top-p 0.95). Scores for MPT, Falcon, Llama 1 65B, and Llama 2 70B.",
+    "url": "https://arxiv.org/abs/2108.07732",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["coding"],
+    "scores": [
+      {
+        "model": {
+          "name": "MPT 7B",
+          "provider": "MosaicML",
+          "familyTag": "MPT 7B",
+          "tags": ["open-weights", "coding"]
+        },
+        "rawScore": 22.6,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Falcon 7B",
+          "provider": "TII",
+          "familyTag": "Falcon 7B",
+          "tags": ["open-weights", "coding"]
+        },
+        "rawScore": 11.2,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Falcon 40B",
+          "provider": "TII",
+          "familyTag": "Falcon 40B",
+          "tags": ["open-weights", "coding"]
+        },
+        "rawScore": 29.8,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 1 65B",
+          "provider": "Meta",
+          "familyTag": "Llama 1 65B",
+          "tags": ["open-weights", "coding"]
+        },
+        "rawScore": 37.7,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Llama 2 70B",
+          "provider": "Meta",
+          "familyTag": "Llama 2 70B",
+          "tags": ["open-weights", "coding"]
+        },
+        "rawScore": 45.0,
+        "sourceUrl": "https://arxiv.org/pdf/2307.09288.pdf",
+        "accessedAt": 1776859200000
+      }
+    ]
+  },
+  {
+    "name": "Artificial Analysis Intelligence Index",
+    "description": "Composite 0–100 intelligence index from Artificial Analysis (methodology in site FAQ). Higher is better; not comparable to exam accuracy or Elo.",
+    "url": "https://artificialanalysis.ai/leaderboards/models",
+    "scaleMin": 0,
+    "scaleMax": 100,
+    "tags": ["reasoning", "knowledge"],
+    "scores": [
+      {
+        "model": {
+          "name": "Claude Opus 4.7 (max)",
+          "provider": "Anthropic",
+          "familyTag": "Claude Opus 4.7",
+          "tags": ["proprietary", "frontier", "reasoning"]
+        },
+        "rawScore": 57,
+        "sourceUrl": "https://artificialanalysis.ai/leaderboards/models",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Gemini 3.1 Pro Preview",
+          "provider": "Google",
+          "familyTag": "Gemini 3.1",
+          "tags": ["proprietary", "frontier", "multimodal"]
+        },
+        "rawScore": 57,
+        "sourceUrl": "https://artificialanalysis.ai/leaderboards/models",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.4 (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.4",
+          "tags": ["proprietary", "frontier", "reasoning"]
+        },
+        "rawScore": 57,
+        "sourceUrl": "https://artificialanalysis.ai/leaderboards/models",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "Kimi K2.6",
+          "provider": "Moonshot",
+          "familyTag": "Kimi K2.6",
+          "tags": ["open-weights", "frontier"]
+        },
+        "rawScore": 54,
+        "sourceUrl": "https://artificialanalysis.ai/leaderboards/models",
+        "accessedAt": 1776859200000
+      },
+      {
+        "model": {
+          "name": "GPT-5.3 Codex (xhigh)",
+          "provider": "OpenAI",
+          "familyTag": "GPT-5.3 Codex",
+          "tags": ["proprietary", "coding", "reasoning"]
+        },
+        "rawScore": 54,
+        "sourceUrl": "https://artificialanalysis.ai/leaderboards/models",
+        "accessedAt": 1776859200000
+      }
+    ]
+  }
+]

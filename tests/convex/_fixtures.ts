@@ -18,8 +18,10 @@ import schema from "../../convex/schema";
 import { api, internal } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
+const modules = import.meta.glob("../../convex/**/*.*s");
+
 export function setupTestDb() {
-  return convexTest(schema);
+  return convexTest(schema, modules);
 }
 
 /** SHA-256 hex. Duplicated from api.ts so tests don't depend on
@@ -187,20 +189,29 @@ export async function seedBaseDataset(t: ReturnType<typeof convexTest>) {
 }
 
 /**
- * Helper to call an HTTP action by assembling a Request object the
- * way convex-test's `t.fetch` expects. Adds the Authorization header
- * when a key is given.
+ * Helper to build `[path, init]` tuple for convex-test's
+ * `t.fetch(path, init)` signature. Callsite spreads it:
+ *     await t.fetch(...buildRequest(`${BASE}/v1/models`, { key }))
+ * Full URLs (with `${BASE}`) are accepted; only the pathname+search
+ * is forwarded to `t.fetch`.
  */
 export function buildRequest(
   url: string,
-  opts: { key?: SeededKey; method?: string; headers?: Record<string, string> } = {}
-): Request {
-  const headers = new Headers(opts.headers ?? {});
-  if (opts.key) headers.set("authorization", `Bearer ${opts.key.plaintext}`);
-  return new Request(url, {
-    method: opts.method ?? "GET",
-    headers,
-  });
+  opts: {
+    key?: SeededKey;
+    method?: string;
+    headers?: Record<string, string>;
+    body?: BodyInit;
+  } = {}
+): [string, RequestInit] {
+  const headers: Record<string, string> = { ...(opts.headers ?? {}) };
+  if (opts.key) headers["authorization"] = `Bearer ${opts.key.plaintext}`;
+  let path = url;
+  if (/^https?:\/\//.test(url)) {
+    const u = new URL(url);
+    path = u.pathname + u.search;
+  }
+  return [path, { method: opts.method ?? "GET", headers, body: opts.body }];
 }
 
 export { api, internal };

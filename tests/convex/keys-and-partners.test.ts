@@ -129,11 +129,9 @@ describe("api.createKey (public mutation)", () => {
     expect(afterKeys[0].revoked).toBe(true);
 
     // API call with revoked key now 401s:
-    const res = await t.fetch(
-      new Request("https://test.convex.site/v1/models", {
-        headers: { authorization: `Bearer ${plaintext}` },
-      })
-    );
+    const res = await t.fetch("/v1/models", {
+      headers: { authorization: `Bearer ${plaintext}` },
+    });
     expect(res.status).toBe(401);
     expect((await res.json()).error.code).toBe("revoked");
   });
@@ -216,11 +214,9 @@ describe("partners:* admin mutations", () => {
     const r = await t.mutation(internal.partners.createPartnerKey, {
       name: "site.test",
     });
-    const res = await t.fetch(
-      new Request("https://test.convex.site/v1/models", {
-        headers: { authorization: `Bearer ${r.plaintext}` },
-      })
-    );
+    const res = await t.fetch("/v1/models", {
+      headers: { authorization: `Bearer ${r.plaintext}` },
+    });
     // 200 (with empty body) or 200 with seeded data — just not 401/402.
     expect([200, 429]).toContain(res.status); // 429 only if a separate test left the quota exhausted in some shared state; vitest "isolate" default keeps it 200.
     if (res.status === 200) {

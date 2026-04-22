@@ -137,17 +137,29 @@ const convexArgs = env === "prod" ? "--prod" : "";
 
 function runConvex(fn, argsObj) {
   const argJson = JSON.stringify(argsObj);
-  // Pipe the JSON via stdin to avoid shell-quote issues on big strings.
+  // `convex run` takes args as a positional JSON string. We have to
+  // shell-quote it, which is fine as long as the chunk stays under
+  // the OS argv cap (~128 KB on Linux). Chunks are sized for that.
+  const quoted = "'" + argJson.replace(/'/g, "'\\''") + "'";
   try {
     const out = execSync(
-      `npx convex run ${convexArgs} ${fn} --no-push`,
+      `npx convex run ${convexArgs} ${fn} ${quoted} --no-push`,
       {
-        input: argJson,
         encoding: "utf-8",
-        stdio: ["pipe", "pipe", "inherit"],
+        stdio: ["ignore", "pipe", "inherit"],
+        maxBuffer: 16 * 1024 * 1024,
       }
     );
-    return JSON.parse(out.trim().split("\n").pop()); // last line = result
+    // `convex run` prints the function's return value as pretty-
+    // formatted JSON (often multi-line). Try the whole stdout first,
+    // then progressively trim status-line prefixes until it parses.
+    const trimmed = out.trim();
+    try { return JSON.parse(trimmed); } catch {}
+    const nlIdx = trimmed.indexOf("\n");
+    if (nlIdx > 0) {
+      try { return JSON.parse(trimmed.slice(nlIdx + 1).trim()); } catch {}
+    }
+    return null;
   } catch (e) {
     throw new Error(`convex run ${fn} failed: ${e.message}`);
   }
