@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260424-2b7a0cb">
+    <link rel="stylesheet" href="css/style.css?v=20260424-71798a5">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -90,7 +90,7 @@
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
     <script src="js/convex.js?v=20260418m"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260424-2b7a0cb"></script>
+    <script src="js/app.js?v=20260424-71798a5"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -195,19 +195,27 @@
     </div>
 
     <!-- Active family-tag filter pill. Appears when a user has clicked
-         a family tag inside the table; click again to clear. -->
-    <div class="list-search" x-show="activeFamilyFilter" style="padding-top:0">
+         a family tag inside the models table; click again to clear.
+         Only visible in models mode — in families mode the filter is
+         conceptually meaningless. -->
+    <div class="list-search" x-show="activeFamilyFilter && leaderboardScope === 'models'" style="padding-top:0">
         <span class="tag active" @click="clearFamilyFilter()" style="cursor:pointer">
             Family: <span x-text="activeFamilyFilter"></span> ×
         </span>
     </div>
 
-    <!-- Models Table -->
-    <table x-show="filteredRankedModels.length > 0" class="models-list">
+    <!-- ── Models Table (leaderboardScope === 'models') ── -->
+    <table x-show="leaderboardScope === 'models' && filteredRankedModels.length > 0" class="models-list">
         <thead>
             <tr>
                 <th style="width:50px">#</th>
-                <th>Model / Model-Family</th>
+                <th>
+                    <span class="lb-scope" :class="{'active': leaderboardScope === 'models'}"
+                          @click="setLeaderboardScope('models')">Model</span><!--
+                    --><span class="lb-scope-sep"> / </span><!--
+                    --><span class="lb-scope" :class="{'active': leaderboardScope === 'families'}"
+                          @click="setLeaderboardScope('families')">Model-Family</span>
+                </th>
                 <th>Provider</th>
                 <th title="Bench-weighted mean of the model's per-bench medians, shrunk by √(coverage share) so a model tested on only a fraction of the available benches cannot outrank a well-covered rival. See About for the full formula.">SupraScore</th>
                 <th x-show="activeTags.length > 0">Filtered Score</th>
@@ -240,12 +248,66 @@
         </tbody>
     </table>
 
-    <div class="empty-state" x-show="rankedModels.length === 0">
-        No models yet — be the first to contribute.
-    </div>
-    <div class="empty-state" x-show="rankedModels.length > 0 && filteredRankedModels.length === 0">
-        No models match this search.
-    </div>
+    <!-- ── Families Table (leaderboardScope === 'families') ──
+         Same five-column shape as the models table but rows are
+         (familyTag, provider) aggregates from familyRankings. Click on
+         a row drills down: switches back to models mode with that
+         family filter applied, so the user immediately sees which
+         member models compose the score. -->
+    <table x-show="leaderboardScope === 'families' && filteredRankedFamilies.length > 0" class="models-list">
+        <thead>
+            <tr>
+                <th style="width:50px">#</th>
+                <th>
+                    <span class="lb-scope" :class="{'active': leaderboardScope === 'models'}"
+                          @click="setLeaderboardScope('models')">Model</span><!--
+                    --><span class="lb-scope-sep"> / </span><!--
+                    --><span class="lb-scope" :class="{'active': leaderboardScope === 'families'}"
+                          @click="setLeaderboardScope('families')">Model-Family</span>
+                </th>
+                <th>Provider</th>
+                <th title="Family SupraScore: bench-weighted mean of the family's per-bench median-of-member-medians, shrunk by √(family coverage share). Same formula as the model SupraScore, just aggregated to the family level. See About for the full formula.">SupraScore</th>
+                <th title="Number of distinct member models in this family that contribute to the score.">Members</th>
+                <th title="Number of distinct benches the family has been measured on (union across all member models).">Coverage</th>
+            </tr>
+        </thead>
+        <tbody>
+            <template x-for="(f, i) in filteredRankedFamilies" :key="f.familyTag + '|' + f.provider">
+                <tr class="clickable-row" @click="drilldownFamily(f)">
+                    <td class="m-rank"><span class="rank-num" x-text="i+1"></span></td>
+                    <td class="m-name">
+                        <a href="#" @click.prevent x-text="f.familyTag" style="font-weight:500"></a>
+                    </td>
+                    <td class="m-provider" style="color:var(--text2)" x-text="f.provider"></td>
+                    <td class="m-supra"><span class="score-cell" x-text="f.supraScore.toFixed(1)"></span></td>
+                    <td class="m-coverage" style="color:var(--text3);font-size:.85rem" x-text="f.modelCount + (f.modelCount === 1 ? ' model' : ' models')"></td>
+                    <td class="m-coverage" style="color:var(--text3);font-size:.85rem" x-text="f.benchCount + ' benches'"></td>
+                </tr>
+            </template>
+        </tbody>
+    </table>
+
+    <!-- Empty states — one per scope -->
+    <template x-if="leaderboardScope === 'models'">
+        <div>
+            <div class="empty-state" x-show="rankedModels.length === 0">
+                No models yet — be the first to contribute.
+            </div>
+            <div class="empty-state" x-show="rankedModels.length > 0 && filteredRankedModels.length === 0">
+                No models match this search.
+            </div>
+        </div>
+    </template>
+    <template x-if="leaderboardScope === 'families'">
+        <div>
+            <div class="empty-state" x-show="rankedFamilies.length === 0">
+                No model families yet — assign a family tag when submitting a model.
+            </div>
+            <div class="empty-state" x-show="rankedFamilies.length > 0 && filteredRankedFamilies.length === 0">
+                No families match this search.
+            </div>
+        </div>
+    </template>
 
 </div>
 

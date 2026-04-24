@@ -552,6 +552,30 @@ tr.clickable-row {
   color: var(--bg);
 }
 
+/* Leaderboard scope toggle — the two clickable words ("Model" /
+   "Model-Family") in the models-table header. The currently active
+   scope is shown in accent yellow; the inactive one is dim and turns
+   white on hover so it's discoverable as interactive. */
+.lb-scope {
+  cursor: pointer;
+  color: var(--text2);
+  transition: color 0.12s;
+  user-select: none;
+}
+.lb-scope:hover {
+  color: var(--text);
+}
+.lb-scope.active {
+  color: var(--accent);
+}
+.lb-scope.active:hover {
+  color: var(--accent);
+}
+.lb-scope-sep {
+  color: var(--text3);
+  user-select: none;
+}
+
 /* ── Badges ── */
 .badge {
   display: inline-block;

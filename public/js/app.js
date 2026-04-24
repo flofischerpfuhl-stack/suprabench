@@ -313,8 +313,15 @@ function supraBench() {
 
     // ── Data (reactive from Convex) ──
     rankedModels: [],
+    rankedFamilies: [],
     rankedBenches: [],
     allTags: [],
+
+    // Models leaderboard scope: "models" (one row per model) or
+    // "families" (one row per (familyTag, provider) aggregate from
+    // familyRankings). Toggled by clicking the "Model / Model-Family"
+    // header. Default "models" — that's what most visitors expect.
+    leaderboardScope: "models",
     allProviders: [],
     allFamilyTags: [],
     activeTags: [],
@@ -603,8 +610,16 @@ function supraBench() {
         this._viewSub("models.listRanked", api.models.listRanked, {}, (data) => {
           this.rankedModels = data || [];
         });
+        // Subscribe to families too whenever the models view is open,
+        // even if the user is currently in "models" scope — keeps the
+        // toggle instant. Families table is small (one row per family,
+        // not per model) so the bandwidth is negligible.
+        this._viewSub("models.listRankedFamilies", api.models.listRankedFamilies, {}, (data) => {
+          this.rankedFamilies = data || [];
+        });
       } else {
         this._closeViewSub("models.listRanked");
+        this._closeViewSub("models.listRankedFamilies");
       }
 
       if (wantBenches) {
@@ -1506,6 +1521,26 @@ function supraBench() {
       this.activeFamilyFilter = "";
     },
 
+    // Switch the leaderboard between models / families view. Switching
+    // INTO families mode clears any active family-filter chip — that
+    // chip is conceptually a "filter the models list to one family",
+    // which is meaningless when each row already IS a family.
+    setLeaderboardScope(scope) {
+      if (scope !== "models" && scope !== "families") return;
+      if (this.leaderboardScope === scope) return;
+      this.leaderboardScope = scope;
+      if (scope === "families") this.activeFamilyFilter = "";
+    },
+
+    // Click handler for a row in the families table: switch back to
+    // models scope and pre-fill the family filter so the user
+    // immediately sees which member models compose this family score.
+    drilldownFamily(f) {
+      if (!f || !f.familyTag) return;
+      this.activeFamilyFilter = f.familyTag;
+      this.leaderboardScope = "models";
+    },
+
     async _loadFilteredModels() {
       if (this.activeTags.length === 0) return;
       const { client, api } = window.sbConvex;
@@ -1579,6 +1614,21 @@ function supraBench() {
         m.name.toLowerCase().includes(q) ||
         (m.provider || "").toLowerCase().includes(q) ||
         (m.tags || []).some((t) => t.includes(q))
+      );
+    },
+
+    // Same shape as filteredRankedModels, but for the families table.
+    // Search applies across familyTag, provider, and aggregate tags.
+    // No activeFamilyFilter handling — it's meaningless when each row
+    // already IS a family (we'd just hide all-but-one row).
+    get filteredRankedFamilies() {
+      const q = this.modelListSearch.trim().toLowerCase();
+      const list = this.rankedFamilies;
+      if (!q) return list;
+      return list.filter((f) =>
+        (f.familyTag || "").toLowerCase().includes(q) ||
+        (f.provider || "").toLowerCase().includes(q) ||
+        (f.tags || []).some((t) => t.includes(q))
       );
     },
 
