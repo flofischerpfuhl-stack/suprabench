@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260422-bce1f7b">
+    <link rel="stylesheet" href="css/style.css?v=20260424-cc71242">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -90,7 +90,7 @@
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
     <script src="js/convex.js?v=20260418m"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260422-bce1f7b"></script>
+    <script src="js/app.js?v=20260424-cc71242"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -1702,42 +1702,92 @@
         </div>
     </div>
 
-    <!-- Q2 -->
+    <!-- Q2 — Bench Score -->
     <div class="qa-item">
         <button class="qa-question" :aria-expanded="aboutOpen.has('q2')" @click="aboutToggle('q2')">
             <span class="expand-icon" :class="{'open': aboutOpen.has('q2')}">▼</span>
-            <span>How is a model's SupraScore computed, end to end?</span>
+            <span>How is a Bench Score computed?</span>
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q2')" x-transition>
-            <p>Five steps, all reproducible from the raw data:</p>
+            <p>The <strong>Bench Score</strong> is the headline number shown on every bench page. It answers a single question: <em>"how much should this benchmark count when ranking models?"</em> — a high-quality, hard, unsaturated bench that many models and many community members have engaged with should count more than a one-rater vanity bench on a trivial task.</p>
 
-            <h4 class="qa-subheader">1. Normalise each submission</h4>
-            <p>Every bench has its own scale (0–100, 0–10, 0–1, …). Each raw score is normalised to 0–100:</p>
+            <p>It's a single number on $[0, 100]$ built from five independent factors. We define each variable first, then put them together.</p>
+
+            <h4 class="qa-subheader">Variables</h4>
+            <ul class="about-list">
+                <li>$b$ — a single benchmark.</li>
+                <li>$Q(b) \in [0, 100]$ — the bench's <strong>quality</strong>, i.e. how trustworthy the score is. Mean of four community ratings (relevance, contamination resistance, discriminability, reproducibility) on a 1–5 scale, scaled by 20. Defaults to $50$ when nobody has rated yet. <em>(Full breakdown in "What exactly are the five bench dimensions?" below.)</em></li>
+                <li>$D(b) \in [0, 1]$ — the bench's <strong>difficulty</strong>, i.e. how much general intelligence it actually probes. Median of community 1–5 ratings, linearly mapped to $[0, 1]$ ($1\!\to\!0$, $5\!\to\!1$). Defaults to $0.5$ when un-rated.</li>
+                <li>$H(b) \in [0, 1]$ — the bench's <strong>headroom</strong>, i.e. how much measurement signal it has left before it saturates. Computed automatically from the top-$K$ frontier mean on $b$ — fully open ($H=1$) until at least 3 models are evaluated, shrinks toward a floor of $0.1$ as the frontier mean climbs from $50$ toward $100$. <em>(Full formula in "What is headroom and why does it exist?" below.)</em></li>
+                <li>$u_b \in \mathbb{Z}_{\geq 0}$ — the bench's <strong>net upvotes</strong>: number of distinct upvoting accounts minus number of distinct downvoting accounts on the bench's existence-vote, floored at $0$.</li>
+                <li>$U^\star = \max_{b'} u_{b'}$ — the maximum $u_b$ across every <em>non-hidden</em> bench in the system. Bootstrap: if $U^\star = 0$ (brand-new deployment, no votes anywhere), this factor is disabled for everyone.</li>
+                <li>$N_b \in \mathbb{Z}_{\geq 0}$ — the bench's <strong>distinct-model count</strong>: how many different models have at least one net-positive (community-validated) submission on $b$.</li>
+                <li>$N^\star = \max_{b'} N_{b'}$ — the maximum $N_b$ across every non-hidden bench. Bootstrap: if $N^\star = 0$, this factor is disabled for everyone.</li>
+            </ul>
+
+            <h4 class="qa-subheader">The formula</h4>
+            <p class="math-block">$$\operatorname{BenchScore}(b) \;=\; \underbrace{Q(b)}_{\text{quality}} \;\cdot\; \underbrace{D(b)}_{\text{difficulty}} \;\cdot\; \underbrace{H(b)}_{\text{headroom}} \;\cdot\; \underbrace{\sqrt{u_b / U^\star}}_{\text{upvote share}} \;\cdot\; \underbrace{\sqrt{N_b / N^\star}}_{\text{model-count share}}$$</p>
+            <p>Quality is on $[0, 100]$; the four other factors are all on $[0, 1]$, so the Bench Score stays naturally on $[0, 100]$ — the same scale as the per-model scores.</p>
+
+            <h4 class="qa-subheader">What each factor does</h4>
+            <ul class="about-list">
+                <li><strong>$Q(b)$ — quality.</strong> If the community thinks the bench is contaminated, trivia-grade, or non-reproducible, $Q$ shrinks and the bench's whole weight shrinks with it. A bench rated 1/5 across the board has $Q=20$, fivefold less weight than a unanimous 5/5.</li>
+                <li><strong>$D(b)$ — difficulty.</strong> A bench rated 1/5 in difficulty has $D=0$ and is silently filtered out — scoring 100 % on a trivial bench earns the model nothing. A bench rated 5/5 has $D=1$ and is counted at full weight.</li>
+                <li><strong>$H(b)$ — headroom.</strong> Once a bench is solved (top frontier models all near 100), $H$ shrinks toward the $0.1$ floor, so the bench stops dominating the leaderboard the moment it loses resolving power. This makes ARC-AGI 3 → 4 hand-offs automatic, no manual retirement needed.</li>
+                <li><strong>$\sqrt{u_b / U^\star}$ — upvote share.</strong> Without this, anyone could mint a brand-new bench, self-rate it $Q=D=H=1$ and immediately appear at #1 on the bench leaderboard. With it, a 1-upvote vanity bench at $u_b=1$ against an established $U^\star=100$ is worth $\sqrt{1/100}=10\,\%$ of an equally well-rated leader. The most-upvoted bench always has share = 1, so there's no self-penalty at the top.</li>
+                <li><strong>$\sqrt{N_b / N^\star}$ — model-count share.</strong> A bench tested by only 1 model gives almost no comparative information. This factor shrinks "spawn a bench, test only your own model on it" attacks: $N_b=1$ vs $N^\star=20$ gives $\sqrt{1/20} \approx 22\,\%$, on top of whatever the upvote share already costs. Modality asymmetry (image benches naturally cover fewer models than text benches) is intentional — they genuinely tell us less about the broader model population.</li>
+            </ul>
+
+            <p class="helper-text">The two $\sqrt{\cdot}$ shapes are deliberate: they mirror the statistical $1/\sqrt{N}$ standard-error falloff. Halving a bench's upvote count doesn't halve its weight, it shrinks by $\sqrt{2} \approx 1.41$. This makes the penalty real but never collapse the bench to zero on a single missing vote.</p>
+        </div>
+    </div>
+
+    <!-- Q2b — Model Score / SupraScore -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q2b')" @click="aboutToggle('q2b')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q2b')}">▼</span>
+            <span>How is a model's SupraScore computed?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q2b')" x-transition>
+            <p>A model's <strong>SupraScore</strong> is the headline number on every model page and the primary leaderboard sort key. It builds <em>on top of</em> the Bench Score from the previous section — so if you haven't read that one yet, start there. Conceptually, it answers: <em>"averaging across every benchmark this model has been tested on, how well does it perform — adjusted for how broadly it's actually been measured?"</em></p>
+
+            <p>Three preparatory steps to get from raw submissions to a usable per-(model, bench) score, then two scoring steps to combine those into a final SupraScore.</p>
+
+            <h4 class="qa-subheader">Foundations: from raw submissions to $\mu_{m,b}$</h4>
+
+            <p><strong>Step 1 — Normalise.</strong> Every bench has its own scale (0–100, 0–10, 0–1, …). Each raw submission $s_{\text{raw}}$ is normalised to a common $[0, 100]$ scale using the bench's declared min/max:</p>
             <p class="math-block">$$s_{\text{norm}} \;=\; \frac{s_{\text{raw}} - s_{\min}}{s_{\max} - s_{\min}} \cdot 100$$</p>
 
-            <h4 class="qa-subheader">2. Validate via community votes</h4>
-            <p>A submission only counts if its net vote is positive (the submitter gets an implicit +1, so a fresh submission starts at 1/0). Wrong, duplicate or fraudulent submissions get downvoted out of the calculation.</p>
+            <p><strong>Step 2 — Validate via community votes.</strong> A submission only counts toward any score if its net vote is positive. The submitter gets an implicit $+1$, so a fresh submission starts at $1/0$. Wrong, duplicate, or fraudulent submissions get downvoted out of the calculation.</p>
 
-            <h4 class="qa-subheader">3. Take the median per (model, bench) pair</h4>
-            <p>For a model <em>m</em> on bench <em>b</em>, with valid normalised scores $\mathcal{S}_{m,b}$:</p>
+            <p><strong>Step 3 — Median per (model, bench) pair.</strong> For a model $m$ on bench $b$, let $\mathcal{S}_{m,b}$ be the set of community-validated normalised scores. The per-pair score is:</p>
             <p class="math-block">$$\mu_{m,b} \;=\; \operatorname{median}\bigl(\mathcal{S}_{m,b}\bigr)$$</p>
             <p>Median, not mean — one outlier submission cannot shift the result.</p>
 
-            <h4 class="qa-subheader">4. Compute the Bench Score</h4>
-            <p>Five independent factors. <strong>Quality</strong> (trust), <strong>difficulty</strong> (intelligence demand), <strong>headroom</strong> (saturation), and two community <strong>coverage-share</strong> factors — one on the bench's net upvotes, one on how many distinct models have actually been scored on it:</p>
-            <p class="math-block">$$\operatorname{BenchScore}(b) \;=\; \underbrace{Q(b)}_{\text{quality}} \;\cdot\; \underbrace{D(b)}_{\text{difficulty}} \;\cdot\; \underbrace{H(b)}_{\text{headroom}} \;\cdot\; \underbrace{\sqrt{u_b / U^\star}}_{\text{upvote share}} \;\cdot\; \underbrace{\sqrt{N_b / N^\star}}_{\text{model-count share}}$$</p>
-            <p class="helper-text">$u_b$ is the bench's net entityVotes (ups − downs, floored at 0) and $U^\star$ is the maximum across every non-hidden bench. Without this factor, anyone could mint a brand-new bench, self-rate it 5/5/5/5, and immediately appear at #1 on the bench leaderboard. With it, a 1-upvote vanity bench at $u_b = 1$ against an established $U^\star = 100$ shrinks to $\sqrt{1/100} = 10\,\%$. The most-upvoted bench always sits at share = 1 (no self-penalty); $U^\star = 0$ disables the factor on a fresh deployment.</p>
-            <p class="helper-text">$N_b$ is the number of distinct (non-hidden) models with a net-positive submission on $b$, and $N^\star$ is the maximum across non-hidden benches. This second share encodes "how widely is this bench actually used to rank models?" — a bench tested by 1 model gives almost no comparative information; one tested by 30 models gives strong signal. Defends "spawn a community bench and test only your own model on it": $N_b = 1$ means $\sqrt{1/N^\star}$ shrinkage on top of the upvote-share. Modality asymmetry (image benches naturally cover fewer models than text benches) is intentional — they genuinely tell us less about the broader model population.</p>
-            <p class="helper-text">Quality is on $[0,100]$; difficulty, headroom, and both coverage-share factors are all on $[0,1]$, so the Bench Score stays naturally on $[0,100]$ — same scale as the per-model scores. It's also the headline number shown on every bench page and in the benchmarks list.</p>
+            <h4 class="qa-subheader">Variables (model side)</h4>
+            <ul class="about-list">
+                <li>$m$ — a single model.</li>
+                <li>$\mathcal{B}_m$ — the set of benches on which $m$ has at least one community-validated score (i.e. at least one $\mu_{m,b}$ exists).</li>
+                <li>$\mu_{m,b} \in [0, 100]$ — the per-pair median from step 3 above.</li>
+                <li>$\operatorname{BenchScore}(b) \in [0, 100]$ — the five-factor weight from the previous section. Used here as the <em>weight</em> for bench $b$ in the average.</li>
+                <li>$\bar{\mu}_m \in [0, 100]$ — the model's <strong>weighted mean</strong> across all its evaluated benches (computed in step 4 below).</li>
+                <li>$W_m \;=\; \displaystyle\sum_{b \in \mathcal{B}_m} \operatorname{BenchScore}(b)$ — the model's <strong>accumulated bench-score weight</strong>. Think of it as "how much trustworthy, hard, well-engaged measurement has been thrown at this model in total".</li>
+                <li>$W^\star \;=\; \max_{m'} W_{m'}$ — the maximum $W_m$ across every <em>non-hidden</em> model. Defines the "fully covered" reference point.</li>
+            </ul>
 
-            <h4 class="qa-subheader">5. The SupraScore</h4>
-            <p>Two steps, both already using the five-factor Bench Score from step 4 (so the two bench-side coverage defences flow straight through). First, the model's <em>weighted mean</em> — a Bench-Score-weighted average of its per-bench medians, over all benches $\mathcal{B}_m$ the model has been evaluated on:</p>
+            <h4 class="qa-subheader">Step 4 — The weighted mean $\bar{\mu}_m$</h4>
+            <p>A Bench-Score-weighted average of the model's per-bench medians:</p>
             <p class="math-block">$$\bar{\mu}_m \;=\; \frac{\displaystyle \sum_{b \in \mathcal{B}_m} \mu_{m,b} \cdot \operatorname{BenchScore}(b)}{\displaystyle \sum_{b \in \mathcal{B}_m} \operatorname{BenchScore}(b)}$$</p>
-            <p class="helper-text">Benches with $\operatorname{BenchScore}(b)=0$ (e.g. zero difficulty, zero quality) are excluded from both numerator and denominator.</p>
-            <p>Second, a <em>coverage-share</em> factor that protects the ranking from models tested on only a tiny slice of the benchmarks. Let $W_m = \sum_{b \in \mathcal{B}_m} \operatorname{BenchScore}(b)$ be the model's accumulated Bench-Score weight, and $W^\star = \max_{m'} W_{m'}$ the maximum over every non-hidden model. The final score shrinks $\bar{\mu}_m$ by the square root of the model's share of that maximum:</p>
-            <p class="math-block">$$\operatorname{SupraScore}(m) \;=\; \bar{\mu}_m \cdot \sqrt{\frac{W_m}{W^\star}}$$</p>
-            <p class="helper-text">The $\sqrt{\cdot}$ mirrors the statistical $1/\sqrt{N}$ shape of standard-error falloff — halving your coverage doesn't halve your score, it shrinks it by $\sqrt{2}$. The best-covered model always has share $=1$ and therefore no self-penalty. Hidden models are excluded from the maximum so a mothballed giant can't permanently squash fresh entrants.</p>
-            <p class="helper-text">This does mean a model's score can move when <em>other</em> models gain coverage (a well-tested new flagship raising $W^\star$ shifts everyone else proportionally). That's deliberate: "coverage" is a relative concept — it only exists in comparison to what else has been tested.</p>
+            <p>Benches with $\operatorname{BenchScore}(b) = 0$ (e.g. zero difficulty or zero quality) are excluded from both numerator and denominator. Because Bench Scores already incorporate the two coverage-shrinkages (upvote share, model-count share), vanity benches automatically pull less weight in this average.</p>
+
+            <h4 class="qa-subheader">Step 5 — The coverage-share shrinkage</h4>
+            <p>The weighted mean alone would let a model tested on a single favourable bench beat a well-covered rival. So we shrink $\bar{\mu}_m$ by the square root of the model's share of the largest accumulated weight in the system:</p>
+            <p class="math-block">$$\operatorname{SupraScore}(m) \;=\; \bar{\mu}_m \cdot \sqrt{\dfrac{W_m}{W^\star}}$$</p>
+            <p>If $W_m = W^\star$ the shrinkage factor is exactly $1$ (the most-covered model has no self-penalty). If $W_m = \tfrac{1}{4} W^\star$ the factor is $\sqrt{0.25} = 0.5$ — half coverage costs you half your score.</p>
+
+            <p class="helper-text">The $\sqrt{\cdot}$ shape mirrors the statistical $1/\sqrt{N}$ standard-error falloff: halving your coverage doesn't halve your score, it shrinks it by $\sqrt{2}$. Hidden models are excluded from the $W^\star$ maximum so a mothballed flagship can't permanently squash fresh entrants.</p>
+
+            <p class="helper-text">A consequence to be aware of: a model's SupraScore can move when <em>other</em> models gain coverage. A well-tested new flagship that raises $W^\star$ shifts everyone else's share proportionally. This is deliberate — "coverage" is a relative concept and only exists in comparison to what else has been tested. See the worked example below for concrete numbers.</p>
         </div>
     </div>
 

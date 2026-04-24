@@ -1464,7 +1464,7 @@ function supraBench() {
       this.$nextTick(() => this.renderAboutMath());
     },
     aboutExpandAll() {
-      const ids = ["q1","q2","q3","q4","q5","q6","q7","q8","q9"];
+      const ids = ["q1","q2","q2b","q3","q4","q5","q6","q7","q8","q9","q10"];
       this.aboutOpen = new Set(ids);
       this.$nextTick(() => this.renderAboutMath());
     },
