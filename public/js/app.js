@@ -463,8 +463,6 @@ function supraBench() {
                               // matches it (see adminToggleSelect).
     adminBusy: false,
     adminFlash: null,         // toast-lite: { kind: 'ok'|'err', msg: string }
-    adminNewKey: null,        // plaintext once after mintKeyForUser
-    adminKeyName: "",
     adminGrantForm: {
       tier: "partner",
       monthlyQuota: 100000,
@@ -770,7 +768,6 @@ function supraBench() {
         } else {
           this.profileTab = "activity";
         }
-        this.adminNewKey = null;
         this.adminFlash = null;
         this._loadProfile();
       } else if (parts[0] === "admin") {
@@ -779,7 +776,6 @@ function supraBench() {
         // from standalone view to profile tab.
         this.view = "profile";
         this.profileTab = "admin";
-        this.adminNewKey = null;
         this.adminFlash = null;
         this._loadProfile();
       }
@@ -1181,8 +1177,6 @@ function supraBench() {
       if (!this.user?.isAdmin) return;
       if (this.adminSelected && this.adminSelected._id === userId) {
         this.adminSelected = null;
-        this.adminNewKey = null;
-        this.adminKeyName = "";
         return;
       }
       await this.adminSelect(userId);
@@ -1192,8 +1186,6 @@ function supraBench() {
       const { client, api } = window.sbConvex;
       try {
         this.adminSelected = await client.query(api.admin.getUserDetail, { userId });
-        this.adminNewKey = null;
-        this.adminKeyName = "";
         // Prime the grant form from the current grant so edits feel
         // like an update, not a wipe.
         if (this.adminSelected?.grantedLimits) {
@@ -1316,27 +1308,6 @@ function supraBench() {
         this.adminBusy = false;
       }
     },
-    async adminMintKey() {
-      if (!this.user?.isAdmin || !this.adminSelected || this.adminBusy) return;
-      const name = (this.adminKeyName || "").trim();
-      if (!name) { this._adminFlash("err", "Key name required"); return; }
-      this.adminBusy = true;
-      try {
-        const { client, api } = window.sbConvex;
-        const res = await client.mutation(api.admin.mintKeyForUser, {
-          userId: this.adminSelected._id,
-          name,
-        });
-        this.adminNewKey = res;   // shown once, plaintext field is rendered highlighted
-        this.adminKeyName = "";
-        this._adminFlash("ok", "Key minted — copy plaintext now");
-        await this.adminRefreshSelected();
-      } catch (e) {
-        this._adminFlash("err", e.message || "Mint failed");
-      } finally {
-        this.adminBusy = false;
-      }
-    },
     async adminRevokeKey(keyId) {
       if (!this.user?.isAdmin || this.adminBusy) return;
       const ok = await this.sbConfirm({
@@ -1357,18 +1328,6 @@ function supraBench() {
       } finally {
         this.adminBusy = false;
       }
-    },
-    async adminCopyKey() {
-      if (!this.adminNewKey?.plaintext) return;
-      try {
-        await navigator.clipboard.writeText(this.adminNewKey.plaintext);
-        this._adminFlash("ok", "Copied to clipboard");
-      } catch {
-        this._adminFlash("err", "Copy failed — select manually");
-      }
-    },
-    adminDismissNewKey() {
-      this.adminNewKey = null;
     },
     _adminFlash(kind, msg) {
       this.adminFlash = { kind, msg };

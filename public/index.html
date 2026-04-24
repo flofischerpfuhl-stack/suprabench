@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260424-sim3">
+    <link rel="stylesheet" href="css/style.css?v=20260424-noadminmint">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -89,9 +89,9 @@
             integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
     <script src="js/convex.js?v=20260418m"></script>
-    <script src="js/simulator-math.js?v=20260424-sim3"></script>
+    <script src="js/simulator-math.js?v=20260424-noadminmint"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260424-sim3"></script>
+    <script src="js/app.js?v=20260424-noadminmint"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -2362,11 +2362,10 @@
                      Renders only for users with an active grantedTier.
                      Their tier is LIVE today — the /v1/ HTTP routes
                      accept their keys, only the paid Stripe-backed
-                     tiers are still demand-gated. Keys are minted by
-                     an admin (admin board → "API keys" section, or
-                     `npx convex run partners:createPartnerKey` for
-                     CLI flows), so this panel is read-only for the
-                     mint side and self-serve for revoke + usage.
+                     tiers are still demand-gated. Fully self-service:
+                     the user mints, names and revokes their own keys
+                     up to grantedLimits.maxKeys. Admin only sets the
+                     limit and can emergency-revoke a compromised key.
                      ════════════════════════════════════════════════ -->
                 <template x-if="user && user.grantedTier">
                     <div class="api-dashboard">
@@ -3065,15 +3064,18 @@
 
             <!-- ── TAB: Admin ──
                  Visible only when user.isAdmin === true. Search for any user,
-                 grant/revoke admin or partner/enterprise_plus tier, mint &
-                 revoke API keys, inspect monthly usage. Backend re-asserts
-                 every permission check — the x-show gate is cosmetic. -->
+                 grant/revoke admin or partner/enterprise_plus tier, view (and
+                 emergency-revoke) their API keys, inspect monthly usage.
+                 Key minting itself is fully self-service from the user's own
+                 API tab — admins set the limit, the user mints. Backend
+                 re-asserts every permission check — the x-show gate is
+                 cosmetic. -->
             <div x-show="profileTab==='admin' && user && user.isAdmin" x-transition.opacity>
         <div class="admin-board">
             <p class="admin-intro">
                 Search accounts by name or email. Grant
                 <strong>partner</strong> or <strong>enterprise+</strong>
-                with custom limits, or mint keys for them here.
+                with custom limits — they mint their own keys from the API tab.
                 <template x-if="user && user.isPrimaryAdmin">
                     <span>As primary admin, you can also promote other admins.</span>
                 </template>
@@ -3238,31 +3240,17 @@
                                     </form>
                                 </section>
 
-                                <!-- Key management (only when user has grantedTier) -->
+                                <!-- Key inspection (only when user has grantedTier).
+                                     Read-only view — minting is self-service from
+                                     the user's own API tab. We keep the revoke
+                                     button as an emergency response tool for
+                                     compromised keys. -->
                                 <section class="admin-section" x-show="adminSelected.grantedTier">
-                                    <h3>API keys</h3>
-
-                                    <template x-if="adminNewKey">
-                                        <div class="admin-newkey">
-                                            <div class="admin-newkey__title">Plaintext key — shown once. Copy now.</div>
-                                            <code class="admin-newkey__value" x-text="adminNewKey.plaintext"></code>
-                                            <div class="admin-newkey__actions">
-                                                <button class="btn btn-sm btn-primary" @click="adminCopyKey()">Copy</button>
-                                                <button class="btn btn-sm btn-outline" @click="adminDismissNewKey()">Dismiss</button>
-                                            </div>
-                                            <small>The backend stores only the SHA-256 hash. If you lose this value, revoke the key and mint a new one.</small>
-                                        </div>
-                                    </template>
-
-                                    <form class="admin-mint-form" @submit.prevent="adminMintKey()">
-                                        <label>
-                                            <span>Key name (for the owner to identify it)</span>
-                                            <input type="text" x-model="adminKeyName" placeholder="e.g. production-api-key">
-                                        </label>
-                                        <button type="submit" class="btn btn-primary btn-sm" :disabled="adminBusy || !adminKeyName.trim()">
-                                            Mint new key
-                                        </button>
-                                    </form>
+                                    <h3>API keys
+                                        <span class="helper-text" style="font-weight:400; margin-left:.5rem">
+                                            view-only — the user mints their own keys from their API tab
+                                        </span>
+                                    </h3>
 
                                     <div class="admin-keys" x-show="adminSelected.keys && adminSelected.keys.length > 0">
                                         <table class="admin-keys__table">
@@ -3301,7 +3289,7 @@
                                         </table>
                                     </div>
                                     <div class="empty-state" x-show="!adminSelected.keys || adminSelected.keys.length === 0" style="padding:.75rem">
-                                        No keys minted yet.
+                                        User hasn't minted any keys yet.
                                     </div>
                                 </section>
 

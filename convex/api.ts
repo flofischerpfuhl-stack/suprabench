@@ -315,9 +315,9 @@ export const createKey = mutation({
  *       through `createKey`, which enforces an active subscription.
  *    2. Caller's active key count must be below `grantedLimits.maxKeys`.
  *
- *  Returns the plaintext ONCE — same contract as `createKey` /
- *  `admin:mintKeyForUser`. We never persist or re-derive the
- *  plaintext; the user must save it on first display. */
+ *  Returns the plaintext ONCE — same contract as `createKey`. We
+ *  never persist or re-derive the plaintext; the user must save it
+ *  on first display. */
 export const createMyKey = mutation({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {

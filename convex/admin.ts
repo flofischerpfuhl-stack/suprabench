@@ -82,31 +82,6 @@ export const cleanupOrphanAuth = internalMutation({
 // deploy.
 export const PRIMARY_ADMIN_EMAIL = "flofischer.pfuhl@gmail.com";
 
-const KEY_PREFIX = "sb_live_";
-
-async function sha256Hex(input: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function generateApiKey(): Promise<{
-  plaintext: string;
-  hash: string;
-  prefix: string;
-}> {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  const tail = Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  const plaintext = KEY_PREFIX + tail;
-  const hash = await sha256Hex(plaintext);
-  const prefix = KEY_PREFIX + hash.slice(0, 8);
-  return { plaintext, hash, prefix };
-}
-
 /** Returns whether the given user has admin privileges (either the
  *  primary admin by email, or has been promoted via grantAdmin). */
 async function isUserAdmin(
@@ -511,64 +486,15 @@ export const revokeTier = mutation({
   },
 });
 
-/** Mint a fresh API key for a user who has been granted a tier.
- *  Uses the user's grantedLimits for quota/rpm. Returns plaintext
- *  ONCE — admin must copy and give to the user (we only store the
- *  hash). Refuses if the user has no grant or has reached maxKeys. */
-export const mintKeyForUser = mutation({
-  args: {
-    userId: v.id("users"),
-    name: v.string(),
-  },
-  handler: async (ctx, { userId, name }) => {
-    await assertAdmin(ctx);
-
-    if (!name.trim()) throw new Error("name is required");
-
-    const role = await ctx.db
-      .query("userRoles")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .first();
-    if (!role?.grantedTier || !role.grantedLimits)
-      throw new Error("user has no granted tier; run grantTier first");
-
-    const existing = await ctx.db
-      .query("apiKeys")
-      .withIndex("by_owner", (q) => q.eq("ownerUserId", userId))
-      .collect();
-    const activeCount = existing.filter((k) => !k.revokedAt).length;
-    if (activeCount >= role.grantedLimits.maxKeys) {
-      throw new Error(
-        `user already has ${activeCount} active keys (maxKeys=${role.grantedLimits.maxKeys})`
-      );
-    }
-
-    const { plaintext, hash, prefix } = await generateApiKey();
-    await ctx.db.insert("apiKeys", {
-      hash,
-      prefix,
-      name,
-      ownerUserId: userId,
-      tier: role.grantedTier,
-      monthlyQuota: role.grantedLimits.monthlyQuota,
-      rpmLimit: role.grantedLimits.rpmLimit,
-      createdAt: Date.now(),
-    });
-    return {
-      plaintext,
-      prefix,
-      name,
-      tier: role.grantedTier,
-      monthlyQuota: role.grantedLimits.monthlyQuota,
-      rpmLimit: role.grantedLimits.rpmLimit,
-      instruction:
-        "Save the plaintext key NOW — shown once. Give it to the user via a secure channel. We only keep the hash.",
-    };
-  },
-});
+// Note: minting is fully self-service from the user's API tab
+// (see api.ts → mintKey). Admins set the limit, the user mints. We
+// previously had `mintKeyForUser` here for ops to provision keys on
+// behalf of partners; that flow is gone — a partner-tier user mints
+// their own keys, no admin involvement required.
 
 /** Revoke a single key (soft — sets revokedAt). Admin-callable
- *  counterpart to the user-level revokeKey in api.ts. */
+ *  counterpart to the user-level revokeKey in api.ts. Used for
+ *  emergency response (e.g. compromised key reported out-of-band). */
 export const revokeKey = mutation({
   args: { apiKeyId: v.id("apiKeys") },
   handler: async (ctx, { apiKeyId }) => {
