@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260424-ace4a0e">
+    <link rel="stylesheet" href="css/style.css?v=20260424-skeletontime">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -90,7 +90,7 @@
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
     <script src="js/convex.js?v=20260418m"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260424-ace4a0e"></script>
+    <script src="js/app.js?v=20260424-skeletontime"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -291,23 +291,52 @@
         </tbody>
     </table>
 
-    <!-- Empty states — one per scope -->
+    <!-- Loading skeleton — shown until the first sub update arrives.
+         Avoids the ~200ms flash of "No models yet" on a cold page
+         load while the Convex websocket is still warming up. -->
+    <div class="leaderboard-skeleton" x-show="leaderboardScope === 'models' && !loaded.models">
+        <div class="skeleton-row" style="--w:50px"><div class="skeleton-cell"></div></div>
+        <template x-for="i in 8" :key="'sk-m-' + i">
+            <div class="skeleton-row">
+                <div class="skeleton-cell skeleton-cell--rank"></div>
+                <div class="skeleton-cell skeleton-cell--name"></div>
+                <div class="skeleton-cell skeleton-cell--provider"></div>
+                <div class="skeleton-cell skeleton-cell--score"></div>
+                <div class="skeleton-cell skeleton-cell--meta"></div>
+            </div>
+        </template>
+    </div>
+    <div class="leaderboard-skeleton" x-show="leaderboardScope === 'families' && !loaded.families">
+        <template x-for="i in 6" :key="'sk-f-' + i">
+            <div class="skeleton-row">
+                <div class="skeleton-cell skeleton-cell--rank"></div>
+                <div class="skeleton-cell skeleton-cell--name"></div>
+                <div class="skeleton-cell skeleton-cell--provider"></div>
+                <div class="skeleton-cell skeleton-cell--score"></div>
+                <div class="skeleton-cell skeleton-cell--meta"></div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Empty states — gated behind `loaded.*` so they only appear
+         after the first sub update confirms the collection is truly
+         empty (vs still in-flight). -->
     <template x-if="leaderboardScope === 'models'">
         <div>
-            <div class="empty-state" x-show="rankedModels.length === 0">
+            <div class="empty-state" x-show="loaded.models && rankedModels.length === 0">
                 No models yet — be the first to contribute.
             </div>
-            <div class="empty-state" x-show="rankedModels.length > 0 && filteredRankedModels.length === 0">
+            <div class="empty-state" x-show="loaded.models && rankedModels.length > 0 && filteredRankedModels.length === 0">
                 No models match this search.
             </div>
         </div>
     </template>
     <template x-if="leaderboardScope === 'families'">
         <div>
-            <div class="empty-state" x-show="rankedFamilies.length === 0">
+            <div class="empty-state" x-show="loaded.families && rankedFamilies.length === 0">
                 No model families yet — assign a family tag when submitting a model.
             </div>
-            <div class="empty-state" x-show="rankedFamilies.length > 0 && filteredRankedFamilies.length === 0">
+            <div class="empty-state" x-show="loaded.families && rankedFamilies.length > 0 && filteredRankedFamilies.length === 0">
                 No families match this search.
             </div>
         </div>
@@ -627,10 +656,24 @@
         </tbody>
     </table>
 
-    <div class="empty-state" x-show="rankedBenches.length === 0">
+    <!-- Loading skeleton + gated empty states. Same pattern as the
+         models view: skeleton until first sub update arrives, only
+         then can the empty / no-match states render. -->
+    <div class="leaderboard-skeleton" x-show="!loaded.benches">
+        <template x-for="i in 8" :key="'sk-b-' + i">
+            <div class="skeleton-row">
+                <div class="skeleton-cell skeleton-cell--rank"></div>
+                <div class="skeleton-cell skeleton-cell--name"></div>
+                <div class="skeleton-cell skeleton-cell--provider"></div>
+                <div class="skeleton-cell skeleton-cell--score"></div>
+                <div class="skeleton-cell skeleton-cell--meta"></div>
+            </div>
+        </template>
+    </div>
+    <div class="empty-state" x-show="loaded.benches && rankedBenches.length === 0">
         No benchmarks yet — be the first to contribute.
     </div>
-    <div class="empty-state" x-show="rankedBenches.length > 0 && filteredSortedBenches.length === 0">
+    <div class="empty-state" x-show="loaded.benches && rankedBenches.length > 0 && filteredSortedBenches.length === 0">
         No benchmarks match this search.
     </div>
 

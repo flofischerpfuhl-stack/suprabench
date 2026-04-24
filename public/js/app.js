@@ -316,6 +316,14 @@ function supraBench() {
     rankedFamilies: [],
     rankedBenches: [],
 
+    // Per-collection "first-update-arrived" flags. Until a collection
+    // flips to true the page renders a skeleton instead of the empty
+    // state — otherwise users see "No models yet — be the first to
+    // contribute" for ~200ms on every fresh page-load while the
+    // Convex websocket is still warming up. Reset on full reload, not
+    // on intra-app navigation (Alpine state survives view switches).
+    loaded: { models: false, families: false, benches: false },
+
     // Flat list of every distinct tag across the site (bench + model
     // tags merged). Used by the submit-form autocomplete and the
     // <datalist> hint, where a user typing should see ANY tag they
@@ -626,6 +634,7 @@ function supraBench() {
       if (wantModels) {
         this._viewSub("models.listRanked", api.models.listRanked, {}, (data) => {
           this.rankedModels = data || [];
+          this.loaded.models = true;
         });
         // Subscribe to families too whenever the models view is open,
         // even if the user is currently in "models" scope — keeps the
@@ -633,6 +642,7 @@ function supraBench() {
         // not per model) so the bandwidth is negligible.
         this._viewSub("models.listRankedFamilies", api.models.listRankedFamilies, {}, (data) => {
           this.rankedFamilies = data || [];
+          this.loaded.families = true;
         });
       } else {
         this._closeViewSub("models.listRanked");
@@ -642,6 +652,7 @@ function supraBench() {
       if (wantBenches) {
         this._viewSub("benches.listRanked", api.benches.listRanked, {}, (data) => {
           this.rankedBenches = data || [];
+          this.loaded.benches = true;
         });
       } else {
         this._closeViewSub("benches.listRanked");

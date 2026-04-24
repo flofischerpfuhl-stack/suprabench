@@ -115,8 +115,14 @@
         <tr><td><span class="name">X-Quota-Limit</span></td><td>Monthly quota for this key.</td></tr>
         <tr><td><span class="name">X-Quota-Remaining</span></td><td>Requests left in the current month.</td></tr>
         <tr><td><span class="name">X-Quota-Reset</span></td><td>Unix timestamp when the monthly bucket resets (00:00 UTC on the 1st).</td></tr>
+        <tr><td><span class="name">X-Computed-At</span></td><td>Server-side response generation time, milliseconds since the Unix epoch. Useful for measuring observed API latency separate from network/edge-cache delay.</td></tr>
+        <tr><td><span class="name">X-Schema-Version</span></td><td>The response-shape contract this body was built against (currently <code>v1</code>). Bump-watching this lets clients gate on schema upgrades before parsing changes.</td></tr>
+        <tr><td><span class="name">Last-Modified</span></td><td>HTTP-date of the most recent <code>updatedAt</code> in the response body. SupraBench scores are dynamic — they shift whenever a new submission lands or a bench is re-rated — so this header (and the per-row <code>updatedAt</code> field) is the canonical "as-of" stamp. Combined with <code>If-Modified-Since</code> on a follow-up request you can short-circuit unchanged data (304 support arriving with v1.1).</td></tr>
       </tbody>
     </table>
+
+    <h3>Why two timestamps?</h3>
+    <p><code>X-Computed-At</code> is "when the server packaged this response". <code>Last-Modified</code> is "when the data inside last changed". They diverge whenever you hit an edge cache (X-Computed-At = original computation time, Last-Modified = data age) or whenever you hit an endpoint with a stale-but-still-valid cached body (both timestamps lag wall-clock by the cache TTL). For freshness-sensitive workflows — leaderboard mirrors, public dashboards — read both.</p>
 
     <h2 id="429">Handling 429</h2>
     <p>When you exceed either limit, you get HTTP 429 with a body:</p>

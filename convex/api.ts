@@ -61,11 +61,22 @@ const TTL = {
 // set rather than letting handlers ferry it around — every public
 // response should carry the same envelope the docs promise
 // (rate-limits.html lists six X-* headers as universal).
+//
+// `lastModified` is the data's max(updatedAt) in milliseconds. When
+// provided we emit a standards-compliant `Last-Modified` HTTP-date
+// header so HTTP caches and conditional-GET clients can short-
+// circuit. Per-row `updatedAt` is still in the body — the header
+// is the freshness summary, the body is the per-resource truth.
 function json(
   data: unknown,
-  opts: { status?: number; ttl?: number; extraHeaders?: Record<string, string> } = {},
+  opts: {
+    status?: number;
+    ttl?: number;
+    extraHeaders?: Record<string, string>;
+    lastModified?: number;
+  } = {},
 ) {
-  const { status = 200, ttl = 0, extraHeaders } = opts;
+  const { status = 200, ttl = 0, extraHeaders, lastModified } = opts;
   const headers: Record<string, string> = {
     "content-type": "application/json; charset=utf-8",
     "cache-control": ttl > 0 ? `public, max-age=${ttl}` : "no-store",
@@ -73,7 +84,44 @@ function json(
     "vary": "authorization",
     ...(extraHeaders ?? {}),
   };
+  if (lastModified && lastModified > 0) {
+    headers["last-modified"] = new Date(lastModified).toUTCString();
+  }
   return new Response(JSON.stringify(data, null, 2), { status, headers });
+}
+
+// Pull the most recent `updatedAt` from a list of records. Used to
+// stamp `Last-Modified` on list responses. Falls back to 0 when
+// nothing in the list carries a timestamp (caller then skips the
+// header).
+function maxUpdatedAt(rows: Array<{ updatedAt?: number | null }>): number {
+  let max = 0;
+  for (const r of rows) {
+    const t = (r.updatedAt ?? 0) as number;
+    if (t > max) max = t;
+  }
+  return max;
+}
+
+// Wrap a payload with a freshness meta block. Non-breaking — the
+// existing top-level shape is preserved under `data`, and consumers
+// that already read e.g. `response[0].slug` can switch to
+// `response.data[0].slug` at their own pace. The meta block carries
+// the same timestamps as the Last-Modified / X-Computed-At headers
+// so clients that only read the body still get them.
+function withFreshnessMeta<T>(
+  data: T,
+  opts: { dataAsOf?: number; rowCount?: number } = {},
+): { data: T; meta: { generatedAt: number; dataAsOf: number | null; rowCount?: number; schemaVersion: string } } {
+  return {
+    data,
+    meta: {
+      generatedAt: Date.now(),
+      dataAsOf: opts.dataAsOf && opts.dataAsOf > 0 ? opts.dataAsOf : null,
+      ...(opts.rowCount !== undefined ? { rowCount: opts.rowCount } : {}),
+      schemaVersion: "v1",
+    },
+  };
 }
 
 function err(
@@ -466,6 +514,13 @@ export const publicModelDetail = internalQuery({
       familyTag: model.familyTag, tags: model.tags,
       supraScore: Math.round(ranking.supraScore * 100) / 100,
       benchCount: ranking.benchCount,
+      // updatedAt = ranking's last recompute timestamp. The model's
+      // own row may have been edited (renamed, re-tagged) more
+      // recently, but for the API the "freshness that matters" is
+      // when the score last changed. modelScores rows individually
+      // carry no per-row updatedAt yet — the ranking timestamp is
+      // the upper bound.
+      updatedAt: ranking.updatedAt,
       scores: scores
         .filter(s => benchById.has(s.benchId))
         .map(s => ({
@@ -497,6 +552,10 @@ export const publicListBenches = internalQuery({
         modelCount: b.cachedModelCount,
         raterCount: b.cachedRaterCount,
         effectiveWeight: b.cachedEffectiveWeight,
+        // updatedAt = the cache's last refresh timestamp (which is
+        // when score-affecting fields changed for this bench). Falls
+        // back to creation time for benches predating the cache.
+        updatedAt: b.cachedAggregatesAt ?? b._creationTime,
       }))
       .sort((a, b) => (b.effectiveWeight ?? 0) - (a.effectiveWeight ?? 0))
       .slice(0, limit);
@@ -662,6 +721,14 @@ function endpoint(name: string, ttl: number, handler: (ctx: any, request: Reques
     // Also attached to the 5xx fallback so a thrashing client
     // can still see how close it is to the cliff.
     resp = withRateHeaders(resp, makeRateHeaders(auth.rate, auth.quota));
+    // Freshness envelope: X-Computed-At is the response generation
+    // time (always now). X-Schema-Version is the API contract
+    // version this response conforms to. Last-Modified (if the
+    // handler set it via json({lastModified}) ) carries the data's
+    // own max(updatedAt) — clients can do conditional fetches
+    // against it once we ship If-Modified-Since support.
+    resp.headers.set("X-Computed-At", String(t0));
+    resp.headers.set("X-Schema-Version", "v1");
     const ms = Date.now() - t0;
     // Fire-and-forget logging (don't block the response).
     ctx.runMutation(internal.api.logRequest, {
@@ -701,7 +768,7 @@ export function registerApiRoutes(http: ReturnType<typeof httpRouter>) {
         limit: clampInt(u.searchParams.get("limit"), 1, 500, 100),
         tag: u.searchParams.get("tag") ?? undefined,
       });
-      return json(data, { ttl: TTL.rankings });
+      return json(data, { ttl: TTL.rankings, lastModified: maxUpdatedAt(data) });
     }),
   });
 
@@ -712,7 +779,7 @@ export function registerApiRoutes(http: ReturnType<typeof httpRouter>) {
       if (!slug) return err(400, "bad_request", "missing model slug");
       const data = await ctx.runQuery(internal.api.publicModelDetail, { slug });
       if (!data) return err(404, "not_found", `model '${slug}' not found`);
-      return json(data, { ttl: TTL.detail });
+      return json(data, { ttl: TTL.detail, lastModified: data.updatedAt });
     }),
   });
 
@@ -723,7 +790,7 @@ export function registerApiRoutes(http: ReturnType<typeof httpRouter>) {
       const data = await ctx.runQuery(internal.api.publicListBenches, {
         limit: clampInt(u.searchParams.get("limit"), 1, 500, 100),
       });
-      return json(data, { ttl: TTL.rankings });
+      return json(data, { ttl: TTL.rankings, lastModified: maxUpdatedAt(data) });
     }),
   });
 
@@ -744,7 +811,7 @@ export function registerApiRoutes(http: ReturnType<typeof httpRouter>) {
       const data = await ctx.runQuery(internal.api.publicListModels, {
         tag, limit: clampInt(u.searchParams.get("limit"), 1, 100, 10),
       });
-      return json(data, { ttl: TTL.rankings });
+      return json(data, { ttl: TTL.rankings, lastModified: maxUpdatedAt(data) });
     }),
   });
 
@@ -754,7 +821,7 @@ export function registerApiRoutes(http: ReturnType<typeof httpRouter>) {
       if (!TIERS[key.tier as Tier].allowExport)
         return err(403, "tier_forbidden", "Export is Pro+ only");
       const data = await ctx.runQuery(internal.api.publicExport, {});
-      return json(data, { ttl: TTL.export });
+      return json(data, { ttl: TTL.export, lastModified: data.generatedAt });
     }),
   });
 
