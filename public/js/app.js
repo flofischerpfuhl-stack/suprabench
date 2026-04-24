@@ -770,6 +770,13 @@ function supraBench() {
         }
         this.adminFlash = null;
         this._loadProfile();
+      } else if (parts[0] === "api") {
+        // Public docs and pricing CTAs historically link to /#api.
+        // Treat it as the API tab inside the profile page.
+        this.view = "profile";
+        this.profileTab = "api";
+        this.adminFlash = null;
+        this._loadProfile();
       } else if (parts[0] === "admin") {
         // Legacy deep-link: #admin redirects to #profile/admin so the
         // admin board is reachable from bookmarks even after the move

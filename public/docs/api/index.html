@@ -91,11 +91,11 @@
 
     <h2 id="overview">What you get</h2>
     <p>
-      Every benchmark, model and submission visible on
+      Every non-hidden benchmark, ranked model and validated submission visible on
       <a href="https://suprabench.com">suprabench.com</a> is available
-      via this API. Most responses are aggressively cached at the edge so
-      typical reads complete in &lt; 50&nbsp;ms; rankings refresh every
-      five minutes.
+      via this API. Responses include cache headers so clients and proxies can
+      avoid unnecessary repeat calls; ranking list responses advertise a
+      five-minute freshness window.
     </p>
 
     <ul>
@@ -183,9 +183,9 @@ func main() {
 
     <h2 id="pricing">Pricing &amp; limits</h2>
     <p>
-      Four tiers, billed monthly via Stripe. Choose based on your monthly
-      request volume; rate limits and feature flags scale with the tier.
-      Cancel any time from the Stripe Customer Portal — see
+      Paid tiers are waitlist-gated while pricing is finalised; partner keys
+      are invite-only and live today. Once paid access opens, billing will run
+      monthly via Stripe and limits will scale with the tier. See
       <a href="/legal/terms#api">Terms § 14</a>.
     </p>
 

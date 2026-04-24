@@ -111,7 +111,7 @@
         <tr><td><span class="name">dimensions</span></td><td><span class="type">object</span></td><td><span class="desc">Per-dimension averages on a 1&ndash;5 scale: <code>relevance</code>, <code>contamination</code>, <code>discriminability</code>, <code>reproducibility</code>, <code>difficulty</code>. Keys may evolve additively.</span></td></tr>
         <tr><td><span class="name">modelCount</span></td><td><span class="type">integer</span></td><td><span class="desc">Distinct models with at least one valid score.</span></td></tr>
         <tr><td><span class="name">raterCount</span></td><td><span class="type">integer</span></td><td><span class="desc">Number of users who rated this benchmark.</span></td></tr>
-        <tr><td><span class="name">effectiveWeight</span></td><td><span class="type">number</span></td><td><span class="desc">Bench Score on 0&ndash;100. Equal to <code>qualityScore</code> × difficulty × headroom (both in [0, 1]). This is the actual ranking weight applied to a model's normalised score on this bench when computing the Supra-Score.</span></td></tr>
+        <tr><td><span class="name">effectiveWeight</span></td><td><span class="type">number</span></td><td><span class="desc">Bench Score on 0&ndash;100. Equal to quality × difficulty × headroom, further adjusted by the benchmark's net-upvote and model-coverage shares. This is the actual ranking weight applied to a model's normalised score on this bench when computing the Supra-Score.</span></td></tr>
       </tbody>
     </table>
 

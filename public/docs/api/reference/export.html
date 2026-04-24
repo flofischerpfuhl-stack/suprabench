@@ -193,7 +193,7 @@ func main() {
     <h2 id="tips">Performance tips</h2>
     <ul>
       <li><strong>Honour the cache.</strong> Response carries <code>Cache-Control: public, max-age=86400</code> &mdash; cache it for 24 hours, not 60 seconds.</li>
-      <li><strong>Use ETags.</strong> The first call returns an <code>ETag</code> response header. Send it back as <code>If-None-Match</code> on subsequent calls; if nothing changed you get <code>304 Not Modified</code> (no body, no quota cost).</li>
+      <li><strong>Use the freshness headers.</strong> Responses include <code>Cache-Control</code>, <code>Last-Modified</code> and <code>X-Computed-At</code>; cache the snapshot until the advertised TTL expires instead of polling.</li>
       <li><strong>Prefer one-shot.</strong> Don't loop the list endpoints to reconstruct the export &mdash; that's strictly more expensive on quota and slower.</li>
       <li><strong>Stream-parse for big snapshots.</strong> Use <code>ijson</code> in Python or a streaming parser in Node if you don't want to hold the whole document in memory.</li>
     </ul>

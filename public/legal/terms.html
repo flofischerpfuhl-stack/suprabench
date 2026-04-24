@@ -152,13 +152,12 @@ special funds under public law is Munich, Germany, to the extent permitted by la
 
 <h2 id="api">14. Paid API service (demand-gated — not yet active)</h2>
 <aside style="background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.3);border-radius:6px;padding:.85rem 1rem;margin:.75rem 0">
-<strong>Status:</strong> The paid REST API described in this section is
-<strong>demand-gated</strong>: the implementation is built but the public
-<code>/v1/</code> endpoints are not enabled until the waitlist accumulates
-enough signups to justify the launch. The terms below take effect only once
-the API is activated. Until then, no charges are made and the waitlist signup
-in your profile creates no contractual obligation. We publish the terms now in
-advance for transparency.
+<strong>Status:</strong> The REST API is live for invite-only Partner keys.
+Paid self-serve tiers described in this section are <strong>demand-gated</strong>
+until the waitlist accumulates enough signups to justify launch. The paid-tier
+terms below take effect only once paid access is activated. Until then, no
+charges are made and the waitlist signup in your profile creates no contractual
+obligation. We publish the terms now in advance for transparency.
 </aside>
 
 <p>
@@ -206,7 +205,7 @@ outside the 14-day withdrawal right.
 
 <h3>14.4 Quotas, rate limits, fair use</h3>
 <p>
-Each tier has a monthly request quota and a per-second rate limit, as shown at the
+Each tier has a monthly request quota and a per-minute rate limit, as shown at the
 time of subscription. Exceeding the quota causes API requests to fail with HTTP 429
 until the next billing period; we do not auto-charge overage. Repeated, sustained
 attempts to circumvent quotas may lead to suspension.
