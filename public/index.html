@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260424-sim1">
+    <link rel="stylesheet" href="css/style.css?v=20260424-sim2">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -89,9 +89,9 @@
             integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
     <script src="js/convex.js?v=20260418m"></script>
-    <script src="js/simulator-math.js?v=20260424-sim1"></script>
+    <script src="js/simulator-math.js?v=20260424-sim2"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260424-sim1"></script>
+    <script src="js/app.js?v=20260424-sim2"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -2223,12 +2223,12 @@
                     API &amp; Billing <span class="badge-soon">Demand-gated</span>
                 </button>
                 <button class="profile-tab"
-                        x-show="simulatorUsage && simulatorUsage.limit > 0"
+                        x-show="simulatorUsage && simulatorUsage.tier"
                         :class="{'is-active': profileTab==='simulator'}"
                         @click="profileTab='simulator'; simulatorEnsureSnapshot()" role="tab"
                         :aria-selected="profileTab==='simulator'">
                     Simulator
-                    <span class="badge-soon" x-show="simulatorUsage" x-text="simulatorUsage ? `${simulatorUsage.tier === 'enterprise_plus' ? 'Ent+' : 'Partner'}` : ''"></span>
+                    <span class="badge-soon" x-show="simulatorUsage && simulatorUsage.tier" x-text="simulatorUsage && simulatorUsage.tier === 'enterprise_plus' ? 'Ent+' : 'Partner'"></span>
                 </button>
                 <button class="profile-tab profile-tab--admin"
                         x-show="user && user.isAdmin"
@@ -2793,7 +2793,7 @@
                  instantly see the SupraScore + rank it would land at. No
                  simulated state is persisted — every recompute is run
                  client-side from a snapshot fetched once per session. -->
-            <div x-show="profileTab==='simulator' && simulatorUsage && simulatorUsage.limit > 0" x-transition.opacity>
+            <div x-show="profileTab==='simulator' && simulatorUsage && simulatorUsage.tier" x-transition.opacity>
                 <div class="sim-shell">
                     <header class="sim-header">
                         <div>
@@ -2815,8 +2815,27 @@
                         </div>
                     </header>
 
+                    <!-- ZERO-BUDGET STATE: tier is granted but the admin set
+                         simulationsPerDay to 0 (or it predates the simulator
+                         schema). Tells the user how to fix it instead of
+                         hiding the tab silently. -->
+                    <section class="sim-input" x-show="simulatorUsage && simulatorUsage.limit === 0">
+                        <h3 style="margin:0 0 .5rem">No simulator budget yet</h3>
+                        <p style="color:var(--muted); margin:.25rem 0 1rem">
+                            Your <strong x-text="simulatorUsage && simulatorUsage.tier === 'enterprise_plus' ? 'Enterprise+' : 'Partner'"></strong>
+                            grant has <code>simulationsPerDay = 0</code>.
+                            <template x-if="user && user.isAdmin">
+                                <span>Open the Admin tab → find your own account → set <em>Simulator runs / day</em> to 20 (or whatever) → re-grant.</span>
+                            </template>
+                            <template x-if="!user || !user.isAdmin">
+                                <span>Ask your SupraBench account contact to bump it.</span>
+                            </template>
+                        </p>
+                    </section>
+
                     <!-- INPUT FORM (collapses after a successful run) -->
-                    <section class="sim-input" x-show="simulator.phase === 'input' || simulator.phase === 'editing'">
+                    <section class="sim-input"
+                             x-show="simulatorUsage && simulatorUsage.limit > 0 && (simulator.phase === 'input' || simulator.phase === 'editing')">
                         <div class="form-row">
                             <label>
                                 <span class="form-label">Model name</span>
@@ -2886,8 +2905,14 @@
                         </div>
                     </section>
 
-                    <!-- COLLAPSED INPUT SUMMARY (after a run) -->
-                    <section class="sim-summary" x-show="simulator.phase === 'result' && simulator.result">
+                    <!-- COLLAPSED INPUT SUMMARY + RESULT PANEL.
+                         Wrapped in a single x-if so the inner x-for never
+                         evaluates against a null result (x-show only hides;
+                         x-for keeps evaluating, which throws when reading
+                         simulator.result.simulatedRanking). -->
+                    <template x-if="simulator.phase === 'result' && simulator.result">
+                    <div>
+                    <section class="sim-summary">
                         <div class="sim-summary__row">
                             <div>
                                 <strong x-text="simulator.modelName + ' (' + simulator.provider + ')'"></strong>
@@ -2899,8 +2924,7 @@
                         </div>
                     </section>
 
-                    <!-- RESULT PANEL -->
-                    <section class="sim-result" x-show="simulator.phase === 'result' && simulator.result">
+                    <section class="sim-result">
                         <template x-if="simulator.result && simulator.result.simulatedRow">
                             <div class="sim-result__hero">
                                 <div class="sim-result__rank">
@@ -3003,6 +3027,8 @@
                             </table>
                         </div>
                     </section>
+                    </div>
+                    </template>
                 </div>
             </div>
 
