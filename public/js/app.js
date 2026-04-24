@@ -372,7 +372,36 @@ function supraBench() {
     // Profile sub-tab. Defaults to "activity" so existing users see the
     // page they always saw. The "api" tab hosts the public-API dashboard
     // (waitlist live, sub/keys disabled until api.future.ts ships).
+    // The "simulator" tab is shown only if `simulatorUsage.limit > 0`
+    // (partner / enterprise+ with a positive grant).
     profileTab: "activity",
+
+    // ── Simulator state ───────────────────────────────────────────
+    // simulatorUsage:   { tier, limit, used } | null  — null while
+    //                   loading or if user has no simulator access.
+    // simulator.phase: "input" | "result" — controls whether the
+    //                   form or the result panel is shown. We use
+    //                   "editing" implicitly inside "input" by
+    //                   nulling `simulator.result` whenever the user
+    //                   touches an input (template key off `result`
+    //                   to know whether to show "stale" badge).
+    // simulator.snapshot: cached output of simulator.fetchSnapshot.
+    //                   Loaded on first tab visit; reused for every
+    //                   subsequent recompute in the same session.
+    //                   Cleared on logout / tab switch away from
+    //                   profile (memory hygiene).
+    simulatorUsage: null,
+    simulator: {
+      phase: "input",       // "input" | "result"
+      modelName: "",
+      provider: "",
+      benchRows: [],         // [{ search, bench, rawScore, _open }]
+      snapshot: null,
+      result: null,
+      computedAt: null,
+      running: false,
+      error: null,
+    },
     waitlistEntries: [],   // { tier: string }[] — populated by waitlist.myEntries
     apiBusy: false,        // blocks double-clicks during waitlist toggle
 
@@ -887,6 +916,16 @@ function supraBench() {
           console.warn("[api] partner keys/usage load failed:", e);
         }
       }
+      // Simulator usage — fires for everyone who hits their profile
+      // (the query returns null for non-tier users so we never get
+      // unwanted access). The tab visibility binds on `simulatorUsage
+      // && simulatorUsage.limit > 0` so missing/null hides cleanly.
+      try {
+        this.simulatorUsage = await client.query(api.simulator.myUsageToday, {});
+      } catch (e) {
+        console.warn("[simulator] usage load failed (non-fatal):", e);
+        this.simulatorUsage = null;
+      }
       // Pre-load the elevated-accounts list for the admin tab so the
       // panel isn't empty on first open. Cheap: small table, only
       // fires for actual admins.
@@ -897,6 +936,144 @@ function supraBench() {
         } catch (e) {
           console.warn("[admin] elevated-accounts preload failed:", e);
         }
+      }
+    },
+
+    // ── Simulator ────────────────────────────────────────────────
+    // Hypothetical SupraScore tool for partner / enterprise+ users.
+    // Fully client-side math (see public/js/simulator-math.js); the
+    // only DB write is `simulator:recordRun`, which charges one unit
+    // of the daily budget. Snapshot is fetched once per visit and
+    // re-used for every subsequent simulate-click in the same
+    // session — keeps the UX snappy without a server round-trip
+    // per click.
+    get simulatorCanRun() {
+      const s = this.simulator;
+      if (s.running || !s.snapshot) return false;
+      if (!s.modelName.trim() || !s.provider.trim()) return false;
+      const validRows = s.benchRows.filter((r) => r.bench && typeof r.rawScore === "number");
+      if (validRows.length === 0) return false;
+      // Every row must have a bench picked + a score in range.
+      for (const r of validRows) {
+        if (r.rawScore < r.bench.scaleMin || r.rawScore > r.bench.scaleMax) return false;
+      }
+      // No two rows on the same bench (we deliberately disallow
+      // multi-runs per bench in the simulator — keeps inputs clean).
+      const seen = new Set();
+      for (const r of validRows) {
+        const id = String(r.bench._id);
+        if (seen.has(id)) return false;
+        seen.add(id);
+      }
+      return true;
+    },
+
+    async simulatorEnsureSnapshot() {
+      if (this.simulator.snapshot) return;
+      const { client, api } = window.sbConvex;
+      try {
+        this.simulator.snapshot = await client.query(api.simulator.fetchSnapshot, {});
+      } catch (e) {
+        console.error("[simulator] snapshot fetch failed:", e);
+        this.simulator.error = e?.message || "Failed to load simulator data.";
+      }
+    },
+
+    simulatorAddBench() {
+      this.simulator.benchRows.push({
+        search: "",
+        bench: null,
+        rawScore: null,
+        _open: false,
+      });
+      this.simulator.result = null;
+    },
+
+    simulatorRemoveBench(i) {
+      this.simulator.benchRows.splice(i, 1);
+      this.simulator.result = null;
+    },
+
+    simulatorPickBench(i, bench) {
+      const row = this.simulator.benchRows[i];
+      if (!row) return;
+      row.bench = bench;
+      row.search = bench.name;
+      row._open = false;
+      this.simulator.result = null;
+    },
+
+    simulatorBenchSuggestions(row) {
+      if (!this.simulator.snapshot) return [];
+      const q = (row.search || "").toLowerCase().trim();
+      const taken = new Set(
+        this.simulator.benchRows
+          .filter((r) => r !== row && r.bench)
+          .map((r) => String(r.bench._id))
+      );
+      const all = this.simulator.snapshot.benches.filter(
+        (b) => !b.hidden && !taken.has(String(b._id))
+      );
+      if (!q) return all.slice(0, 8);
+      return all
+        .filter(
+          (b) =>
+            b.name.toLowerCase().includes(q) || b.slug.toLowerCase().includes(q)
+        )
+        .slice(0, 8);
+    },
+
+    simulatorEdit() {
+      this.simulator.phase = "input";
+      // Keep the result around so re-opening the result tab after
+      // tweaks is "stale" rather than empty — the input form already
+      // nulls it whenever the user touches anything substantive.
+    },
+
+    async simulatorRun() {
+      const s = this.simulator;
+      if (!this.simulatorCanRun) return;
+      s.running = true;
+      s.error = null;
+      try {
+        const { client, api } = window.sbConvex;
+        // Charge the budget FIRST so a backend rejection (over-quota,
+        // tier-revoked) prevents wasted compute and shows an error
+        // before we render a misleading result.
+        const usage = await client.mutation(api.simulator.recordRun, {});
+        this.simulatorUsage = {
+          tier: usage.tier,
+          limit: usage.limit,
+          used: usage.used,
+        };
+
+        // Build math inputs and run.
+        const validRows = s.benchRows.filter((r) => r.bench && typeof r.rawScore === "number");
+        const simInput = {
+          name: s.modelName.trim(),
+          provider: s.provider.trim(),
+          scores: validRows.map((r) => ({
+            benchId: r.bench._id,
+            // Normalize the raw score onto [0,100] the same way
+            // convex/scores.ts does at submit time so the math sees
+            // numbers in the same units as live model scores.
+            score:
+              r.bench.scaleMax === r.bench.scaleMin
+                ? 0
+                : ((r.rawScore - r.bench.scaleMin) /
+                    (r.bench.scaleMax - r.bench.scaleMin)) *
+                  100,
+          })),
+        };
+        const result = window.SupraSimulator.simulateRanking(s.snapshot, simInput);
+        s.result = result;
+        s.computedAt = Date.now();
+        s.phase = "result";
+      } catch (e) {
+        console.error("[simulator] run failed:", e);
+        s.error = e?.message || "Simulation failed.";
+      } finally {
+        s.running = false;
       }
     },
 
@@ -966,12 +1143,19 @@ function supraBench() {
             ...this.adminSelected.grantedLimits,
           };
         } else {
+          // Defaults pre-fill the form so the admin doesn't start
+          // from zero. simulationsPerDay defaults to the partner
+          // recommendation (20); if the admin switches the tier
+          // dropdown to enterprise_plus they're expected to bump it
+          // (Enterprise+ pays for the headroom — see grantTier in
+          // convex/admin.ts).
           this.adminGrantForm = {
             tier: "partner",
             monthlyQuota: 100000,
             rpmLimit: 60,
             maxKeys: 3,
             allowExport: true,
+            simulationsPerDay: 20,
           };
         }
       } catch (e) {
@@ -991,6 +1175,9 @@ function supraBench() {
         rpmLimit: Math.floor(Number(f.rpmLimit) || 0),
         maxKeys: Math.floor(Number(f.maxKeys) || 0),
         allowExport: !!f.allowExport,
+        // 0 is allowed (= simulator off for this user); the upper
+        // clamp is enforced server-side in admin.ts.
+        simulationsPerDay: Math.max(0, Math.floor(Number(f.simulationsPerDay) || 0)),
       };
       if (limits.monthlyQuota < 1000 || limits.rpmLimit < 10 || limits.maxKeys < 1) {
         this._adminFlash("err", "Limits below minimum (quota ≥ 1000, rpm ≥ 10, keys ≥ 1)");

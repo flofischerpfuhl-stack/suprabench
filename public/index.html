@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260424-81cac11">
+    <link rel="stylesheet" href="css/style.css?v=20260424-sim1">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -89,8 +89,9 @@
             integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
     <script src="js/convex.js?v=20260418m"></script>
+    <script src="js/simulator-math.js?v=20260424-sim1"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260424-81cac11"></script>
+    <script src="js/app.js?v=20260424-sim1"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -2221,6 +2222,14 @@
                         :aria-selected="profileTab==='api'">
                     API &amp; Billing <span class="badge-soon">Demand-gated</span>
                 </button>
+                <button class="profile-tab"
+                        x-show="simulatorUsage && simulatorUsage.limit > 0"
+                        :class="{'is-active': profileTab==='simulator'}"
+                        @click="profileTab='simulator'; simulatorEnsureSnapshot()" role="tab"
+                        :aria-selected="profileTab==='simulator'">
+                    Simulator
+                    <span class="badge-soon" x-show="simulatorUsage" x-text="simulatorUsage ? `${simulatorUsage.tier === 'enterprise_plus' ? 'Ent+' : 'Partner'}` : ''"></span>
+                </button>
                 <button class="profile-tab profile-tab--admin"
                         x-show="user && user.isAdmin"
                         :class="{'is-active': profileTab==='admin'}"
@@ -2778,6 +2787,225 @@
                 </div>
             </div><!-- /tab api -->
 
+            <!-- ── TAB: Simulator ──
+                 Partner / Enterprise+ feature. Lets the partner enter a
+                 hypothetical model + scores against existing benches and
+                 instantly see the SupraScore + rank it would land at. No
+                 simulated state is persisted — every recompute is run
+                 client-side from a snapshot fetched once per session. -->
+            <div x-show="profileTab==='simulator' && simulatorUsage && simulatorUsage.limit > 0" x-transition.opacity>
+                <div class="sim-shell">
+                    <header class="sim-header">
+                        <div>
+                            <h2 style="margin:0">Simulated SupraScore</h2>
+                            <p class="sim-intro" style="margin:.25rem 0 0">
+                                Calculate the SupraScore your unreleased model
+                                <em>would</em> land at if you submitted these
+                                scores against existing benches. Nothing is saved
+                                — runs are purely a what-if for your decks.
+                            </p>
+                        </div>
+                        <div class="sim-budget" x-show="simulatorUsage">
+                            <span class="sim-budget__num">
+                                <span x-text="simulatorUsage ? (simulatorUsage.limit - simulatorUsage.used) : 0"></span>
+                                <span class="sim-budget__sep">/</span>
+                                <span x-text="simulatorUsage ? simulatorUsage.limit : 0"></span>
+                            </span>
+                            <span class="sim-budget__label">runs left today</span>
+                        </div>
+                    </header>
+
+                    <!-- INPUT FORM (collapses after a successful run) -->
+                    <section class="sim-input" x-show="simulator.phase === 'input' || simulator.phase === 'editing'">
+                        <div class="form-row">
+                            <label>
+                                <span class="form-label">Model name</span>
+                                <input type="text" class="form-input" x-model="simulator.modelName"
+                                       placeholder="e.g. Halcyon-2"
+                                       @input="simulator.result = null">
+                            </label>
+                            <label>
+                                <span class="form-label">Provider</span>
+                                <input type="text" class="form-input" x-model="simulator.provider"
+                                       placeholder="e.g. AcmeAI"
+                                       @input="simulator.result = null">
+                            </label>
+                        </div>
+
+                        <div class="sim-scores">
+                            <div class="sim-scores__head">
+                                <span class="form-label" style="margin:0">Bench scores</span>
+                                <span class="sim-scores__hint" x-show="simulator.benchRows.length === 0">Add at least one bench to simulate</span>
+                            </div>
+                            <template x-for="(row, i) in simulator.benchRows" :key="i">
+                                <div class="sim-row">
+                                    <div class="sim-row__bench">
+                                        <input type="text" class="form-input"
+                                               :placeholder="'Search bench by name or slug…'"
+                                               x-model="row.search"
+                                               @input="simulator.result = null"
+                                               @focus="row._open = true"
+                                               @blur="setTimeout(() => row._open = false, 150)">
+                                        <div class="sim-row__results" x-show="row._open && simulatorBenchSuggestions(row).length > 0">
+                                            <template x-for="b in simulatorBenchSuggestions(row)" :key="b._id">
+                                                <button type="button" class="sim-row__result"
+                                                        @click="simulatorPickBench(i, b)">
+                                                    <span class="sim-row__result-name" x-text="b.name"></span>
+                                                    <span class="sim-row__result-slug" x-text="b.slug"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="sim-row__score">
+                                        <input type="number" class="form-input"
+                                               :min="row.bench ? row.bench.scaleMin : 0"
+                                               :max="row.bench ? row.bench.scaleMax : 100"
+                                               step="any"
+                                               :placeholder="row.bench ? `${row.bench.scaleMin}–${row.bench.scaleMax}` : 'score'"
+                                               x-model.number="row.rawScore"
+                                               @input="simulator.result = null">
+                                        <span class="sim-row__scale" x-show="row.bench"
+                                              x-text="row.bench ? `${row.bench.scaleMin}–${row.bench.scaleMax}` : ''"></span>
+                                    </div>
+                                    <button type="button" class="sim-row__remove" @click="simulatorRemoveBench(i)" aria-label="Remove">×</button>
+                                </div>
+                            </template>
+                            <button type="button" class="btn btn-sm btn-outline" @click="simulatorAddBench()" style="margin-top:.5rem">
+                                + Add bench
+                            </button>
+                        </div>
+
+                        <div class="sim-actions">
+                            <button type="button" class="btn btn-primary"
+                                    :disabled="!simulatorCanRun || simulator.running"
+                                    @click="simulatorRun()">
+                                <span x-show="!simulator.running">Simulate SupraScore</span>
+                                <span x-show="simulator.running">Computing…</span>
+                            </button>
+                            <p class="sim-error" x-show="simulator.error" x-text="simulator.error"></p>
+                        </div>
+                    </section>
+
+                    <!-- COLLAPSED INPUT SUMMARY (after a run) -->
+                    <section class="sim-summary" x-show="simulator.phase === 'result' && simulator.result">
+                        <div class="sim-summary__row">
+                            <div>
+                                <strong x-text="simulator.modelName + ' (' + simulator.provider + ')'"></strong>
+                                <span class="sim-summary__meta">
+                                    on <span x-text="simulator.benchRows.length"></span> benches
+                                </span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline" @click="simulatorEdit()">Edit &amp; re-simulate</button>
+                        </div>
+                    </section>
+
+                    <!-- RESULT PANEL -->
+                    <section class="sim-result" x-show="simulator.phase === 'result' && simulator.result">
+                        <template x-if="simulator.result && simulator.result.simulatedRow">
+                            <div class="sim-result__hero">
+                                <div class="sim-result__rank">
+                                    <span class="sim-result__rank-num">#<span x-text="simulator.result.simulatedRow.rank"></span></span>
+                                    <span class="sim-result__rank-label">hypothetical rank</span>
+                                </div>
+                                <div class="sim-result__score">
+                                    <span class="sim-result__score-num" x-text="simulator.result.simulatedRow.supraScore"></span>
+                                    <span class="sim-result__score-label">SupraScore</span>
+                                </div>
+                                <div class="sim-result__meta">
+                                    <p>
+                                        <span x-text="simulator.modelName"></span> would place
+                                        <strong>#<span x-text="simulator.result.simulatedRow.rank"></span></strong>
+                                        out of <span x-text="simulator.result.simulatedRanking.length"></span> models,
+                                        scored on <span x-text="simulator.result.simulatedRow.benchCount"></span> benches.
+                                    </p>
+                                    <p class="sim-result__caption">
+                                        Computed at <span x-text="new Date(simulator.computedAt).toLocaleString()"></span>
+                                        from snapshot taken <span x-text="new Date(simulator.snapshot.capturedAt).toLocaleString()"></span>.
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Frontier-impact warning: if any of the touched benches'
+                             effective weight dropped meaningfully, surface it so
+                             the partner sees their hypothetical model is "breaking"
+                             those benches' headroom (a real signal, not a bug). -->
+                        <template x-if="simulator.result && simulator.result.benchDeltas && simulator.result.benchDeltas.some(d => d.weightDelta < -1)">
+                            <div class="sim-warning">
+                                <strong>Frontier-buster effect detected.</strong>
+                                Your simulated model lifted the frontier mean of
+                                <span x-text="simulator.result.benchDeltas.filter(d => d.weightDelta < -1).length"></span>
+                                bench(es) so much that their effective weight dropped — meaning
+                                the simulated SupraScore is conservative compared to what you'd
+                                see right after publication (the bench would still be at its
+                                pre-saturation weight for a few hours of cache).
+                                <details style="margin-top:.5rem">
+                                    <summary>Per-bench impact</summary>
+                                    <table class="sim-bench-table">
+                                        <thead>
+                                            <tr><th>Bench</th><th>Frontier (live → sim)</th><th>Weight (live → sim)</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <template x-for="d in simulator.result.benchDeltas" :key="d.benchId">
+                                                <tr>
+                                                    <td x-text="d.name"></td>
+                                                    <td><span x-text="d.frontierMeanLive"></span> → <span x-text="d.frontierMeanSimulated"></span></td>
+                                                    <td><span x-text="d.weightLive"></span> → <span x-text="d.weightSimulated"></span></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </details>
+                            </div>
+                        </template>
+
+                        <h3 style="margin:2rem 0 .5rem">Hypothetical leaderboard</h3>
+                        <p class="sim-result__caption" style="margin:0 0 1rem">
+                            Top 25 of the simulated full ranking. Δ columns compare against the live ranking right now.
+                        </p>
+                        <div class="table-scroll">
+                            <table class="leaderboard sim-leaderboard">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Model</th>
+                                        <th>Provider</th>
+                                        <th>SupraScore</th>
+                                        <th>Δ Score</th>
+                                        <th>Δ Rank</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(row, idx) in simulator.result.simulatedRanking.slice(0, 25)" :key="row.modelId || '__sim__'">
+                                        <tr :class="{ 'sim-row--hypo': row.isSimulated }">
+                                            <td><strong x-text="row.rank"></strong></td>
+                                            <td>
+                                                <span x-text="row.name"></span>
+                                                <span class="sim-badge" x-show="row.isSimulated">simulated</span>
+                                            </td>
+                                            <td x-text="row.provider"></td>
+                                            <td><strong x-text="row.supraScore"></strong></td>
+                                            <td>
+                                                <span x-show="!row.isSimulated && row.deltaScore !== undefined"
+                                                      :class="row.deltaScore > 0 ? 'sim-delta-up' : (row.deltaScore < 0 ? 'sim-delta-down' : 'sim-delta-flat')"
+                                                      x-text="row.deltaScore > 0 ? '+' + row.deltaScore : row.deltaScore"></span>
+                                                <span x-show="row.isSimulated" class="sim-delta-flat">—</span>
+                                            </td>
+                                            <td>
+                                                <span x-show="!row.isSimulated && row.deltaRank !== undefined"
+                                                      :class="row.deltaRank > 0 ? 'sim-delta-up' : (row.deltaRank < 0 ? 'sim-delta-down' : 'sim-delta-flat')"
+                                                      x-text="row.deltaRank > 0 ? '+' + row.deltaRank : (row.deltaRank < 0 ? row.deltaRank : '—')"></span>
+                                                <span x-show="row.isSimulated" class="sim-delta-flat">—</span>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
             <!-- ── TAB: Admin ──
                  Visible only when user.isAdmin === true. Search for any user,
                  grant/revoke admin or partner/enterprise_plus tier, mint &
@@ -2939,6 +3167,12 @@
                                                 <input type="checkbox" x-model="adminGrantForm.allowExport">
                                                 <span class="sb-check__box" aria-hidden="true"></span>
                                                 <span>Allow bulk export</span>
+                                            </label>
+                                            <label>
+                                                <span>Simulator runs / day</span>
+                                                <input type="number" min="0" max="10000" step="1"
+                                                       x-model.number="adminGrantForm.simulationsPerDay"
+                                                       :placeholder="adminGrantForm.tier === 'enterprise_plus' ? '200' : '20'">
                                             </label>
                                         </div>
                                         <button type="submit" class="btn btn-primary" :disabled="adminBusy">

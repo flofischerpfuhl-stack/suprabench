@@ -448,6 +448,10 @@ export const grantTier = mutation({
       rpmLimit: v.number(),
       maxKeys: v.number(),
       allowExport: v.boolean(),
+      // Daily simulator-recompute budget (see convex/simulator.ts).
+      // Optional in the input so old admin frontends don't break;
+      // missing → 0 (simulator off for this grant).
+      simulationsPerDay: v.optional(v.number()),
     }),
   },
   handler: async (ctx, { userId, tier, limits }) => {
@@ -460,6 +464,14 @@ export const grantTier = mutation({
       rpmLimit: Math.max(10, Math.min(100_000, limits.rpmLimit)),
       maxKeys: Math.max(1, Math.min(50, limits.maxKeys)),
       allowExport: !!limits.allowExport,
+      // Cap simulationsPerDay generously: the budget is enforced
+      // per-user, so even the upper bound here is well below the
+      // hosting cost we'd actually feel. 0 is a valid value (turns
+      // the simulator off for this user without revoking the tier).
+      simulationsPerDay: Math.max(
+        0,
+        Math.min(10_000, Math.floor(limits.simulationsPerDay ?? 0))
+      ),
     };
     await upsertRole(ctx, userId, (prev) => ({
       ...prev,

@@ -379,10 +379,26 @@ export default defineSchema({
         rpmLimit: v.number(),
         maxKeys: v.number(),
         allowExport: v.boolean(),
+        // Per-day simulator-recompute budget. Optional for back-compat
+        // with grants made before the simulator shipped (treated as 0
+        // → simulator tab is hidden until admin sets a positive
+        // value). Admin chooses the number per-grant in the UI.
+        simulationsPerDay: v.optional(v.number()),
       })
     ),
     grantedBy: v.optional(v.id("users")),
     grantedAt: v.optional(v.number()),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // Per-user, per-day rolling counter for simulator runs. Mirrors
+  // apiUsage's shape but yyyymmdd granularity (simulator is a burst
+  // tool, not steady load — daily window matches user mental model).
+  // Counter incremented by simulator.recordRun mutation, which also
+  // enforces grantedLimits.simulationsPerDay.
+  simulationUsage: defineTable({
+    userId: v.id("users"),
+    yyyymmdd: v.string(),  // e.g. "2026-04-24"
+    count: v.number(),
+  }).index("by_user_day", ["userId", "yyyymmdd"]),
 });
