@@ -1974,6 +1974,14 @@ tr.clickable-row {
   color: var(--text);
   font-family: var(--hd);
 }
+/* Modifier: lists where <strong> is used for inline emphasis inside
+   the description (math glossaries, factor explanations) instead of as
+   a leading term. Disables the 180px term-column alignment. */
+.about-list--inline li strong {
+  display: inline;
+  min-width: 0;
+  font-family: inherit;
+}
 ol.about-list { counter-reset: ablist; }
 ol.about-list li { counter-increment: ablist; padding-left: 2rem; position: relative; }
 ol.about-list li::before {
