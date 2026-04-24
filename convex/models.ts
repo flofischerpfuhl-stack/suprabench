@@ -214,6 +214,130 @@ export const listRankedFamilies = query({
   },
 });
 
+// Ranked FAMILIES with a tag-filtered score. Parallel to
+// listRankedWithFilter, but the inner aggregation is the same
+// "median-of-member-medians, weighted by full bench weight" semantics
+// used by familyRankings.recomputeAll. activeTags is OR-matched
+// against bench tags (a bench counts if it has any of the tags).
+export const listRankedFamiliesWithFilter = query({
+  args: { activeTags: v.array(v.string()) },
+  handler: async (ctx, { activeTags }) => {
+    const rankings = await ctx.db
+      .query("familyRankings")
+      .withIndex("by_score")
+      .order("desc")
+      .collect();
+    const visible = rankings.filter((r) => !(r.hidden ?? false));
+
+    if (activeTags.length === 0) {
+      return visible.map((r) => ({
+        familyTag: r.familyTag,
+        provider: r.provider,
+        supraScore: r.supraScore,
+        benchCount: r.benchCount,
+        modelCount: r.modelCount,
+        tags: r.tags,
+        filteredScore: null as number | null,
+      }));
+    }
+
+    const allBenches = await ctx.db.query("benches").collect();
+    const matchingBenches = allBenches.filter(
+      (b) => !b.hidden && b.tags.some((t) => activeTags.includes(t))
+    );
+    const matchingBenchIds = new Set<string>(
+      matchingBenches.map((b) => b._id as string)
+    );
+    const benchWeight: Record<string, number> = {};
+    for (const b of matchingBenches) {
+      if (typeof b.cachedEffectiveWeight === "number") {
+        benchWeight[b._id as string] = b.cachedEffectiveWeight;
+      } else {
+        const w = await getBenchWeights(ctx, b._id as any);
+        benchWeight[b._id as string] = w.weight;
+      }
+    }
+
+    const allModels = await ctx.db.query("models").collect();
+    const out = [];
+    for (const r of visible) {
+      const members = allModels.filter(
+        (m: any) =>
+          !m.hidden &&
+          (m.familyTag ?? "").trim() === r.familyTag &&
+          m.provider === r.provider
+      );
+
+      // perBench[benchId] = array of per-member medians on that bench,
+      // restricted to matching benches and net-positive scores. The
+      // outer median across that array is the family's score on that
+      // bench (matches familyRankings.recomputeAll semantics).
+      const perBench: Record<string, number[]> = {};
+      for (const m of members) {
+        const scores = await ctx.db
+          .query("modelScores")
+          .withIndex("by_model", (q) => q.eq("modelId", m._id))
+          .collect();
+        const byBench: Record<string, number[]> = {};
+        for (const s of scores) {
+          const bId = s.benchId as string;
+          if (!matchingBenchIds.has(bId)) continue;
+          if (s.upvotes <= s.downvotes) continue;
+          (byBench[bId] ??= []).push(s.normalizedScore);
+        }
+        for (const [bId, vals] of Object.entries(byBench)) {
+          vals.sort((a, b) => a - b);
+          const med =
+            vals.length % 2 === 0
+              ? (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2
+              : vals[Math.floor(vals.length / 2)];
+          (perBench[bId] ??= []).push(med);
+        }
+      }
+
+      let weighted = 0;
+      let weight = 0;
+      for (const [bId, memberMeds] of Object.entries(perBench)) {
+        memberMeds.sort((a, b) => a - b);
+        const familyMed =
+          memberMeds.length % 2 === 0
+            ? (memberMeds[memberMeds.length / 2 - 1] +
+                memberMeds[memberMeds.length / 2]) /
+              2
+            : memberMeds[Math.floor(memberMeds.length / 2)];
+        const w = benchWeight[bId] ?? 0;
+        if (w <= 0) continue;
+        weighted += w * familyMed;
+        weight += w;
+      }
+
+      const filteredScore =
+        weight > 0 ? Math.round((weighted / weight) * 10) / 10 : null;
+
+      out.push({
+        familyTag: r.familyTag,
+        provider: r.provider,
+        supraScore: r.supraScore,
+        benchCount: r.benchCount,
+        modelCount: r.modelCount,
+        tags: r.tags,
+        filteredScore,
+      });
+    }
+
+    out.sort((a, b) => {
+      if (a.filteredScore !== null && b.filteredScore === null) return -1;
+      if (a.filteredScore === null && b.filteredScore !== null) return 1;
+      if (a.filteredScore !== null && b.filteredScore !== null) {
+        return b.filteredScore - a.filteredScore;
+      }
+      return b.supraScore - a.supraScore;
+    });
+
+    return out;
+  },
+});
+
 // Distinct family-tags list — same idea, prevents typo splits.
 export const listFamilyTags = query({
   args: {},

@@ -78,7 +78,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260424-71798a5">
+    <link rel="stylesheet" href="css/style.css?v=20260424-tagsplit">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -90,7 +90,7 @@
     <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
     <script src="js/convex.js?v=20260418m"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260424-71798a5"></script>
+    <script src="js/app.js?v=20260424-tagsplit"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -169,22 +169,22 @@
 
     <h1 class="page-title">Model Reality<br>Ranking</h1>
 
-    <!-- Tag Filter Bar (with search if many tags) -->
-    <div class="tag-filter-wrap" x-show="allTags.length > 0">
-        <div class="tag-search-row" x-show="allTags.length > 12">
-            <input type="text" class="tag-search-input" x-model="tagSearch"
-                   placeholder="Filter tags…" aria-label="Search tags">
-            <span class="tag-count" x-text="filteredAllTags.length + ' / ' + allTags.length"></span>
-        </div>
-        <div class="tags-container">
-            <template x-for="t in visibleAllTags" :key="t">
-                <span class="tag" :class="{'active': activeTags.includes(t)}" @click="toggleTag(t)" x-text="t"></span>
+    <!-- Tag Filter Bar — bench tags only.
+         Top-5 most popular bench tags by default; any active tag not
+         in that top-5 is also pinned visible so the user never loses
+         sight of their selection. The "+ N more" pill opens the
+         picker popup (full overlay with search), defined once near
+         the bottom of <body> and shared with the benches view. -->
+    <div class="tag-bar-wrap" x-show="benchTagsInfo.length > 0">
+        <div class="tag-bar">
+            <template x-for="t in visibleTagChips" :key="'mtb-' + t">
+                <span class="tag" :class="{'active': activeTags.includes(t)}"
+                      @click="toggleTag(t)" x-text="t"></span>
             </template>
-            <span class="tag tag-more" x-show="hasMoreTags" @click="tagSearch = ' '; tagSearch = ''"
-                  x-text="'+' + (allTags.length - 20) + ' more — search to find'"></span>
-            <template x-if="filteredAllTags.length === 0 && tagSearch">
-                <span style="font-size:.8rem;color:var(--text3)">No matching tags</span>
-            </template>
+            <span class="tag tag-more" x-show="hiddenTagCount > 0"
+                  @click="openTagPicker()"
+                  x-text="'+ ' + hiddenTagCount + ' more'"
+                  title="Browse all bench tags"></span>
         </div>
     </div>
 
@@ -267,6 +267,7 @@
                 </th>
                 <th>Provider</th>
                 <th title="Family SupraScore: bench-weighted mean of the family's per-bench median-of-member-medians, shrunk by √(family coverage share). Same formula as the model SupraScore, just aggregated to the family level. See About for the full formula.">SupraScore</th>
+                <th x-show="activeTags.length > 0" title="Same math as the family SupraScore but restricted to benches matching the active tag filter. No coverage shrinkage — pure tag-scoped bench-weighted mean.">Filtered Score</th>
                 <th title="Number of distinct member models in this family that contribute to the score.">Members</th>
                 <th title="Number of distinct benches the family has been measured on (union across all member models).">Coverage</th>
             </tr>
@@ -280,6 +281,9 @@
                     </td>
                     <td class="m-provider" style="color:var(--text2)" x-text="f.provider"></td>
                     <td class="m-supra"><span class="score-cell" x-text="f.supraScore.toFixed(1)"></span></td>
+                    <td class="m-filtered" x-show="activeTags.length > 0">
+                        <span class="score-cell score-accent" x-text="f.filteredScore !== null && f.filteredScore !== undefined ? f.filteredScore.toFixed(1) : '—'"></span>
+                    </td>
                     <td class="m-coverage" style="color:var(--text3);font-size:.85rem" x-text="f.modelCount + (f.modelCount === 1 ? ' model' : ' models')"></td>
                     <td class="m-coverage" style="color:var(--text3);font-size:.85rem" x-text="f.benchCount + ' benches'"></td>
                 </tr>
@@ -538,6 +542,23 @@
 
     <h1 class="page-title">Benchmark Quality<br>Ranking</h1>
 
+    <!-- Same tag-bar component as the models page (bench tags only,
+         shared activeTags state, shared picker popup). Lives above
+         the search input so power users can pre-filter the list
+         before typing. -->
+    <div class="tag-bar-wrap" x-show="benchTagsInfo.length > 0">
+        <div class="tag-bar">
+            <template x-for="t in visibleTagChips" :key="'btb-' + t">
+                <span class="tag" :class="{'active': activeTags.includes(t)}"
+                      @click="toggleTag(t)" x-text="t"></span>
+            </template>
+            <span class="tag tag-more" x-show="hiddenTagCount > 0"
+                  @click="openTagPicker()"
+                  x-text="'+ ' + hiddenTagCount + ' more'"
+                  title="Browse all bench tags"></span>
+        </div>
+    </div>
+
     <div class="list-search" x-show="rankedBenches.length > 0">
         <input type="text" x-model="benchListSearch" placeholder="Search benchmarks by name, description, or tag…"
                aria-label="Search benchmarks">
@@ -590,7 +611,11 @@
                     </td>
                     <td class="b-tags">
                         <template x-for="tg in b.tags.slice(0,3)" :key="tg">
-                            <span class="tag-sm" x-text="tg"></span>
+                            <span class="tag-sm tag-sm-clickable"
+                                  :class="{'active': activeTags.includes(tg)}"
+                                  @click.stop="toggleTag(tg)"
+                                  :title="activeTags.includes(tg) ? 'Remove from filter' : 'Filter by ' + tg"
+                                  x-text="tg"></span>
                         </template>
                         <template x-if="b.tags.length > 3">
                             <span style="font-size:.7rem;color:var(--text3)" x-text="'+' + (b.tags.length - 3)"></span>
@@ -2068,6 +2093,39 @@
         </div>
     </div>
 
+    <!-- Q9c — Model tags vs bench tags. Lives here because users
+         hit the distinction the moment they wonder why typing
+         "multimodal" in search finds Gemini, but no "multimodal"
+         chip appears in the tag-filter bar. -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q9c')" @click="aboutToggle('q9c')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q9c')}">▼</span>
+            <span>Why are model tags and bench tags treated differently?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q9c')" x-transition>
+            <p>Tags exist on two different things on SupraBench, and they play two different roles:</p>
+            <ul class="about-list">
+                <li><strong>Bench tags</strong> describe what the bench measures — <code>reasoning</code>, <code>code</code>, <code>multilingual</code>, <code>vision</code>, <code>safety</code>. These are <em>structural</em>: they decide which benches feed a tag-scoped score.</li>
+                <li><strong>Model tags</strong> describe what the model is or claims to be — <code>multimodal</code>, <code>open-weights</code>, <code>moe</code>, <code>frontier</code>, <code>agentic</code>. These are <em>descriptive</em>: they help you find a model in search but don't enter the math.</li>
+            </ul>
+
+            <h4 class="qa-subheader">Why the asymmetry?</h4>
+            <p>The "Filtered Score" column reweighs a model's SupraScore using <em>only the benches that match the active tag</em>. That math only makes sense if the tag actually selects a non-empty set of benches. A pure model tag like <code>multimodal</code> — useful for search ("show me models that claim to do vision") — would select zero benches and produce a null filtered score for every row. So we hide model-only tags from the chip bar entirely.</p>
+
+            <h4 class="qa-subheader">What this means in practice</h4>
+            <ul class="about-list">
+                <li>The <strong>tag-filter chip bar</strong> (top of the models / benches list) shows <strong>bench tags only</strong>, sorted by how many benches carry them.</li>
+                <li>The <strong>search box</strong> on either list matches against <strong>everything</strong> — model name, provider, bench tags, model tags. Type <code>multimodal</code> there and Gemini surfaces immediately, even though no bench is tagged that way (yet).</li>
+                <li>The <strong>tag picker popup</strong> ("+ N more" pill) lists every bench tag with its bench count, so you can drill into any structural slice without scrolling the chip strip.</li>
+                <li>Bench tags <strong>also</strong> show up in the benches table — clicking one there toggles the same shared filter as the chip bar.</li>
+            </ul>
+
+            <h4 class="qa-subheader">Can a tag be both?</h4>
+            <p>Yes. <code>code</code> is the obvious one: HumanEval is a code <em>bench</em>, GPT-5.3 Codex is a code-tuned <em>model</em>. The tag exists once globally; it just appears in a chip bar if at least one bench carries it, and surfaces in search regardless of which side it lives on. The tag-counts API tracks both sides separately so this remains true even after extensive recategorisation.</p>
+            <p class="helper-text">Implementation: the <code>tagCounts</code> Convex table keeps <code>{benches, models}</code> per tag; the chip bar reads <code>tags.listForBenches</code> and the autocomplete reads <code>tags.listAll</code>. See <code>convex/tags.ts</code>.</p>
+        </div>
+    </div>
+
     <!-- Q10 — API teaser. Lives in About so SEO/crawlers index it
          and so curious users discover the planned API even if they
          never sign in to the profile page. -->
@@ -3011,6 +3069,59 @@
                     @click="sbDialogConfirm()"
                     :disabled="sbDialog.kind === 'prompt' && !(sbDialog.value || '').trim()"
                     x-text="sbDialog.confirmLabel"></button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     TAG PICKER POPUP
+     Shared by both leaderboard views (models + benches). Opens via
+     openTagPicker() from the "+ N more" pill in the tag bar. Lists
+     every BENCH tag (model-only tags are deliberately excluded —
+     they wouldn't yield a usable filteredScore). Clicking a tag
+     toggles activeTags immediately; the user closes the modal
+     manually with the X / Done / backdrop / Esc.
+     ═══════════════════════════════════════ -->
+<div class="tag-picker-overlay"
+     x-show="tagPicker.open"
+     x-cloak
+     x-transition.opacity
+     role="dialog"
+     aria-modal="true"
+     aria-label="Browse all tags"
+     @keydown.escape.window="tagPicker.open && closeTagPicker()">
+    <div class="tag-picker-backdrop" @click="closeTagPicker()"></div>
+    <div class="tag-picker-modal" @click.stop>
+        <div class="tag-picker-header">
+            <h3 class="tag-picker-title">Bench tags</h3>
+            <button type="button" class="tag-picker-close" @click="closeTagPicker()" aria-label="Close">×</button>
+        </div>
+        <div class="tag-picker-search-row">
+            <input type="text"
+                   class="tag-picker-search"
+                   x-model="tagPicker.search"
+                   placeholder="Search tags…"
+                   aria-label="Search tags">
+            <span class="tag-picker-count"
+                  x-text="filteredPickerTags.length + ' / ' + benchTagsInfo.length"></span>
+        </div>
+        <div class="tag-picker-body">
+            <template x-for="t in filteredPickerTags" :key="'pk-' + t.tag">
+                <span class="tag tag-picker-item"
+                      :class="{'active': activeTags.includes(t.tag)}"
+                      @click="toggleTag(t.tag)">
+                    <span x-text="t.tag"></span>
+                    <span class="tag-picker-item-count" x-text="t.count"></span>
+                </span>
+            </template>
+            <div class="tag-picker-empty" x-show="filteredPickerTags.length === 0">
+                No matching tags.
+            </div>
+        </div>
+        <div class="tag-picker-footer">
+            <span class="tag-picker-hint"
+                  x-text="activeTags.length === 0 ? 'No filter active' : (activeTags.length === 1 ? '1 tag active' : (activeTags.length + ' tags active'))"></span>
+            <button type="button" class="btn btn-sm" @click="closeTagPicker()">Done</button>
         </div>
     </div>
 </div>

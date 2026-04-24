@@ -315,7 +315,25 @@ function supraBench() {
     rankedModels: [],
     rankedFamilies: [],
     rankedBenches: [],
+
+    // Flat list of every distinct tag across the site (bench + model
+    // tags merged). Used by the submit-form autocomplete and the
+    // <datalist> hint, where a user typing should see ANY tag they
+    // could pick from. Filter chips are deliberately bench-tags-only
+    // (see benchTagsInfo + the Q-tag-distinction explainer in About).
     allTags: [],
+
+    // Bench tags only, with popularity counts. Source of truth for
+    // the leaderboard's tag-filter chips and the picker popup.
+    // Populated by api.tags.listForBenches; sorted desc by count.
+    // Shape: [{tag: string, count: number}, ...].
+    benchTagsInfo: [],
+
+    // Picker popup state. Opened from the "+ N more" pill in the tag
+    // bar; lets the user search and toggle any bench tag. activeTags
+    // is the shared selection — chip clicks and popup clicks update
+    // the same array, so closing the popup just hides the overlay.
+    tagPicker: { open: false, search: "" },
 
     // Models leaderboard scope: "models" (one row per model) or
     // "families" (one row per (familyTag, provider) aggregate from
@@ -331,7 +349,6 @@ function supraBench() {
     // clutter the tag-pill bar: a family is conceptually a "which
     // lineage of this lab's models" pick, not a capability filter.
     activeFamilyFilter: "",
-    tagSearch: "",
     modelListSearch: "",
     benchListSearch: "",
     currentModel: null,
@@ -631,11 +648,22 @@ function supraBench() {
       }
 
       if (wantTags) {
+        // listAll = every tag (bench + model). Used by submit-form
+        // autocomplete and the <datalist> — users typing should see
+        // anything they could possibly pick.
         this._viewSub("tags.listAll", api.tags.listAll, {}, (data) => {
           this.allTags = (data || []).map(t => t.tag);
         });
+        // listForBenches = bench tags only, with counts. Drives the
+        // filter chips on both leaderboard views, because the
+        // filteredScore math only makes sense for bench tags
+        // (see About → "Why model tags ≠ bench tags").
+        this._viewSub("tags.listForBenches", api.tags.listForBenches, {}, (data) => {
+          this.benchTagsInfo = data || [];
+        });
       } else {
         this._closeViewSub("tags.listAll");
+        this._closeViewSub("tags.listForBenches");
       }
 
       // Submit-form metadata: one-shot fetch instead of subscription, since
@@ -1497,7 +1525,16 @@ function supraBench() {
       else setTimeout(run, 200);
     },
 
-    // ═══ TAG FILTERING (model list) ═══
+    // ═══ TAG FILTERING ═══
+    // Shared by both leaderboards (models + benches) and by the picker
+    // popup. Same activeTags array drives:
+    //   • models view  → re-fetches listRankedWithFilter / families
+    //   • benches view → reactive client-side filter in
+    //     filteredSortedBenches (no fetch needed, list is small)
+    // We always trigger _loadFilteredModels because (a) the user may
+    // toggle from the picker without leaving the bench page and then
+    // navigate to models, and (b) the call is cheap when the models
+    // view isn't subscribed.
     toggleTag(tag) {
       const idx = this.activeTags.indexOf(tag);
       if (idx >= 0) this.activeTags.splice(idx, 1);
@@ -1542,29 +1579,80 @@ function supraBench() {
     },
 
     async _loadFilteredModels() {
-      if (this.activeTags.length === 0) return;
       const { client, api } = window.sbConvex;
+      // No active tags: snap both rankedModels and rankedFamilies back
+      // to their unfiltered, supraScore-sorted lists. Without this
+      // re-fetch the previous filteredScore-sorted ordering would
+      // persist (the reactive listRanked / listRankedFamilies subs
+      // only re-fire when the underlying data changes, not when we
+      // mutate locally).
+      if (this.activeTags.length === 0) {
+        try {
+          this.rankedModels = await client.query(api.models.listRanked, {});
+        } catch (e) { console.error("Failed to reload ranked models:", e); }
+        try {
+          this.rankedFamilies = await client.query(api.models.listRankedFamilies, {});
+        } catch (e) { console.error("Failed to reload ranked families:", e); }
+        return;
+      }
       try {
         this.rankedModels = await client.query(api.models.listRankedWithFilter, { activeTags: this.activeTags });
       } catch (e) {
         console.error("Failed to load filtered models:", e);
       }
+      try {
+        this.rankedFamilies = await client.query(api.models.listRankedFamiliesWithFilter, { activeTags: this.activeTags });
+      } catch (e) {
+        console.error("Failed to load filtered families:", e);
+      }
     },
 
-    get filteredAllTags() {
-      const q = this.tagSearch.trim().toLowerCase();
-      if (!q) return this.allTags;
-      return this.allTags.filter(t => t.includes(q));
+    // ── Tag-bar (chips + popup) ──
+    // The chip strip shows the top-N most popular bench tags plus any
+    // currently-active tags that aren't already in that top-N. This
+    // keeps the bar short by default while never hiding a user's own
+    // selection. The "+ N more" pill opens the picker popup which
+    // exposes every bench tag with a search box.
+    get visibleTagChips() {
+      const TOP_N = 5;
+      const top = this.benchTagsInfo.slice(0, TOP_N).map(t => t.tag);
+      const extras = this.activeTags.filter(t => !top.includes(t));
+      return [...top, ...extras];
     },
 
-    get visibleAllTags() {
-      const all = this.filteredAllTags;
-      if (this.tagSearch || all.length <= 20) return all;
-      return all.slice(0, 20);
+    get hiddenTagCount() {
+      const TOP_N = 5;
+      const total = this.benchTagsInfo.length;
+      // Subtract top-N visible plus any active extras pulled into the
+      // bar that came from outside the top-N.
+      const top = this.benchTagsInfo.slice(0, TOP_N).map(t => t.tag);
+      const extrasInBar = this.activeTags.filter(t => !top.includes(t)).length;
+      const visible = Math.min(TOP_N, total) + extrasInBar;
+      return Math.max(0, total - visible);
     },
 
-    get hasMoreTags() {
-      return !this.tagSearch && this.allTags.length > 20;
+    openTagPicker() {
+      this.tagPicker.open = true;
+      this.tagPicker.search = "";
+      // Lock body scroll while the modal is up.
+      document.body.classList.add("modal-open");
+      // Defer focus to next tick so the input is in the DOM.
+      this.$nextTick(() => {
+        const el = document.querySelector(".tag-picker-search");
+        if (el) el.focus();
+      });
+    },
+
+    closeTagPicker() {
+      this.tagPicker.open = false;
+      this.tagPicker.search = "";
+      document.body.classList.remove("modal-open");
+    },
+
+    get filteredPickerTags() {
+      const q = this.tagPicker.search.trim().toLowerCase();
+      if (!q) return this.benchTagsInfo;
+      return this.benchTagsInfo.filter(t => t.tag.toLowerCase().includes(q));
     },
 
     // ── Local autocomplete helpers for the submit form ──
@@ -1635,6 +1723,14 @@ function supraBench() {
     get filteredSortedBenches() {
       const q = this.benchListSearch.trim().toLowerCase();
       let list = this.sortedBenches;
+      // Tag chips: OR-match against bench tags. Same semantics as the
+      // models view (a bench counts if it has any of the active tags).
+      // Done client-side because the bench list is small enough and
+      // we already have all bench tags in the result rows.
+      if (this.activeTags && this.activeTags.length > 0) {
+        const active = this.activeTags;
+        list = list.filter(b => (b.tags || []).some(t => active.includes(t)));
+      }
       if (q) {
         list = list.filter(b =>
           b.name.toLowerCase().includes(q) ||
