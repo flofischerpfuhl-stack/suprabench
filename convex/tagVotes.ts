@@ -3,8 +3,10 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
 import { applyTagDeltaInline } from "./cache";
+import { enforceDailyActionLimit } from "./abuse";
 
 const ENTITY = v.union(v.literal("model"), v.literal("bench"));
+const TAG_VOTE_LIMIT_PER_DAY = 300;
 
 function normalizeTag(raw: string): string {
   return raw.trim().toLowerCase();
@@ -105,6 +107,7 @@ export const cast = mutation({
   handler: async (ctx, { entityType, entityId, tag, value }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await enforceDailyActionLimit(ctx, userId, "tag-vote", TAG_VOTE_LIMIT_PER_DAY);
 
     const t = normalizeTag(tag);
     if (!t) throw new Error("Empty tag");

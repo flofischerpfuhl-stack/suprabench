@@ -18,7 +18,10 @@
   --warn: #ffaa44;
   --hd: 'Clash Display', sans-serif;
   --bd: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   --radius: 8px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
   --transition: 0.2s ease;
 }
 
@@ -196,6 +199,15 @@ a:hover {
   align-items: center;
   justify-content: center;
   transition: color var(--transition), border-color var(--transition);
+}
+.sidebar-user__logout svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .sidebar-user__logout:hover { color: var(--danger); border-color: var(--danger); }
 
@@ -1431,6 +1443,12 @@ tr.clickable-row {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  border: 1px solid var(--border);
+  font: inherit;
+}
+.tag-picker-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .tag-picker-item-count {
   font-size: 0.65rem;

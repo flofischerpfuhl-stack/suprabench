@@ -2,6 +2,10 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
+import { enforceDailyActionLimit } from "./abuse";
+import { recomputeBenchAggregatesInline } from "./cache";
+
+const RATING_LIMIT_PER_DAY = 100;
 
 export const getMyRating = query({
   args: { benchId: v.id("benches") },
@@ -31,6 +35,7 @@ export const rate = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await enforceDailyActionLimit(ctx, userId, "bench-rating", RATING_LIMIT_PER_DAY);
 
     for (const dim of [
       args.relevance,
@@ -46,6 +51,7 @@ export const rate = mutation({
 
     const bench = await ctx.db.get(args.benchId);
     if (!bench) throw new Error("Benchmark not found");
+    if (bench.hidden) throw new Error("This benchmark has been removed by the community");
 
     const existing = await ctx.db
       .query("benchQualityRatings")
@@ -78,25 +84,10 @@ export const rate = mutation({
     // headroom, effectiveWeight, …) is now stale. Recompute it before we
     // touch model rankings so any subsequent listRanked subscribers see
     // the updated bench info immediately.
-    await ctx.scheduler.runAfter(0, internal.cache.recomputeBenchAggregates, {
+    await recomputeBenchAggregatesInline(ctx, args.benchId);
+
+    await ctx.scheduler.runAfter(0, internal.rankings.recomputeForBench, {
       benchId: args.benchId,
     });
-
-    // Bench quality changed → recompute all models that have scores on this bench
-    const scores = await ctx.db
-      .query("modelScores")
-      .withIndex("by_bench", (q) => q.eq("benchId", args.benchId))
-      .collect();
-
-    const modelIds = new Set<string>();
-    for (const s of scores) {
-      modelIds.add(s.modelId as string);
-    }
-
-    for (const modelId of modelIds) {
-      await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, {
-        modelId: modelId as any,
-      });
-    }
   },
 });

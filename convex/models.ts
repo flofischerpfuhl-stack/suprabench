@@ -7,7 +7,17 @@ import {
   seedCreatorEntityVote,
   assertNotResurrectingOwnHidden,
 } from "./entityVotes";
-import { getBenchWeights } from "./rankings";
+import {
+  getBenchWeights,
+  getBenchCoverageIndex,
+  effectiveBenchWeight,
+} from "./rankings";
+import { enforceDailyActionLimit } from "./abuse";
+
+const MAX_NAME_LEN = 120;
+const MAX_PROVIDER_LEN = 80;
+const MAX_FAMILY_TAG_LEN = 80;
+const CREATE_LIMIT_PER_DAY = 10;
 
 function generateSlug(name: string): string {
   return name
@@ -70,6 +80,7 @@ export const getBySlug = query({
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .first();
     if (!model) return null;
+    if (model.hidden) return null;
 
     const allScores = await ctx.db
       .query("modelScores")
@@ -86,7 +97,7 @@ export const getBySlug = query({
     const benchPerformance = [];
     for (const [benchId, submissions] of Object.entries(benchGroups)) {
       const bench = await ctx.db.get(benchId as any);
-      if (!bench) continue;
+      if (!bench || (bench as any).hidden) continue;
 
       // Bench quality
       const ratings = await ctx.db
@@ -214,6 +225,38 @@ export const listRankedFamilies = query({
   },
 });
 
+function median(vals: number[]): number {
+  vals.sort((a, b) => a - b);
+  return vals.length % 2 === 0
+    ? (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2
+    : vals[Math.floor(vals.length / 2)];
+}
+
+async function scopedBenchWeights(ctx: any, benches: any[]) {
+  const cov = await getBenchCoverageIndex(ctx);
+  const weights: Record<string, number> = {};
+  for (const b of benches) {
+    const raw =
+      typeof b.cachedEffectiveWeight === "number"
+        ? b.cachedEffectiveWeight
+        : (await getBenchWeights(ctx, b._id as any)).weight;
+    weights[b._id as string] = effectiveBenchWeight(
+      raw,
+      cov.upvoteMap.get(b._id as string) ?? 1,
+      cov.upvoteMax,
+      cov.modelCountMap.get(b._id as string) ?? 0,
+      cov.modelCountMax
+    );
+  }
+  return weights;
+}
+
+function supraFromAggregate(weightedSum: number, totalWeight: number, maxWeight: number) {
+  if (totalWeight <= 0 || maxWeight <= 0) return null;
+  const weightedMean = weightedSum / totalWeight;
+  return Math.round(weightedMean * Math.sqrt(Math.min(1, totalWeight / maxWeight)) * 10) / 10;
+}
+
 // Ranked FAMILIES with a tag-filtered score. Parallel to
 // listRankedWithFilter, but the inner aggregation is the same
 // "median-of-member-medians, weighted by full bench weight" semantics
@@ -248,18 +291,11 @@ export const listRankedFamiliesWithFilter = query({
     const matchingBenchIds = new Set<string>(
       matchingBenches.map((b) => b._id as string)
     );
-    const benchWeight: Record<string, number> = {};
-    for (const b of matchingBenches) {
-      if (typeof b.cachedEffectiveWeight === "number") {
-        benchWeight[b._id as string] = b.cachedEffectiveWeight;
-      } else {
-        const w = await getBenchWeights(ctx, b._id as any);
-        benchWeight[b._id as string] = w.weight;
-      }
-    }
+    const benchWeight = await scopedBenchWeights(ctx, matchingBenches);
 
     const allModels = await ctx.db.query("models").collect();
     const out = [];
+    let maxWeight = 0;
     for (const r of visible) {
       const members = allModels.filter(
         (m: any) =>
@@ -287,32 +323,20 @@ export const listRankedFamiliesWithFilter = query({
         }
         for (const [bId, vals] of Object.entries(byBench)) {
           vals.sort((a, b) => a - b);
-          const med =
-            vals.length % 2 === 0
-              ? (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2
-              : vals[Math.floor(vals.length / 2)];
-          (perBench[bId] ??= []).push(med);
+          (perBench[bId] ??= []).push(median(vals));
         }
       }
 
       let weighted = 0;
       let weight = 0;
       for (const [bId, memberMeds] of Object.entries(perBench)) {
-        memberMeds.sort((a, b) => a - b);
-        const familyMed =
-          memberMeds.length % 2 === 0
-            ? (memberMeds[memberMeds.length / 2 - 1] +
-                memberMeds[memberMeds.length / 2]) /
-              2
-            : memberMeds[Math.floor(memberMeds.length / 2)];
+        const familyMed = median(memberMeds);
         const w = benchWeight[bId] ?? 0;
         if (w <= 0) continue;
         weighted += w * familyMed;
         weight += w;
       }
-
-      const filteredScore =
-        weight > 0 ? Math.round((weighted / weight) * 10) / 10 : null;
+      if (weight > maxWeight) maxWeight = weight;
 
       out.push({
         familyTag: r.familyTag,
@@ -321,8 +345,16 @@ export const listRankedFamiliesWithFilter = query({
         benchCount: r.benchCount,
         modelCount: r.modelCount,
         tags: r.tags,
-        filteredScore,
+        filteredScore: null as number | null,
+        _filteredWeighted: weighted,
+        _filteredWeight: weight,
       });
+    }
+
+    for (const row of out) {
+      row.filteredScore = supraFromAggregate(row._filteredWeighted, row._filteredWeight, maxWeight);
+      delete (row as any)._filteredWeighted;
+      delete (row as any)._filteredWeight;
     }
 
     out.sort((a, b) => {
@@ -394,17 +426,10 @@ export const listRankedWithFilter = query({
     // Slow fallback: compute live via getBenchWeights for benches that
     // haven't been backfilled yet. Once `migrations:backfillAll` has run,
     // the slow path is never taken.
-    const benchWeight: Record<string, number> = {};
-    for (const b of matchingBenches) {
-      if (typeof b.cachedEffectiveWeight === "number") {
-        benchWeight[b._id as string] = b.cachedEffectiveWeight;
-      } else {
-        const w = await getBenchWeights(ctx, b._id as any);
-        benchWeight[b._id as string] = w.weight;
-      }
-    }
+    const benchWeight = await scopedBenchWeights(ctx, matchingBenches);
 
     const out = [];
+    let maxWeight = 0;
     for (const r of rankings) {
       const scores = await ctx.db
         .query("modelScores")
@@ -424,19 +449,13 @@ export const listRankedWithFilter = query({
       let weighted = 0;
       let weight = 0;
       for (const [bId, vals] of Object.entries(byBench)) {
-        vals.sort((a, b) => a - b);
-        const median =
-          vals.length % 2 === 0
-            ? (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2
-            : vals[Math.floor(vals.length / 2)];
+        const med = median(vals);
         const w = benchWeight[bId] ?? 0;
         if (w <= 0) continue;
-        weighted += w * median;
+        weighted += w * med;
         weight += w;
       }
-
-      const filteredScore =
-        weight > 0 ? Math.round((weighted / weight) * 10) / 10 : null;
+      if (weight > maxWeight) maxWeight = weight;
 
       out.push({
         _id: r.modelId,
@@ -447,8 +466,16 @@ export const listRankedWithFilter = query({
         tags: r.tags,
         supraScore: r.supraScore,
         benchCount: r.benchCount,
-        filteredScore,
+        filteredScore: null as number | null,
+        _filteredWeighted: weighted,
+        _filteredWeight: weight,
       });
+    }
+
+    for (const row of out) {
+      row.filteredScore = supraFromAggregate(row._filteredWeighted, row._filteredWeight, maxWeight);
+      delete (row as any)._filteredWeighted;
+      delete (row as any)._filteredWeight;
     }
 
     // Sort: models with a filteredScore first, by filteredScore desc,
@@ -478,6 +505,10 @@ export const create = mutation({
     if (!userId) throw new Error("Not authenticated");
     if (!args.name?.trim()) throw new Error("Name is required");
     if (!args.provider?.trim()) throw new Error("Provider is required");
+    if (args.name.trim().length > MAX_NAME_LEN) throw new Error("Name too long");
+    if (args.provider.trim().length > MAX_PROVIDER_LEN) throw new Error("Provider too long");
+    if ((args.familyTag ?? "").trim().length > MAX_FAMILY_TAG_LEN) throw new Error("Family tag too long");
+    await enforceDailyActionLimit(ctx, userId, "create-model", CREATE_LIMIT_PER_DAY);
     await assertNotResurrectingOwnHidden(ctx, "model", args.name, userId);
 
     let slug = generateSlug(args.name);

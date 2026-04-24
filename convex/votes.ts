@@ -2,6 +2,9 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
+import { enforceDailyActionLimit } from "./abuse";
+
+const VOTE_LIMIT_PER_DAY = 500;
 
 export const getMyVote = query({
   args: { targetId: v.string() },
@@ -27,10 +30,19 @@ export const cast = mutation({
   handler: async (ctx, { targetId, value }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await enforceDailyActionLimit(ctx, userId, "score-vote", VOTE_LIMIT_PER_DAY);
 
     // Find the target modelScore
     const score = await ctx.db.get(targetId as any);
-    if (!score) throw new Error("Submission not found");
+    if (
+      !score ||
+      typeof (score as any).upvotes !== "number" ||
+      typeof (score as any).downvotes !== "number" ||
+      !(score as any).modelId ||
+      !(score as any).benchId
+    ) {
+      throw new Error("Submission not found");
+    }
 
     // Find existing vote
     const existingVote = await ctx.db

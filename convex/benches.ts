@@ -7,6 +7,8 @@ import {
   assertNotResurrectingOwnHidden,
 } from "./entityVotes";
 import { isOfficialUrl } from "./urls";
+import { normalizePublicHttpUrl } from "./urls";
+import { enforceDailyActionLimit } from "./abuse";
 import {
   getBenchWeights,
   getBenchCoverageIndex,
@@ -19,6 +21,10 @@ function generateSlug(name: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
+
+const MAX_NAME_LEN = 120;
+const MAX_DESCRIPTION_LEN = 1000;
+const CREATE_LIMIT_PER_DAY = 10;
 
 export const listRanked = query({
   args: {},
@@ -166,6 +172,7 @@ export const getBySlug = query({
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .first();
     if (!bench) return null;
+    if (bench.hidden) return null;
 
     // Aggregate fields — fast path reads from denormalized cache,
     // slow fallback computes live (for unmigrated rows).
@@ -393,7 +400,16 @@ export const create = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
     if (!args.name?.trim()) throw new Error("Name is required");
+    if (args.name.trim().length > MAX_NAME_LEN) throw new Error("Name too long");
+    if ((args.description ?? "").trim().length > MAX_DESCRIPTION_LEN) {
+      throw new Error("Description too long");
+    }
+    if (!Number.isFinite(args.scaleMin) || !Number.isFinite(args.scaleMax) || args.scaleMax <= args.scaleMin) {
+      throw new Error("Scale must have finite min < max");
+    }
+    await enforceDailyActionLimit(ctx, userId, "create-bench", CREATE_LIMIT_PER_DAY);
     await assertNotResurrectingOwnHidden(ctx, "bench", args.name, userId);
+    const url = normalizePublicHttpUrl(args.url);
 
     let slug = generateSlug(args.name);
     let existing = await ctx.db
@@ -414,8 +430,8 @@ export const create = mutation({
       name: args.name,
       slug,
       description: args.description,
-      url: args.url,
-      isOfficial: isOfficialUrl(args.url),
+      url,
+      isOfficial: isOfficialUrl(url),
       tags: [],
       scaleMin: args.scaleMin,
       scaleMax: args.scaleMax,

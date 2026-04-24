@@ -8,9 +8,16 @@ import {
   seedCreatorEntityVote,
   assertNotResurrectingOwnHidden,
 } from "./entityVotes";
-import { isOfficialUrl } from "./urls";
+import { isOfficialUrl, normalizePublicHttpUrl } from "./urls";
+import { enforceDailyActionLimit } from "./abuse";
+import { recomputeBenchAggregatesInline } from "./cache";
 
 const RATE_LIMIT_PER_DAY = 30;
+const MAX_NAME_LEN = 120;
+const MAX_PROVIDER_LEN = 80;
+const MAX_DESCRIPTION_LEN = 1000;
+const MAX_FAMILY_TAG_LEN = 80;
+const MAX_SOURCE_AGE_FUTURE_MS = 24 * 60 * 60 * 1000;
 
 function generateSlug(name: string): string {
   return name
@@ -66,7 +73,13 @@ async function resolveOrCreateBench(
 
   const nb = args.newBench;
   if (!nb.name?.trim()) throw new Error("Benchmark name is required");
+  if (nb.name.trim().length > MAX_NAME_LEN) throw new Error("Benchmark name too long");
+  if ((nb.description ?? "").trim().length > MAX_DESCRIPTION_LEN) throw new Error("Benchmark description too long");
+  if (!Number.isFinite(nb.scaleMin) || !Number.isFinite(nb.scaleMax) || nb.scaleMax <= nb.scaleMin) {
+    throw new Error("Benchmark scale must have finite min < max");
+  }
   await assertNotResurrectingOwnHidden(ctx, "bench", nb.name, userId);
+  const url = normalizePublicHttpUrl(nb.url);
 
   let slug = generateSlug(nb.name);
   let existing = await ctx.db
@@ -86,8 +99,8 @@ async function resolveOrCreateBench(
     name: nb.name,
     slug,
     description: nb.description,
-    url: nb.url,
-    isOfficial: isOfficialUrl(nb.url),
+    url,
+    isOfficial: isOfficialUrl(url),
     tags: [],
     scaleMin: nb.scaleMin,
     scaleMax: nb.scaleMax,
@@ -129,6 +142,9 @@ async function resolveOrCreateModel(
   const nm = args.newModel;
   if (!nm.name?.trim()) throw new Error("Model name is required");
   if (!nm.provider?.trim()) throw new Error("Provider is required");
+  if (nm.name.trim().length > MAX_NAME_LEN) throw new Error("Model name too long");
+  if (nm.provider.trim().length > MAX_PROVIDER_LEN) throw new Error("Provider too long");
+  if ((nm.familyTag ?? "").trim().length > MAX_FAMILY_TAG_LEN) throw new Error("Family tag too long");
   await assertNotResurrectingOwnHidden(ctx, "model", nm.name, userId);
 
   let slug = generateSlug(nm.name);
@@ -199,13 +215,17 @@ async function insertScore(
   if (rawScore < bench.scaleMin || rawScore > bench.scaleMax) {
     throw new Error(`Score ${rawScore} out of range (${bench.scaleMin}–${bench.scaleMax})`);
   }
+  let normalizedSourceUrl: string;
   try {
-    new URL(sourceUrl);
+    normalizedSourceUrl = normalizePublicHttpUrl(sourceUrl);
   } catch {
     throw new Error(`Invalid source URL: ${sourceUrl}`);
   }
   if (!Number.isFinite(accessedAt) || accessedAt <= 0) {
     throw new Error("Invalid 'accessed on' date");
+  }
+  if (accessedAt > Date.now() + MAX_SOURCE_AGE_FUTURE_MS) {
+    throw new Error("'accessed on' date cannot be in the future");
   }
 
   const normalized =
@@ -222,7 +242,7 @@ async function insertScore(
     benchId,
     rawScore,
     normalizedScore: Math.round(normalized * 100) / 100,
-    sourceUrl,
+    sourceUrl: normalizedSourceUrl,
     accessedAt,
     submittedBy: userId,
     createdAt: Date.now(),
@@ -257,6 +277,7 @@ export const submitOne = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
     await checkRateLimit(ctx, userId, 1);
+    await enforceDailyActionLimit(ctx, userId, "submit-batch", 20);
 
     const { benchId, bench } = await resolveOrCreateBench(ctx, userId, {
       benchId: args.benchId,
@@ -268,8 +289,8 @@ export const submitOne = mutation({
       ctx, userId, modelId, benchId, bench,
       args.rawScore, args.sourceUrl, args.accessedAt
     );
+    await recomputeBenchAggregatesInline(ctx, benchId);
     await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, { modelId });
-    await ctx.scheduler.runAfter(0, internal.cache.recomputeBenchAggregates, { benchId });
     return { scoreIds: [scoreId], benchId, modelIds: [modelId] };
   },
 });
@@ -296,6 +317,7 @@ export const submitForBench = mutation({
     if (args.scores.length === 0) throw new Error("At least one score required");
     if (args.scores.length > 30) throw new Error("Max 30 scores per submission");
     await checkRateLimit(ctx, userId, args.scores.length);
+    await enforceDailyActionLimit(ctx, userId, "submit-batch", 20);
 
     const { benchId, bench } = await resolveOrCreateBench(ctx, userId, {
       benchId: args.benchId, newBench: args.newBench,
@@ -319,13 +341,10 @@ export const submitForBench = mutation({
         throw new Error(`Score #${i + 1}: ${err.message}`);
       }
     }
-    for (const m of modelIdsAffected) {
-      await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, {
-        modelId: m as Id<"models">,
-      });
-    }
-    // Single bench, many new scores → one aggregate refresh for it.
-    await ctx.scheduler.runAfter(0, internal.cache.recomputeBenchAggregates, { benchId });
+    // One bench changed, and the ranker is global anyway. Refresh its
+    // aggregate inline, then schedule exactly one global ranking pass.
+    await recomputeBenchAggregatesInline(ctx, benchId);
+    await ctx.scheduler.runAfter(0, internal.rankings.recomputeForBench, { benchId });
     return { scoreIds, benchId, modelIds: Array.from(modelIdsAffected) };
   },
 });
@@ -352,6 +371,7 @@ export const submitForModel = mutation({
     if (args.scores.length === 0) throw new Error("At least one score required");
     if (args.scores.length > 30) throw new Error("Max 30 scores per submission");
     await checkRateLimit(ctx, userId, args.scores.length);
+    await enforceDailyActionLimit(ctx, userId, "submit-batch", 20);
 
     const modelId = await resolveOrCreateModel(ctx, userId, {
       modelId: args.modelId, newModel: args.newModel,
@@ -375,12 +395,10 @@ export const submitForModel = mutation({
         throw new Error(`Score #${i + 1}: ${err.message}`);
       }
     }
-    await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, { modelId });
     for (const b of benchIdsAffected) {
-      await ctx.scheduler.runAfter(0, internal.cache.recomputeBenchAggregates, {
-        benchId: b as Id<"benches">,
-      });
+      await recomputeBenchAggregatesInline(ctx, b as Id<"benches">);
     }
+    await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, { modelId });
     return { scoreIds, modelId };
   },
 });
@@ -396,6 +414,7 @@ export const getById = query({
     if (!score) return null;
     const model = await ctx.db.get(score.modelId);
     const bench = await ctx.db.get(score.benchId);
+    if ((model as any)?.hidden || (bench as any)?.hidden) return null;
 
     // Prefer denormalized submitter fields; fall back to db.get only if
     // the score row predates the migration.
@@ -433,6 +452,9 @@ export const listByModelBench = query({
         q.eq("modelId", modelId).eq("benchId", benchId)
       )
       .collect();
+    const model = await ctx.db.get(modelId);
+    const bench = await ctx.db.get(benchId);
+    if ((model as any)?.hidden || (bench as any)?.hidden) return [];
     const enriched = [];
     for (const s of scores) {
       let submitterName = s.submitterName;

@@ -72,12 +72,12 @@ describe("monthly quota", () => {
       apiKeyId: key.apiKeyId,
       yyyymm,
     });
-    expect(r1).toBe(1);
+    expect(r1).toMatchObject({ allowed: true, used: 1, limit: 10 });
     const r2 = await t.mutation(internal.api.consumeQuota, {
       apiKeyId: key.apiKeyId,
       yyyymm,
     });
-    expect(r2).toBe(2);
+    expect(r2).toMatchObject({ allowed: true, used: 2, limit: 10 });
   });
 
   test("consumeQuota returns null when at cap", async () => {
@@ -92,12 +92,12 @@ describe("monthly quota", () => {
       apiKeyId: key.apiKeyId,
       yyyymm,
     });
-    expect(r1).toBe(1);
+    expect(r1).toMatchObject({ allowed: true, used: 1, limit: 1 });
     const r2 = await t.mutation(internal.api.consumeQuota, {
       apiKeyId: key.apiKeyId,
       yyyymm,
     });
-    expect(r2).toBeNull();
+    expect(r2).toMatchObject({ allowed: false, used: 1, limit: 1 });
   });
 });
 

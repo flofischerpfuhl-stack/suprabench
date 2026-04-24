@@ -1400,22 +1400,30 @@ function supraBench() {
     },
     sbConfirm({ title, body = "", confirmLabel = "Confirm", cancelLabel = "Cancel", danger = false } = {}) {
       return new Promise((resolve) => {
+        this._dialogReturnFocus = document.activeElement;
         this.sbDialog = {
           open: true, kind: "confirm",
           title, body, value: "", placeholder: "",
           confirmLabel, cancelLabel, danger,
           _resolve: resolve,
         };
+        document.body.classList.add("modal-open");
+        this.$nextTick(() => {
+          const btn = document.querySelector(".sb-dialog__actions .btn:last-child");
+          if (btn) btn.focus();
+        });
       });
     },
     sbPrompt({ title, body = "", placeholder = "", confirmLabel = "OK", cancelLabel = "Cancel" } = {}) {
       return new Promise((resolve) => {
+        this._dialogReturnFocus = document.activeElement;
         this.sbDialog = {
           open: true, kind: "prompt",
           title, body, value: "", placeholder,
           confirmLabel, cancelLabel, danger: false,
           _resolve: resolve,
         };
+        document.body.classList.add("modal-open");
       });
     },
     sbDialogConfirm() {
@@ -1424,6 +1432,8 @@ function supraBench() {
       const out = dlg.kind === "prompt" ? (dlg.value || "").trim() : true;
       if (dlg.kind === "prompt" && !out) return; // require non-empty
       this.sbDialog = { ...dlg, open: false, _resolve: null };
+      document.body.classList.remove("modal-open");
+      this._restoreDialogFocus();
       if (dlg._resolve) dlg._resolve(out);
     },
     sbDialogCancel() {
@@ -1431,7 +1441,17 @@ function supraBench() {
       if (!dlg.open) return;
       const out = dlg.kind === "prompt" ? null : false;
       this.sbDialog = { ...dlg, open: false, _resolve: null };
+      document.body.classList.remove("modal-open");
+      this._restoreDialogFocus();
       if (dlg._resolve) dlg._resolve(out);
+    },
+
+    _restoreDialogFocus() {
+      const el = this._dialogReturnFocus;
+      this._dialogReturnFocus = null;
+      if (el && typeof el.focus === "function") {
+        setTimeout(() => el.focus(), 0);
+      }
     },
 
     // Lightweight toast — used by waitlist + future API actions.
@@ -2400,6 +2420,14 @@ function supraBench() {
         const u = new URL(url);
         return u.hostname + (u.pathname.length > 30 ? u.pathname.slice(0, 30) + "…" : u.pathname);
       } catch { return url; }
+    },
+
+    safeExternalUrl(url) {
+      try {
+        const u = new URL(url);
+        if (u.protocol === "https:" || u.protocol === "http:") return u.toString();
+      } catch (e) { /* fall through */ }
+      return "about:blank";
     },
   };
 }

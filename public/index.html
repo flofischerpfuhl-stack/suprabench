@@ -59,24 +59,8 @@
     <meta name="twitter:image" content="https://suprabench.com/img/og-image.png">
     <meta name="twitter:image:alt" content="SupraBench — Community-Driven AI Model Rankings">
 
-    <!-- JSON-LD structured data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "SupraBench",
-      "url": "https://suprabench.com/",
-      "description": "Community-driven AI model rankings based on benchmark trustworthiness.",
-      "publisher": {
-        "@type": "Organization",
-        "name": "SupraBench",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://suprabench.com/img/icon-512.png"
-        }
-      }
-    }
-    </script>
+    <!-- JSON-LD structured data is injected from an external file so CSP can block inline scripts. -->
+    <script src="js/structured-data.js?v=20260424-security"></script>
 
     <link rel="stylesheet" href="css/style.css?v=20260424-noadminmint">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
@@ -130,7 +114,12 @@
                  @click="navigate('profile'); mobileMenuOpen = false" title="Open my profile">
                 <img class="sidebar-user__avatar" :src="user.image" :alt="user.name" x-show="user.image">
                 <span class="sidebar-user__name" x-text="user.name || user.email"></span>
-                <button class="sidebar-user__logout" @click.stop="logout(); mobileMenuOpen = false" title="Log out">⏻</button>
+                <button class="sidebar-user__logout" @click.stop="logout(); mobileMenuOpen = false" title="Log out" aria-label="Log out">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M12 3v9"></path>
+                        <path d="M7.05 5.64a8 8 0 1 0 9.9 0"></path>
+                    </svg>
+                </button>
             </div>
         </template>
         <template x-if="!user">
@@ -499,7 +488,7 @@
                                             <span class="submission-card-disclose">View →</span>
                                         </div>
                                         <div class="submission-card-footer">
-                                            <a :href="sub.sourceUrl" target="_blank" @click.stop style="color:var(--text2)" x-text="truncateUrl(sub.sourceUrl)">↗</a>
+                                            <a :href="safeExternalUrl(sub.sourceUrl)" target="_blank" rel="noopener noreferrer" @click.stop style="color:var(--text2)" x-text="truncateUrl(sub.sourceUrl)">↗</a>
                                             <span class="submission-meta" x-show="sub.accessedAt">
                                                 accessed <span x-text="formatDate(sub.accessedAt)"></span>
                                             </span>
@@ -713,7 +702,7 @@
                 <div class="bench-desc-body" x-show="benchDescExpanded" x-transition.opacity>
                     <p style="color:var(--text2);font-size:1.05rem;max-width:650px;margin:0.6rem 0 0.5rem" x-text="currentBench.description"></p>
                     <p style="margin:0">
-                        <a :href="currentBench.url" target="_blank" style="color:var(--accent);font-family:var(--hd);font-size:.85rem;text-transform:uppercase;letter-spacing:.5px">Source ↗</a>
+                        <a :href="safeExternalUrl(currentBench.url)" target="_blank" rel="noopener noreferrer" style="color:var(--accent);font-family:var(--hd);font-size:.85rem;text-transform:uppercase;letter-spacing:.5px">Source ↗</a>
                     </p>
                 </div>
             </div>
@@ -1057,7 +1046,7 @@
                                                 <img :src="sub.submitterImage" :alt="sub.submitterName">
                                                 <span x-text="sub.submitterName" style="font-size:.85rem"></span>
                                             </div>
-                                            <a :href="sub.sourceUrl" target="_blank" @click.stop style="color:var(--text2);font-size:.8rem" x-text="truncateUrl(sub.sourceUrl)"></a>
+                                            <a :href="safeExternalUrl(sub.sourceUrl)" target="_blank" rel="noopener noreferrer" @click.stop style="color:var(--text2);font-size:.8rem" x-text="truncateUrl(sub.sourceUrl)"></a>
                                             <span class="submission-meta" x-show="sub.accessedAt">
                                                 accessed <span x-text="formatDate(sub.accessedAt)"></span>
                                             </span>
@@ -1175,7 +1164,7 @@
                     (scale: <span x-text="currentSubmission.scaleMin"></span>–<span x-text="currentSubmission.scaleMax"></span>)
                 </p>
                 <p style="margin-bottom:1rem">
-                    <a :href="currentSubmission.sourceUrl" target="_blank" style="color:var(--accent)" x-text="currentSubmission.sourceUrl">↗</a>
+                    <a :href="safeExternalUrl(currentSubmission.sourceUrl)" target="_blank" rel="noopener noreferrer" style="color:var(--accent)" x-text="currentSubmission.sourceUrl">↗</a>
                 </p>
                 <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
                     <div class="submitter" x-show="currentSubmission.submitterImage">
@@ -3429,12 +3418,13 @@
         </div>
         <div class="tag-picker-body">
             <template x-for="t in filteredPickerTags" :key="'pk-' + t.tag">
-                <span class="tag tag-picker-item"
+                <button type="button"
+                      class="tag tag-picker-item"
                       :class="{'active': activeTags.includes(t.tag)}"
                       @click="toggleTag(t.tag)">
                     <span x-text="t.tag"></span>
                     <span class="tag-picker-item-count" x-text="t.count"></span>
-                </span>
+                </button>
             </template>
             <div class="tag-picker-empty" x-show="filteredPickerTags.length === 0">
                 No matching tags.
@@ -3462,22 +3452,10 @@
         No cookies, no tracking, no analytics.
         <a href="/legal/privacy">Privacy Policy</a>.
     </div>
-    <button type="button" class="cookie-notice__ok" onclick="window.sbDismissCookie()">Got it</button>
-    <button type="button" class="cookie-notice__close" aria-label="Dismiss" onclick="window.sbDismissCookie()">×</button>
+    <button type="button" class="cookie-notice__ok" data-sb-dismiss-cookie>Got it</button>
+    <button type="button" class="cookie-notice__close" aria-label="Dismiss" data-sb-dismiss-cookie>×</button>
 </div>
-<script>
-(function () {
-    var KEY = 'sb_notice_v1';
-    var el = document.getElementById('sb-cookie');
-    try {
-        if (!localStorage.getItem(KEY)) el.hidden = false;
-    } catch (e) { /* localStorage blocked → just don't show */ }
-    window.sbDismissCookie = function () {
-        try { localStorage.setItem(KEY, '1'); } catch (e) {}
-        el.hidden = true;
-    };
-})();
-</script>
+<script src="js/storage-notice.js?v=20260424-security"></script>
 
 </body>
 </html>

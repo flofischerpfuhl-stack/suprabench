@@ -469,6 +469,9 @@ export const cleanupOldData = internalMutation({
     const oldBuckets = await ctx.db.query("apiRateLimits")
       .filter(q => q.lt(q.field("minuteBucket"), cutoffRate)).take(500);
     for (const r of oldBuckets) await ctx.db.delete(r._id);
+    const oldCounters = await ctx.db.query("actionCounters")
+      .filter(q => q.lt(q.field("updatedAt"), cutoffLog)).take(500);
+    for (const r of oldCounters) await ctx.db.delete(r._id);
   },
 });
 
@@ -500,7 +503,7 @@ export const publicModelDetail = internalQuery({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
     const ranking = await ctx.db.query("modelRankings")
-      .filter(q => q.eq(q.field("slug"), slug)).first();
+      .withIndex("by_slug", q => q.eq("slug", slug)).first();
     if (!ranking || ranking.hidden) return null;
     const model = await ctx.db.get(ranking.modelId);
     if (!model || model.hidden) return null;
@@ -508,7 +511,9 @@ export const publicModelDetail = internalQuery({
       .withIndex("by_model", q => q.eq("modelId", model._id)).collect();
     const benchIds = [...new Set(scores.map(s => s.benchId))];
     const benches = await Promise.all(benchIds.map(id => ctx.db.get(id)));
-    const benchById = new Map(benches.filter(Boolean).map(b => [b!._id, b]));
+    const benchById = new Map(
+      benches.filter((b) => b && !(b as any).hidden).map(b => [b!._id, b])
+    );
     return {
       slug: model.slug, name: model.name, provider: model.provider,
       familyTag: model.familyTag, tags: model.tags,

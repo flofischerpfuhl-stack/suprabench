@@ -158,6 +158,7 @@ export default defineSchema({
     hidden: v.optional(v.boolean()),
   })
     .index("by_model", ["modelId"])
+    .index("by_slug", ["slug"])
     .index("by_score", ["supraScore"]),
 
   // Denormalized family rankings cache — recomputed alongside
@@ -401,4 +402,15 @@ export default defineSchema({
     yyyymmdd: v.string(),  // e.g. "2026-04-24"
     count: v.number(),
   }).index("by_user_day", ["userId", "yyyymmdd"]),
+
+  // Generic per-user, per-day write budget used for low-cost abuse
+  // throttles on community mutations (entity creation, voting, ratings).
+  // The window is UTC and old rows are pruned by the daily cleanup cron.
+  actionCounters: defineTable({
+    userId: v.id("users"),
+    action: v.string(),
+    yyyymmdd: v.string(),
+    count: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user_action_day", ["userId", "action", "yyyymmdd"]),
 });

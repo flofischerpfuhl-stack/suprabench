@@ -109,11 +109,26 @@ export const OFFICIAL_DOMAINS: ReadonlyArray<string> = [
 
 export function isOfficialUrl(url: string): boolean {
   try {
-    const hostname = new URL(url).hostname.toLowerCase();
+    const hostname = parsePublicHttpUrl(url).hostname.toLowerCase();
     return OFFICIAL_DOMAINS.some(
       (d) => hostname === d || hostname.endsWith("." + d)
     );
   } catch {
     return false;
   }
+}
+
+export function parsePublicHttpUrl(raw: string): URL {
+  const url = new URL(raw);
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new Error("URL must start with http:// or https://");
+  }
+  if (!url.hostname || url.username || url.password) {
+    throw new Error("URL must be a public http(s) URL without embedded credentials");
+  }
+  return url;
+}
+
+export function normalizePublicHttpUrl(raw: string): string {
+  return parsePublicHttpUrl(raw.trim()).toString();
 }

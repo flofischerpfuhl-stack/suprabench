@@ -8,8 +8,10 @@ import {
   applyTagDeltaInline,
   recomputeBenchNetUpvotesInline,
 } from "./cache";
+import { enforceDailyActionLimit } from "./abuse";
 
 const ENTITY = v.union(v.literal("model"), v.literal("bench"));
+const ENTITY_VOTE_LIMIT_PER_DAY = 300;
 
 // Hide rule (engagement-aware):
 //   downs ≥ max(MIN_DOWNS_FLOOR, ceil(RATIO * (ups + downs)))   AND   downs > ups
@@ -172,6 +174,7 @@ export const cast = mutation({
   handler: async (ctx, { entityType, entityId, value }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await enforceDailyActionLimit(ctx, userId, "entity-vote", ENTITY_VOTE_LIMIT_PER_DAY);
 
     if (entityType === "model") {
       const m = await ctx.db.get(entityId as Id<"models">);

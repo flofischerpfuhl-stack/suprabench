@@ -136,6 +136,8 @@ const IGNORE_LINE = [
   /90 200/,                       // result of the same example
   /5\s?000\s?\+/,                 // "5 000 + models" in pagination is dataset size, not a tier
   /10\s?000\s?rows/,              // pagination's threshold-for-paging note
+  /\\\(|\\\)|\\in|\$\$/,          // Math/Katex prose, not tier tables
+  /Claude X/,                      // Worked SupraScore example numbers
 ];
 
 // ── 5. Scan ─────────────────────────────────────────────────

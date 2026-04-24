@@ -13,11 +13,24 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { PRIMARY_ADMIN_EMAIL } from "./admin";
 
 // Mirrors the keys in convex/tiers.ts — keep in sync if those change.
 // We duplicate rather than import so the list stays a `const` string
 // union for the v.string() validator below.
 const TIERS = ["starter", "pro", "enterprise", "enterprise_plus"] as const;
+
+async function assertAdmin(ctx: any) {
+  const userId = await getAuthUserId(ctx);
+  if (!userId) throw new Error("unauthorized");
+  const user = await ctx.db.get(userId);
+  if ((user as any)?.email === PRIMARY_ADMIN_EMAIL) return;
+  const role = await ctx.db
+    .query("userRoles")
+    .withIndex("by_user", (q: any) => q.eq("userId", userId))
+    .first();
+  if (role?.role !== "admin") throw new Error("forbidden");
+}
 
 // Returns the rows for the current user, so the UI can render
 // "you signed up for Pro on …" instead of the bare button.
@@ -83,6 +96,7 @@ export const leave = mutation({
 export const adminStats = query({
   args: {},
   handler: async (ctx) => {
+    await assertAdmin(ctx);
     const all = await ctx.db.query("apiWaitlist").collect();
     const byTier: Record<string, number> = {};
     for (const r of all) byTier[r.tier] = (byTier[r.tier] ?? 0) + 1;
