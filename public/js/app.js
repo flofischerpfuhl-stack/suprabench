@@ -395,7 +395,13 @@ function supraBench() {
       phase: "input",       // "input" | "result"
       modelName: "",
       provider: "",
-      benchRows: [],         // [{ search, bench, rawScore, _open }]
+      // Same shape as submitFormC.scoreEntries so we can reuse the
+      // existing .score-entry / .form-section / .picked-pill /
+      // .search-dropdown styling and feel exactly like the regular
+      // Score-submit flow. Each entry: { _id, collapsed,
+      // selectedBench, benchSearch, benchResults, rawScore,
+      // normalizedPreview }.
+      scoreEntries: [],
       snapshot: null,
       result: null,
       computedAt: null,
@@ -951,17 +957,19 @@ function supraBench() {
       const s = this.simulator;
       if (s.running || !s.snapshot) return false;
       if (!s.modelName.trim() || !s.provider.trim()) return false;
-      const validRows = s.benchRows.filter((r) => r.bench && typeof r.rawScore === "number");
-      if (validRows.length === 0) return false;
-      // Every row must have a bench picked + a score in range.
-      for (const r of validRows) {
-        if (r.rawScore < r.bench.scaleMin || r.rawScore > r.bench.scaleMax) return false;
+      const valid = s.scoreEntries.filter(
+        (e) => e.selectedBench && e.rawScore !== "" && e.rawScore !== null && !isNaN(parseFloat(e.rawScore))
+      );
+      if (valid.length === 0) return false;
+      for (const e of valid) {
+        const r = parseFloat(e.rawScore);
+        if (r < e.selectedBench.scaleMin || r > e.selectedBench.scaleMax) return false;
       }
-      // No two rows on the same bench (we deliberately disallow
-      // multi-runs per bench in the simulator — keeps inputs clean).
+      // No two entries on the same bench (single score per bench
+      // by design — see the Architecture note in convex/simulator.ts).
       const seen = new Set();
-      for (const r of validRows) {
-        const id = String(r.bench._id);
+      for (const e of valid) {
+        const id = String(e.selectedBench._id);
         if (seen.has(id)) return false;
         seen.add(id);
       }
@@ -973,61 +981,113 @@ function supraBench() {
       const { client, api } = window.sbConvex;
       try {
         this.simulator.snapshot = await client.query(api.simulator.fetchSnapshot, {});
+        // Seed an empty entry so the form isn't blank on first open.
+        if (this.simulator.scoreEntries.length === 0) {
+          this.simulatorAddEntry();
+        }
       } catch (e) {
         console.error("[simulator] snapshot fetch failed:", e);
         this.simulator.error = e?.message || "Failed to load simulator data.";
       }
     },
 
-    simulatorAddBench() {
-      this.simulator.benchRows.push({
-        search: "",
-        bench: null,
-        rawScore: null,
-        _open: false,
-      });
+    _makeSimEntry() {
+      // Mirror the shape of submitFormC's score entries so the
+      // template can reuse the same .score-entry markup.
+      return {
+        _id: Math.random().toString(36).slice(2),
+        collapsed: false,
+        selectedBench: null,
+        benchSearch: "",
+        benchResults: [],
+        rawScore: "",
+        normalizedPreview: null,
+      };
+    },
+
+    simulatorAddEntry() {
+      // Collapse all existing entries so the new one is the only
+      // open card — mirrors addCScoreEntry in the regular submit form.
+      for (const e of this.simulator.scoreEntries) e.collapsed = true;
+      this.simulator.scoreEntries.push(this._makeSimEntry());
       this.simulator.result = null;
     },
 
-    simulatorRemoveBench(i) {
-      this.simulator.benchRows.splice(i, 1);
+    simulatorRemoveEntry(entry) {
+      const arr = this.simulator.scoreEntries;
+      const idx = arr.indexOf(entry);
+      if (idx >= 0) arr.splice(idx, 1);
+      if (arr.length === 0) this.simulatorAddEntry();
       this.simulator.result = null;
     },
 
-    simulatorPickBench(i, bench) {
-      const row = this.simulator.benchRows[i];
-      if (!row) return;
-      row.bench = bench;
-      row.search = bench.name;
-      row._open = false;
-      this.simulator.result = null;
+    simulatorToggleEntry(entry) {
+      entry.collapsed = !entry.collapsed;
     },
 
-    simulatorBenchSuggestions(row) {
-      if (!this.simulator.snapshot) return [];
-      const q = (row.search || "").toLowerCase().trim();
+    // Bench search runs CLIENT-SIDE against the snapshot — the snapshot
+    // already has every bench, so we save a round-trip and the dropdown
+    // appears with no perceptible delay. Excludes hidden benches and
+    // benches already picked in another entry so the user can't double-
+    // book a bench (single-score-per-bench by design).
+    simulatorSearchBenchesForEntry(entry) {
+      const snap = this.simulator.snapshot;
+      const q = (entry.benchSearch || "").toLowerCase().trim();
+      if (!snap || q.length < 1) {
+        entry.benchResults = [];
+        return;
+      }
       const taken = new Set(
-        this.simulator.benchRows
-          .filter((r) => r !== row && r.bench)
-          .map((r) => String(r.bench._id))
+        this.simulator.scoreEntries
+          .filter((e) => e !== entry && e.selectedBench)
+          .map((e) => String(e.selectedBench._id))
       );
-      const all = this.simulator.snapshot.benches.filter(
-        (b) => !b.hidden && !taken.has(String(b._id))
-      );
-      if (!q) return all.slice(0, 8);
-      return all
-        .filter(
-          (b) =>
-            b.name.toLowerCase().includes(q) || b.slug.toLowerCase().includes(q)
-        )
+      entry.benchResults = snap.benches
+        .filter((b) => !b.hidden && !taken.has(String(b._id)))
+        .filter((b) => b.name.toLowerCase().includes(q) || b.slug.toLowerCase().includes(q))
         .slice(0, 8);
+    },
+
+    simulatorSelectBenchForEntry(entry, bench) {
+      entry.selectedBench = bench;
+      entry.benchSearch = bench.name;
+      entry.benchResults = [];
+      this.simulatorUpdateNormalize(entry);
+      this.simulator.result = null;
+    },
+
+    simulatorClearBenchForEntry(entry) {
+      entry.selectedBench = null;
+      entry.benchSearch = "";
+      entry.normalizedPreview = null;
+      this.simulator.result = null;
+    },
+
+    simulatorUpdateNormalize(entry) {
+      const raw = parseFloat(entry.rawScore);
+      if (isNaN(raw) || !entry.selectedBench) {
+        entry.normalizedPreview = null;
+        return;
+      }
+      const min = entry.selectedBench.scaleMin;
+      const max = entry.selectedBench.scaleMax;
+      if (max === min) {
+        entry.normalizedPreview = 0;
+        return;
+      }
+      entry.normalizedPreview = Math.round(((raw - min) / (max - min)) * 10000) / 100;
+      this.simulator.result = null;
+    },
+
+    simulatorEntryLabel(entry, idx) {
+      if (entry.selectedBench) return entry.selectedBench.name;
+      return `Score #${idx + 1}`;
     },
 
     simulatorEdit() {
       this.simulator.phase = "input";
-      // Keep the result around so re-opening the result tab after
-      // tweaks is "stale" rather than empty — the input form already
-      // nulls it whenever the user touches anything substantive.
+      // Keep the result around so the user can flip back if they
+      // change their mind — touching any input nulls it.
     },
 
     async simulatorRun() {
@@ -1047,23 +1107,22 @@ function supraBench() {
           used: usage.used,
         };
 
-        // Build math inputs and run.
-        const validRows = s.benchRows.filter((r) => r.bench && typeof r.rawScore === "number");
+        const valid = s.scoreEntries.filter(
+          (e) => e.selectedBench && e.rawScore !== "" && e.rawScore !== null && !isNaN(parseFloat(e.rawScore))
+        );
         const simInput = {
           name: s.modelName.trim(),
           provider: s.provider.trim(),
-          scores: validRows.map((r) => ({
-            benchId: r.bench._id,
-            // Normalize the raw score onto [0,100] the same way
-            // convex/scores.ts does at submit time so the math sees
-            // numbers in the same units as live model scores.
-            score:
-              r.bench.scaleMax === r.bench.scaleMin
-                ? 0
-                : ((r.rawScore - r.bench.scaleMin) /
-                    (r.bench.scaleMax - r.bench.scaleMin)) *
-                  100,
-          })),
+          scores: valid.map((e) => {
+            const raw = parseFloat(e.rawScore);
+            // Normalise to [0,100] the same way convex/scores.ts does
+            // at submit time so the math sees numbers in the same
+            // units as live model scores.
+            const min = e.selectedBench.scaleMin;
+            const max = e.selectedBench.scaleMax;
+            const score = max === min ? 0 : ((raw - min) / (max - min)) * 100;
+            return { benchId: e.selectedBench._id, score };
+          }),
         };
         const result = window.SupraSimulator.simulateRanking(s.snapshot, simInput);
         s.result = result;

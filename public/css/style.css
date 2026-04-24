@@ -3794,162 +3794,20 @@ ol.about-list li::before {
 
 /* ════════════════════════════════════════════════════════════
  * SIMULATOR TAB
- * Profile → Simulator. Visible only for partner / enterprise+
- * users with grantedLimits.simulationsPerDay > 0. Two phases:
- * input (form) and result (collapsed summary + hypothetical
- * leaderboard). Layout mirrors the submit-new-model form so the
- * affordances feel familiar to users who've already submitted
- * scores manually.
+ * Profile → Simulator. The input form reuses the existing
+ * .form-section / .score-entry / .picked-pill / .search-dropdown
+ * components from the Contribute page, so only the result-panel
+ * specific styling lives here (hero number, frontier-buster
+ * warning, hypothetical-leaderboard delta columns).
  * ════════════════════════════════════════════════════════════ */
-.sim-shell { display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem; }
-
-.sim-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 2rem;
-  flex-wrap: wrap;
-}
-.sim-intro {
-  color: var(--muted);
-  max-width: 60ch;
-}
-.sim-budget {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  padding: 0.6rem 0.9rem;
-  min-width: 9rem;
-}
-.sim-budget__num {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-}
-.sim-budget__sep { opacity: 0.4; margin: 0 0.15rem; }
-.sim-budget__label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-
-.sim-input,
-.sim-summary,
 .sim-result {
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 0.6rem;
   padding: 1.25rem 1.4rem;
-}
-.sim-summary { display: flex; }
-.sim-summary__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-.sim-summary__meta { color: var(--muted); margin-left: 0.5rem; }
-
-.sim-input .form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-@media (max-width: 520px) {
-  .sim-input .form-row { grid-template-columns: 1fr; }
-}
-.sim-scores__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  gap: 1rem;
-}
-.sim-scores__hint {
-  color: var(--muted);
-  font-size: 0.85rem;
+  margin-top: 1.5rem;
 }
 
-.sim-row {
-  display: grid;
-  grid-template-columns: 1fr 12rem auto;
-  gap: 0.6rem;
-  align-items: start;
-  margin-bottom: 0.5rem;
-  position: relative;
-}
-@media (max-width: 640px) {
-  .sim-row { grid-template-columns: 1fr 7rem auto; }
-}
-.sim-row__bench { position: relative; }
-.sim-row__results {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 0.4rem;
-  margin-top: 2px;
-  z-index: 30;
-  max-height: 12rem;
-  overflow-y: auto;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-}
-.sim-row__result {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  color: inherit;
-}
-.sim-row__result:last-child { border-bottom: 0; }
-.sim-row__result:hover { background: rgba(255, 255, 255, 0.04); }
-.sim-row__result-name { font-weight: 500; }
-.sim-row__result-slug { font-size: 0.8rem; color: var(--muted); }
-
-.sim-row__score {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.sim-row__scale { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
-.sim-row__remove {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.4rem;
-  cursor: pointer;
-  font-size: 1.1rem;
-  line-height: 1;
-}
-.sim-row__remove:hover { color: var(--danger, #f55); border-color: var(--danger, #f55); }
-
-.sim-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin-top: 1.25rem;
-  align-items: flex-start;
-}
-.sim-error {
-  color: var(--danger, #f55);
-  font-size: 0.85rem;
-  margin: 0;
-}
-
-/* ── RESULT PANEL ── */
 .sim-result__hero {
   display: flex;
   align-items: center;
