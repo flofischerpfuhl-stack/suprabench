@@ -1,0 +1,33 @@
+# ════════════════════════════════════════════════════════════
+#  Wrangler config for the SupraBench public-API edge proxy.
+#  See worker.js for the design rationale.
+#
+#  Deploy:
+#    cd infra/cloudflare-worker
+#    npx wrangler login          # one-time, opens browser
+#    npx wrangler deploy
+#
+#  After deploy, Cloudflare will:
+#    1. Create the Worker in your account.
+#    2. Auto-create the DNS A/AAAA record for api.suprabench.com
+#       (because of `custom_domain = true` below — the apex
+#       suprabench.com must already be in the same Cloudflare
+#       zone, which it is).
+#    3. Issue a free Universal SSL cert (~30 s).
+#  No DNS click required from you.
+# ════════════════════════════════════════════════════════════
+
+name = "suprabench-api-proxy"
+main = "worker.js"
+compatibility_date = "2026-04-24"
+
+# Workers Custom Domain — bypasses the route/cache layer and
+# behaves like a first-class hostname. DNS + cert are managed
+# by Cloudflare automatically.
+routes = [
+  { pattern = "api.suprabench.com", custom_domain = true },
+]
+
+# Observability — logs visible in CF Dashboard → Workers → Logs.
+[observability]
+enabled = true
