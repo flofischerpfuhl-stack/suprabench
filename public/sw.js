@@ -27,7 +27,13 @@
    want to force every client to drop its old cache after a deploy.
    ════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION = "v1.13.0";
+// IMPORTANT: bump this on every change to the fetch-handler logic
+// or the precache list. The activate handler garbage-collects every
+// cache name that doesn't include the current version, and skipWaiting
+// + clients.claim guarantees existing tabs swap to the new SW on
+// their next request. Without a bump, users keep running the old
+// (potentially broken) SW until they clear site data.
+const CACHE_VERSION = "v1.14.0";
 const CACHE_PREFIX = "suprabench-";
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 const PRECACHE = `${CACHE_PREFIX}precache-${CACHE_VERSION}`;
@@ -134,14 +140,29 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 5. Cross-origin static (KaTeX, Fontshare, Alpine, Convex bundle on
-  //    unpkg) → stale-while-revalidate so first paint is offline-safe.
-  if (req.destination === "style" || req.destination === "script" ||
-      req.destination === "font") {
-    event.respondWith(staleWhileRevalidate(req, RUNTIME_CACHE));
-    return;
-  }
-
+  // 5. Cross-origin static assets — DO NOT INTERCEPT.
+  //
+  //    Why: when this SW intercepts a request and re-issues it via
+  //    `fetch()`, that fetch is governed by the page's CSP
+  //    `connect-src`, NOT the original `script-src` / `style-src` /
+  //    `font-src` directive. Our connect-src allows convex + giscus
+  //    only; if the SW intercepts a `<script src="https://unpkg.com/…">`
+  //    request, fetch() is blocked, the SW returns 504, the script
+  //    tag fails to load, and the page dies (`ConvexClient is undefined`).
+  //
+  //    Letting the browser handle these requests directly bypasses
+  //    the SW entirely, so script-src / style-src / font-src apply
+  //    normally and the assets load. The browser's HTTP cache still
+  //    covers the "instant repeat-visit paint" use case the SW would
+  //    have addressed; we lose only the offline-cache for these CDNs,
+  //    which is moot — if jsdelivr/unpkg/fontshare are unreachable
+  //    the user is genuinely offline and the app shell offline.html
+  //    already covers that path.
+  //
+  //    NEVER add a cross-origin SW interceptor without ALSO adding
+  //    the origin to connect-src in public/_headers — the two MUST
+  //    move together. See "CSP coupling" comment in _headers.
+  //
   // 6. Default: pass through to the network.
 });
 
