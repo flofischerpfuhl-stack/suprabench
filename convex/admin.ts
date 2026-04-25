@@ -80,7 +80,7 @@ export const cleanupOrphanAuth = internalMutation({
 // env var) because a compromised env var should not let someone lock
 // the real operator out of their own project. Change only with a
 // deploy.
-export const PRIMARY_ADMIN_EMAIL = "flofischer.pfuhl@gmail.com";
+export const PRIMARY_ADMIN_EMAIL = "suprabench.editor887@passmail.com";
 
 /** Returns whether the given user has admin privileges (either the
  *  primary admin by email, or has been promoted via grantAdmin). */

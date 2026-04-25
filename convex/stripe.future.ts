@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════
 // Stripe billing — PLACEHOLDER, NOT WIRED UP.
 //
-// Pairs with convex/api.future.ts. The Stripe layer's job is:
+// Pairs with the live convex/api.ts. The Stripe layer's job is:
 //   1. Get a logged-in user to a Checkout page for a given tier.
 //   2. Verify the resulting webhook from Stripe (HMAC-SHA256 sig check).
 //   3. Mirror the resulting subscription into our `stripeSubscriptions`
@@ -142,7 +142,7 @@ export const createCheckout = mutation({
     // app.js forces profileTab='api' after reading ?stripe=success,
     // so the user lands directly on the API & Billing tab regardless
     // of what STRIPE_RETURN_URL points at.
-    const returnUrl = process.env.STRIPE_RETURN_URL ?? "https://suprabench.ai/#profile";
+    const returnUrl = process.env.STRIPE_RETURN_URL ?? "https://suprabench.com/#profile";
     const session = await stripeFetch("/checkout/sessions", {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -179,7 +179,7 @@ export const createBillingPortalSession = mutation({
       .withIndex("by_user", q => q.eq("userId", userId)).first();
     if (!mapping) throw new Error("no stripe customer");
 
-    const returnUrl = process.env.STRIPE_RETURN_URL ?? "https://suprabench.ai/#profile";
+    const returnUrl = process.env.STRIPE_RETURN_URL ?? "https://suprabench.com/#profile";
     const portal = await stripeFetch("/billing_portal/sessions", {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },

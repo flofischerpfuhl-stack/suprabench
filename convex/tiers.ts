@@ -6,8 +6,10 @@
 // below. Do NOT re-declare these numbers anywhere else.
 //
 // Things that already follow this rule:
-//   • convex/api.future.ts   → imports TIERS from "./tiers"
+//   • convex/api.ts          → imports TIERS from "./tiers" (LIVE)
+//   • convex/partners.ts     → imports PARTNER_DEFAULTS (LIVE)
 //   • convex/stripe.future.ts → imports TIERS, Tier from "./tiers"
+//     (activates when paid tiers ship)
 //   • scripts/check-tier-consistency.mjs runs in CI and greps the
 //     repo for any drifted price/quota strings
 //

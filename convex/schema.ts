@@ -199,10 +199,11 @@ export default defineSchema({
     models: v.number(),
   }).index("by_tag", ["tag"]),
 
-  // Public-API waitlist. The full API (apiKeys / Stripe / etc.) lives
-  // behind commented-out blocks (see below + api.future.ts), but the
-  // waitlist itself is LIVE so the dashboard can collect demand
-  // signal before we flip the API on.
+  // Public-API waitlist. The `/v1/*` HTTP API itself is LIVE for
+  // Partner keys (see convex/api.ts + convex/partners.ts); paid tiers
+  // (Starter / Pro / Enterprise) are demand-gated and the waitlist
+  // here collects the demand signal so we know when to flip Stripe
+  // billing (convex/stripe.future.ts) on.
   apiWaitlist: defineTable({
     userId: v.optional(v.id("users")),  // null = signed-out signup (we still capture)
     email: v.string(),

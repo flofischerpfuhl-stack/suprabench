@@ -12,8 +12,9 @@
 > moderation logic end-to-end. Read the code, reproduce the numbers,
 > fork for research and learning, open issues and PRs. If you want
 > to *use* SupraBench day-to-day, visit
-> [suprabench.ai](https://suprabench.ai). Licensing terms are in
-> [LICENSE](LICENSE).
+> [suprabench.com](https://suprabench.com). Licensing terms are in
+> [LICENSE](LICENSE) — the BSL is **source-available**, not OSI
+> open-source until the Change Date of 2029-01-01.
 
 ---
 
@@ -92,7 +93,7 @@ SupraScore(m)   = weightedMean(m) · √(W(m) / W*)      ← W* = max over non-h
   best-covered model has share $=1$ and no self-penalty. Hidden models are
   excluded from $W^\star$.
 
-Worked example, full math, and trajectory tables: [About page on the live site](https://suprabench.ai/#about).
+Worked example, full math, and trajectory tables: [About page on the live site](https://suprabench.com/#about).
 
 ### Community validation (five layers)
 
@@ -145,7 +146,10 @@ not a gatekeeper. Whitelist lives in [`convex/urls.ts`](convex/urls.ts).
 
 | Layer | Technology |
 |---|---|
-| Backend | [Convex](https://convex.dev) — reactive serverless DB + functions |
+| Backend | [Convex](https://convex.dev) — reactive serverless DB + functions (rankings, votes, ratings, auth, HTTP API) |
+| Score store (hot path) | [Cloudflare D1](https://developers.cloudflare.com/d1/) SQLite, fronted by a Cloudflare Worker — see [`infra/scores-worker/`](infra/scores-worker/) and [Score storage and rebuild path](#score-storage-and-rebuild-path) below |
+| Edge proxy | Cloudflare Worker in front of `/v1/*` for caching + custom headers — see [`infra/cloudflare-worker/`](infra/cloudflare-worker/) |
+| Hosting | [Cloudflare Pages](https://pages.cloudflare.com/) for the static site, deployed on every push to `main` |
 | Auth | [`@convex-dev/auth`](https://labs.convex.dev/auth) with Google OAuth |
 | Frontend | Vanilla HTML + [Alpine.js](https://alpinejs.dev) v3 (no React, no build step) |
 | Math rendering | [KaTeX](https://katex.org/) (About page only) |
@@ -184,22 +188,36 @@ suprabench/
 │   ├── benchQualityRatings.ts    # 5-dimension quality ratings
 │   ├── tags.ts                   # Tag aggregation (cached)
 │   ├── rankings.ts               # SupraScore + headroom math
+│   ├── familyRankings.ts         # Family-level aggregate (delegates to rankings.ts)
 │   ├── cache.ts                  # Denormalized aggregate recompute helpers
 │   ├── migrations.ts             # One-off backfill mutations
 │   ├── users.ts                  # Viewer + activity feed
 │   ├── admin.ts                  # Internal cleanup utilities
 │   ├── urls.ts                   # Official-source whitelist
-│   ├── api.future.ts             # Planned paid HTTP API (placeholder)
-│   └── stripe.future.ts          # Planned Stripe billing (placeholder)
+│   ├── api.ts                    # Live public HTTP API (/v1/* read endpoints, Partner-keyed)
+│   ├── tiers.ts                  # Single source of truth for API tier shapes
+│   ├── partners.ts               # Partner-key issuance + management
+│   ├── waitlist.ts               # Demand-gate waitlist for paid tiers
+│   ├── scoresWorker.ts           # Internal actions that talk to the Cloudflare D1 scores worker
+│   └── stripe.future.ts          # Stripe billing skeleton — activates when paid tiers ship
+├── infra/
+│   ├── cloudflare-worker/        # Edge cache + header rewriter in front of /v1/*
+│   └── scores-worker/            # D1-backed mirror of modelScores; see README in that folder
 ├── public/
 │   ├── index.html                # Single-page app — all views in one file
+│   ├── _headers                  # Cloudflare Pages CSP + cache headers
+│   ├── sw.js                     # Service worker (PWA, offline shell)
+│   ├── sitemap.xml               # SEO sitemap
+│   ├── docs/api/                 # Static API docs (mirrored from convex/api.ts)
+│   ├── legal/                    # Imprint, privacy, terms
 │   ├── css/style.css             # Design system
 │   ├── img/                      # Logos + favicons
 │   └── js/
 │       ├── app.js                # Alpine.js application
 │       └── convex.js             # Convex client + auth bootstrap
 ├── docs/
-│   └── api-roadmap.md            # Public API design + pricing
+│   └── api-roadmap.md            # Public API design + pricing rationale (paid tiers)
+├── tests/                        # Vitest + convex-test suite (unit + adversarial + integration)
 ├── package.json
 └── .env.local                    # OAuth + Convex credentials (gitignored)
 ```
@@ -404,27 +422,82 @@ Idempotent. The frontend opens subscriptions lazily per active view, so an
 idle session running on a model detail page costs ~1 long-lived subscription
 instead of 6.
 
-## Public API (planned)
+### Score storage and rebuild path
 
-A paid HTTP API for routers / dashboards / observability tools is sketched
-out — schema, endpoints, pricing tiers, Stripe activation steps and
-Convex-cost analysis live in [`docs/api-roadmap.md`](docs/api-roadmap.md).
-The placeholder implementations are in
-[`convex/api.future.ts`](convex/api.future.ts) (HTTP routes, key
-generation, rate limiting) and
-[`convex/stripe.future.ts`](convex/stripe.future.ts) (Checkout,
-billing portal, signed webhook). Not active yet.
+The single biggest read source on Convex used to be the ranking
+recompute, which scans the entire `modelScores` table on every
+submission and every vote. That made Convex bandwidth (1 GB/mo on
+the free plan) the binding constraint long before we'd hit any
+other quota.
+
+To break the dependency we mirror every score row to a Cloudflare
+D1 SQLite database fronted by a small Worker (see
+[`infra/scores-worker/`](infra/scores-worker/) for the full code,
+schema, deploy commands and pricing math). The architecture is:
+
+```
+   Browser          Convex                    Cloudflare D1
+  (mutation) ─▶  modelScores  ─runAfter(0)─▶  suprabench-scores
+                    ↑ (primary store)              ↑ (read replica)
+                    │                              │
+                    ╰─────  rebuild reads from ────╯
+                            D1, writes rankings
+                            back to Convex
+```
+
+* **Writes** still hit Convex first inside the user-facing
+  mutation — so the user sees a strongly-consistent response.
+* A scheduled action (`scoresWorker.mirrorScoresAndRebuild`)
+  immediately POSTs the new row to the D1 worker and then triggers
+  the unified ranking rebuild.
+* **Rankings** (`rankings.recomputeFromD1`) read the entire score
+  set from D1 over a single HTTP `GET /scores`, compute model and
+  family rankings in memory, and write the (much smaller) rankings
+  tables back to Convex.
+
+Net effect: the per-submission Convex bandwidth bill collapses
+from "rescan 10–100 k score rows" to "fetch a few hundred bytes
+of cached aggregates and write back two ranking rows per affected
+model/family", which lets the free tier comfortably absorb the
+projected launch traffic. Cost analysis and the upgrade thresholds
+live in [`infra/scores-worker/README.md`](infra/scores-worker/README.md).
+
+The Convex `modelScores` table stays as the primary store and a
+rollback safety net during phase-1 of the migration. Once D1 is
+proven as the source of truth, we'll cut over the remaining read
+paths (detail pages, simulator, API listings) and drop the Convex
+copy. None of this is observable to end users.
+
+## Public HTTP API
+
+`/v1/*` is **live today** for invited Partner keys — read
+endpoints for models, benchmarks, rankings, tags, and submissions.
+The full developer-facing documentation is published under
+[`/docs/api/`](public/docs/api/) and the implementation lives in
+[`convex/api.ts`](convex/api.ts) (HTTP routes, key validation,
+per-key rate limiting + quotas, edge-cache headers).
+
+| Tier | Status | Notes |
+|---|---|---|
+| Partner | **Live, free, invite-only** | Manual issuance via [`convex/partners.ts`](convex/partners.ts); used to seed the ecosystem. |
+| Starter / Pro / Enterprise | **Demand-gated** | All implementation is shipped — Stripe wiring lives in [`convex/stripe.future.ts`](convex/stripe.future.ts) and only flips on once the waitlist hits launch threshold. |
+| Enterprise+ | Custom contracts | Direct conversation, not self-serve. |
+
+Schema, endpoint catalog, pricing rationale, Stripe activation
+steps and the Convex-cost analysis that drove the demand-gating
+policy all live in [`docs/api-roadmap.md`](docs/api-roadmap.md).
 
 **Tier shape lives in exactly one place:**
-[`convex/tiers.ts`](convex/tiers.ts). Every other file (the
-tier-cards in `public/index.html`, the API docs tables under
-`public/docs/api/`, the roadmap markdown) mirrors quotas, RPM and
-key counts from that file. **Prices are intentionally `null` /
-"TBD" everywhere right now** — the API is finished and Stripe-wired,
-but final pricing is collected via the waitlist before launch. The
-real numbers will live in the Stripe dashboard (Products → recurring
-Prices) and never in this repo: at checkout we send only the Stripe
-Price ID and Stripe owns the amount/currency. To prevent drift,
+[`convex/tiers.ts`](convex/tiers.ts). Every other file — the
+tier-cards in [`public/index.html`](public/index.html), the API
+docs tables under [`public/docs/api/`](public/docs/api/), the
+roadmap markdown — mirrors quotas, RPM and key counts from that
+file. **Paid-tier prices are intentionally `null` / "TBD"
+everywhere right now**: final pricing is collected via the
+waitlist before launch. The real numbers will live in the Stripe
+dashboard (Products → recurring Prices) and never in this repo —
+at checkout we send only the Stripe Price ID and Stripe owns the
+amount/currency. To prevent drift,
 `npm run check:tiers` runs
 [`scripts/check-tier-consistency.mjs`](scripts/check-tier-consistency.mjs)
 which parses `tiers.ts` and grep-validates every other place — it
@@ -447,12 +520,14 @@ This repo is intentionally simple to read end-to-end:
 
 There is **no setup guide** here on purpose — for most questions
 ("what does bench X score?", "how is model Y's SupraScore computed?")
-the easier path is the public dataset, which the (planned)
-[Public API](#public-api-planned) exposes directly. If you're
-digging into the math, an install isn't required: `convex/rankings.ts`
-is self-contained enough to reproduce against the dataset in any
-language. For reproducibility or implementation questions, open an
-issue on the [tracker](https://gitlab.com/florian-fischer-group/suprabench/-/issues) —
+the easier path is the public dataset, which the
+[Public HTTP API](#public-http-api) exposes directly (request a
+free Partner key while paid tiers are still demand-gated). If
+you're digging into the math, an install isn't required:
+`convex/rankings.ts` is self-contained enough to reproduce against
+the dataset in any language. For reproducibility or implementation
+questions, open an issue on the
+[tracker](https://gitlab.com/florian-fischer-group/suprabench/-/issues) —
 PRs are welcome too.
 
 ## Security model
@@ -461,9 +536,10 @@ The frontend, the Convex query/mutation handlers, and the planned HTTP API
 are **all** designed to be safe with a fully public codebase:
 
 - **No secrets in the repo.** Every secret (Google OAuth client ID/secret,
-  JWT keys, the planned Stripe + webhook secrets) lives in
-  `.env.local` (gitignored) for dev and in `npx convex env set` on the
-  Convex deployment for production. The repo only references their *names*.
+  JWT keys, the D1 scores-worker bearer, the planned Stripe + webhook
+  secrets) lives in `.env.local` (gitignored) for dev and in
+  `npx convex env set` / `npx wrangler secret put` for production.
+  The repo only references their *names*.
 - **Authorization is server-side.** Every mutation re-checks
   `ctx.auth.getUserIdentity()` and the caller's role — the client is treated
   as fully untrusted. Rate limits, vote-once rules and the auto-hide
@@ -472,16 +548,22 @@ are **all** designed to be safe with a fully public codebase:
   `public/js/convex.js` is the same kind of identifier as a Firebase
   project ID. Authentication still has to happen against it; an attacker
   knowing the URL gains nothing they couldn't get by visiting the live site.
-- **Planned API.** Once enabled, the API uses hashed bearer keys
-  (`sb_live_…`) generated in Convex, validated server-side on every
-  request, with per-key tier-based rate limits and Stripe-driven
-  subscription gating. See [`convex/api.future.ts`](convex/api.future.ts)
-  and [`convex/stripe.future.ts`](convex/stripe.future.ts) — both are
-  fully commented-out skeletons. Stripe webhook signatures are verified
-  with `STRIPE_WEBHOOK_SECRET` (Convex env var, never in code).
+- **Cloudflare D1 scores worker.** Server-to-server only. Every
+  request carries `Authorization: Bearer <SCORES_WORKER_SECRET>`;
+  the browser never touches that URL. The worker also writes the
+  `Access-Control-Allow-Origin` only on the `/health` ping.
+- **Public HTTP API.** Live for Partner keys today, paid tiers
+  demand-gated. Bearer keys (`sb_live_…`) are generated and stored
+  hashed in Convex, validated server-side on every request, with
+  per-key tier-based rate limits + monthly quotas. See
+  [`convex/api.ts`](convex/api.ts), [`convex/partners.ts`](convex/partners.ts),
+  and [`convex/tiers.ts`](convex/tiers.ts). Stripe billing for paid
+  tiers will activate via [`convex/stripe.future.ts`](convex/stripe.future.ts);
+  webhook signatures are verified with `STRIPE_WEBHOOK_SECRET`
+  (Convex env var, never in code).
 
 If you spot anything that looks security-sensitive, please report it
-privately via the email in [`/legal/imprint`](https://suprabench.ai/legal/imprint).
+privately via the email in [`/legal/imprint`](https://suprabench.com/legal/imprint).
 
 ## License
 
@@ -496,6 +578,7 @@ covers it; open an issue if you'd like clarification.
 > Tip for the curious: the simplest path to verify the SupraScore
 > independently is to reproduce the math from
 > [`convex/rankings.ts`](convex/rankings.ts) against the public dataset
-> exposed by the (planned) HTTP API. No deployment required.
+> exposed by the [HTTP API](#public-http-api) (Partner keys are free
+> while paid tiers are demand-gated). No deployment required.
 
 Community-driven. No corporate influence.

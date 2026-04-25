@@ -116,15 +116,36 @@ go test ./tests/integration/go/...
   those are gated by Google OAuth sessions, not API keys, and have
   their own human-QA pass.
 
+## Why two `package.json` / two lockfiles?
+
+The repo intentionally has **two** package roots:
+
+* `/package.json` — the production runtime. Pinned to the exact
+  Convex + auth + frontend bundle versions deployed to
+  `suprabench.com`. This file should change rarely; every change
+  here triggers a Convex backend redeploy.
+* `/tests/convex/package.json` — the **test runner only**. Pulls in
+  `convex-test`, `vitest`, `@edge-runtime/vm` and a few other
+  dev-only deps that have no business landing in the production
+  bundle. Lives in its own subtree so a `cd tests/convex && npm ci`
+  is fast and keeps test-only transitive deps out of `package-lock.json`
+  at the root.
+
+The third `package.json` under `tests/integration/javascript/` is
+the same idea applied to the language-specific HTTP smoke-test
+runner (no devDeps; `node --test` only).
+
+This is *not* an npm workspace: the trees are deliberately
+independent so the production install on Cloudflare Pages /
+Convex deploy never has to fetch any test infrastructure.
+
 ## Requirements when the API isn't activated yet
 
-If `apiLive=false` in `public/js/app.js` and the schema's `apiKeys`
-table is still commented out (see `ACTIVATION.md`), **these tests
-will fail to even start** — the imports target code that doesn't
-exist in the deployed runtime. They are designed to run **after**
-the activation steps.
-
-During the dormant period, the suite is still useful as an
-executable specification: reviewers can read
-`tests/convex/endpoints.test.ts` to understand exactly what the API
-promises to do.
+The `/v1/*` HTTP routes (`convex/api.ts`) and partner-key minting
+(`convex/partners.ts`) are **LIVE** in production today, so the
+`tests/convex/endpoints.test.ts` and `tests/convex/keys-and-partners.test.ts`
+suites run against the real shipped code — no separate activation
+needed. The only block still gated behind a `.future` fence is the
+Stripe checkout layer in `convex/stripe.future.ts`; tests that
+reference it will fail to start until paid tiers ship, which is
+the intended signal (see `ACTIVATION.md`).

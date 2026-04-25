@@ -1,10 +1,19 @@
 # Public API — Roadmap
 
-> **Status:** designed but not active. Code lives commented-out in
-> [`convex/api.future.ts`](../convex/api.future.ts) and
-> [`convex/stripe.future.ts`](../convex/stripe.future.ts), with the
-> corresponding tables commented in [`convex/schema.ts`](../convex/schema.ts).
-> Activate when there's demonstrated demand.
+> **Status (April 2026):** the `/v1/*` HTTP routes in
+> [`convex/api.ts`](../convex/api.ts) are **LIVE** and answering
+> requests for invited **Partner** keys (minted via
+> [`convex/partners.ts`](../convex/partners.ts)). The schema tables
+> in [`convex/schema.ts`](../convex/schema.ts) (`apiKeys`, `apiUsage`,
+> `apiRateLimits`, `apiRequestLog`) are deployed and live.
+>
+> **Paid self-serve tiers** (Starter / Pro / Enterprise) are
+> **demand-gated** — the implementation is finished, but the Stripe
+> billing layer in [`convex/stripe.future.ts`](../convex/stripe.future.ts)
+> stays behind a `.future` fence until the waitlist hits launch
+> threshold. The waitlist itself
+> ([`convex/waitlist.ts`](../convex/waitlist.ts)) is live so we
+> measure demand.
 
 ## Why an API at all
 
@@ -142,32 +151,40 @@ targeting this is fine; revisit if we hit MOSS-relevant volumes.
 
 ## Activation steps
 
-In order:
+The schema tables, HTTP routes, key validation, rate limiting,
+quota tracking, audit logging and the cron-based cleanup are all
+**already live in production** for Partner keys. The only piece
+that still needs to be activated is **Stripe-backed billing** for
+the paid Starter / Pro / Enterprise tiers. To flip those on:
 
-1. **Schema** — uncomment the `apiKeys`, `apiUsage`, `apiRateLimits`,
-   `apiRequestLog`, `stripeCustomers`, `stripeSubscriptions`,
-   `stripeEvents` blocks at the bottom of `convex/schema.ts`.
-2. **API code** — uncomment everything inside
-   `convex/api.future.ts`, drop the leading `export {};`, and rename
-   to `convex/api.ts`.
-3. **Stripe code** — same with `convex/stripe.future.ts` →
-   `convex/stripe.ts`.
-4. **Wire HTTP routes** — in `convex/http.ts`:
+1. **Stripe code** — un-fence the file: rename
+   [`convex/stripe.future.ts`](../convex/stripe.future.ts) →
+   `convex/stripe.ts`, drop the leading `export {};`, and uncomment
+   the body. The TIERS / Tier imports already match
+   [`convex/tiers.ts`](../convex/tiers.ts) so no rewiring needed.
+2. **Stripe dashboard** — create three recurring monthly Products
+   (Starter / Pro / Enterprise), each with one Price. Copy the
+   `price_…` IDs into `PRICE_IDS` in `convex/stripe.ts`.
+3. **Convex env** —
+   ```bash
+   npx convex env set STRIPE_SECRET_KEY sk_live_…
+   npx convex env set STRIPE_WEBHOOK_SECRET whsec_…
+   npx convex env set STRIPE_RETURN_URL https://suprabench.com/#profile
+   ```
+4. **Stripe webhook** — add endpoint
+   `https://<deployment>.convex.site/stripe/webhook` listening to
+   `checkout.session.completed`,
+   `customer.subscription.{created,updated,deleted}`,
+   `invoice.payment_failed`.
+5. **Wire HTTP routes** — in `convex/http.ts` add:
    ```ts
-   import { registerApiRoutes } from "./api";
    import { registerStripeRoutes } from "./stripe";
-   registerApiRoutes(http);
    registerStripeRoutes(http);
    ```
-5. **Cron** — add `convex/crons.ts` (if missing) with an hourly call
-   to `internal.api.cleanupOldData` so the audit log + rate-limit
-   buckets don't grow forever.
-6. **Frontend** — add an `/#api` view with:
-   - "Subscribe" buttons → call `stripe:createCheckout({tier})`,
-     redirect to returned URL
-   - "Manage billing" → calls `stripe:createBillingPortalSession`
-   - List keys (calls `api:myKeys`), create / revoke buttons
-   - Usage chart (calls `api:myKeyUsage`)
+6. **Frontend** — the `/#profile` → API tab already renders the
+   tier-grid + key dashboard. Wire the per-tier "Subscribe" buttons
+   to `stripe:createCheckout({tier})` and the "Manage billing"
+   button to `stripe:createBillingPortalSession`.
 7. `npx convex deploy --yes`, then trigger a Stripe test event:
    `stripe trigger customer.subscription.created`.
 

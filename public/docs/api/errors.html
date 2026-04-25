@@ -70,7 +70,7 @@
     </p>
 
     <div class="docs-meta">
-      <span>Last updated: April 18, 2026</span>
+      <span>Last updated: April 25, 2026</span>
       <span>Reading time: 5 min</span>
     </div>
 
@@ -102,7 +102,7 @@
         <tr><td><span class="name">400</span></td><td><span class="desc">Bad request — malformed query / missing required parameter.</span></td></tr>
         <tr><td><span class="name">401</span></td><td><span class="desc">Authentication failed — missing, malformed, unknown or revoked key.</span></td></tr>
         <tr><td><span class="name">402</span></td><td><span class="desc">Subscription inactive — payment failed or you cancelled and the period ended.</span></td></tr>
-        <tr><td><span class="name">403</span></td><td><span class="desc">Forbidden — you're authenticated but your tier or IP doesn't allow this action.</span></td></tr>
+        <tr><td><span class="name">403</span></td><td><span class="desc">Forbidden — you're authenticated but your tier doesn't allow this action.</span></td></tr>
         <tr><td><span class="name">404</span></td><td><span class="desc">Not found — model/bench slug doesn't exist or is hidden.</span></td></tr>
         <tr><td><span class="name">422</span></td><td><span class="desc">Unprocessable — semantically wrong, e.g. trying to create a 4th key on Pro tier.</span></td></tr>
         <tr><td><span class="name">429</span></td><td><span class="desc">Rate-limited or quota exceeded.</span></td></tr>
@@ -141,8 +141,7 @@
       <thead><tr><th>Code</th><th>When</th></tr></thead>
       <tbody>
         <tr><td><span class="name">tier_forbidden</span></td><td><span class="desc">Endpoint not available on your tier (e.g. bulk export on Starter).</span></td></tr>
-        <tr><td><span class="name">ip_not_allowed</span></td><td><span class="desc">Source IP not in this Enterprise+ key's allowlist.</span></td></tr>
-        <tr><td><span class="name">rate_limited</span></td><td><span class="desc">More than your per-minute limit in the last 60 seconds.</span></td></tr>
+        <tr><td><span class="name">rate_limited</span></td><td><span class="desc">More requests in the current calendar minute (UTC) than your per-minute ceiling.</span></td></tr>
         <tr><td><span class="name">quota_exceeded</span></td><td><span class="desc">Monthly quota for this key reached.</span></td></tr>
       </tbody>
     </table>

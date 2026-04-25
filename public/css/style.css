@@ -973,8 +973,10 @@ tr.clickable-row {
 
 /* ── Vote Buttons ── */
 .vote-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.3rem;
   padding: 0.3rem 0.7rem;
   border: 1px solid var(--border);
@@ -986,6 +988,19 @@ tr.clickable-row {
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition);
+  /* Min visible size stays the same; the ::before below extends the
+     pointer/touch hit area to the WCAG 2.5.5 minimum without nudging
+     surrounding layout. */
+  min-width: 2.4rem;
+}
+/* Invisible expanded hit-area — keeps the visible button compact (so
+   the dense submission/score tables don't reflow) while giving touch
+   users a comfortable target on phones. The pseudo only intercepts
+   pointer events; it carries no styling. */
+.vote-btn::before {
+  content: "";
+  position: absolute;
+  inset: -6px -4px;
 }
 .vote-btn:hover {
   border-color: var(--text2);
@@ -997,6 +1012,17 @@ tr.clickable-row {
 .vote-btn.active-down {
   border-color: var(--danger);
   color: var(--danger);
+}
+/* On phones, also enlarge the visible button itself — tapping a 28 px
+   pill repeatedly is uncomfortable even with the extended hit area.
+   Wrapping rows already use `flex-wrap`, so the extra height doesn't
+   cause overflow. */
+@media (max-width: 640px) {
+  .vote-btn {
+    padding: 0.5rem 0.85rem;
+    font-size: 0.9rem;
+    min-height: 2.4rem;
+  }
 }
 
 /* ── User Badge ── */

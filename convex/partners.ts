@@ -41,7 +41,8 @@
 // web-based partner admin UI, wire a regular `mutation` that checks
 // `getAuthUserId` against an explicit allowlist of admin user IDs.
 //
-// Roadmap: see docs/api-roadmap.md → Partner tier section.
+// Roadmap, rationale and admin commands: see docs/api-roadmap.md
+// → Partner tier section.
 // ════════════════════════════════════════════════════════════
 
 import { internalMutation, internalQuery } from "./_generated/server";

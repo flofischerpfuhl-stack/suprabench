@@ -2071,7 +2071,7 @@
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q8')" x-transition>
             <p>Any URL is a valid source — but only well-known academic, lab, and dedicated leaderboard hosts get an "Official source" badge. Everything else (YouTube, Substack, X/Twitter, personal blogs) is a valid <em>community source</em> and gets a "Community" badge instead. The submission is otherwise treated identically; the badge is a transparency signal, not a gatekeeper.</p>
-            <p class="helper-text">The whitelist is open source — see <code>convex/urls.ts</code> in the GitLab repo. Suggestions welcome via issues.</p>
+            <p class="helper-text">The whitelist lives in <code>convex/urls.ts</code> in the public source repository on GitLab — suggestions welcome via issues.</p>
         </div>
     </div>
 
@@ -2082,13 +2082,14 @@
             <span>Open source, license, contribution?</span>
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q9')" x-transition>
-            <p>SupraBench is open source under the <strong>Business Source License 1.1</strong>. The full code, including the ranking math you just read, is in the GitLab repo:</p>
+            <p>The full source code of SupraBench, including the ranking math you just read, is published under the <strong>Business Source License 1.1</strong> (BSL):</p>
             <p>
                 <a class="external-link" href="https://gitlab.com/florian-fischer-group/suprabench" target="_blank" rel="noopener">
                     gitlab.com/florian-fischer-group/suprabench ↗
                 </a>
             </p>
-            <p>Issues, feature requests and merge requests are welcome. Imprint, privacy and terms in the sidebar footer.</p>
+            <p><strong>Source-available, not OSI-open-source.</strong> The BSL is a "source-available" licence: you can read, audit, fork for research, learning and non-commercial use, patch and redistribute &mdash; but the licence does <em>not</em> meet the OSI Open Source Definition because it carves out commercial competing-service use until the <strong>Change Date of 2029-01-01</strong>. On that date the entire codebase auto-converts to Apache License 2.0 and becomes plain open source under that name. We use this exact wording instead of the unqualified "open source" label because the OSI / FSF community is &mdash; rightly &mdash; strict about that distinction.</p>
+            <p>Issues, feature requests and merge requests are welcome on GitLab. Imprint, privacy and terms in the sidebar footer.</p>
         </div>
     </div>
 
@@ -2171,7 +2172,7 @@
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q10')" x-transition>
             <p><strong>Yes &mdash; partially.</strong> The <code>/v1/*</code> endpoints are live and answering requests today, but the only keys we mint right now are <strong>free Partner keys</strong> for non-profit, research and open-source projects we explicitly approve. Paid self-serve tiers (Starter / Pro / Enterprise) stay on a <strong>waitlist</strong> until enough developers are actually queued for them &mdash; running Stripe + a dedicated edge cache for an API nobody uses isn't free. Pricing is <strong>TBD until that launch</strong>, the waitlist is how we figure out what each tier should actually cost. Enterprise plans are always custom. Billing will be handled by Stripe (EU VAT collected automatically).</p>
-            <p>Read the full <a href="/docs/api/" style="color:var(--accent)"><strong>API documentation</strong></a> &mdash; every endpoint, error code, rate-limit and example is already there. For paid tiers, <strong>join the waitlist</strong> for the one you'd actually subscribe to: <a href="#profile" @click.prevent="navigate('profile'); $nextTick(() => profileTab='api')">Profile → API &amp; Billing</a>. When the queue hits launch threshold we ship and email everyone in signup order.</p>
+                    <p>Read the full <a href="/docs/api/" style="color:var(--accent)"><strong>API documentation</strong></a> &mdash; every endpoint, error code, rate-limit and example is already there. For paid tiers, <strong>join the waitlist</strong> for the one you'd actually subscribe to: <a href="#profile/api" @click.prevent="navigate('profile'); $nextTick(() => setProfileTab('api'))">Profile → API &amp; Billing</a>. When the queue hits launch threshold we ship and email everyone in signup order.</p>
             <p>Running a non-profit, research or open-source project that could genuinely use the API today? <a href="mailto:suprabench.editor887@passmail.com?subject=SupraBench%20Partner%20API%20application">Pitch us for a Partner key</a> &mdash; free, negotiated quota, live right now. The <em>Apply to become a partner</em> button at the bottom of the pricing grid opens a pre-filled form with the bits we need to evaluate.</p>
             <p class="helper-text">Have a specific use case (dashboard, leaderboard mirror, evaluation tooling)? Tell us via a GitLab issue or the partner mailto &mdash; high-signal asks weigh more than passive signups.</p>
         </div>
@@ -2204,17 +2205,17 @@
             <!-- Tab nav -->
             <nav class="profile-tabs" role="tablist" aria-label="Profile sections">
                 <button class="profile-tab" :class="{'is-active': profileTab==='activity'}"
-                        @click="profileTab='activity'" role="tab"
+                        @click="setProfileTab('activity')" role="tab"
                         :aria-selected="profileTab==='activity'">Activity</button>
                 <button class="profile-tab" :class="{'is-active': profileTab==='api'}"
-                        @click="profileTab='api'" role="tab"
+                        @click="setProfileTab('api')" role="tab"
                         :aria-selected="profileTab==='api'">
                     API &amp; Billing <span class="badge-soon">Demand-gated</span>
                 </button>
                 <button class="profile-tab"
                         x-show="simulatorUsage && simulatorUsage.tier"
                         :class="{'is-active': profileTab==='simulator'}"
-                        @click="profileTab='simulator'; simulatorEnsureSnapshot()" role="tab"
+                        @click="setProfileTab('simulator')" role="tab"
                         :aria-selected="profileTab==='simulator'">
                     Simulator
                     <span class="badge-soon" x-show="simulatorUsage && simulatorUsage.tier" x-text="simulatorUsage && simulatorUsage.tier === 'enterprise_plus' ? 'Ent+' : 'Partner'"></span>
@@ -2222,7 +2223,7 @@
                 <button class="profile-tab profile-tab--admin"
                         x-show="user && user.isAdmin"
                         :class="{'is-active': profileTab==='admin'}"
-                        @click="profileTab='admin'" role="tab"
+                        @click="setProfileTab('admin')" role="tab"
                         :aria-selected="profileTab==='admin'">
                     Admin <span class="badge-soon" x-show="user && user.isPrimaryAdmin">Primary</span>
                 </button>
@@ -2340,9 +2341,11 @@
 
             <!-- ════════════════════════════════════
                  TAB: API & Billing
-                 The full API ships behind a feature flag (api.future.ts +
-                 stripe.future.ts are commented). The waitlist below is LIVE
-                 — it captures demand so we know when to flip the switch.
+                 The `/v1/*` API is LIVE for Partner keys (free, invite-only).
+                 Paid tiers (Starter / Pro / Enterprise) are demand-gated —
+                 Stripe wiring lives in convex/stripe.future.ts and the
+                 waitlist below captures demand so we know when to flip
+                 paid checkout on.
                  ════════════════════════════════════ -->
             <div x-show="profileTab==='api'" x-transition.opacity>
 
@@ -2551,16 +2554,18 @@
                     <div>
                         <p class="api-banner__title">Public API — Demand-gated</p>
                         <p class="api-banner__text">
-                            Programmatic access to SupraBench data (rankings, models,
-                            benchmarks, submissions). The contract is final, the
+                            Read-only programmatic access to SupraBench data (rankings,
+                            models, benchmarks, tags). The
                             <a href="/docs/api/" style="color:var(--accent);text-decoration:underline">full developer documentation</a>
-                            is live, the implementation is built. Paid tiers are
-                            <strong>demand-gated</strong> &mdash; we don't flip
-                            <code>/v1/</code> on for them until enough developers
-                            are waiting to justify the recurring Stripe + edge-cache
-                            overhead. Join the waitlist on the tier you'd actually
-                            subscribe to; once the queue hits launch threshold we
-                            ship and email everyone in signup order.
+                            is live and <code>/v1/</code> answers requests today &mdash;
+                            but the only keys we currently mint are free
+                            <strong>Partner</strong> keys (invite-only, see the bottom
+                            card). Self-serve <strong>paid</strong> tiers (Starter /
+                            Pro / Enterprise) are demand-gated until the waitlist hits
+                            launch threshold &mdash; running Stripe and a dedicated
+                            edge cache for an API nobody uses isn't free. Join the
+                            waitlist on the tier you'd actually subscribe to; we email
+                            everyone in signup order when we flip paid tiers on.
                         </p>
                         <p class="api-banner__text" style="margin-top:.5rem">
                             Running a non-profit, research or open-source project
@@ -2630,8 +2635,7 @@
                             <li>Everything in Pro</li>
                             <li>1 200 req/min rate limit</li>
                             <li>10 API keys</li>
-                            <li>Priority support</li>
-                            <li>Webhooks (beta)</li>
+                            <li>Priority support (best-effort, no formal SLA)</li>
                         </ul>
                         <button class="btn btn-sm btn-outline" :disabled="tierButtonDisabled('enterprise')"
                                 @click="tierAction('enterprise')"
@@ -2644,14 +2648,14 @@
                         <span class="tier-card__badge" x-show="isOnWaitlist('enterprise_plus')">On waitlist</span>
                         <h3 class="tier-card__name">Enterprise+</h3>
                         <p class="tier-card__price">Custom</p>
-                        <p class="tier-card__quota">Custom quota, SLA, on-prem mirror</p>
-                        <ul class="tier-card__features">
-                            <li>Everything in Enterprise</li>
-                            <li>Custom rate limits</li>
-                            <li>50+ keys + IP allowlists</li>
-                            <li>SLA + dedicated Slack channel</li>
-                            <li>Custom data agreements</li>
-                        </ul>
+                    <p class="tier-card__quota">Custom quota, optional contractual SLA, on-prem mirror</p>
+                    <ul class="tier-card__features">
+                        <li>Everything in Enterprise</li>
+                        <li>Custom rate limits</li>
+                        <li>50+ keys</li>
+                        <li>Dedicated Slack channel; SLA negotiable per contract</li>
+                        <li>Custom data agreements</li>
+                    </ul>
                         <button class="btn btn-sm btn-outline" :disabled="tierButtonDisabled('enterprise_plus')"
                                 @click="tierAction('enterprise_plus')"
                                 x-text="tierButtonLabel('enterprise_plus')"></button>

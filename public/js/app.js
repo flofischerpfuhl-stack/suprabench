@@ -383,7 +383,8 @@ function supraBench() {
 
     // Profile sub-tab. Defaults to "activity" so existing users see the
     // page they always saw. The "api" tab hosts the public-API dashboard
-    // (waitlist live, sub/keys disabled until api.future.ts ships).
+    // — Partner keys (free, invite-only) are fully live; the Stripe-backed
+    // paid tiers are demand-gated via the waitlist on the same tab.
     // The "simulator" tab is shown only if `simulatorUsage.limit > 0`
     // (partner / enterprise+ with a positive grant).
     profileTab: "activity",
@@ -774,7 +775,7 @@ function supraBench() {
         // Support deep-linking to a specific profile tab: #profile/api,
         // #profile/admin. Default is "activity". Invalid tab names
         // collapse to "activity" so copy-pasted bad URLs don't 404.
-        const allowedTabs = ["activity", "api", "admin"];
+        const allowedTabs = ["activity", "api", "simulator", "admin"];
         if (parts[1] && allowedTabs.includes(parts[1])) {
           this.profileTab = parts[1];
         } else {
@@ -798,6 +799,54 @@ function supraBench() {
         this.adminFlash = null;
         this._loadProfile();
       }
+      this._updateDocumentTitle();
+    },
+
+    // Profile tabs are stored in the second hash segment so the
+    // browser back-button moves through them correctly. Always go
+    // through this helper instead of writing `profileTab = …`
+    // directly so the URL + title stay in sync. `simulatorEnsureSnapshot`
+    // is fired manually on the simulator tab the way the inline
+    // @click handler used to do it; everything else has no per-tab
+    // side-effect beyond the parent `_loadProfile()` already running.
+    setProfileTab(tab) {
+      const allowed = ["activity", "api", "simulator", "admin"];
+      if (!allowed.includes(tab)) tab = "activity";
+      if (this.profileTab === tab && this.view === "profile") return;
+      this.profileTab = tab;
+      const target = tab === "activity" ? "profile" : `profile/${tab}`;
+      if (window.location.hash.slice(1) !== target) {
+        window.location.hash = target;
+      } else {
+        this._updateDocumentTitle();
+      }
+      if (tab === "simulator") this.simulatorEnsureSnapshot?.();
+    },
+
+    // Page title per route. Kept short — the SupraBench prefix is the
+    // brand anchor every search result needs, the suffix is the one
+    // piece of context that actually changes between routes. We don't
+    // include user data in the title to keep it shareable.
+    _updateDocumentTitle() {
+      const base = "SupraBench";
+      let suffix = "Community-driven AI model rankings";
+      switch (this.view) {
+        case "models":      suffix = "Model rankings"; break;
+        case "modelDetail": suffix = this.currentModel?.name ? `${this.currentModel.name} — model` : "Model"; break;
+        case "benchmarks":  suffix = "Benchmark index"; break;
+        case "benchDetail": suffix = this.currentBench?.name ? `${this.currentBench.name} — benchmark` : "Benchmark"; break;
+        case "submit":      suffix = "Submit a score"; break;
+        case "submission":  suffix = "Submission detail"; break;
+        case "about":       suffix = "About & methodology"; break;
+        case "profile":
+          suffix = ({
+            activity:  "Profile — activity",
+            api:       "Profile — API & billing",
+            simulator: "Profile — simulator",
+            admin:     "Profile — admin",
+          })[this.profileTab] ?? "Profile"; break;
+      }
+      document.title = `${base} · ${suffix}`;
     },
 
     navigate(view, params) {
@@ -834,7 +883,9 @@ function supraBench() {
         }
       } catch (e) {
         console.error("Failed to load model:", e);
+        this.showToast(e?.message || "Couldn't load this model — try refreshing.", "error");
       }
+      this._updateDocumentTitle();
     },
 
     async _loadBenchDetail() {
@@ -868,7 +919,9 @@ function supraBench() {
         }
       } catch (e) {
         console.error("Failed to load bench:", e);
+        this.showToast(e?.message || "Couldn't load this benchmark — try refreshing.", "error");
       }
+      this._updateDocumentTitle();
     },
 
     async _loadSubmissionDetail() {
@@ -877,6 +930,7 @@ function supraBench() {
         this.currentSubmission = await client.query(api.submissions.getById, { id: this.currentSubmissionId });
       } catch (e) {
         console.error("Failed to load submission:", e);
+        this.showToast(e?.message || "Couldn't load this submission — try refreshing.", "error");
       }
     },
 
@@ -888,6 +942,7 @@ function supraBench() {
         this.profileSubmissionLimit = 25;
       } catch (e) {
         console.error("Failed to load profile:", e);
+        this.showToast(e?.message || "Couldn't load your profile — try refreshing.", "error");
       }
       // Waitlist is independent: load it whenever the user lands on
       // their profile so the API tab is correct on first paint.
@@ -1860,17 +1915,23 @@ function supraBench() {
         } catch (e) { console.error("Failed to reload ranked families:", e); }
         return;
       }
+      let filterError = null;
       try {
         const r = await client.query(api.models.listRankedWithFilter, { activeTags: this.activeTags });
         if (isCurrent()) this.rankedModels = r;
       } catch (e) {
         console.error("Failed to load filtered models:", e);
+        filterError = e;
       }
       try {
         const r = await client.query(api.models.listRankedFamiliesWithFilter, { activeTags: this.activeTags });
         if (isCurrent()) this.rankedFamilies = r;
       } catch (e) {
         console.error("Failed to load filtered families:", e);
+        filterError = e;
+      }
+      if (filterError && isCurrent()) {
+        this.showToast(filterError?.message || "Couldn't apply tag filter — please try again.", "error");
       }
     },
 
@@ -2015,7 +2076,10 @@ function supraBench() {
     // ═══ AUTH ═══
     async login() {
       try { await window.sbConvex.signIn("google"); }
-      catch (e) { console.error("Login failed:", e); }
+      catch (e) {
+        console.error("Login failed:", e);
+        this.showToast(e?.message || "Sign-in failed — please try again.", "error");
+      }
     },
 
     async logout() {
@@ -2334,14 +2398,20 @@ function supraBench() {
 
     // ═══ VOTING (submission scores) ═══
     async castVote(targetId, value) {
-      if (!this.user) return;
+      if (!this.user) {
+        this.showToast("Sign in to vote on submissions.", "info");
+        return;
+      }
       const { client, api } = window.sbConvex;
       try {
         await client.mutation(api.votes.cast, { targetId: String(targetId), value });
         if (this.view === "modelDetail") await this._loadModelDetail();
         if (this.view === "benchDetail") await this._loadBenchDetail();
         if (this.view === "submission") await this._loadSubmissionDetail();
-      } catch (e) { console.error("Vote failed:", e); }
+      } catch (e) {
+        console.error("Vote failed:", e);
+        this.showToast(e?.message || "Vote failed — please try again.", "error");
+      }
     },
 
     // ═══ TAG VOTING ═══

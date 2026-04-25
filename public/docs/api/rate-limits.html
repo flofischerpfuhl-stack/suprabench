@@ -70,13 +70,13 @@
     </p>
 
     <div class="docs-meta">
-      <span>Last updated: April 18, 2026</span>
+      <span>Last updated: April 25, 2026</span>
       <span>Reading time: 4 min</span>
     </div>
 
     <h2 id="two-limits">Two limits, one purpose</h2>
     <ul>
-      <li><strong>Rate limit</strong> — protects the platform from bursts. Counted in a sliding 60-second window per key. Hitting it returns <code>429 rate_limited</code>.</li>
+      <li><strong>Rate limit</strong> — protects the platform from bursts. Counted per <strong>calendar minute (UTC)</strong> per key &mdash; i.e. the bucket resets at the top of every wall-clock minute, not 60s after your first request. Hitting it returns <code>429 rate_limited</code> with a <code>Retry-After</code> header pointing at the next minute boundary.</li>
       <li><strong>Monthly quota</strong> — the total number of requests included in your subscription. Counted per calendar month (UTC), per key. Hitting it returns <code>429 quota_exceeded</code>.</li>
     </ul>
     <p>
@@ -110,8 +110,8 @@
       <thead><tr><th>Header</th><th>Meaning</th></tr></thead>
       <tbody>
         <tr><td><span class="name">X-RateLimit-Limit</span></td><td>Your per-minute rate ceiling.</td></tr>
-        <tr><td><span class="name">X-RateLimit-Remaining</span></td><td>Requests left in the current 60-second window.</td></tr>
-        <tr><td><span class="name">X-RateLimit-Reset</span></td><td>Unix timestamp (seconds) when the current minute window resets.</td></tr>
+        <tr><td><span class="name">X-RateLimit-Remaining</span></td><td>Requests left in the current calendar-minute bucket.</td></tr>
+        <tr><td><span class="name">X-RateLimit-Reset</span></td><td>Unix timestamp (seconds) when the next calendar-minute bucket starts.</td></tr>
         <tr><td><span class="name">X-Quota-Limit</span></td><td>Monthly quota for this key.</td></tr>
         <tr><td><span class="name">X-Quota-Remaining</span></td><td>Requests left in the current month.</td></tr>
         <tr><td><span class="name">X-Quota-Reset</span></td><td>Unix timestamp when the monthly bucket resets (00:00 UTC on the 1st).</td></tr>

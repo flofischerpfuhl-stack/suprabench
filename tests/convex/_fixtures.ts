@@ -6,12 +6,12 @@
 // users (Google OAuth). The test adapter bypasses auth — we drop rows
 // directly into tables, including apiKeys rows whose `hash` we control.
 //
-// This file assumes the "API activated" state: apiKeys / apiUsage /
-// apiRateLimits / stripeSubscriptions tables exist, and the
-// api.future.ts / stripe.future.ts / partners.future.ts files have
-// been renamed + uncommented. Tests import from the activated paths.
-// While the API is dormant these imports will fail — that's the
-// signal that activation is pending (see tests/README.md).
+// API state (April 2026): the `/v1/*` HTTP routes (convex/api.ts) and
+// partner-key minting (convex/partners.ts) are LIVE. Stripe billing
+// for paid tiers (convex/stripe.future.ts) is the only piece still
+// behind a `.future` fence. Tests import from convex/api.ts directly;
+// any imports of stripe.future.ts will fail until paid tiers ship,
+// which is the intended signal (see tests/README.md).
 
 import { convexTest } from "convex-test";
 import schema from "../../convex/schema";

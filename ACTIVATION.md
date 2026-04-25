@@ -140,7 +140,7 @@ npx convex env set --prod STRIPE_SECRET_KEY  # paste when prompted
 npx convex env set --prod STRIPE_WEBHOOK_SECRET whsec_placeholder
 
 # The URL Stripe redirects users back to after Checkout / Billing-Portal.
-npx convex env set --prod STRIPE_RETURN_URL https://suprabench.ai/#profile
+npx convex env set --prod STRIPE_RETURN_URL https://suprabench.com/#profile
 ```
 
 ### 5. Deploy (≈2 min)
@@ -212,7 +212,7 @@ Stripe dashboard → **Developers** → **Webhooks** → **Add endpoint**:
 
    # Partner keys have no Stripe sub — should return 200 without
    # ever touching Stripe. If you see a 402 "subscription_inactive"
-   # something wasn't un-commented correctly in api.future.ts.
+   # something is wrong with the partner-tier branch in convex/api.ts.
 
    # Revoke when done testing:
    npx convex run --prod partners:listPartnerKeys

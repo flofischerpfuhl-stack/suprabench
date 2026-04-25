@@ -116,7 +116,7 @@ const FILES = [
   "public/docs/api/reference/export.html",
   "public/legal/terms.html",
   "convex/schema.ts",
-  "convex/api.future.ts",
+  "convex/api.ts",
   "convex/stripe.future.ts",
 ];
 

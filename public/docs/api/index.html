@@ -67,31 +67,34 @@
   <!-- ── Content ── -->
   <main class="docs-content">
 
-    <h1>SupraBench API <span class="pill pill-soon">Demand-gated</span></h1>
+    <h1>SupraBench API <span class="pill pill-soon">Partner live · paid demand-gated</span></h1>
     <p class="lead">
       A read-only REST API over the SupraBench database: model rankings,
-      benchmark metadata, score submissions and tag taxonomies.
-      JSON over HTTPS. Bearer-token auth. Predictable HTTP status codes.
+      benchmark metadata and tag taxonomies. JSON over HTTPS.
+      Bearer-token auth. Predictable HTTP status codes.
     </p>
 
     <div class="docs-meta">
-      <span>Last updated: April 18, 2026</span>
+      <span>Last updated: April 25, 2026</span>
       <span>Reading time: 4 min</span>
       <span>API version: <code>v1</code></span>
     </div>
 
     <div class="preview-banner">
-      <strong>Status: Demand-gated.</strong> The contract you're reading is final and
-      the implementation is built &mdash; we just don't flip <code>/v1/</code> on
-      until enough developers are waiting for it to justify the recurring infra
-      and payment-processing overhead. Requests currently return <code>503</code>.
+      <strong>Status: Partner-only today, paid tiers demand-gated.</strong>
+      <code>/v1/</code> is live and answers requests <em>now</em> &mdash;
+      but the only keys we currently mint are free
+      <strong>Partner</strong> keys (invite-only, for non-profit / research /
+      open-source projects). Self-serve paid tiers (Starter / Pro / Enterprise)
+      sit on a waitlist until enough developers are queued up to justify
+      the recurring Stripe + edge-cache overhead.
       <a href="/#api">Join the waitlist</a> on the tier you'd actually pay for;
       when the queue hits launch threshold we ship.
     </div>
 
     <h2 id="overview">What you get</h2>
     <p>
-      Every non-hidden benchmark, ranked model and validated submission visible on
+      Every non-hidden benchmark and ranked model visible on
       <a href="https://suprabench.com">suprabench.com</a> is available
       via this API. Responses include cache headers so clients and proxies can
       avoid unnecessary repeat calls; ranking list responses advertise a
@@ -249,7 +252,7 @@ func main() {
       we figure out what each tier should actually cost. Billing will be
       handled by <a href="https://stripe.com" target="_blank" rel="noopener">Stripe</a>:
       EU VAT collected automatically, B2B reverse-charge supported via VAT-ID
-      at checkout. Need higher limits, an SLA or on-prem mirror?
+      at checkout. Need higher limits, a custom contract or on-prem mirror?
       <a href="mailto:suprabench.editor887@passmail.com">Contact us</a>.
     </p>
 
@@ -308,11 +311,16 @@ func main() {
     </ul>
 
     <h2 id="support">Support</h2>
+    <p>
+      All paid tiers receive best-effort support &mdash; we don't offer
+      a contractual SLA on Starter, Pro or Enterprise. The channel
+      escalates with tier:
+    </p>
     <ul>
       <li><strong>Starter:</strong> community via <a href="https://gitlab.com/florian-fischer-group/suprabench/-/issues" target="_blank" rel="noopener">GitLab issues</a>.</li>
-      <li><strong>Pro:</strong> email <a href="mailto:suprabench.editor887@passmail.com">suprabench.editor887@passmail.com</a>, response within 2 business days.</li>
-      <li><strong>Enterprise:</strong> priority email, response within 1 business day.</li>
-      <li><strong>Enterprise+:</strong> dedicated Slack channel, contractual SLA.</li>
+      <li><strong>Pro:</strong> email <a href="mailto:suprabench.editor887@passmail.com">suprabench.editor887@passmail.com</a>, best-effort reply.</li>
+      <li><strong>Enterprise:</strong> priority email, best-effort reply.</li>
+      <li><strong>Enterprise+:</strong> dedicated Slack channel; SLA is negotiable on a case-by-case basis as part of the custom contract.</li>
     </ul>
 
     <div class="docs-pagenav">

@@ -1,11 +1,12 @@
 // ════════════════════════════════════════════════════════════
 // Public-API waitlist.
 //
-// The actual paid API (api.future.ts + stripe.future.ts) is not
-// active yet, but the dashboard needs to collect demand signal so we
-// know how many seats to provision before flipping it on. This file
-// is the live, working backend for that — schema is in
-// convex/schema.ts (table: `apiWaitlist`).
+// The `/v1/*` HTTP API itself is LIVE for Partner keys (see
+// convex/api.ts + convex/partners.ts). Paid self-serve tiers
+// (Starter / Pro / Enterprise) are demand-gated — Stripe wiring lives
+// in convex/stripe.future.ts and only activates once the queue here
+// hits launch threshold. This file is the live, working backend for
+// that waitlist — schema is in convex/schema.ts (table: `apiWaitlist`).
 //
 // One row per (email, tier). Re-signup is idempotent.
 // ════════════════════════════════════════════════════════════
