@@ -62,7 +62,7 @@
     <!-- JSON-LD structured data is injected from an external file so CSP can block inline scripts. -->
     <script src="js/structured-data.js?v=20260424-security"></script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260424-noadminmint">
+    <link rel="stylesheet" href="css/style.css?v=20260425-a11y-focustrap">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
@@ -75,7 +75,7 @@
     <script src="js/convex.js?v=20260418m"></script>
     <script src="js/simulator-math.js?v=20260424-noadminmint"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <script src="js/app.js?v=20260424-noadminmint"></script>
+    <script src="js/app.js?v=20260425-a11y-focustrap"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -3363,7 +3363,8 @@
      role="dialog"
      aria-modal="true"
      :aria-label="sbDialog.title"
-     @keydown.escape.window="sbDialog.open && sbDialogCancel()">
+     @keydown.escape.window="sbDialog.open && sbDialogCancel()"
+     @keydown.tab.window="sbDialog.open && _trapTabFocus($event, '.sb-dialog__card')">
     <div class="sb-dialog__backdrop" @click="sbDialogCancel()"></div>
     <div class="sb-dialog__card" @click.stop>
         <h3 class="sb-dialog__title" x-text="sbDialog.title"></h3>
@@ -3404,7 +3405,8 @@
      role="dialog"
      aria-modal="true"
      aria-label="Browse all tags"
-     @keydown.escape.window="tagPicker.open && closeTagPicker()">
+     @keydown.escape.window="tagPicker.open && closeTagPicker()"
+     @keydown.tab.window="tagPicker.open && _trapTabFocus($event, '.tag-picker-modal')">
     <div class="tag-picker-backdrop" @click="closeTagPicker()"></div>
     <div class="tag-picker-modal" @click.stop>
         <div class="tag-picker-header">
@@ -3416,7 +3418,8 @@
                    class="tag-picker-search"
                    x-model="tagPicker.search"
                    placeholder="Search tags…"
-                   aria-label="Search tags">
+                   aria-label="Search tags"
+                   x-effect="if (tagPicker.open) $nextTick(() => $el.focus())">
             <span class="tag-picker-count"
                   x-text="filteredPickerTags.length + ' / ' + benchTagsInfo.length"></span>
         </div>

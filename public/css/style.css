@@ -1483,7 +1483,11 @@ tr.clickable-row {
 .tag-picker-item-count {
   font-size: 0.65rem;
   font-family: var(--hd);
-  color: var(--text3);
+  /* --text3 (#555) drowns in the dark popup background. The count
+     is the second-most-important info on every row (after the tag
+     name itself), so keep it dim relative to --text but well above
+     the WCAG-AA floor on var(--bg). */
+  color: #c8c8c8;
   background: var(--bg);
   border-radius: 100px;
   padding: 0.05rem 0.45rem;

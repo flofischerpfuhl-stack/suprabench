@@ -555,7 +555,11 @@ are **all** designed to be safe with a fully public codebase:
 - **Public HTTP API.** Live for Partner keys today, paid tiers
   demand-gated. Bearer keys (`sb_live_…`) are generated and stored
   hashed in Convex, validated server-side on every request, with
-  per-key tier-based rate limits + monthly quotas. See
+  per-key tier-based rate limits + monthly quotas. Every `/v1/*`
+  response sends `Access-Control-Allow-Origin: *` so browsers can
+  call us directly, but **putting an API key into client-side code
+  is unsafe regardless of CORS** — wrap every browser call in a
+  server-side proxy that holds the key. See
   [`convex/api.ts`](convex/api.ts), [`convex/partners.ts`](convex/partners.ts),
   and [`convex/tiers.ts`](convex/tiers.ts). Stripe billing for paid
   tiers will activate via [`convex/stripe.future.ts`](convex/stripe.future.ts);

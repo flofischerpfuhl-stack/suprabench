@@ -1528,6 +1528,50 @@ function supraBench() {
       }
     },
 
+    // Keyboard focus trap for modal dialogs.
+    //
+    // Wired from the modal overlay via `@keydown.tab.window` so we
+    // catch Tab/Shift-Tab from anywhere on the page while the modal
+    // is open. We then:
+    //   1. Find every focusable element inside `containerSelector`
+    //      (the modal card, NOT the overlay backdrop).
+    //   2. If focus is currently outside the container, snap it to
+    //      the first focusable element.
+    //   3. If focus is on the last focusable and Tab is pressed,
+    //      wrap to the first. Same the other way for Shift-Tab.
+    //
+    // Without this, Tab walks behind the modal into the page that's
+    // visually hidden by the backdrop — a screen-reader / keyboard
+    // accessibility regression. Tab inside form controls (e.g. text
+    // selection within an input) still works normally because the
+    // browser handles those before our keydown listener.
+    _trapTabFocus($event, containerSelector) {
+      const container = document.querySelector(containerSelector);
+      if (!container) return;
+      const focusable = container.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable.length) {
+        $event.preventDefault();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      const insideModal = container.contains(active);
+      if ($event.shiftKey) {
+        if (!insideModal || active === first) {
+          $event.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (!insideModal || active === last) {
+          $event.preventDefault();
+          first.focus();
+        }
+      }
+    },
+
     // Lightweight toast — used by waitlist + future API actions.
     // Only one toast at a time; replacing the prior one is fine.
     showToast(message, type = "info") {
@@ -1960,21 +2004,30 @@ function supraBench() {
     },
 
     openTagPicker() {
+      // Remember which element the user opened the modal from so we
+      // can hand focus back when they close it (keyboard / a11y).
+      this._tagPickerReturnFocus = document.activeElement;
       this.tagPicker.open = true;
       this.tagPicker.search = "";
       // Lock body scroll while the modal is up.
       document.body.classList.add("modal-open");
-      // Defer focus to next tick so the input is in the DOM.
-      this.$nextTick(() => {
-        const el = document.querySelector(".tag-picker-search");
-        if (el) el.focus();
-      });
+      // Autofocus is handled declaratively on the search input via
+      // `x-effect` (see index.html). x-effect re-runs whenever
+      // tagPicker.open flips, which is more reliable than a one-shot
+      // $nextTick from this handler — Alpine's transition timing
+      // sometimes lands the focus before the input is paint-visible
+      // and the keyboard never opens on iOS Safari.
     },
 
     closeTagPicker() {
       this.tagPicker.open = false;
       this.tagPicker.search = "";
       document.body.classList.remove("modal-open");
+      const el = this._tagPickerReturnFocus;
+      this._tagPickerReturnFocus = null;
+      if (el && typeof el.focus === "function") {
+        setTimeout(() => el.focus(), 0);
+      }
     },
 
     get filteredPickerTags() {
