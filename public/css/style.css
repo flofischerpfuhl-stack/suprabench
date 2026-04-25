@@ -1442,6 +1442,10 @@ tr.clickable-row {
 .tag-picker-item {
   display: inline-flex;
   align-items: center;
+  /* Inside the dark popup the default --text2 (#888) is barely
+     readable. Bump unselected tag labels to full white; the
+     `.active` background-fill rule already overrides this. */
+  color: var(--text);
   gap: 0.45rem;
   border: 1px solid var(--border);
   font: inherit;

@@ -346,8 +346,11 @@ function supraBench() {
     // Models leaderboard scope: "models" (one row per model) or
     // "families" (one row per (familyTag, provider) aggregate from
     // familyRankings). Toggled by clicking the "Model / Model-Family"
-    // header. Default "models" — that's what most visitors expect.
-    leaderboardScope: "models",
+    // header. Default "families" — landing on a per-family roll-up
+    // gives a much cleaner first impression than 80 quasi-duplicate
+    // model variants of the same lab; users who want individual
+    // models can drill in with one click.
+    leaderboardScope: "families",
     allProviders: [],
     allFamilyTags: [],
     activeTags: [],
@@ -357,6 +360,15 @@ function supraBench() {
     // clutter the tag-pill bar: a family is conceptually a "which
     // lineage of this lab's models" pick, not a capability filter.
     activeFamilyFilter: "",
+    // Monotonic counter used by _loadFilteredModels to discard
+    // stale responses. Without it, rapidly toggling tags fires
+    // multiple in-flight queries whose resolution order is not
+    // guaranteed — the slowest filtered query could land AFTER
+    // the user has already cleared all tags, freezing the list
+    // in a stale filtered state. We snapshot this counter at
+    // call-entry and only commit results if it still matches on
+    // resolve.
+    _filterSeq: 0,
     modelListSearch: "",
     benchListSearch: "",
     currentModel: null,
@@ -1823,6 +1835,14 @@ function supraBench() {
 
     async _loadFilteredModels() {
       const { client, api } = window.sbConvex;
+      // Stale-write guard: capture the current sequence number on
+      // entry. Every result write below is gated on the seq still
+      // being current — if the user toggled tags again before we
+      // resolved, a newer call has bumped the counter and we skip
+      // writing so the latest tag selection stays authoritative.
+      const seq = ++this._filterSeq;
+      const isCurrent = () => seq === this._filterSeq;
+
       // No active tags: snap both rankedModels and rankedFamilies back
       // to their unfiltered, supraScore-sorted lists. Without this
       // re-fetch the previous filteredScore-sorted ordering would
@@ -1831,20 +1851,24 @@ function supraBench() {
       // mutate locally).
       if (this.activeTags.length === 0) {
         try {
-          this.rankedModels = await client.query(api.models.listRanked, {});
+          const r = await client.query(api.models.listRanked, {});
+          if (isCurrent()) this.rankedModels = r;
         } catch (e) { console.error("Failed to reload ranked models:", e); }
         try {
-          this.rankedFamilies = await client.query(api.models.listRankedFamilies, {});
+          const r = await client.query(api.models.listRankedFamilies, {});
+          if (isCurrent()) this.rankedFamilies = r;
         } catch (e) { console.error("Failed to reload ranked families:", e); }
         return;
       }
       try {
-        this.rankedModels = await client.query(api.models.listRankedWithFilter, { activeTags: this.activeTags });
+        const r = await client.query(api.models.listRankedWithFilter, { activeTags: this.activeTags });
+        if (isCurrent()) this.rankedModels = r;
       } catch (e) {
         console.error("Failed to load filtered models:", e);
       }
       try {
-        this.rankedFamilies = await client.query(api.models.listRankedFamiliesWithFilter, { activeTags: this.activeTags });
+        const r = await client.query(api.models.listRankedFamiliesWithFilter, { activeTags: this.activeTags });
+        if (isCurrent()) this.rankedFamilies = r;
       } catch (e) {
         console.error("Failed to load filtered families:", e);
       }
