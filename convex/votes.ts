@@ -99,22 +99,27 @@ export const cast = mutation({
       }
     }
 
-    // Trigger ranking recompute for the affected model
-    const modelId = (score as any).modelId;
-    if (modelId) {
-      await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, {
-        modelId,
-      });
-    }
-
-    // The vote may have flipped this submission's validity (upvotes vs
-    // downvotes), which changes the bench's frontier mean / model count.
-    // Refresh the bench aggregate cache.
+    // The vote may have flipped this submission's validity (upvotes
+    // vs downvotes), which changes the bench's frontier mean / model
+    // count. Refresh the bench aggregate cache BEFORE we schedule
+    // the rebuild so the cached weight the rebuild reads is fresh.
     const benchId = (score as any).benchId;
     if (benchId) {
       await ctx.scheduler.runAfter(0, internal.cache.recomputeBenchAggregates, {
         benchId,
       });
     }
+
+    // Mirror the patched score to D1 then trigger the ranking
+    // rebuild. Both happen inside the same action so the rebuild
+    // observes the new upvote / downvote count, not the stale one.
+    // (Convex's vote-target id is a string here because votes can
+    // theoretically point at any entity; we know it's a modelScore
+    // by virtue of targetType validation above.)
+    await ctx.scheduler.runAfter(
+      0,
+      internal.scoresWorker.mirrorScoresAndRebuild,
+      { scoreIds: [targetId as any] }
+    );
   },
 });

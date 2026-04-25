@@ -1,0 +1,31 @@
+# ════════════════════════════════════════════════════════════
+#  Wrangler config for the SupraBench scores worker (D1).
+#
+#  Deploy:
+#    cd infra/scores-worker
+#    npx wrangler d1 execute suprabench-scores --remote --file=schema.sql
+#    npx wrangler secret put SCORES_SECRET   # paste a long random string
+#    npx wrangler deploy
+#
+#  This worker is internal infrastructure: only Convex actions
+#  call it. We expose it on the auto-assigned workers.dev URL
+#  (no DNS / no custom domain), keeping the public API surface
+#  unchanged (the api.suprabench.com proxy still points at
+#  Convex for /v1/* — see infra/cloudflare-worker/).
+# ════════════════════════════════════════════════════════════
+
+name = "suprabench-scores"
+main = "worker.js"
+compatibility_date = "2026-04-24"
+
+# workers.dev hostname is enabled by default. We keep it on so
+# Convex can reach the worker without DNS gymnastics.
+workers_dev = true
+
+[[d1_databases]]
+binding       = "DB"
+database_name = "suprabench-scores"
+database_id   = "f078a5f8-5e2c-4485-91fc-288beb64c3d0"
+
+[observability]
+enabled = true

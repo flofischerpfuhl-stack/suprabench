@@ -86,7 +86,10 @@ export const rate = mutation({
     // the updated bench info immediately.
     await recomputeBenchAggregatesInline(ctx, args.benchId);
 
-    await ctx.scheduler.runAfter(0, internal.rankings.recomputeForBench, {
+    // Bench rating doesn't touch any score row, so no D1 mirror
+    // needed — straight to the rebuild action that reads scores
+    // from D1 and uses the bench's now-fresh cachedEffectiveWeight.
+    await ctx.scheduler.runAfter(0, internal.rankings.recomputeForBenchFromD1, {
       benchId: args.benchId,
     });
   },

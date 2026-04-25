@@ -1,7 +1,12 @@
-import { internalMutation } from "./_generated/server";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
+import { fetchAllScoresFromD1, D1ScoreRow } from "./scoresWorker";
 
 // ── SupraScore: three √-coverage factors stacked ──
 //
@@ -272,178 +277,600 @@ export function effectiveBenchWeight(
   return rawWeight * Math.sqrt(uShare * nShare);
 }
 
-// Compute {weightedMean, totalWeight, benchCount} for ONE model with
-// the per-bench √(u_b/U*) shrinkage already folded into the weights.
-// Does NOT write anything — caller composes the per-model aggregates
-// from every model, finds max totalWeight, then writes modelRankings
-// in a second pass.
-async function computeAggregate(
-  ctx: any,
-  modelId: Id<"models">,
-  cov: BenchCoverageIndex
-) {
-  const model = await ctx.db.get(modelId);
-  if (!model) return null;
+// ════════════════════════════════════════════════════════════
+// UNIFIED REBUILD
+//
+// Loads every model, every bench, and every modelScore EXACTLY
+// ONCE and uses that snapshot to rebuild BOTH `modelRankings`
+// and `familyRankings` in a single pass.
+//
+// Two drivers, one compute kernel:
+//   • Convex-db driver  — recomputeAllUnifiedImpl, used by tests
+//                         + seed + migrations. Reads from the
+//                         Convex modelScores table.
+//   • D1 action driver  — recomputeFromD1*, used in production.
+//                         Fetches scores from the Cloudflare
+//                         worker so the per-event Convex
+//                         bandwidth stays flat as score volume
+//                         grows. See scoresWorker.ts.
+//
+// Both drivers feed the same buildRankingsFromInputs() pure
+// function, so SupraScores, family aggregates, hidden flags,
+// and idempotency are identical regardless of which path runs.
+// ════════════════════════════════════════════════════════════
 
-  const scores = await ctx.db
-    .query("modelScores")
-    .withIndex("by_model", (q: any) => q.eq("modelId", modelId))
-    .collect();
+function normalizeFamilyKey(
+  familyTag: string | undefined | null
+): string | null {
+  if (!familyTag) return null;
+  const t = familyTag.trim();
+  return t.length === 0 ? null : t;
+}
 
-  const benchScores: Record<string, number[]> = {};
+function medianOf(vals: number[]): number {
+  const s = [...vals].sort((a, b) => a - b);
+  if (s.length === 0) return 0;
+  return s.length % 2 === 0
+    ? (s[s.length / 2 - 1] + s[s.length / 2]) / 2
+    : s[Math.floor(s.length / 2)];
+}
+
+// ── Score-shape adapter ─────────────────────────────────────
+// We read scores from two places now:
+//   • Convex modelScores (legacy / tests / seed / migrations)
+//   • Cloudflare D1 via the scores worker (production rebuild)
+// Both produce the same logical row but with different keys
+// (Convex uses _id + Id<"models"> branded strings; D1 uses
+// convex_id + plain strings). The pure compute below treats
+// scores as a structural type so either source works.
+type ScoreLike = {
+  modelId: string;
+  benchId: string;
+  normalizedScore: number;
+  upvotes: number;
+  downvotes: number;
+};
+
+// ── Pure compute: all the SupraScore math, no DB access ─────
+// Inputs are already-loaded snapshots; output is the rows we
+// want to write. Persisting + stale-row cleanup happen in the
+// driver functions below so this stays trivially testable and
+// reusable across the Convex-db and D1-action code paths.
+type ModelRankingData = {
+  modelId: Id<"models">;
+  name: string;
+  provider: string;
+  slug: string;
+  familyTag?: string;
+  tags: string[];
+  supraScore: number;
+  benchCount: number;
+  hidden: boolean;
+};
+
+type FamilyRankingData = {
+  familyTag: string;
+  provider: string;
+  supraScore: number;
+  benchCount: number;
+  modelCount: number;
+  tags: string[];
+  hidden: boolean;
+};
+
+function buildRankingsFromInputs(args: {
+  models: any[];
+  benches: any[];
+  scores: ScoreLike[];
+  // Optional fallback: if a bench has no cachedEffectiveWeight,
+  // we need ITS Q·D·H from somewhere. Convex-db driver passes
+  // a cache pre-populated via getBenchWeights. D1 driver passes
+  // an empty map and any missing weight degrades to 0 (the bench
+  // is silently excluded). In steady-state production, every
+  // bench has a cache so this never triggers.
+  weightFallback?: Map<string, number>;
+}): {
+  modelRows: ModelRankingData[];
+  familyRows: FamilyRankingData[];
+  validFamilyKeys: Set<string>;
+} {
+  const { models: allModels, benches: allBenches, scores, weightFallback } = args;
+
+  // Group scores by model up-front (single pass).
+  const scoresByModel = new Map<string, ScoreLike[]>();
   for (const s of scores) {
-    if (s.upvotes > s.downvotes) {
-      const key = s.benchId as string;
-      if (!benchScores[key]) benchScores[key] = [];
-      benchScores[key].push(s.normalizedScore);
+    let arr = scoresByModel.get(s.modelId);
+    if (!arr) {
+      arr = [];
+      scoresByModel.set(s.modelId, arr);
+    }
+    arr.push(s);
+  }
+
+  // ─── 1. Coverage index (U*, N*) ───
+  const upvoteMap = new Map<string, number>();
+  const modelCountMap = new Map<string, number>();
+  let upvoteMax = 0;
+  let modelCountMax = 0;
+  for (const b of allBenches) {
+    const u =
+      typeof (b as any).cachedNetUpvotes === "number"
+        ? (b as any).cachedNetUpvotes
+        : 1;
+    let n: number;
+    if (typeof (b as any).cachedModelCount === "number") {
+      n = (b as any).cachedModelCount;
+    } else {
+      // Live fallback: count distinct models with net-positive
+      // submissions on this bench. Uses already-loaded scores.
+      const valid = new Set<string>();
+      for (const s of scores) {
+        if (s.benchId === (b._id as string) && s.upvotes > s.downvotes) {
+          valid.add(s.modelId);
+        }
+      }
+      n = valid.size;
+    }
+    upvoteMap.set(b._id as string, u);
+    modelCountMap.set(b._id as string, n);
+    if (!(b as any).hidden) {
+      if (u > upvoteMax) upvoteMax = u;
+      if (n > modelCountMax) modelCountMax = n;
     }
   }
 
-  let weightedSum = 0;
-  let weightTotal = 0;
-  let benchCount = 0;
-
-  for (const [benchId, vals] of Object.entries(benchScores)) {
-    vals.sort((a, b) => a - b);
-    const median =
-      vals.length % 2 === 0
-        ? (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2
-        : vals[Math.floor(vals.length / 2)];
-    const w = await getBenchWeights(ctx, benchId as Id<"benches">);
-    const u = cov.upvoteMap.get(benchId) ?? 1;
-    const n = cov.modelCountMap.get(benchId) ?? 0;
-    const effective = effectiveBenchWeight(
-      w.weight,
-      u,
-      cov.upvoteMax,
-      n,
-      cov.modelCountMax
-    );
-    if (effective <= 0) continue;
-    weightedSum += effective * median;
-    weightTotal += effective;
-    benchCount++;
+  // ─── 2. Bench raw weight (Q×D×H) cache ───
+  const benchWeightCache = new Map<string, number>();
+  for (const b of allBenches) {
+    if (typeof (b as any).cachedEffectiveWeight === "number") {
+      benchWeightCache.set(b._id as string, (b as any).cachedEffectiveWeight);
+    } else if (weightFallback?.has(b._id as string)) {
+      benchWeightCache.set(b._id as string, weightFallback.get(b._id as string)!);
+    } else {
+      // Bench is missing its denormalised weight AND no fallback
+      // was supplied — caller didn't pre-warm the cache. We log
+      // and assign 0, which excludes the bench from rankings
+      // until the next recomputeBenchAggregates fires.
+      console.warn(
+        `[rankings] bench ${b._id} missing cachedEffectiveWeight; excluded from rebuild`
+      );
+      benchWeightCache.set(b._id as string, 0);
+    }
   }
 
-  const weightedMean = weightTotal > 0 ? weightedSum / weightTotal : 0;
-
-  return {
-    modelId,
-    model,
-    weightedMean,
-    totalWeight: weightTotal,
-    benchCount,
-  };
-}
-
-// Upsert the modelRankings row for ONE model given the pre-computed
-// aggregate + the global maxTotalWeight. coverageShare = 1 when the
-// model IS the max — no self-penalty at the top.
-async function writeRanking(
-  ctx: any,
-  agg: {
+  // ─── 3. Per-model aggregate ───
+  type ModelAgg = {
     modelId: Id<"models">;
     model: any;
     weightedMean: number;
     totalWeight: number;
     benchCount: number;
-  },
-  maxTotalWeight: number
-) {
-  const share =
-    maxTotalWeight > 0 ? Math.min(1, agg.totalWeight / maxTotalWeight) : 0;
-  const supraScore = agg.weightedMean * Math.sqrt(share);
-
-  const existing = await ctx.db
-    .query("modelRankings")
-    .withIndex("by_model", (q: any) => q.eq("modelId", agg.modelId))
-    .first();
-
-  const data = {
-    modelId: agg.modelId,
-    name: agg.model.name,
-    provider: agg.model.provider,
-    slug: agg.model.slug,
-    familyTag: agg.model.familyTag,
-    tags: agg.model.tags,
-    supraScore: Math.round(supraScore * 10) / 10,
-    benchCount: agg.benchCount,
-    updatedAt: Date.now(),
-    // Mirror models.hidden so listRanked never has to do an N×db.get loop.
-    hidden: agg.model.hidden ?? false,
   };
+  const modelAggregates: ModelAgg[] = [];
+  // medianByModelBench[modelId][benchId] = that model's median on
+  // that bench. The family aggregator reuses this.
+  const medianByModelBench = new Map<string, Map<string, number>>();
 
-  if (existing) await ctx.db.patch(existing._id, data);
-  else await ctx.db.insert("modelRankings", data);
+  for (const m of allModels) {
+    const scores = scoresByModel.get(m._id as string) ?? [];
+    const benchScores: Record<string, number[]> = {};
+    for (const s of scores) {
+      if (s.upvotes > s.downvotes) {
+        (benchScores[s.benchId] ??= []).push(s.normalizedScore);
+      }
+    }
+
+    let weightedSum = 0;
+    let weightTotal = 0;
+    let benchCount = 0;
+    const perBench = new Map<string, number>();
+
+    for (const [benchId, vals] of Object.entries(benchScores)) {
+      const med = medianOf(vals);
+      perBench.set(benchId, med);
+
+      const rawW = benchWeightCache.get(benchId) ?? 0;
+      const u = upvoteMap.get(benchId) ?? 1;
+      const n = modelCountMap.get(benchId) ?? 0;
+      const eff = effectiveBenchWeight(rawW, u, upvoteMax, n, modelCountMax);
+      if (eff <= 0) continue;
+      weightedSum += eff * med;
+      weightTotal += eff;
+      benchCount++;
+    }
+    medianByModelBench.set(m._id as string, perBench);
+
+    modelAggregates.push({
+      modelId: m._id as Id<"models">,
+      model: m,
+      weightedMean: weightTotal > 0 ? weightedSum / weightTotal : 0,
+      totalWeight: weightTotal,
+      benchCount,
+    });
+  }
+
+  // ─── 4. Per-family aggregate ───
+  type FamilyAgg = {
+    familyTag: string;
+    provider: string;
+    weightedMean: number;
+    totalWeight: number;
+    benchCount: number;
+    modelCount: number;
+    tags: string[];
+    hidden: boolean;
+  };
+  const familyAggregates: FamilyAgg[] = [];
+
+  const pairs = new Map<
+    string,
+    { familyTag: string; provider: string; members: any[] }
+  >();
+  for (const m of allModels) {
+    const k = normalizeFamilyKey(m.familyTag);
+    if (!k) continue;
+    const key = `${k}\u0000${m.provider}`;
+    let pair = pairs.get(key);
+    if (!pair) {
+      pair = { familyTag: k, provider: m.provider, members: [] };
+      pairs.set(key, pair);
+    }
+    pair.members.push(m);
+  }
+
+  for (const { familyTag, provider, members } of pairs.values()) {
+    const visible = members.filter((m: any) => !m.hidden);
+    const isAllHidden = visible.length === 0 && members.length > 0;
+
+    const perBench: Record<string, number[]> = {};
+    for (const m of visible) {
+      const memberMedians = medianByModelBench.get(m._id as string);
+      if (!memberMedians) continue;
+      for (const [benchId, med] of memberMedians) {
+        (perBench[benchId] ??= []).push(med);
+      }
+    }
+
+    let weightedSum = 0;
+    let weightTotal = 0;
+    let benchCount = 0;
+    for (const [benchId, memberMedians] of Object.entries(perBench)) {
+      const familyMedian = medianOf(memberMedians);
+      const rawW = benchWeightCache.get(benchId) ?? 0;
+      const u = upvoteMap.get(benchId) ?? 1;
+      const n = modelCountMap.get(benchId) ?? 0;
+      const eff = effectiveBenchWeight(rawW, u, upvoteMax, n, modelCountMax);
+      if (eff <= 0) continue;
+      weightedSum += eff * familyMedian;
+      weightTotal += eff;
+      benchCount++;
+    }
+
+    const tagSet = new Set<string>();
+    for (const m of visible) for (const t of (m.tags ?? [])) tagSet.add(t);
+
+    familyAggregates.push({
+      familyTag,
+      provider,
+      weightedMean: weightTotal > 0 ? weightedSum / weightTotal : 0,
+      totalWeight: weightTotal,
+      benchCount,
+      modelCount: visible.length,
+      tags: Array.from(tagSet),
+      hidden: isAllHidden,
+    });
+  }
+
+  // ─── 5. Apply √(W_m / W*) and √(W_f / W*) shrinkage ───
+  let maxModelTotalWeight = 0;
+  for (const a of modelAggregates) {
+    if (a.model.hidden) continue;
+    if (a.totalWeight > maxModelTotalWeight) maxModelTotalWeight = a.totalWeight;
+  }
+  let maxFamilyTotalWeight = 0;
+  for (const a of familyAggregates) {
+    if (a.hidden) continue;
+    if (a.totalWeight > maxFamilyTotalWeight) maxFamilyTotalWeight = a.totalWeight;
+  }
+
+  const modelRows: ModelRankingData[] = modelAggregates.map((a) => {
+    const share =
+      maxModelTotalWeight > 0
+        ? Math.min(1, a.totalWeight / maxModelTotalWeight)
+        : 0;
+    const supraScore = a.weightedMean * Math.sqrt(share);
+    return {
+      modelId: a.modelId,
+      name: a.model.name,
+      provider: a.model.provider,
+      slug: a.model.slug,
+      familyTag: a.model.familyTag,
+      tags: a.model.tags,
+      supraScore: Math.round(supraScore * 10) / 10,
+      benchCount: a.benchCount,
+      hidden: a.model.hidden ?? false,
+    };
+  });
+
+  const validFamilyKeys = new Set<string>();
+  const familyRows: FamilyRankingData[] = familyAggregates.map((a) => {
+    validFamilyKeys.add(`${a.familyTag}\u0000${a.provider}`);
+    const share =
+      maxFamilyTotalWeight > 0
+        ? Math.min(1, a.totalWeight / maxFamilyTotalWeight)
+        : 0;
+    const supraScore = a.weightedMean * Math.sqrt(share);
+    return {
+      familyTag: a.familyTag,
+      provider: a.provider,
+      supraScore: Math.round(supraScore * 10) / 10,
+      benchCount: a.benchCount,
+      modelCount: a.modelCount,
+      tags: a.tags,
+      hidden: a.hidden,
+    };
+  });
+
+  return { modelRows, familyRows, validFamilyKeys };
 }
 
-// The one function that actually re-ranks everything. Called by
-// recomputeAll, recomputeModel, and recomputeForBench because every
-// score / bench change potentially shifts maxTotalWeight, and
-// maxTotalWeight appears in every model's SupraScore — so a fully
-// correct update requires a full-table pass.
+// ── Persist: write the computed rows + delete stale family rows ──
+// Shared by both the Convex-db driver (called inline from a
+// mutation) and the D1 action driver (called via runMutation).
+async function persistRankings(
+  ctx: any,
+  out: {
+    modelRows: ModelRankingData[];
+    familyRows: FamilyRankingData[];
+    validFamilyKeys: Set<string>;
+  }
+): Promise<{ models: number; families: number; familiesDeleted: number }> {
+  const updatedAt = Date.now();
+
+  for (const row of out.modelRows) {
+    const existing = await ctx.db
+      .query("modelRankings")
+      .withIndex("by_model", (q: any) => q.eq("modelId", row.modelId))
+      .first();
+    const data = { ...row, updatedAt };
+    if (existing) await ctx.db.patch(existing._id, data);
+    else await ctx.db.insert("modelRankings", data);
+  }
+
+  // Stale rows happen on rename / familyTag-change / model delete.
+  const existingFamilyRows = await ctx.db.query("familyRankings").collect();
+  let familiesDeleted = 0;
+  for (const r of existingFamilyRows) {
+    const key = `${r.familyTag}\u0000${r.provider}`;
+    if (!out.validFamilyKeys.has(key)) {
+      await ctx.db.delete(r._id);
+      familiesDeleted++;
+    }
+  }
+
+  for (const row of out.familyRows) {
+    const data = { ...row, updatedAt };
+    const existing = await ctx.db
+      .query("familyRankings")
+      .withIndex("by_family_provider", (q: any) =>
+        q.eq("familyTag", row.familyTag).eq("provider", row.provider)
+      )
+      .first();
+    if (existing) await ctx.db.patch(existing._id, data);
+    else await ctx.db.insert("familyRankings", data);
+  }
+
+  return {
+    models: out.modelRows.length,
+    families: out.familyRows.length,
+    familiesDeleted,
+  };
+}
+
+// ════════════════════════════════════════════════════════════
+//  DRIVER 1: Convex-db source (legacy path)
 //
-// For the scales we're at (< 1k models, < 100 benches) this is fine;
-// if we ever outgrow it, the right optimisation is to cache the
-// aggregate per model and only re-aggregate the changed ones.
-async function recomputeAllImpl(ctx: any) {
-  const models = await ctx.db.query("models").collect();
+//  Used by tests, seed:finalize, and migrations.ts. Reads scores
+//  straight from the Convex modelScores table — same code path
+//  the rebuild has used since day one.
+//
+//  In production this entry point is no longer wired up to
+//  submissions/votes — those now schedule the D1 action below.
+//  We keep this around because (a) tests don't have a worker to
+//  fetch from, (b) it's a useful "cold-rebuild from authoritative
+//  Convex state" tool when D1 needs re-bootstrapping.
+// ════════════════════════════════════════════════════════════
+export async function recomputeAllUnifiedImpl(ctx: any): Promise<{
+  models: number;
+  families: number;
+  familiesDeleted: number;
+}> {
+  const allModels = await ctx.db.query("models").collect();
+  const allBenches = await ctx.db.query("benches").collect();
 
-  // U*, N* and per-bench coverage maps — single snapshot used by
-  // every per-model aggregate so the math is internally consistent
-  // (no chance of one model seeing a different U* than another).
-  const cov = await getBenchCoverageIndex(ctx);
-
-  const aggregates: Awaited<ReturnType<typeof computeAggregate>>[] = [];
-  for (const m of models) {
-    const agg = await computeAggregate(ctx, m._id, cov);
-    if (agg) aggregates.push(agg);
+  // Per-model scores read pass.
+  const flatScores: ScoreLike[] = [];
+  for (const m of allModels) {
+    const rows = await ctx.db
+      .query("modelScores")
+      .withIndex("by_model", (q: any) => q.eq("modelId", m._id))
+      .collect();
+    for (const s of rows) {
+      flatScores.push({
+        modelId: s.modelId as string,
+        benchId: s.benchId as string,
+        normalizedScore: s.normalizedScore,
+        upvotes: s.upvotes,
+        downvotes: s.downvotes,
+      });
+    }
   }
 
-  // Hidden models don't influence the coverage denominator — otherwise
-  // a single mothballed flagship with huge coverage would permanently
-  // squash every real entrant.
-  let maxTotalWeight = 0;
-  for (const a of aggregates) {
-    if (a!.model.hidden) continue;
-    if (a!.totalWeight > maxTotalWeight) maxTotalWeight = a!.totalWeight;
+  // Pre-warm the weight-fallback map for any bench missing
+  // cachedEffectiveWeight. This was inline in the old impl but
+  // pulling it out lets the pure compute stay db-free.
+  const weightFallback = new Map<string, number>();
+  for (const b of allBenches) {
+    if (typeof (b as any).cachedEffectiveWeight !== "number") {
+      const w = await getBenchWeights(ctx, b._id as Id<"benches">);
+      weightFallback.set(b._id as string, w.weight);
+    }
   }
 
-  for (const a of aggregates) {
-    await writeRanking(ctx, a!, maxTotalWeight);
-  }
+  const out = buildRankingsFromInputs({
+    models: allModels,
+    benches: allBenches,
+    scores: flatScores,
+    weightFallback,
+  });
+  return persistRankings(ctx, out);
 }
 
 export const recomputeModel = internalMutation({
   args: { modelId: v.id("models") },
   handler: async (ctx) => {
     // Coverage-share couples every model's score to every other
-    // model's totalWeight, so even a single-model update triggers a
-    // full re-rank. Cheaper than you'd think at current scale.
-    await recomputeAllImpl(ctx);
-    // Cascade to family rankings. We intentionally schedule rather
-    // than run inline so the mutation's transaction stays small.
-    await ctx.scheduler.runAfter(0, internal.familyRankings.recomputeAll, {});
+    // model's totalWeight, so even a single-model update triggers
+    // a full re-rank. Used by tests + seed only — production
+    // submissions/votes call recomputeFromD1 instead.
+    await recomputeAllUnifiedImpl(ctx);
   },
 });
 
 export const recomputeAll = internalMutation({
   args: {},
   handler: async (ctx) => {
-    await recomputeAllImpl(ctx);
-    // Inline (not scheduled) so a single recomputeAll call leaves the
-    // DB in a fully consistent state on return — migrations rely on it.
-    await ctx.runMutation(internal.familyRankings.recomputeAll, {});
+    await recomputeAllUnifiedImpl(ctx);
   },
 });
 
 export const recomputeForBench = internalMutation({
   args: { benchId: v.id("benches") },
   handler: async (ctx) => {
-    // Bench-weight changes (quality ratings, headroom recomputation,
-    // etc.) shift totalWeight for every model that's been tested on
-    // that bench — so again we do a full re-rank, same as recomputeAll.
-    await recomputeAllImpl(ctx);
-    await ctx.scheduler.runAfter(0, internal.familyRankings.recomputeAll, {});
+    await recomputeAllUnifiedImpl(ctx);
   },
+});
+
+// ════════════════════════════════════════════════════════════
+//  DRIVER 2: D1 source (production path)
+//
+//  Used by submissions / votes / benchQualityRatings. The whole
+//  reason this exists: scores are the dominant per-rebuild read
+//  cost and Convex bandwidth is the binding constraint. By
+//  pulling them from D1 (which has no egress meter on the free
+//  tier) we can rebuild rankings without touching the Convex
+//  bandwidth quota.
+//
+//  Composition:
+//    1. _loadInputsForRebuild query → models + benches (cheap,
+//       both tables small, both cached on the bench row include
+//       cachedEffectiveWeight so no rating reads needed).
+//    2. fetchAllScoresFromD1() → score snapshot from the worker.
+//    3. buildRankingsFromInputs() → pure compute.
+//    4. _persistRankings mutation → write modelRankings +
+//       familyRankings, delete stale family rows.
+//
+//  Each step runs in its own runtime: the action does HTTP
+//  + arithmetic in the action runtime, the load + persist run
+//  in their own (atomic) transactions. Read budget on each
+//  transaction is a small constant (M + B for load; M + F for
+//  persist) so we comfortably stay under the 32k per-mutation
+//  document-read cap regardless of submission volume.
+// ════════════════════════════════════════════════════════════
+
+export const _loadInputsForRebuild = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const models = await ctx.db.query("models").collect();
+    const benches = await ctx.db.query("benches").collect();
+    return { models, benches };
+  },
+});
+
+export const _persistRankings = internalMutation({
+  args: {
+    modelRows: v.array(
+      v.object({
+        modelId: v.id("models"),
+        name: v.string(),
+        provider: v.string(),
+        slug: v.string(),
+        familyTag: v.optional(v.string()),
+        tags: v.array(v.string()),
+        supraScore: v.number(),
+        benchCount: v.number(),
+        hidden: v.boolean(),
+      })
+    ),
+    familyRows: v.array(
+      v.object({
+        familyTag: v.string(),
+        provider: v.string(),
+        supraScore: v.number(),
+        benchCount: v.number(),
+        modelCount: v.number(),
+        tags: v.array(v.string()),
+        hidden: v.boolean(),
+      })
+    ),
+    validFamilyKeys: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return persistRankings(ctx, {
+      modelRows: args.modelRows,
+      familyRows: args.familyRows,
+      validFamilyKeys: new Set(args.validFamilyKeys),
+    });
+  },
+});
+
+async function recomputeFromD1Impl(ctx: any) {
+  const { models, benches } = await ctx.runQuery(
+    internal.rankings._loadInputsForRebuild,
+    {}
+  );
+
+  const d1Scores: D1ScoreRow[] = await fetchAllScoresFromD1();
+  const scores: ScoreLike[] = d1Scores.map((s) => ({
+    modelId: s.modelId,
+    benchId: s.benchId,
+    normalizedScore: s.normalizedScore,
+    upvotes: s.upvotes,
+    downvotes: s.downvotes,
+  }));
+
+  const out = buildRankingsFromInputs({ models, benches, scores });
+
+  await ctx.runMutation(internal.rankings._persistRankings, {
+    modelRows: out.modelRows,
+    familyRows: out.familyRows,
+    validFamilyKeys: Array.from(out.validFamilyKeys),
+  });
+
+  return {
+    models: out.modelRows.length,
+    families: out.familyRows.length,
+  };
+}
+
+// Production entry points. These mirror the names of the legacy
+// mutation entries so callers only swap the module path. We
+// intentionally do NOT discriminate on `modelId` / `benchId`:
+// the SupraScore is globally coupled (every model's score depends
+// on every other model's totalWeight), so any change requires a
+// full rebuild regardless. The arg lets future incremental work
+// route differently without changing the caller contract.
+export const recomputeFromD1 = internalAction({
+  args: {},
+  handler: async (ctx) => recomputeFromD1Impl(ctx),
+});
+
+export const recomputeModelFromD1 = internalAction({
+  args: { modelId: v.id("models") },
+  handler: async (ctx) => recomputeFromD1Impl(ctx),
+});
+
+export const recomputeForBenchFromD1 = internalAction({
+  args: { benchId: v.id("benches") },
+  handler: async (ctx) => recomputeFromD1Impl(ctx),
 });

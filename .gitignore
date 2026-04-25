@@ -2,6 +2,10 @@ node_modules/
 .env.local
 .env
 .env.*
+
+# Wrangler / Cloudflare local build artifacts
+.wrangler/
+.dev.vars
 convex/_generated/
 jwt_private.pem
 jwt_public.pem

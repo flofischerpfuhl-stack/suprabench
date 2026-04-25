@@ -290,7 +290,13 @@ export const submitOne = mutation({
       args.rawScore, args.sourceUrl, args.accessedAt
     );
     await recomputeBenchAggregatesInline(ctx, benchId);
-    await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, { modelId });
+    // Mirror the new score to D1 first, then trigger the
+    // ranking recompute (which now reads its score input from
+    // D1, not Convex). The two are chained inside one action so
+    // the rebuild never sees a stale D1 snapshot.
+    await ctx.scheduler.runAfter(0, internal.scoresWorker.mirrorScoresAndRebuild, {
+      scoreIds: [scoreId],
+    });
     return { scoreIds: [scoreId], benchId, modelIds: [modelId] };
   },
 });
@@ -341,10 +347,14 @@ export const submitForBench = mutation({
         throw new Error(`Score #${i + 1}: ${err.message}`);
       }
     }
-    // One bench changed, and the ranker is global anyway. Refresh its
-    // aggregate inline, then schedule exactly one global ranking pass.
+    // One bench changed, and the ranker is global anyway. Refresh
+    // its aggregate inline, then mirror every new score to D1 and
+    // schedule one global ranking pass (chained inside the action
+    // so the rebuild can rely on the mirror having flushed first).
     await recomputeBenchAggregatesInline(ctx, benchId);
-    await ctx.scheduler.runAfter(0, internal.rankings.recomputeForBench, { benchId });
+    await ctx.scheduler.runAfter(0, internal.scoresWorker.mirrorScoresAndRebuild, {
+      scoreIds,
+    });
     return { scoreIds, benchId, modelIds: Array.from(modelIdsAffected) };
   },
 });
@@ -398,7 +408,9 @@ export const submitForModel = mutation({
     for (const b of benchIdsAffected) {
       await recomputeBenchAggregatesInline(ctx, b as Id<"benches">);
     }
-    await ctx.scheduler.runAfter(0, internal.rankings.recomputeModel, { modelId });
+    await ctx.scheduler.runAfter(0, internal.scoresWorker.mirrorScoresAndRebuild, {
+      scoreIds,
+    });
     return { scoreIds, modelId };
   },
 });

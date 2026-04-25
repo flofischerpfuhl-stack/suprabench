@@ -183,7 +183,7 @@
     // === LIVE BASELINE PASS =================================
     // Build per-bench per-model median, then bench weights, then
     // per-model aggregates, then SupraScore with W*. Mirrors
-    // recomputeAllImpl in convex/rankings.ts.
+    // recomputeAllUnifiedImpl in convex/rankings.ts.
     const perBenchMediansLive = buildPerBenchModelMedians(scores, hiddenModelIds);
 
     /** @type {Map<string, {effective: number, weight: number, modelCount: number, frontierMean: number, headroom: number}>} */
