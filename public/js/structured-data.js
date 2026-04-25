@@ -55,14 +55,25 @@
      `variableMeasured` block spells out the columns; `distribution`
      points at the JSON export endpoint so a researcher knows there's
      a programmatic way to grab the data once a Pro-tier API key is
-     active. */
+     active.
+
+     Why no `dateModified`: this dataset mutates on every submission /
+     vote / rating, so any hardcoded value would lie within hours.
+     Generating one at render time would force every crawler-render to
+     hit Convex for a freshness query — wasted volume for marginal
+     SEO benefit. Google falls back to other freshness signals when
+     dateModified is absent: HTTP Last-Modified header (set by
+     Cloudflare Pages on every asset), the sitemap's <lastmod>
+     entry for `/` (changefreq=daily), and its own crawl timestamp.
+     `temporalCoverage` below stays open-ended ("2025-01-01/..") so
+     consumers know the series is ongoing. */
   const DATASET = {
     "@type": "Dataset",
     "@id": "https://suprabench.com/#dataset",
     name: "SupraBench AI Model Rankings",
     alternateName: "SupraScore Leaderboard",
     description:
-      "Community-curated, trustworthiness-weighted rankings of large language models across crowd-rated benchmarks. Each model receives a SupraScore — the bench-weighted mean of its per-bench medians, shrunk by a coverage-share factor so that models tested on few benches cannot outrank well-covered rivals. Benchmarks themselves are rated by the community on relevance, contamination resistance, discriminability, reproducibility and difficulty. The dataset is updated continuously as new submissions, votes and quality ratings land.",
+      "Community-curated, trustworthiness-weighted rankings of large language models across crowd-rated benchmarks. Each model receives a SupraScore — the bench-weighted mean of its per-bench medians, shrunk by a coverage-share factor so that models tested on few benches cannot outrank well-covered rivals. Benchmarks themselves are rated by the community on relevance, contamination resistance, discriminability, reproducibility and difficulty. The dataset is updated continuously as new submissions, votes and quality ratings land — the snapshot a crawler sees reflects the state at request time; consult the HTTP Last-Modified header on the page response, or fetch /v1/export.json, for the most recent values.",
     url: SITE_URL,
     identifier: SITE_URL,
     keywords: [
