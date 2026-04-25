@@ -30,8 +30,10 @@ fix three failure modes of public leaderboards:
 - **Bench-maxing** — a model is tuned for a small set of popular benches.
 
 **Everything is community-driven**: users add models, add benchmarks, submit
-scores, vote on every entity, and rate benchmark quality. There is no admin
-curation layer.
+scores, vote on every entity, and rate benchmark quality. There is no
+*editorial* curation of scores — admins exist only to enforce abuse rules
+(spam removal, account bans, partner-key minting) and never edit, weight,
+or reorder community submissions.
 
 ## How It Works
 
@@ -228,7 +230,7 @@ suprabench/
 |---|---|
 | `#models` (default) | Model ranking table with tag filtering |
 | `#model/{slug}` | Model detail with per-bench scores + tag voting |
-| `#benchmarks` | Benchmark quality ranking |
+| `#benches` | Benchmark quality ranking |
 | `#bench/{slug}` | Benchmark detail with quality ratings + per-model scores |
 | `#submit` | Submit scores / models / benchmarks (3 modes) |
 | `#submission/{id}` | Individual submission detail with vote panel |
@@ -238,8 +240,10 @@ suprabench/
 
 ## Anti-Gaming Rules
 
-- **One submission can't carry a score** — per-(model, bench) median needs
-  multiple submissions to move
+- **One submission can't anchor a score** — the per-(model, bench) median
+  becomes robust to outliers as soon as $n \ge 2$ submissions exist; a
+  single attacker submission is replaced by the community median the
+  moment a second honest submission lands
 - **One bench can't carry a model** — SupraScore averages across all benches
   weighted by trust × difficulty × headroom, then shrinks the result by the
   coverage-share factor $\sqrt{W(m)/W^\star}$. A model with only 1 bench loses
@@ -285,13 +289,23 @@ suprabench/
 Every claim in [Anti-Gaming Rules](#anti-gaming-rules) is encoded as an
 executable test in
 [`tests/convex/adversarial-robustness.test.ts`](tests/convex/adversarial-robustness.test.ts).
-The whole suite runs in **~1.5 s on CI** (66 tests total, 14 of them
-adversarial). When the math regresses, a named test fails with a
+The whole suite runs in **~1.7 s on CI** (103 tests across 9 files,
+14 of them adversarial). When the math regresses, a named test fails with a
 descriptive message — instead of someone discovering the regression
 on the production leaderboard.
 
+The Vitest suite lives in `tests/convex/` with its own `package.json`.
+You can run it from the repo root via the proxy script in `package.json`,
+or directly:
+
 ```bash
-npm test -- adversarial-robustness
+# from repo root (one-time install of test deps):
+npm run test:install
+npm test                                   # full suite
+
+# or from tests/convex/ for a file filter:
+cd tests/convex
+npx vitest run adversarial-robustness
 ```
 
 The harness has three layers, each adding a different kind of

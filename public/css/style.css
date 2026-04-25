@@ -2453,10 +2453,51 @@ ol.about-list li::before {
   max-width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  /* Subtle scrollbar so tablet users see the scroll affordance instead
+     of guessing why columns look squished. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.table-scroll::-webkit-scrollbar { height: 8px; }
+.table-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
 }
 .table-scroll > table {
   min-width: 100%;
 }
+
+/* ── Tablet sweet spot (701-1024px) ──
+   Without this, the leaderboard tables stretch to fill the container
+   width (min-width: 100% on the table) and the browser silently
+   crushes 7 columns into ~750px, producing two-line headers, wrapped
+   tag chips, and broken dimension dots. We force a true minimum
+   width so the .table-scroll wrapper actually scrolls instead. */
+@media (min-width: 701px) and (max-width: 1024px) {
+  .table-scroll > .benches-list { min-width: 920px; }
+  .table-scroll > .models-list  { min-width: 720px; }
+  .b-desc { max-width: 220px; }
+}
+
+/* ── Tags column: horizontally scrollable on all viewports >700px ──
+   Tag chips otherwise wrap onto multiple lines and blow up the row
+   height (and on tablet they push the column past its budget). Force
+   a single-line scroll strip with a subtle webkit scrollbar so the
+   user can swipe / mouse-wheel through long tag lists. The "+N more"
+   indicator stays inline at the end. */
+.b-tags {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 180px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;          /* Firefox: hide scrollbar (still scrolls) */
+}
+.b-tags::-webkit-scrollbar { display: none; }
+.b-tags > * { flex: 0 0 auto; }   /* tags don't shrink to fit */
 
 /* ── Mobile-friendly tables → compact cards under 700px ── */
 @media (max-width: 700px) {
@@ -3172,12 +3213,20 @@ ol.about-list li::before {
         most of the viewport.
    ══════════════════════════════════════════ */
 @media (max-width: 700px) {
-  /* (1) Stop iOS auto-zoom. 16px is the magic number Safari uses. */
+  /* (1) Stop iOS auto-zoom. 16px is the magic number Safari uses.
+     Includes every <input>/<textarea>/<select> the user can focus
+     on a phone — main forms, list search, tag picker, dialog
+     prompts (sb-dialog), and the admin grant form. Anything below
+     16px would zoom Safari into the field on tap. */
   .form-group input,
   .form-group textarea,
   .form-group select,
   .input-tags input,
-  .list-search input { font-size: 16px; }
+  .list-search input,
+  .tag-picker-search,
+  .sb-dialog__input,
+  .admin-grant-form__row input,
+  .admin-grant-form__row select { font-size: 16px; }
 
   /* (2) Search dropdown: replace float:right + span hack with a
      proper flex row so name + provider/badge always sit on the

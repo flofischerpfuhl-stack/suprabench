@@ -59,8 +59,10 @@
     <meta name="twitter:image" content="https://suprabench.com/img/og-image.png">
     <meta name="twitter:image:alt" content="SupraBench — Community-Driven AI Model Rankings">
 
-    <!-- JSON-LD structured data is injected from an external file so CSP can block inline scripts. -->
-    <script src="js/structured-data.js?v=20260424-security"></script>
+    <!-- JSON-LD structured data is injected from an external file so CSP can block inline scripts.
+         Emits a 3-entity @graph: WebSite, Organization, Dataset. The Dataset
+         entity is what makes us eligible for Google Dataset Search. -->
+    <script defer src="js/structured-data.js?v=20260425-dataset"></script>
 
     <link rel="stylesheet" href="css/style.css?v=20260425-a11y-focustrap">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
@@ -194,8 +196,12 @@
         </span>
     </div>
 
-    <!-- ── Models Table (leaderboardScope === 'models') ── -->
-    <table x-show="leaderboardScope === 'models' && filteredRankedModels.length > 0" class="models-list">
+    <!-- ── Models Table (leaderboardScope === 'models') ──
+         Wrapped in .table-scroll so long model names + filtered-score
+         column never silently clip on tablet widths (701–899px) where
+         .main has overflow-x: hidden. -->
+    <div class="table-scroll" x-show="leaderboardScope === 'models' && filteredRankedModels.length > 0">
+    <table class="models-list">
         <thead>
             <tr>
                 <th style="width:50px">#</th>
@@ -237,6 +243,7 @@
             </template>
         </tbody>
     </table>
+    </div>
 
     <!-- ── Families Table (leaderboardScope === 'families') ──
          Same five-column shape as the models table but rows are
@@ -244,7 +251,8 @@
          a row drills down: switches back to models mode with that
          family filter applied, so the user immediately sees which
          member models compose the score. -->
-    <table x-show="leaderboardScope === 'families' && filteredRankedFamilies.length > 0" class="models-list">
+    <div class="table-scroll" x-show="leaderboardScope === 'families' && filteredRankedFamilies.length > 0">
+    <table class="models-list">
         <thead>
             <tr>
                 <th style="width:50px">#</th>
@@ -280,6 +288,7 @@
             </template>
         </tbody>
     </table>
+    </div>
 
     <!-- Loading skeleton — shown until the first sub update arrives.
          Avoids the ~200ms flash of "No models yet" on a cold page
@@ -583,7 +592,8 @@
                aria-label="Search benchmarks">
     </div>
 
-    <table x-show="filteredSortedBenches.length > 0" class="benches-list">
+    <div class="table-scroll" x-show="filteredSortedBenches.length > 0">
+    <table class="benches-list">
         <thead>
             <tr>
                 <th style="width:50px">#</th>
@@ -645,6 +655,7 @@
             </template>
         </tbody>
     </table>
+    </div>
 
     <!-- Loading skeleton + gated empty states. Same pattern as the
          models view: skeleton until first sub update arrives, only
@@ -2049,7 +2060,7 @@
         <div class="qa-answer" x-show="aboutOpen.has('q7')" x-transition>
             <p>Adversarial robustness is built into the formula at every layer:</p>
             <ul class="about-list">
-                <li><strong>One submission can't carry a score</strong> — per-(model, bench) median needs multiple submissions to move; a single fake doesn't shift it.</li>
+                <li><strong>One submission can't anchor a score</strong> — the per-(model, bench) median becomes robust to outliers as soon as $n \ge 2$ submissions exist: a single attacker number is replaced by the community median the moment a second honest submission lands.</li>
                 <li><strong>One bench can't carry a model</strong> — the SupraScore is averaged across <em>all</em> benches a model has scores on, weighted by trust × difficulty × headroom, and then further shrunk by a coverage-share factor $\sqrt{W_m/W^\star}$. A model tested on only one bench loses $\approx\!\sqrt{1/N^\star}$ of its score versus the best-covered rival, so bench-maxing your way to the top with a single vanity bench is literally impossible.</li>
                 <li><strong>One user can't carry a bench</strong> — the same $\sqrt{\cdot}$ shape is also applied to the bench side: every bench's contribution to its own headline score and to any model's SupraScore is shrunk by $\sqrt{u_b/U^\star}$ where $u_b$ is its net upvote count and $U^\star$ is the leader's. A self-rated 100/100 vanity bench from a single account is worth $\sqrt{1/U^\star}$ of an established bench at the same Q·D·H — you'd need $U^\star$ separate accounts upvoting it to even tie. Same defence works on the bench leaderboard <em>and</em> in the SupraScore aggregate, so you can't spawn a bench just to pump one model.</li>
                 <li><strong>Single-model vanity benches don't count</strong> — every Bench Score is <em>additionally</em> shrunk by $\sqrt{N_b/N^\star}$, where $N_b$ is the number of distinct models that have actually been scored on the bench and $N^\star$ is the maximum across non-hidden benches. A "community bench" used to test only the attacker's own model has $N_b = 1$ and so contributes $\sqrt{1/N^\star}$ of the weight a well-used bench would. Combined with the upvote-share, a 1-rater + 1-model vanity bench is worth $\sqrt{1/(U^\star \!\cdot\! N^\star)}$ of an established peer.</li>

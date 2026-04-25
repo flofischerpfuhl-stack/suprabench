@@ -146,7 +146,7 @@ targeting this is fine; revisit if we hit MOSS-relevant volumes.
    - `customer.subscription.{created,updated,deleted}`
    - `invoice.payment_failed`
 5. `npx convex env set STRIPE_WEBHOOK_SECRET whsec_…`
-6. `npx convex env set STRIPE_RETURN_URL https://suprabench.com/#api`
+6. `npx convex env set STRIPE_RETURN_URL https://suprabench.com/#profile`
 7. Enable Stripe Tax for EU compliance.
 
 ## Activation steps

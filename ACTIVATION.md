@@ -75,8 +75,13 @@ to re-run if something fails mid-flight.
   false, `_loadProfile()` does not fetch `api.stripe.mySubscription`
   (which doesn't exist yet anyway), paid-tier cards show "Join
   waitlist" instead of "Subscribe", and the subscription dashboard
-  is hidden. Partner keys still work end-to-end; they just don't
-  surface in the UI (partners manage keys via email / CLI for now).
+  is hidden. Partner keys still work end-to-end and **partners with
+  `grantedTier` set on their user record can self-serve via
+  `/#profile` → API & Billing** (the key list, "Create new key",
+  copy/revoke flows are gated on `user.grantedTier`, not on
+  `apiLive`). The CLI flow (`partners:createPartnerKey`) is still
+  the supported provisioning path; the UI is the supported
+  day-to-day-use path once a partner is granted.
 - **Environment**: `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`
   are not set on prod.
 

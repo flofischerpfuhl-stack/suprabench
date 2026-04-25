@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "npx convex dev",
     "deploy": "npx convex deploy",
-    "check:tiers": "node scripts/check-tier-consistency.mjs"
+    "check:tiers": "node scripts/check-tier-consistency.mjs",
+    "test": "cd tests/convex && npm test",
+    "test:install": "cd tests/convex && npm install"
   },
   "dependencies": {
     "@auth/core": "0.37.0",
