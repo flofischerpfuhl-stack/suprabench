@@ -8,8 +8,14 @@
 // for the same (model, bench, sourceUrl) tuple. Safe to re-run.
 //
 // Run from the project root with:
-//   npx convex run --prod seed:seedAll
+//   npx convex run --prod seed:seedBenches
+//   npx convex run --prod seed:seedModels
+//   npx convex run --prod seed:seedBenchRatings
+//   npx convex run --prod seed:seedScores        # repeat until inserted = 0
+//   npx convex run --prod seed:recomputeAllBenchCaches
+//   npx convex run --prod scoresWorker:migrateAllToD1
 //   npx convex run --prod seed:finalize
+//   npx convex run --prod rankings:recomputeFromD1
 //
 // All inserted records are attributed to the primary admin
 // (PRIMARY_ADMIN_EMAIL in admin.ts) which must already exist as a
@@ -46,6 +52,12 @@ const SRC_AA_TBHARD =
 const SRC_AA_TAU = "https://artificialanalysis.ai/evaluations/tau2-bench";
 const SRC_AA_APEX =
   "https://artificialanalysis.ai/evaluations/apex-agents-aa";
+const SRC_DEEPSWE = "https://deepswe.datacurve.ai/";
+const SRC_DEEPSWE_JSON =
+  "https://deepswe.datacurve.ai/artifacts/v1.1/leaderboard-live.json";
+const SRC_HF_DEEPSWE_PREVIEW =
+  "https://huggingface.co/agentica-org/DeepSWE-Preview";
+const SRC_SKATEBENCH = "https://skatebench.t3.gg/";
 
 // ── Bench definitions (existing benches are matched by slug) ──
 type BenchDef = {
@@ -184,6 +196,24 @@ const BENCHES: BenchDef[] = [
     scaleMax: 1000,
     tags: ["agents", "professional services", "tool use"],
   },
+  {
+    name: "DeepSWE",
+    description:
+      "DeepSWE is Datacurve's long-horizon software-engineering benchmark with original tasks across active open-source repositories, evaluated with Pier/mini-swe-agent. The v1.1 leaderboard reports pass@1 across 113 tasks and exposes a wide frontier spread for agentic coding systems.",
+    url: SRC_DEEPSWE,
+    scaleMin: 0,
+    scaleMax: 1000,
+    tags: ["coding", "software engineering", "agents", "long horizon"],
+  },
+  {
+    name: "SkateBench",
+    description:
+      "SkateBench v2 is a community benchmark for technical skateboarding trick knowledge. It asks models to identify 390 trick definitions and reports success rate from exact string-match grading. Useful as a low-weight niche/community signal rather than a core capability benchmark.",
+    url: SRC_SKATEBENCH,
+    scaleMin: 0,
+    scaleMax: 1000,
+    tags: ["community", "domain knowledge", "sports"],
+  },
 ];
 
 // ── Model definitions (new models to insert) ────────────────
@@ -195,6 +225,10 @@ type ModelDef = {
 
 const MODELS: ModelDef[] = [
   // ─ From SWE-bench Verified seed (new) ─
+  { name: "Claude 4.5 Opus (high reasoning)", provider: "Anthropic", familyTag: "Claude 4.5 Opus" },
+  { name: "Gemini 3 Flash (high reasoning)", provider: "Google", familyTag: "Gemini 3 Flash" },
+  { name: "MiniMax M2.5 (high reasoning)", provider: "MiniMax", familyTag: "MiniMax M2.5" },
+  { name: "GPT-5-2 Codex", provider: "OpenAI", familyTag: "GPT-5-2 Codex" },
   { name: "GLM-5 (high reasoning)", provider: "Zhipu AI", familyTag: "GLM-5" },
   { name: "GPT-5-2 (high reasoning)", provider: "OpenAI", familyTag: "GPT-5-2" },
   { name: "Claude 4.5 Sonnet (high reasoning)", provider: "Anthropic", familyTag: "Claude 4.5 Sonnet" },
@@ -207,6 +241,7 @@ const MODELS: ModelDef[] = [
   // ─ From safe.ai dashboard seed (new) ─
   { name: "GPT-5.4", provider: "OpenAI", familyTag: "GPT-5.4" },
   { name: "Claude Opus 4.7", provider: "Anthropic", familyTag: "Claude Opus 4.7" },
+  { name: "Claude Opus 4.6", provider: "Anthropic", familyTag: "Claude Opus 4.6" },
   { name: "Claude 4.5 Opus", provider: "Anthropic", familyTag: "Claude 4.5 Opus" },
   { name: "Gemini 3 Flash", provider: "Google", familyTag: "Gemini 3 Flash" },
   { name: "GPT-5.2", provider: "OpenAI", familyTag: "GPT-5.2" },
@@ -245,10 +280,13 @@ const MODELS: ModelDef[] = [
   { name: "GPT-5.4 nano (xhigh)", provider: "OpenAI", familyTag: "GPT-5.4 nano" },
   { name: "GPT-5.2 Codex (xhigh)", provider: "OpenAI", familyTag: "GPT-5.2 Codex" },
   { name: "GPT-6.3 Codex (xhigh)", provider: "OpenAI", familyTag: "GPT-6.3 Codex" },
+  { name: "Gemini 3.1 Pro Preview", provider: "Google", familyTag: "Gemini 3.1" },
   { name: "Gemini 3 Pro Preview (high)", provider: "Google", familyTag: "Gemini 3 Pro" },
   { name: "Kimi K2.6", provider: "Moonshot AI", familyTag: "Kimi K2.6" },
   { name: "Qwen 3.5 397B A17B", provider: "Alibaba", familyTag: "Qwen 3.5" },
+  { name: "Muse Spark", provider: "Meta", familyTag: "Muse Spark" },
   { name: "Claude Opus 4.7 (Non-reasoning, high)", provider: "Anthropic", familyTag: "Claude Opus 4.7" },
+  { name: "Claude Opus 4.7 (max)", provider: "Anthropic", familyTag: "Claude Opus 4.7" },
   { name: "Claude Opus 4.6 (max)", provider: "Anthropic", familyTag: "Claude Opus 4.6" },
   { name: "Claude Sonnet 4.6 (max)", provider: "Anthropic", familyTag: "Claude Sonnet 4.6" },
   { name: "Grok 4.20 0309", provider: "xAI", familyTag: "Grok 4.20" },
@@ -272,6 +310,53 @@ const MODELS: ModelDef[] = [
   { name: "gpt-oss-20B (high)", provider: "OpenAI", familyTag: "gpt-oss 20B" },
   { name: "Solar Pro 3", provider: "Upstage", familyTag: "Solar Pro 3" },
   { name: "KAT-Coder-Pro V1", provider: "Kuaishou", familyTag: "KAT-Coder-Pro" },
+
+  // ─ From June 2026 review refresh / DeepSWE / SkateBench ─
+  { name: "GPT-5.5", provider: "OpenAI", familyTag: "GPT-5.5" },
+  { name: "GPT-5.4 (high)", provider: "OpenAI", familyTag: "GPT-5.4" },
+  { name: "GPT-5.4 (xhigh)", provider: "OpenAI", familyTag: "GPT-5.4" },
+  { name: "GPT-5.4 (medium)", provider: "OpenAI", familyTag: "GPT-5.4" },
+  { name: "GPT-5.4 (pro thinking)", provider: "OpenAI", familyTag: "GPT-5.4" },
+  { name: "GPT-5.2 Pro", provider: "OpenAI", familyTag: "GPT-5.2" },
+  { name: "GPT-5.2 (xhigh)", provider: "OpenAI", familyTag: "GPT-5.2" },
+  { name: "GPT-5.2 (high)", provider: "OpenAI", familyTag: "GPT-5.2" },
+  { name: "GPT-5.2 (default)", provider: "OpenAI", familyTag: "GPT-5.2" },
+  { name: "GPT-5.1 (high)", provider: "OpenAI", familyTag: "GPT-5.1" },
+  { name: "GPT-5 (minimal)", provider: "OpenAI", familyTag: "GPT-5" },
+  { name: "GPT-5.3 Codex (xhigh)", provider: "OpenAI", familyTag: "GPT-5.3 Codex" },
+  { name: "Claude Fable 5 (adaptive max/fallback)", provider: "Anthropic", familyTag: "Claude Fable 5" },
+  { name: "Claude Fable 5 (xhigh)", provider: "Anthropic", familyTag: "Claude Fable 5" },
+  { name: "Claude Fable 5 (max)", provider: "Anthropic", familyTag: "Claude Fable 5" },
+  { name: "Claude Fable 5 (high)", provider: "Anthropic", familyTag: "Claude Fable 5" },
+  { name: "Claude Fable 5 (medium)", provider: "Anthropic", familyTag: "Claude Fable 5" },
+  { name: "Claude Fable 5 (low)", provider: "Anthropic", familyTag: "Claude Fable 5" },
+  { name: "Claude Opus 4.8", provider: "Anthropic", familyTag: "Claude Opus 4.8" },
+  { name: "Claude Opus 4.8 (adaptive max)", provider: "Anthropic", familyTag: "Claude Opus 4.8" },
+  { name: "Claude Opus 4.8 (max)", provider: "Anthropic", familyTag: "Claude Opus 4.8" },
+  { name: "Claude Opus 4.8 (xhigh)", provider: "Anthropic", familyTag: "Claude Opus 4.8" },
+  { name: "Claude Opus 4.8 (high)", provider: "Anthropic", familyTag: "Claude Opus 4.8" },
+  { name: "Claude Opus 4.8 (medium)", provider: "Anthropic", familyTag: "Claude Opus 4.8" },
+  { name: "Claude Opus 4.8 (low)", provider: "Anthropic", familyTag: "Claude Opus 4.8" },
+  { name: "Claude Opus 4.6 (thinking high)", provider: "Anthropic", familyTag: "Claude Opus 4.6" },
+  { name: "Claude 4.5 Opus (thinking high)", provider: "Anthropic", familyTag: "Claude 4.5 Opus" },
+  { name: "Claude Sonnet 4.6 (high)", provider: "Anthropic", familyTag: "Claude Sonnet 4.6" },
+  { name: "DeepSeek V4 Pro", provider: "DeepSeek", familyTag: "DeepSeek V4 Pro" },
+  { name: "DeepSeek V3.2 (thinking high)", provider: "DeepSeek", familyTag: "DeepSeek V3.2" },
+  { name: "Kimi K2 (thinking)", provider: "Moonshot AI", familyTag: "Kimi K2" },
+  { name: "Kimi K2.7 Code (default)", provider: "Moonshot AI", familyTag: "Kimi K2.7 Code" },
+  { name: "GLM-5.2 (max)", provider: "Zhipu AI", familyTag: "GLM-5.2" },
+  { name: "Grok 4.3", provider: "xAI", familyTag: "Grok 4.3" },
+  { name: "Gemini 3.1 Pro Preview (high)", provider: "Google", familyTag: "Gemini 3.1" },
+  { name: "Gemini 3 Pro Preview", provider: "Google", familyTag: "Gemini 3 Pro" },
+  { name: "Gemini 3 Flash (low)", provider: "Google", familyTag: "Gemini 3 Flash" },
+  { name: "Gemini 3 Flash (high)", provider: "Google", familyTag: "Gemini 3 Flash" },
+  { name: "Gemini 3.5 Flash (high)", provider: "Google", familyTag: "Gemini 3.5 Flash" },
+  { name: "Gemini 3.5 Flash (medium)", provider: "Google", familyTag: "Gemini 3.5 Flash" },
+  { name: "MiniMax M2.5", provider: "MiniMax", familyTag: "MiniMax M2.5" },
+  { name: "JT-35B-Flash", provider: "China Mobile", familyTag: "JT-35B" },
+  { name: "DeepSWE-Preview 32B (R2E-Gym Agent)", provider: "Agentica/Together", familyTag: "DeepSWE-Preview" },
+  { name: "DeepSWE-Preview 32B (Hybrid Best@8)", provider: "Agentica/Together", familyTag: "DeepSWE-Preview" },
+  { name: "DeepSWE-Preview 32B (Hybrid Best@16 / TTS)", provider: "Agentica/Together", familyTag: "DeepSWE-Preview" },
 ];
 
 // ── Score entries ───────────────────────────────────────────
@@ -541,10 +626,191 @@ const SCORES_AA: ScoreEntry[] = [
   // fit the percentage-based SupraScore model).
 ];
 
+// ── June 2026 review refresh ─
+// These are the visible source values captured in
+// docs/research/suprabench-prefill-review-2026-06-22.html.
+// They are intentionally submitted as additional source rows rather
+// than mutating older submissions.
+const SCORES_REVIEW_REFRESH: ScoreEntry[] = [
+  // CAIS dashboard, text capabilities.
+  { modelName: "GPT-5.5", benchSlug: "humanity-s-last-exam", pct: 43.6, sourceUrl: SRC_SAFEAI },
+  { modelName: "GPT-5.5", benchSlug: "arc-agi-2", pct: 77.5, sourceUrl: SRC_SAFEAI },
+  { modelName: "GPT-5.5", benchSlug: "swe-bench-pro", pct: 53.4, sourceUrl: SRC_SAFEAI },
+  { modelName: "GPT-5.5", benchSlug: "textquests", pct: 42.0, sourceUrl: SRC_SAFEAI },
+  { modelName: "Claude Opus 4.8", benchSlug: "humanity-s-last-exam", pct: 42.2, sourceUrl: SRC_SAFEAI },
+  { modelName: "Claude Opus 4.8", benchSlug: "arc-agi-2", pct: 67.5, sourceUrl: SRC_SAFEAI },
+  { modelName: "Claude Opus 4.8", benchSlug: "swe-bench-pro", pct: 65.4, sourceUrl: SRC_SAFEAI },
+  { modelName: "Claude Opus 4.8", benchSlug: "textquests", pct: 40.1, sourceUrl: SRC_SAFEAI },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "humanity-s-last-exam", pct: 45.9, sourceUrl: SRC_SAFEAI },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "arc-agi-2", pct: 73.3, sourceUrl: SRC_SAFEAI },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "swe-bench-pro", pct: 46.7, sourceUrl: SRC_SAFEAI },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "textquests", pct: 45.8, sourceUrl: SRC_SAFEAI },
+  { modelName: "DeepSeek V4 Pro", benchSlug: "humanity-s-last-exam", pct: 32.4, sourceUrl: SRC_SAFEAI },
+  { modelName: "DeepSeek V4 Pro", benchSlug: "arc-agi-2", pct: 28.3, sourceUrl: SRC_SAFEAI },
+  { modelName: "DeepSeek V4 Pro", benchSlug: "swe-bench-pro", pct: 47.3, sourceUrl: SRC_SAFEAI },
+  { modelName: "DeepSeek V4 Pro", benchSlug: "textquests", pct: 20.3, sourceUrl: SRC_SAFEAI },
+  { modelName: "Kimi K2.6", benchSlug: "humanity-s-last-exam", pct: 29.9, sourceUrl: SRC_SAFEAI },
+  { modelName: "Kimi K2.6", benchSlug: "arc-agi-2", pct: 18.1, sourceUrl: SRC_SAFEAI },
+  { modelName: "Kimi K2.6", benchSlug: "swe-bench-pro", pct: 50.1, sourceUrl: SRC_SAFEAI },
+  { modelName: "Kimi K2.6", benchSlug: "textquests", pct: 27.4, sourceUrl: SRC_SAFEAI },
+  { modelName: "GLM-5.1", benchSlug: "humanity-s-last-exam", pct: 25.6, sourceUrl: SRC_SAFEAI },
+  { modelName: "GLM-5.1", benchSlug: "arc-agi-2", pct: 15.0, sourceUrl: SRC_SAFEAI },
+  { modelName: "GLM-5.1", benchSlug: "swe-bench-pro", pct: 49.2, sourceUrl: SRC_SAFEAI },
+  { modelName: "GLM-5.1", benchSlug: "textquests", pct: 29.5, sourceUrl: SRC_SAFEAI },
+  { modelName: "Grok 4.3", benchSlug: "humanity-s-last-exam", pct: 33.1, sourceUrl: SRC_SAFEAI },
+  { modelName: "Grok 4.3", benchSlug: "arc-agi-2", pct: 13.3, sourceUrl: SRC_SAFEAI },
+  { modelName: "Grok 4.3", benchSlug: "swe-bench-pro", pct: 38.7, sourceUrl: SRC_SAFEAI },
+  { modelName: "Grok 4.3", benchSlug: "textquests", pct: 13.7, sourceUrl: SRC_SAFEAI },
+
+  // CAIS dashboard, vision capabilities.
+  { modelName: "GPT-5.5", benchSlug: "erqa", pct: 70.5, sourceUrl: SRC_SAFEAI },
+  { modelName: "GPT-5.5", benchSlug: "mindcube", pct: 79.9, sourceUrl: SRC_SAFEAI },
+  { modelName: "GPT-5.5", benchSlug: "spatialviz", pct: 74.2, sourceUrl: SRC_SAFEAI },
+  { modelName: "GPT-5.5", benchSlug: "intphys-2", pct: 59.9, sourceUrl: SRC_SAFEAI },
+  { modelName: "GPT-5.5", benchSlug: "enigmaeval", pct: 37.2, sourceUrl: SRC_SAFEAI },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "erqa", pct: 74.2, sourceUrl: SRC_SAFEAI },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "mindcube", pct: 84.1, sourceUrl: SRC_SAFEAI },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "spatialviz", pct: 66.1, sourceUrl: SRC_SAFEAI },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "intphys-2", pct: 53.6, sourceUrl: SRC_SAFEAI },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "enigmaeval", pct: 32.4, sourceUrl: SRC_SAFEAI },
+  { modelName: "Kimi K2.6", benchSlug: "erqa", pct: 61.3, sourceUrl: SRC_SAFEAI },
+  { modelName: "Kimi K2.6", benchSlug: "mindcube", pct: 75.6, sourceUrl: SRC_SAFEAI },
+  { modelName: "Kimi K2.6", benchSlug: "spatialviz", pct: 73.9, sourceUrl: SRC_SAFEAI },
+  { modelName: "Kimi K2.6", benchSlug: "intphys-2", pct: 60.0, sourceUrl: SRC_SAFEAI },
+  { modelName: "Kimi K2.6", benchSlug: "enigmaeval", pct: 5.5, sourceUrl: SRC_SAFEAI },
+  { modelName: "Claude Opus 4.8", benchSlug: "erqa", pct: 59.5, sourceUrl: SRC_SAFEAI },
+  { modelName: "Claude Opus 4.8", benchSlug: "mindcube", pct: 64.9, sourceUrl: SRC_SAFEAI },
+  { modelName: "Claude Opus 4.8", benchSlug: "spatialviz", pct: 65.2, sourceUrl: SRC_SAFEAI },
+  { modelName: "Claude Opus 4.8", benchSlug: "intphys-2", pct: 55.1, sourceUrl: SRC_SAFEAI },
+  { modelName: "Claude Opus 4.8", benchSlug: "enigmaeval", pct: 20.5, sourceUrl: SRC_SAFEAI },
+  { modelName: "Grok 4.3", benchSlug: "erqa", pct: 57.3, sourceUrl: SRC_SAFEAI },
+  { modelName: "Grok 4.3", benchSlug: "mindcube", pct: 72.2, sourceUrl: SRC_SAFEAI },
+  { modelName: "Grok 4.3", benchSlug: "spatialviz", pct: 49.6, sourceUrl: SRC_SAFEAI },
+  { modelName: "Grok 4.3", benchSlug: "intphys-2", pct: 56.9, sourceUrl: SRC_SAFEAI },
+  { modelName: "Grok 4.3", benchSlug: "enigmaeval", pct: 6.1, sourceUrl: SRC_SAFEAI },
+
+  // SWE-bench Verified context from HF/Together DeepSWE-Preview.
+  { modelName: "DeepSWE-Preview 32B (R2E-Gym Agent)", benchSlug: "swe-bench-verified", pct: 42.2, sourceUrl: SRC_HF_DEEPSWE_PREVIEW },
+  { modelName: "DeepSWE-Preview 32B (Hybrid Best@8)", benchSlug: "swe-bench-verified", pct: 57.9, sourceUrl: SRC_HF_DEEPSWE_PREVIEW },
+  { modelName: "DeepSWE-Preview 32B (Hybrid Best@16 / TTS)", benchSlug: "swe-bench-verified", pct: 59.0, sourceUrl: SRC_HF_DEEPSWE_PREVIEW },
+
+  // Current Artificial Analysis top deltas visible in the review page.
+  { modelName: "Claude Fable 5 (adaptive max/fallback)", benchSlug: "humanity-s-last-exam", pct: 53.3, sourceUrl: SRC_AA_HLE },
+  { modelName: "Claude Opus 4.8 (adaptive max)", benchSlug: "humanity-s-last-exam", pct: 45.7, sourceUrl: SRC_AA_HLE },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "humanity-s-last-exam", pct: 44.7, sourceUrl: SRC_AA_HLE },
+  { modelName: "Gemini 3.5 Flash (high)", benchSlug: "mmmu-pro", pct: 84.0, sourceUrl: SRC_AA_MMMU },
+  { modelName: "Gemini 3.5 Flash (medium)", benchSlug: "mmmu-pro", pct: 84.0, sourceUrl: SRC_AA_MMMU },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "mmmu-pro", pct: 82.0, sourceUrl: SRC_AA_MMMU },
+  { modelName: "Claude Fable 5 (adaptive max/fallback)", benchSlug: "scicode", pct: 60.2, sourceUrl: SRC_AA_SCICODE },
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "scicode", pct: 58.9, sourceUrl: SRC_AA_SCICODE },
+  { modelName: "GPT-5.4 (xhigh)", benchSlug: "scicode", pct: 56.6, sourceUrl: SRC_AA_SCICODE },
+  { modelName: "Claude Fable 5 (adaptive max/fallback)", benchSlug: "terminal-bench-hard", pct: 62.9, sourceUrl: SRC_AA_TBHARD },
+  { modelName: "GPT-5.5 (xhigh)", benchSlug: "terminal-bench-hard", pct: 60.6, sourceUrl: SRC_AA_TBHARD },
+  { modelName: "GPT-5.5 (high)", benchSlug: "terminal-bench-hard", pct: 59.8, sourceUrl: SRC_AA_TBHARD },
+  { modelName: "GPT-5.2 Codex (xhigh)", benchSlug: "aa-long-context-reasoning", pct: 75.7, sourceUrl: SRC_AA_LCR },
+  { modelName: "GPT-5 (high)", benchSlug: "aa-long-context-reasoning", pct: 75.6, sourceUrl: SRC_AA_LCR },
+  { modelName: "GPT-5.1", benchSlug: "aa-long-context-reasoning", pct: 75.0, sourceUrl: SRC_AA_LCR },
+  { modelName: "JT-35B-Flash", benchSlug: "tau2-bench-telecom", pct: 99.1, sourceUrl: SRC_AA_TAU },
+  { modelName: "GLM-5.2 (max)", benchSlug: "tau2-bench-telecom", pct: 99.1, sourceUrl: SRC_AA_TAU },
+  { modelName: "GLM-4.7 Flash", benchSlug: "tau2-bench-telecom", pct: 98.8, sourceUrl: SRC_AA_TAU },
+  { modelName: "Gemini 3.5 Flash (high)", benchSlug: "apex-agents-aa", pct: 47.1, sourceUrl: SRC_AA_APEX },
+  { modelName: "GPT-5.5 (xhigh)", benchSlug: "apex-agents-aa", pct: 37.7, sourceUrl: SRC_AA_APEX },
+  { modelName: "GPT-5.4 (xhigh)", benchSlug: "apex-agents-aa", pct: 33.3, sourceUrl: SRC_AA_APEX },
+];
+
+const SCORES_DEEPSWE: ScoreEntry[] = [
+  { modelName: "Claude Fable 5 (xhigh)", benchSlug: "deepswe", pct: 69.91, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Claude Fable 5 (max)", benchSlug: "deepswe", pct: 69.72, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Claude Fable 5 (high)", benchSlug: "deepswe", pct: 68.60, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "GPT-5.5 (xhigh)", benchSlug: "deepswe", pct: 67.04, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Claude Fable 5 (medium)", benchSlug: "deepswe", pct: 65.37, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "GPT-5.5 (high)", benchSlug: "deepswe", pct: 64.38, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Claude Fable 5 (low)", benchSlug: "deepswe", pct: 59.58, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Claude Opus 4.8 (max)", benchSlug: "deepswe", pct: 58.97, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Claude Opus 4.8 (xhigh)", benchSlug: "deepswe", pct: 54.36, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "GPT-5.5 (medium)", benchSlug: "deepswe", pct: 53.98, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Claude Opus 4.8 (high)", benchSlug: "deepswe", pct: 51.77, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "GPT-5.4 (xhigh)", benchSlug: "deepswe", pct: 51.77, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Claude Opus 4.8 (medium)", benchSlug: "deepswe", pct: 48.67, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "GLM-5.2 (max)", benchSlug: "deepswe", pct: 43.78, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Claude Opus 4.8 (low)", benchSlug: "deepswe", pct: 40.80, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Gemini 3.5 Flash (medium)", benchSlug: "deepswe", pct: 37.39, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Kimi K2.7 Code (default)", benchSlug: "deepswe", pct: 30.53, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Claude Sonnet 4.6 (high)", benchSlug: "deepswe", pct: 29.93, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "GPT-5.5 (low)", benchSlug: "deepswe", pct: 26.99, sourceUrl: SRC_DEEPSWE_JSON },
+  { modelName: "Gemini 3.1 Pro Preview (high)", benchSlug: "deepswe", pct: 11.75, sourceUrl: SRC_DEEPSWE_JSON },
+];
+
+const SCORES_SKATEBENCH: ScoreEntry[] = [
+  { modelName: "Gemini 3.1 Pro Preview", benchSlug: "skatebench", pct: 96.92, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5.4 (high)", benchSlug: "skatebench", pct: 81.54, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5.4 (xhigh)", benchSlug: "skatebench", pct: 81.28, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5.4 (medium)", benchSlug: "skatebench", pct: 78.46, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5.4 (pro thinking)", benchSlug: "skatebench", pct: 78.46, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5 (high)", benchSlug: "skatebench", pct: 77.44, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "Gemini 3 Flash (low)", benchSlug: "skatebench", pct: 76.15, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "Gemini 3 Pro Preview", benchSlug: "skatebench", pct: 76.15, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5", benchSlug: "skatebench", pct: 75.38, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "Gemini 3 Flash (high)", benchSlug: "skatebench", pct: 75.13, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5.1 (high)", benchSlug: "skatebench", pct: 71.79, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5.2 Pro", benchSlug: "skatebench", pct: 71.79, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5.2 (xhigh)", benchSlug: "skatebench", pct: 68.97, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GLM-5", benchSlug: "skatebench", pct: 66.67, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "Claude Opus 4.6 (thinking high)", benchSlug: "skatebench", pct: 64.36, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "Grok 4", benchSlug: "skatebench", pct: 61.28, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "Kimi K2.5", benchSlug: "skatebench", pct: 57.18, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "Claude 4.5 Opus (thinking high)", benchSlug: "skatebench", pct: 50.26, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "DeepSeek V3.2 (thinking high)", benchSlug: "skatebench", pct: 46.67, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5.2 (high)", benchSlug: "skatebench", pct: 44.62, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "Kimi K2 (thinking)", benchSlug: "skatebench", pct: 43.85, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5.2 (default)", benchSlug: "skatebench", pct: 41.54, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5 mini", benchSlug: "skatebench", pct: 37.95, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "Grok 4.1 Fast", benchSlug: "skatebench", pct: 35.38, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "GPT-5 (minimal)", benchSlug: "skatebench", pct: 16.67, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "gpt-oss-120B (high)", benchSlug: "skatebench", pct: 16.41, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "Claude Sonnet 4.6", benchSlug: "skatebench", pct: 15.13, sourceUrl: SRC_SKATEBENCH },
+  { modelName: "MiniMax M2.5", benchSlug: "skatebench", pct: 13.85, sourceUrl: SRC_SKATEBENCH },
+];
+
 const ALL_SCORES: ScoreEntry[] = [
   ...SCORES_SWEBENCH,
   ...SCORES_SAFEAI,
   ...SCORES_AA,
+  ...SCORES_REVIEW_REFRESH,
+  ...SCORES_DEEPSWE,
+  ...SCORES_SKATEBENCH,
+];
+
+type BenchRatingSeed = {
+  benchSlug: string;
+  relevance: number;
+  contamination: number;
+  discriminability: number;
+  reproducibility: number;
+  // The June review called this "priority"; the current schema calls
+  // the fifth weighting dimension "difficulty".
+  difficulty: number;
+};
+
+const BENCH_RATINGS: BenchRatingSeed[] = [
+  { benchSlug: "arc-agi-2", relevance: 2, contamination: 5, discriminability: 4, reproducibility: 3, difficulty: 4 },
+  { benchSlug: "humanity-s-last-exam", relevance: 3, contamination: 4, discriminability: 5, reproducibility: 4, difficulty: 5 },
+  { benchSlug: "swe-bench-pro", relevance: 5, contamination: 5, discriminability: 5, reproducibility: 4, difficulty: 5 },
+  { benchSlug: "textquests", relevance: 3, contamination: 2, discriminability: 4, reproducibility: 4, difficulty: 3 },
+  { benchSlug: "enigmaeval", relevance: 2, contamination: 3, discriminability: 5, reproducibility: 4, difficulty: 3 },
+  { benchSlug: "intphys-2", relevance: 3, contamination: 4, discriminability: 3, reproducibility: 4, difficulty: 3 },
+  { benchSlug: "swe-bench-verified", relevance: 5, contamination: 2, discriminability: 3, reproducibility: 5, difficulty: 3 },
+  { benchSlug: "spatialviz", relevance: 3, contamination: 5, discriminability: 4, reproducibility: 4, difficulty: 4 },
+  { benchSlug: "erqa", relevance: 4, contamination: 3, discriminability: 3, reproducibility: 4, difficulty: 3 },
+  { benchSlug: "apex-agents-aa", relevance: 5, contamination: 3, discriminability: 5, reproducibility: 4, difficulty: 5 },
+  { benchSlug: "mindcube", relevance: 3, contamination: 4, discriminability: 3, reproducibility: 4, difficulty: 3 },
+  { benchSlug: "scicode", relevance: 5, contamination: 3, discriminability: 5, reproducibility: 5, difficulty: 5 },
+  { benchSlug: "terminal-bench-hard", relevance: 5, contamination: 4, discriminability: 5, reproducibility: 4, difficulty: 5 },
+  { benchSlug: "aa-long-context-reasoning", relevance: 4, contamination: 4, discriminability: 3, reproducibility: 2, difficulty: 3 },
+  { benchSlug: "mmmu-pro", relevance: 3, contamination: 4, discriminability: 3, reproducibility: 5, difficulty: 4 },
+  { benchSlug: "tau2-bench-telecom", relevance: 5, contamination: 4, discriminability: 1, reproducibility: 5, difficulty: 2 },
+  { benchSlug: "deepswe", relevance: 5, contamination: 5, discriminability: 5, reproducibility: 4, difficulty: 5 },
+  { benchSlug: "skatebench", relevance: 1, contamination: 2, discriminability: 2, reproducibility: 2, difficulty: 1 },
 ];
 
 // ── Idempotent admin lookup ─────────────────────────────────
@@ -679,12 +945,76 @@ export const seedModels = internalMutation({
   },
 });
 
-// ── Step 3: insert missing scores ───────────────────────────
+// ── Step 3: upsert admin benchmark ratings ──────────────────
+export const seedBenchRatings = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const adminId = await findAdminUserId(ctx);
+
+    const allBenches = await ctx.db.query("benches").collect();
+    const benchBySlug = new Map<string, any>();
+    for (const b of allBenches) benchBySlug.set(b.slug, b);
+
+    let created = 0;
+    let updated = 0;
+    let unchanged = 0;
+    const missing: string[] = [];
+
+    for (const rating of BENCH_RATINGS) {
+      const bench = benchBySlug.get(rating.benchSlug);
+      if (!bench) {
+        missing.push(rating.benchSlug);
+        continue;
+      }
+
+      const existing = await ctx.db
+        .query("benchQualityRatings")
+        .withIndex("by_bench_user", (q) =>
+          q.eq("benchId", bench._id).eq("userId", adminId)
+        )
+        .first();
+
+      const next = {
+        relevance: rating.relevance,
+        contamination: rating.contamination,
+        discriminability: rating.discriminability,
+        reproducibility: rating.reproducibility,
+        difficulty: rating.difficulty,
+      };
+
+      if (existing) {
+        const changed =
+          existing.relevance !== next.relevance ||
+          existing.contamination !== next.contamination ||
+          existing.discriminability !== next.discriminability ||
+          existing.reproducibility !== next.reproducibility ||
+          (existing.difficulty ?? 3) !== next.difficulty;
+        if (changed) {
+          await ctx.db.patch(existing._id, next);
+          updated++;
+        } else {
+          unchanged++;
+        }
+      } else {
+        await ctx.db.insert("benchQualityRatings", {
+          benchId: bench._id,
+          userId: adminId,
+          ...next,
+        });
+        created++;
+      }
+
+      await recomputeBenchAggregatesInline(ctx, bench._id as Id<"benches">);
+    }
+
+    return { created, updated, unchanged, missing };
+  },
+});
+
+// ── Step 4: insert missing scores ───────────────────────────
 //
 // Splits SCORES into chunks so each invocation stays well under
-// Convex's per-mutation limits. `chunk` is 0-indexed; the final chunk
-// is detected when no scores remain. Returns `{ done: true }` once
-// every chunk has been processed.
+// Convex's per-mutation limits. Re-run until `inserted` returns 0.
 const SCORE_CHUNK_SIZE = 100;
 
 export const seedScores = internalMutation({
@@ -789,7 +1119,7 @@ export const seedScores = internalMutation({
   },
 });
 
-// ── Step 4: refresh per-bench aggregate caches ──────────────
+// ── Step 5: refresh per-bench aggregate caches ──────────────
 export const recomputeAllBenchCaches = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -803,7 +1133,7 @@ export const recomputeAllBenchCaches = internalMutation({
   },
 });
 
-// ── Step 5: rankings + family rankings ─────────────────────
+// ── Step 6: rankings + family rankings ─────────────────────
 //
 // Full table rebuild. Run last, once every bench aggregate cache is
 // fresh. rankings.recomputeAll runs the unified rebuild that

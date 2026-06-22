@@ -92,6 +92,9 @@ export async function seedKey(
       ...(opts.subStatus
         ? { stripeSubscriptionStatus: opts.subStatus }
         : {}),
+      ...(opts.subStatus
+        ? { stripeSubscriptionId: `sub_${tier}_${Date.now()}` }
+        : {}),
     } as any);
     return { apiKeyId, ownerUserId };
   });

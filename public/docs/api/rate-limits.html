@@ -251,11 +251,11 @@ def call(url, *, max_retries=5):
 
     <h2 id="caching">Use the cache</h2>
     <p>
-      Most read endpoints carry <code>Cache-Control: public, max-age=300</code>
+      Most read endpoints carry <code>Cache-Control: private, max-age=300</code>
       (5 minutes for rankings, 24h for bulk exports, 1h for tags). If
       you're polling rankings every second from one process, you're
-      wasting your quota — there's nothing newer to fetch. A simple
-      in-process cache that respects <code>max-age</code> will cut
+      wasting your quota — there's nothing newer to fetch. A private
+      client-side or in-process cache that respects <code>max-age</code> will cut
       consumption by 100×+ for many workloads.
     </p>
     <p>

@@ -120,7 +120,7 @@ async function seedAdminUser(
     return await t.run((ctx) =>
       ctx.db.insert("users", {
         name: "Primary",
-        email: "suprabench.editor887@passmail.com",
+        email: "flofischer.pfuhl@gmail.com",
       } as any)
     );
   }

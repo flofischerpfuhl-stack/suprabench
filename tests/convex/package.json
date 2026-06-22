@@ -9,12 +9,15 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@edge-runtime/vm": "^3.2.0",
-    "convex-test": "^0.0.35",
-    "vitest": "^2.1.5",
-    "typescript": "^5.5.4"
+    "@edge-runtime/vm": "^5.0.0",
+    "convex-test": "^0.0.53",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
   },
   "dependencies": {
-    "convex": "^1.35.1"
+    "convex": "^1.41.0"
+  },
+  "overrides": {
+    "ws": "8.21.0"
   }
 }

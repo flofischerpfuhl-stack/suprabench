@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SupraBench Prefill Review - 2026-06-22</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --ink: #18202a;
+      --muted: #637083;
+      --line: #d9dee7;
+      --panel: #ffffff;
+      --accent: #1d6f8f;
+      --accent-soft: #e7f4f8;
+      --warn: #8f5e1d;
+      --warn-soft: #fff4df;
+      --good: #1f7a4d;
+      --good-soft: #e8f6ee;
+      --bad: #9b2c2c;
+      --bad-soft: #fdecec;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    header {
+      background: #101820;
+      color: white;
+      padding: 28px 32px;
+      border-bottom: 5px solid var(--accent);
+    }
+    header h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: 0; }
+    header p { margin: 0; color: #c7d2df; max-width: 980px; }
+    main { max-width: 1320px; margin: 0 auto; padding: 24px; }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 18px;
+    }
+    nav a {
+      color: var(--accent);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 12px;
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      margin: 0 0 18px;
+    }
+    h2 { margin: 0 0 12px; font-size: 20px; }
+    h3 { margin: 0; font-size: 17px; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .metric {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .metric strong { display: block; font-size: 20px; }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .bench {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .bench-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      background: #fbfcfd;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: white;
+      font-size: 12px;
+    }
+    .tag.good { color: var(--good); background: var(--good-soft); border-color: #bfe5ce; }
+    .tag.warn { color: var(--warn); background: var(--warn-soft); border-color: #efd8a8; }
+    .tag.bad { color: var(--bad); background: var(--bad-soft); border-color: #f3bcbc; }
+    .bench-body { padding: 14px; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0 0; }
+    th, td { border-bottom: 1px solid var(--line); padding: 7px 8px; vertical-align: top; text-align: left; }
+    th { background: #f5f7fa; color: #344055; font-size: 12px; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .note { color: var(--muted); margin: 8px 0 0; }
+    .sources a { color: var(--accent); margin-right: 10px; }
+    .shots {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    figure { margin: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: white; }
+    figure img { display: block; width: 100%; height: 150px; object-fit: cover; object-position: top left; }
+    figcaption { padding: 7px 8px; color: var(--muted); font-size: 12px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .callout { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 10px 12px; border-radius: 4px; }
+    .callout.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+    .callout.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
+    @media (max-width: 860px) {
+      header { padding: 22px 18px; }
+      main { padding: 14px; }
+      .summary, .grid2 { grid-template-columns: 1fr; }
+      .bench-head { grid-template-columns: 1fr; }
+      table { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SupraBench Prefill Review - 2026-06-22</h1>
+    <p>Review page for the June 22, 2026 prefill. After review, the researched scores and benchmark ratings were seeded into Convex Production; each benchmark card keeps the source links and local proof screenshots used for verification.</p>
+  </header>
+  <main>
+    <nav id="nav"></nav>
+
+    <section>
+      <h2>Review Summary</h2>
+      <div class="summary">
+        <div class="metric"><strong>18</strong><span>production benchmarks after import</span></div>
+        <div class="metric"><strong>495</strong><span>production score submissions after import</span></div>
+        <div class="metric"><strong>18</strong><span>benchmark ratings seeded</span></div>
+        <div class="metric"><strong>8</strong><span>local screenshot proofs available</span></div>
+      </div>
+      <p class="note">Import result: DeepSWE is integrated as a high-priority benchmark. SkateBench is integrated as a visible low-rating community/niche benchmark and does not materially affect SupraScore.</p>
+    </section>
+
+    <section id="benchmarks">
+      <h2>Bench-by-Bench Score Review</h2>
+      <div id="benchList"></div>
+    </section>
+
+    <section id="ratings">
+      <h2>Quality Ratings</h2>
+      <p class="note">Scale: 1 weak/low, 5 strong/high. Priority is SupraBench integration/weighting priority.</p>
+      <div id="ratingsTable"></div>
+    </section>
+
+    <section id="security-capacity">
+      <h2>Security and Capacity Notes</h2>
+      <div class="grid2">
+        <div class="callout">
+          <strong>Fixed in repo during audit:</strong>
+          <p>Root and test npm audits are clean; API responses are private-cache only; paid Stripe keys fail closed without active subscription linkage; API log IPs are hashed.</p>
+        </div>
+        <div class="callout warn">
+          <strong>Still needs operational cleanup:</strong>
+          <p>Ignored local <code>client_secret_*.json</code> and <code>.env.local</code> exist in repo root. They are not tracked, but move the OAuth JSON outside the repo and rotate it if it may have been synced or shared.</p>
+        </div>
+      </div>
+      <p>Convex Free is not enough for broad public launch traffic. Official current limits include 0.5 GB DB storage, 1 GB/month DB I/O, 1M function calls/month, S16 deployment, 1,000 concurrent sessions, and 16 concurrent queries. D1 Free helps the score mirror but has daily row-read/write limits.</p>
+      <p class="sources">
+        <a href="suprabench-security-audit-2026-06-22.md">Full local security audit</a>
+        <a href="https://docs.convex.dev/production/state/limits">Convex limits</a>
+        <a href="https://developers.cloudflare.com/d1/platform/pricing/">D1 pricing</a>
+        <a href="https://developers.cloudflare.com/d1/platform/limits/">D1 limits</a>
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const shots = {
+      cais: ["screenshots/cais-dashboard-current-2026-06-22.png", "CAIS dashboard screenshot"],
+      deepswe: ["screenshots/deepswe-leaderboard-2026-06-22.png", "Datacurve DeepSWE screenshot"],
+      skate: ["screenshots/skatebench-leaderboard-2026-06-22.png", "SkateBench v2 screenshot"],
+      hle: ["screenshots/artificial-analysis-hle-2026-06-22.png", "Artificial Analysis HLE screenshot"],
+      lcr: ["screenshots/artificial-analysis-lcr-2026-06-22.png", "Artificial Analysis LCR screenshot"],
+      scicode: ["screenshots/artificial-analysis-scicode-2026-06-22.png", "Artificial Analysis SciCode screenshot"],
+      swev: ["screenshots/swebench-verified-2026-06-22.png", "SWE-bench Verified context screenshot"],
+      hfdeep: ["screenshots/hf-deepswe-preview-evaluation-2026-06-22.png", "HF DeepSWE-Preview screenshot"]
+    };
+
+    const ratings = {
+      "arc-agi-2": [2,5,4,3,4,"Abstract generalization; low memorization risk, indirect practical utility."],
+      "humanity-s-last-exam": [3,4,5,4,5,"Broad frontier academic knowledge, strong headroom."],
+      "swe-bench-pro": [5,5,5,4,5,"Realistic long-horizon SWE and strong contamination design."],
+      "textquests": [3,2,4,4,3,"Agent planning signal; public classic-game material raises contamination risk."],
+      "enigmaeval": [2,3,5,4,3,"Very hard multimodal puzzle reasoning; lower direct utility."],
+      "intphys-2": [3,4,3,4,3,"World-model/physics signal; synthetic setup and moderate discrimination."],
+      "swe-bench-verified": [5,2,3,5,3,"Still comparable, but public GitHub-derived and increasingly saturated."],
+      "spatialviz": [3,5,4,4,4,"Programmatic spatial diagnostic with good frontier variation."],
+      "erqa": [4,3,3,4,3,"Robotics/embodied relevance, moderate multiple-choice scope."],
+      "apex-agents-aa": [5,3,5,4,5,"High-value professional-services agent tasks with headroom."],
+      "mindcube": [3,4,3,4,3,"Spatial mental-modeling; current top scores reduce priority."],
+      "scicode": [5,3,5,5,5,"Strong scientific-coding signal and reproducible methodology."],
+      "terminal-bench-hard": [5,4,5,4,5,"Highly relevant terminal-agent tasks with programmatic verification."],
+      "aa-long-context-reasoning": [4,4,3,2,3,"Useful long-context signal, limited source transparency."],
+      "mmmu-pro": [3,4,3,5,4,"Solid multimodal academic standard, less frontier-hard now."],
+      "tau2-bench-telecom": [5,4,1,5,2,"Very real-world, but saturated near 99%."],
+      "deepswe": [5,5,5,4,5,"Recommended: current original long-horizon SWE with wide score spread."],
+      "skatebench": [1,2,2,2,1,"Technically extractable, but niche/community rather than core benchmark."]
+    };
+
+    const benches = [
+      {
+        slug: "arc-agi-2", name: "ARC-AGI-2", status: "existing", dbTop: "Gemini 3.1 Pro Preview 73.3; GPT-5.4 65.0; Grok 4.2 55.0",
+        sources: [["CAIS dashboard", "https://dashboard.safe.ai/"]], screenshots: ["cais"],
+        values: [["GPT-5.5", "77.5", "CAIS"], ["Opus 4.8", "67.5", "CAIS"], ["Gemini 3.1 Pro", "73.3", "CAIS"], ["DeepSeek 4 Pro", "28.3", "CAIS"], ["Kimi K2.6", "18.1", "CAIS"], ["GLM 5.1", "15.0", "CAIS"], ["Grok 4.3", "13.3", "CAIS"]]
+      },
+      {
+        slug: "humanity-s-last-exam", name: "Humanity's Last Exam", status: "existing", dbTop: "Gemini 3.1 Pro Preview 45.9/44.7; GPT-5.5 xhigh 44.3; GPT-5.5 high 43.0",
+        sources: [["CAIS dashboard", "https://dashboard.safe.ai/"], ["Artificial Analysis HLE", "https://artificialanalysis.ai/evaluations/humanitys-last-exam"]], screenshots: ["cais","hle"],
+        values: [["Claude Fable 5 adaptive max/fallback", "53.3", "AA"], ["Claude Opus 4.8 adaptive max", "45.7", "AA"], ["Gemini 3.1 Pro Preview", "44.7", "AA"], ["GPT-5.5", "43.6", "CAIS"], ["Opus 4.8", "42.2", "CAIS"], ["Gemini 3.1 Pro", "45.9", "CAIS"], ["DeepSeek 4 Pro", "32.4", "CAIS"], ["Kimi K2.6", "29.9", "CAIS"], ["GLM 5.1", "25.6", "CAIS"], ["Grok 4.3", "33.1", "CAIS"]]
+      },
+      {
+        slug: "swe-bench-pro", name: "SWE-Bench Pro", status: "existing", dbTop: "Claude Opus 4.7 60.9; Claude Opus 4.6 56.7; Claude Sonnet 4.6 53.8",
+        sources: [["CAIS dashboard", "https://dashboard.safe.ai/"]], screenshots: ["cais"],
+        values: [["GPT-5.5", "53.4", "CAIS"], ["Opus 4.8", "65.4", "CAIS"], ["Gemini 3.1 Pro", "46.7", "CAIS"], ["DeepSeek 4 Pro", "47.3", "CAIS"], ["Kimi K2.6", "50.1", "CAIS"], ["GLM 5.1", "49.2", "CAIS"], ["Grok 4.3", "38.7", "CAIS"]]
+      },
+      {
+        slug: "textquests", name: "TextQuests", status: "existing", dbTop: "Gemini 3.1 Pro Preview 45.8; GPT-5.4 42.2; Gemini 3 Pro 41.0",
+        sources: [["CAIS dashboard", "https://dashboard.safe.ai/"]], screenshots: ["cais"],
+        values: [["GPT-5.5", "42.0", "CAIS"], ["Opus 4.8", "40.1", "CAIS"], ["Gemini 3.1 Pro", "45.8", "CAIS"], ["DeepSeek 4 Pro", "20.3", "CAIS"], ["Kimi K2.6", "27.4", "CAIS"], ["GLM 5.1", "29.5", "CAIS"], ["Grok 4.3", "13.7", "CAIS"]]
+      },
+      {
+        slug: "enigmaeval", name: "EnigmaEval", status: "existing", dbTop: "Gemini 3.1 Pro Preview 32.4; GPT-5.4 27.6; Gemini 3 Flash 18.3",
+        sources: [["CAIS dashboard", "https://dashboard.safe.ai/"]], screenshots: ["cais"],
+        values: [["GPT-5.5", "37.2", "CAIS"], ["Gemini 3.1 Pro", "32.4", "CAIS"], ["Kimi K2.6", "5.5", "CAIS"], ["Opus 4.8", "20.5", "CAIS"], ["Grok 4.3", "6.1", "CAIS"]]
+      },
+      {
+        slug: "intphys-2", name: "IntPhys 2", status: "existing", dbTop: "Gemini 3 Flash 63.4; Grok 4.2 62.6; GPT-5 mini 59.2",
+        sources: [["CAIS dashboard", "https://dashboard.safe.ai/"]], screenshots: ["cais"],
+        values: [["GPT-5.5", "59.9", "CAIS"], ["Gemini 3.1 Pro", "53.6", "CAIS"], ["Kimi K2.6", "60.0", "CAIS"], ["Opus 4.8", "55.1", "CAIS"], ["Grok 4.3", "56.9", "CAIS"]]
+      },
+      {
+        slug: "swe-bench-verified", name: "SWE-bench Verified", status: "existing", dbTop: "Claude 4.5 Opus high 76.8; Gemini 3 Flash high 75.8; MiniMax M2.5 high 75.79",
+        sources: [["SWE-bench Verified", "https://www.swebench.com/verified.html"], ["HF DeepSWE-Preview", "https://huggingface.co/agentica-org/DeepSWE-Preview"], ["Together DeepSWE-Preview", "https://www.together.ai/blog/deepswe"]], screenshots: ["swev","hfdeep"],
+        note: "DeepSWE-Preview is a model/agent on SWE-bench Verified, not the Datacurve DeepSWE benchmark.",
+        values: [["DeepSWE-Preview 32B, R2E-Gym Agent", "42.2", "HF/Together"], ["DeepSWE-Preview + Hybrid Best@8", "57.9", "HF/Together"], ["DeepSWE-Preview + Hybrid Best@16/TTS", "59.0", "HF/Together"]]
+      },
+      {
+        slug: "spatialviz", name: "SpatialViz", status: "existing", dbTop: "GPT-5.4 69.3; Gemini 3.1 Pro Preview 66.1; GPT-5.2 65.8",
+        sources: [["CAIS dashboard", "https://dashboard.safe.ai/"]], screenshots: ["cais"],
+        values: [["GPT-5.5", "74.2", "CAIS"], ["Gemini 3.1 Pro", "66.1", "CAIS"], ["Kimi K2.6", "73.9", "CAIS"], ["Opus 4.8", "65.2", "CAIS"], ["Grok 4.3", "49.6", "CAIS"]]
+      },
+      {
+        slug: "erqa", name: "ERQA", status: "existing", dbTop: "Gemini 3.1 Pro Preview 74.2; Gemini 3 Flash 71.0; Gemini 3 Pro 70.2",
+        sources: [["CAIS dashboard", "https://dashboard.safe.ai/"]], screenshots: ["cais"],
+        values: [["GPT-5.5", "70.5", "CAIS"], ["Gemini 3.1 Pro", "74.2", "CAIS"], ["Kimi K2.6", "61.3", "CAIS"], ["Opus 4.8", "59.5", "CAIS"], ["Grok 4.3", "57.3", "CAIS"]]
+      },
+      {
+        slug: "apex-agents-aa", name: "APEX-Agents-AA", status: "existing", dbTop: "GPT-5.5 xhigh 37.7; GPT-5.4 xhigh 33.3; Claude Opus 4.6 max 33.0",
+        sources: [["Artificial Analysis APEX", "https://artificialanalysis.ai/evaluations/apex-agents-aa"]], screenshots: [],
+        note: "Headless screenshot for this AA subpage timed out; source link is included for manual verification.",
+        values: [["Gemini 3.5 Flash high", "47.1", "AA"], ["GPT-5.5 xhigh", "37.7", "AA"], ["GPT-5.4 xhigh", "33.3", "AA"]]
+      },
+      {
+        slug: "mindcube", name: "MindCube", status: "existing", dbTop: "Gemini 3.1 Pro Preview 84.1; Gemini 3 Flash 78.3; Gemini 3 Pro 77.3",
+        sources: [["CAIS dashboard", "https://dashboard.safe.ai/"]], screenshots: ["cais"],
+        values: [["GPT-5.5", "79.9", "CAIS"], ["Gemini 3.1 Pro", "84.1", "CAIS"], ["Kimi K2.6", "75.6", "CAIS"], ["Opus 4.8", "64.9", "CAIS"], ["Grok 4.3", "72.2", "CAIS"]]
+      },
+      {
+        slug: "scicode", name: "SciCode", status: "existing", dbTop: "Gemini 3.1 Pro Preview 58.9; GPT-5.4 xhigh 56.6; GPT-5.5 xhigh 56.1",
+        sources: [["Artificial Analysis SciCode", "https://artificialanalysis.ai/evaluations/scicode"]], screenshots: ["scicode"],
+        values: [["Claude Fable 5 adaptive max/fallback", "60.2", "AA"], ["Gemini 3.1 Pro Preview", "58.9", "AA"], ["GPT-5.4 xhigh", "56.6", "AA"]]
+      },
+      {
+        slug: "terminal-bench-hard", name: "Terminal-Bench Hard", status: "existing", dbTop: "GPT-5.5 xhigh 60.6; GPT-5.5 high 59.8; GPT-5.4 xhigh 57.6",
+        sources: [["Artificial Analysis Terminal-Bench Hard", "https://artificialanalysis.ai/evaluations/terminalbench-hard"]], screenshots: [],
+        note: "Headless screenshot for this AA subpage timed out; source link is included for manual verification.",
+        values: [["Claude Fable 5 adaptive max/fallback", "62.9", "AA"], ["GPT-5.5 xhigh", "60.6", "AA"], ["GPT-5.5 high", "59.8", "AA"]]
+      },
+      {
+        slug: "aa-long-context-reasoning", name: "AA Long Context Reasoning", status: "existing", dbTop: "GPT-5.2 Codex xhigh 75.7; GPT-5 high 75.6; GPT-5.1 75.0",
+        sources: [["Artificial Analysis LCR", "https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning"]], screenshots: ["lcr"],
+        values: [["GPT-5.2 Codex xhigh", "75.7", "AA"], ["GPT-5 high", "75.6", "AA"], ["GPT-5.1 high", "75.0", "AA"]]
+      },
+      {
+        slug: "mmmu-pro", name: "MMMU-Pro", status: "existing", dbTop: "Gemini 3.1 Pro Preview 82; GPT-5.5 medium/high 81; Muse Spark 81",
+        sources: [["Artificial Analysis MMMU-Pro", "https://artificialanalysis.ai/evaluations/mmmu-pro"]], screenshots: [],
+        note: "Headless screenshot for this AA subpage timed out; source link is included for manual verification.",
+        values: [["Gemini 3.5 Flash high", "84", "AA"], ["Gemini 3.5 Flash medium", "84", "AA"], ["Gemini 3.1 Pro Preview", "82", "AA"]]
+      },
+      {
+        slug: "tau2-bench-telecom", name: "Tau2-Bench Telecom", status: "existing", dbTop: "GLM-4.7 Flash 98.8; GLM-5 Turbo 98.5; GLM-5V Turbo 98.5",
+        sources: [["Artificial Analysis Tau2-Bench", "https://artificialanalysis.ai/evaluations/tau2-bench"]], screenshots: [],
+        note: "Headless screenshot for this AA subpage timed out; source link is included for manual verification.",
+        values: [["JT-35B-Flash", "99.1", "AA"], ["GLM-5.2 max", "99.1", "AA"], ["GLM-4.7-Flash reasoning", "98.8", "AA"]]
+      },
+      {
+        slug: "deepswe", name: "DeepSWE", status: "candidate", dbTop: "not in production",
+        sources: [["Datacurve DeepSWE", "https://deepswe.datacurve.ai/"], ["DeepSWE v1.1 JSON", "https://deepswe.datacurve.ai/artifacts/v1.1/leaderboard-live.json"], ["DeepSWE GitHub", "https://github.com/datacurve-ai/deep-swe"]], screenshots: ["deepswe"],
+        note: "Recommended new benchmark. Proposed raw score: round(pass@1 * 10) on scale 0..1000.",
+        values: [["Claude Fable 5 xhigh", "69.91", "316/452, raw 699"], ["Claude Fable 5 max", "69.72", "304/436, raw 697"], ["Claude Fable 5 high", "68.60", "295/430, raw 686"], ["GPT-5.5 xhigh", "67.04", "303/452, raw 670"], ["Claude Fable 5 medium", "65.37", "285/436, raw 654"], ["GPT-5.5 high", "64.38", "291/452, raw 644"], ["Claude Fable 5 low", "59.58", "258/433, raw 596"], ["Claude Opus 4.8 max", "58.97", "253/429, raw 590"], ["Claude Opus 4.8 xhigh", "54.36", "243/447, raw 544"], ["GPT-5.5 medium", "53.98", "244/452, raw 540"], ["Claude Opus 4.8 high", "51.77", "234/452, raw 518"], ["GPT-5.4 xhigh", "51.77", "234/452, raw 518"], ["Claude Opus 4.8 medium", "48.67", "220/452, raw 487"], ["GLM-5.2 max", "43.78", "197/450, raw 438"], ["Claude Opus 4.8 low", "40.80", "184/451, raw 408"], ["Gemini 3.5 Flash medium", "37.39", "169/452, raw 374"], ["Kimi K2.7 Code default", "30.53", "138/452, raw 305"], ["Claude Sonnet 4.6 high", "29.93", "135/451, raw 299"], ["GPT-5.5 low", "26.99", "122/452, raw 270"], ["Gemini 3.1 Pro Preview high", "11.75", "53/451, raw 118"]]
+      },
+      {
+        slug: "skatebench", name: "SkateBench v2", status: "candidate", dbTop: "not in production",
+        sources: [["Live leaderboard", "https://skatebench.t3.gg/"], ["GitHub repo", "https://github.com/T3-Content/skatebench"]], screenshots: ["skate"],
+        note: "Technically integrable from live Next.js bundle, but not recommended as core SupraBench benchmark. Snapshot timestamp 2026-03-06; version 2026-03-05; 28 models; 390 tests/model.",
+        values: [["gemini-3.1-pro-preview", "96.92", "378/390"], ["gpt-5.4-high", "81.54", "318/390"], ["gpt-5.4-xhigh", "81.28", "317/390"], ["gpt-5.4-medium", "78.46", "306/390"], ["gpt-5.4-pro-thinking", "78.46", "306/390"], ["gpt-5-high", "77.44", "302/390"], ["gemini-3-flash-low", "76.15", "297/390"], ["gemini-3-pro-preview", "76.15", "297/390"], ["gpt-5-default", "75.38", "294/390"], ["gemini-3-flash-high", "75.13", "293/390"], ["gpt-5.1-high", "71.79", "280/390"], ["gpt-5.2-pro", "71.79", "280/390"], ["gpt-5.2-xhigh", "68.97", "269/390"], ["glm-5", "66.67", "260/390"], ["claude-4.6-opus-thinking-high", "64.36", "251/390"], ["grok-4", "61.28", "239/390"], ["kimi-k2.5", "57.18", "223/390"], ["claude-4.5-opus-thinking-high", "50.26", "196/390"], ["deepseek-v3.2-thinking-high", "46.67", "182/390"], ["gpt-5.2-high", "44.62", "174/390"], ["kimi-k2-thinking", "43.85", "171/390"], ["gpt-5.2-default", "41.54", "162/390"], ["gpt-5-mini", "37.95", "148/390"], ["grok-4.1-fast", "35.38", "138/390"], ["gpt-5-minimal", "16.67", "65/390"], ["gpt-oss-120b-high", "16.41", "64/390"], ["claude-4.6-sonnet", "15.13", "59/390"], ["minimax-m2.5", "13.85", "54/390"]]
+      }
+    ];
+
+    function tagForPriority(p) {
+      if (p >= 5) return "tag good";
+      if (p >= 3) return "tag warn";
+      return "tag bad";
+    }
+
+    function renderBench(b) {
+      const r = ratings[b.slug];
+      const div = document.createElement("article");
+      div.className = "bench";
+      div.id = b.slug;
+      div.innerHTML = "";
+
+      const head = document.createElement("div");
+      head.className = "bench-head";
+      const title = document.createElement("div");
+      title.innerHTML = `<h3>${b.name}</h3><div class="tags"><span class="tag">${b.slug}</span><span class="tag">${b.status}</span><span class="${tagForPriority(r[4])}">priority ${r[4]}/5</span></div>`;
+      const score = document.createElement("div");
+      score.innerHTML = `<strong>DB top</strong><br><span class="note">${b.dbTop}</span>`;
+      head.append(title, score);
+      div.appendChild(head);
+
+      const body = document.createElement("div");
+      body.className = "bench-body";
+      const src = document.createElement("p");
+      src.className = "sources";
+      src.innerHTML = b.sources.map(([label, href]) => `<a href="${href}">${label}</a>`).join("");
+      body.appendChild(src);
+      if (b.note) {
+        const note = document.createElement("p");
+        note.className = "note";
+        note.textContent = b.note;
+        body.appendChild(note);
+      }
+      const table = document.createElement("table");
+      table.innerHTML = `<thead><tr><th>Model / label</th><th class="num">Found score</th><th>Source / notes</th></tr></thead><tbody>${b.values.map(v => `<tr><td>${v[0]}</td><td class="num">${v[1]}</td><td>${v[2]}</td></tr>`).join("")}</tbody>`;
+      body.appendChild(table);
+
+      const rating = document.createElement("p");
+      rating.className = "note";
+      rating.textContent = `Ratings: relevance ${r[0]}/5, contamination ${r[1]}/5, frontier discrimination ${r[2]}/5, reproducibility ${r[3]}/5. ${r[5]}`;
+      body.appendChild(rating);
+
+      if (b.screenshots.length) {
+        const shotWrap = document.createElement("div");
+        shotWrap.className = "shots";
+        for (const key of b.screenshots) {
+          const [path, label] = shots[key];
+          const fig = document.createElement("figure");
+          fig.innerHTML = `<a href="${path}"><img src="${path}" alt="${label}"></a><figcaption>${label}</figcaption>`;
+          shotWrap.appendChild(fig);
+        }
+        body.appendChild(shotWrap);
+      }
+      div.appendChild(body);
+      return div;
+    }
+
+    const nav = document.getElementById("nav");
+    benches.forEach(b => {
+      const a = document.createElement("a");
+      a.href = `#${b.slug}`;
+      a.textContent = b.name;
+      nav.appendChild(a);
+    });
+
+    const list = document.getElementById("benchList");
+    benches.forEach(b => list.appendChild(renderBench(b)));
+
+    const ratingRows = benches.map(b => {
+      const r = ratings[b.slug];
+      return `<tr><td>${b.name}</td><td><code>${b.slug}</code></td><td class="num">${r[0]}</td><td class="num">${r[1]}</td><td class="num">${r[2]}</td><td class="num">${r[3]}</td><td class="num">${r[4]}</td><td>${r[5]}</td></tr>`;
+    }).join("");
+    document.getElementById("ratingsTable").innerHTML = `<table><thead><tr><th>Benchmark</th><th>Slug</th><th class="num">Relevance</th><th class="num">Contam.</th><th class="num">Discrim.</th><th class="num">Repro.</th><th class="num">Priority</th><th>Rationale</th></tr></thead><tbody>${ratingRows}</tbody></table>`;
+  </script>
+</body>
+</html>

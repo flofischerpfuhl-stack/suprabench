@@ -69,6 +69,14 @@ describe("auth middleware", () => {
     expect(res.status).toBe(402);
   });
 
+  test("paid tier without Stripe linkage fails closed", async () => {
+    const t = setupTestDb();
+    const key = await seedKey(t, { tier: "pro" });
+    const res = await t.fetch(...buildRequest(`${BASE}/v1/models`, { key }));
+    expect(res.status).toBe(402);
+    expect((await res.json()).error.code).toBe("subscription_inactive");
+  });
+
   test("partner tier SKIPS subscription check even with missing sub status", async () => {
     const t = setupTestDb();
     const key = await seedKey(t, { tier: "partner" /* no subStatus */ });
@@ -99,7 +107,7 @@ describe("auth middleware", () => {
     expect(res.headers.get("access-control-allow-origin")).toBe("*");
     expect(res.headers.get("vary")).toContain("authorization");
     const cc = res.headers.get("cache-control");
-    expect(cc).toMatch(/public, max-age=\d+/);
+    expect(cc).toMatch(/private, max-age=\d+/);
   });
 
   test("OPTIONS preflight returns 204 + CORS headers", async () => {

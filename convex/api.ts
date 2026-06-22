@@ -45,8 +45,9 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { TIERS, PUBLIC_TIERS, type Tier } from "./tiers";
 
 const KEY_PREFIX = "sb_live_";
-// Cache TTLs (per docs/api-roadmap.md). Sent as Cache-Control headers
-// so clients / Cloudflare-in-front can edge-cache responses.
+// Cache TTLs (per docs/api-roadmap.md). Sent as private Cache-Control
+// headers: every /v1/* response is authenticated and carries per-key
+// quota/rate-limit headers, so shared caches must not serve it for us.
 const TTL = {
   rankings: 300,    //  5 min
   detail:   300,
@@ -79,7 +80,7 @@ function json(
   const { status = 200, ttl = 0, extraHeaders, lastModified } = opts;
   const headers: Record<string, string> = {
     "content-type": "application/json; charset=utf-8",
-    "cache-control": ttl > 0 ? `public, max-age=${ttl}` : "no-store",
+    "cache-control": ttl > 0 ? `private, max-age=${ttl}` : "no-store",
     "access-control-allow-origin": "*",
     "vary": "authorization",
     ...(extraHeaders ?? {}),
@@ -296,6 +297,8 @@ export const createKey = mutation({
       tier: tier as any,
       monthlyQuota: cfg.monthlyQuota,
       rpmLimit: cfg.rpmLimit,
+      stripeSubscriptionId: (sub as any).stripeSubscriptionId,
+      stripeSubscriptionStatus: (sub as any).status,
       createdAt: Date.now(),
     });
     // Plaintext returned here is the ONLY time the user sees it.
@@ -649,10 +652,11 @@ async function authenticate(ctx: any, request: Request) {
   // subscription liveness check for them — everything else (rate
   // limit, monthly quota, audit log) still applies.
   const needsSubCheck = key.tier !== "partner" && key.tier !== "enterprise_plus";
-  if (needsSubCheck && key.stripeSubscriptionStatus &&
-      !["active", "trialing"].includes(key.stripeSubscriptionStatus)) {
+  if (needsSubCheck &&
+      (!key.stripeSubscriptionId ||
+       !["active", "trialing"].includes(key.stripeSubscriptionStatus ?? ""))) {
     return { resp: err(402, "subscription_inactive",
-                       `Subscription is ${key.stripeSubscriptionStatus}`,
+                       `Subscription is ${key.stripeSubscriptionStatus ?? "missing"}`,
                        "Update payment method at https://suprabench.com/#api") };
   }
 
@@ -686,6 +690,11 @@ function clientIp(request: Request) {
   return request.headers.get("cf-connecting-ip")
       ?? request.headers.get("x-forwarded-for")?.split(",")[0].trim()
       ?? undefined;
+}
+
+async function clientIpHash(request: Request) {
+  const ip = clientIp(request);
+  return ip ? await sha256Hex(ip) : undefined;
 }
 
 // Re-build a Response with the rate-limit / quota headers merged
@@ -741,7 +750,7 @@ function endpoint(name: string, ttl: number, handler: (ctx: any, request: Reques
       endpoint: name,
       status: resp.status,
       ms,
-      ip: clientIp(request),
+      ip: await clientIpHash(request),
       userAgent: request.headers.get("user-agent") ?? undefined,
     }).catch(() => {});
     return resp;

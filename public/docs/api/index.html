@@ -321,7 +321,7 @@ func main() {
     <h2 id="design-principles">Design principles</h2>
     <ul>
       <li><strong>Read-only.</strong> Mutations require human contribution through the web app — the API never accepts new submissions, votes, or ratings, by design.</li>
-      <li><strong>Cacheable.</strong> Every response carries an honest <code>Cache-Control</code> header. Mirroring SupraBench at your own edge is allowed and encouraged.</li>
+      <li><strong>Cacheable by the client.</strong> Every response carries an honest private <code>Cache-Control</code> header. Cache within your own process or trusted infrastructure; shared public caches should still forward requests so quota and rate limits are enforced.</li>
       <li><strong>Predictable.</strong> Status codes follow REST conventions. Errors always carry a machine-readable <code>error.code</code> string in addition to a human message.</li>
       <li><strong>Stable.</strong> Once a field is in <code>v1</code>, it stays. New fields are additive. Deprecations get six months and a header warning.</li>
       <li><strong>No vendor lock-in.</strong> Plain JSON, no proprietary SDK required. Use any HTTP client.</li>

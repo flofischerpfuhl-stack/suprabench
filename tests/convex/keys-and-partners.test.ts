@@ -88,6 +88,10 @@ describe("api.createKey (public mutation)", () => {
       .mutation(api.api.createKey, { name: "k1", tier: "starter" });
     expect(r1.plaintext).toMatch(/^sb_live_[0-9a-f]{64}$/);
     expect(r1.prefix).toMatch(/^sb_live_[0-9a-f]{8}$/);
+    const [createdKey] = await t.withIdentity(iden).query(api.api.myKeys, {});
+    const storedKey = await t.run((ctx) => ctx.db.get(createdKey._id));
+    expect((storedKey as any).stripeSubscriptionId).toBe("sub_x");
+    expect((storedKey as any).stripeSubscriptionStatus).toBe("active");
     // Starter maxKeys = 1 → second creation fails.
     await expect(
       t

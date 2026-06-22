@@ -209,7 +209,7 @@ func main() {
 
     <h2 id="tips">Performance tips</h2>
     <ul>
-      <li><strong>Honour the cache.</strong> Response carries <code>Cache-Control: public, max-age=86400</code> &mdash; cache it for 24 hours, not 60 seconds.</li>
+      <li><strong>Honour the cache.</strong> Response carries <code>Cache-Control: private, max-age=86400</code> &mdash; cache it in your client or trusted infrastructure for 24 hours, not 60 seconds.</li>
       <li><strong>Use the freshness headers.</strong> Responses include <code>Cache-Control</code>, <code>Last-Modified</code> and <code>X-Computed-At</code>; cache the snapshot until the advertised TTL expires instead of polling.</li>
       <li><strong>Prefer one-shot.</strong> Don't loop the list endpoints to reconstruct the export &mdash; that's strictly more expensive on quota and slower.</li>
       <li><strong>Stream-parse for big snapshots.</strong> Use <code>ijson</code> in Python or a streaming parser in Node if you don't want to hold the whole document in memory.</li>
