@@ -568,7 +568,7 @@
      ═══════════════════════════════════════ -->
 <div x-show="view==='benchmarks'" x-transition.opacity>
 
-    <h1 class="page-title">Benchmark Quality<br>Ranking</h1>
+    <h1 class="page-title">Bench Weight<br>Ranking</h1>
 
     <!-- Same tag-bar component as the models page (bench tags only,
          shared activeTags state, shared picker popup). Lives above
@@ -594,12 +594,21 @@
 
     <div class="table-scroll" x-show="filteredSortedBenches.length > 0">
     <table class="benches-list">
+        <colgroup>
+            <col class="b-col-rank">
+            <col class="b-col-name">
+            <col class="b-col-type">
+            <col class="b-col-score">
+            <col class="b-col-dims">
+            <col class="b-col-tags">
+            <col class="b-col-models">
+        </colgroup>
         <thead>
             <tr>
                 <th style="width:50px">#</th>
                 <th class="sort-btn" @click="toggleBenchSort('name')">Benchmark</th>
                 <th>Type</th>
-                <th class="sort-btn" @click="toggleBenchSort('score')" title="Bench Score = quality × difficulty × headroom × √(net-upvotes / max net-upvotes) × √(distinct models scored / max distinct models). The bench's actual contribution to a model's SupraScore. The two √ shares block 'self-rated vanity bench appears at #1' (upvote share) and 'community bench tested only by my own model' (model-count share) attacks. Range 0–100.">Bench Score</th>
+                <th class="sort-btn" @click="toggleBenchSort('score')" title="Bench Weight = quality × difficulty × headroom × √(net-upvotes / max net-upvotes) × √(distinct models scored / max distinct models). This is the bench's actual contribution to a model's SupraScore, not a pure quality-only score. The two √ shares block 'self-rated vanity bench appears at #1' and 'community bench tested only by my own model' attacks. Range 0–100.">Bench Weight</th>
                 <th>Dimensions</th>
                 <th>Tags</th>
                 <th>Models</th>
@@ -639,16 +648,15 @@
                         </div>
                     </td>
                     <td class="b-tags">
-                        <template x-for="tg in b.tags.slice(0,3)" :key="tg">
-                            <span class="tag-sm tag-sm-clickable"
-                                  :class="{'active': activeTags.includes(tg)}"
-                                  @click.stop="toggleTag(tg)"
-                                  :title="activeTags.includes(tg) ? 'Remove from filter' : 'Filter by ' + tg"
-                                  x-text="tg"></span>
-                        </template>
-                        <template x-if="b.tags.length > 3">
-                            <span style="font-size:.7rem;color:var(--text3)" x-text="'+' + (b.tags.length - 3)"></span>
-                        </template>
+                        <div class="b-tags-scroll">
+                            <template x-for="tg in b.tags" :key="tg">
+                                <span class="tag-sm tag-sm-clickable"
+                                      :class="{'active': activeTags.includes(tg)}"
+                                      @click.stop="toggleTag(tg)"
+                                      :title="activeTags.includes(tg) ? 'Remove from filter' : 'Filter by ' + tg"
+                                      x-text="tg"></span>
+                            </template>
+                        </div>
                     </td>
                     <td class="b-models" style="color:var(--text3);font-size:.85rem" x-text="b.modelCount + ' models'"></td>
                 </tr>

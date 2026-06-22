@@ -2535,8 +2535,8 @@ function supraBench() {
       if (this.benchSortField === "name") {
         sorted.sort((a, b) => this.benchSortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
       } else {
-        // Default ranking dimension is the Bench Score (effectiveWeight),
-        // i.e. quality × difficulty × headroom — the actual ranking weight.
+        // Default ranking dimension is Bench Weight (effectiveWeight),
+        // i.e. the actual contribution weight used by SupraScore.
         sorted.sort((a, b) => this.benchSortAsc ? a.effectiveWeight - b.effectiveWeight : b.effectiveWeight - a.effectiveWeight);
       }
       return sorted;

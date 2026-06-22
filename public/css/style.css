@@ -408,7 +408,8 @@ a:hover {
 /* ── Tables ── */
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 th {
@@ -538,13 +539,14 @@ tr.clickable-row {
 }
 
 .tag-sm {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   padding: 0.2rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: 100px;
   font-size: 0.7rem;
   color: var(--text3);
-  margin-right: 0.3rem;
+  white-space: nowrap;
 }
 
 /* Clickable family-tag chip inside a model row. Visually identical to
@@ -2431,12 +2433,21 @@ ol.about-list li::before {
 .b-desc {
   color: var(--text3);
   font-size: 0.8rem;
-  display: inline-block;
-  max-width: 320px;
+  display: block;
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  vertical-align: bottom;
+}
+.b-name {
+  min-width: 0;
+}
+.b-name a {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ════════════════════════════════════════════
@@ -2467,6 +2478,17 @@ ol.about-list li::before {
   min-width: 100%;
 }
 
+.benches-list {
+  table-layout: fixed;
+}
+
+.benches-list .b-col-rank { width: 50px; }
+.benches-list .b-col-type { width: 130px; }
+.benches-list .b-col-score { width: 140px; }
+.benches-list .b-col-dims { width: 130px; }
+.benches-list .b-col-tags { width: 210px; }
+.benches-list .b-col-models { width: 96px; }
+
 /* ── Tablet sweet spot (701-1024px) ──
    Without this, the leaderboard tables stretch to fill the container
    width (min-width: 100% on the table) and the browser silently
@@ -2474,7 +2496,7 @@ ol.about-list li::before {
    tag chips, and broken dimension dots. We force a true minimum
    width so the .table-scroll wrapper actually scrolls instead. */
 @media (min-width: 701px) and (max-width: 1024px) {
-  .table-scroll > .benches-list { min-width: 920px; }
+  .table-scroll > .benches-list { min-width: 980px; }
   .table-scroll > .models-list  { min-width: 720px; }
   .b-desc { max-width: 220px; }
 }
@@ -2483,21 +2505,31 @@ ol.about-list li::before {
    Tag chips otherwise wrap onto multiple lines and blow up the row
    height (and on tablet they push the column past its budget). Force
    a single-line scroll strip with a subtle webkit scrollbar so the
-   user can swipe / mouse-wheel through long tag lists. The "+N more"
-   indicator stays inline at the end. */
+   user can swipe / mouse-wheel through long tag lists. */
 .b-tags {
+  min-width: 0;
+  overflow: hidden;
+}
+.b-tags-scroll {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.35rem;
-  max-width: 180px;
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;          /* Firefox: hide scrollbar (still scrolls) */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  padding-bottom: 2px;
 }
-.b-tags::-webkit-scrollbar { display: none; }
-.b-tags > * { flex: 0 0 auto; }   /* tags don't shrink to fit */
+.b-tags-scroll::-webkit-scrollbar { height: 4px; }
+.b-tags-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+.b-tags-scroll > * { flex: 0 0 auto; }   /* tags don't shrink to fit */
 
 /* ── Mobile-friendly tables → compact cards under 700px ── */
 @media (max-width: 700px) {

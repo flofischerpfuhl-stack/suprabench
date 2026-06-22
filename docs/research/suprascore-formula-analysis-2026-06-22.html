@@ -1,0 +1,1250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SupraScore Formula Analysis · 2026-06-22</title>
+  <style>
+    :root { color-scheme: dark; --bg:#050505; --panel:#111; --panel2:#181818; --text:#f5f5f5; --muted:#999; --border:#333; --accent:#e5fe40; --green:#44ff88; --warn:#ffaa44; --red:#ff5555; }
+    body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; }
+    main { max-width:1180px; margin:0 auto; padding:32px 20px 80px; }
+    h1 { font-size:42px; line-height:1; margin:0 0 12px; letter-spacing:-.02em; }
+    h2 { margin:0 0 10px; font-size:22px; }
+    h3 { margin:20px 0 8px; font-size:16px; color:var(--accent); text-transform:uppercase; letter-spacing:.04em; }
+    p { color:#cfcfcf; max-width:940px; }
+    a { color:var(--accent); text-decoration:none; }
+    code { background:#202020; padding:1px 5px; border-radius:4px; }
+    .meta { color:var(--muted); margin-bottom:28px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; margin:18px 0 24px; }
+    .stat, .card { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; }
+    .stat strong { display:block; font-size:24px; color:var(--accent); }
+    .recommendation { border-color:var(--accent); background:linear-gradient(180deg,#15170a,#101010); }
+    .warning { border-color:var(--warn); }
+    table { width:100%; border-collapse:collapse; margin-top:12px; }
+    th, td { border-bottom:1px solid var(--border); padding:8px 10px; vertical-align:top; text-align:left; }
+    th { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+    td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .muted { color:var(--muted); font-size:12px; }
+    .pill { display:inline-block; border:1px solid var(--border); border-radius:99px; padding:2px 8px; color:#bbb; margin:2px 4px 2px 0; }
+    .good { color:var(--green); }
+    .warn { color:var(--warn); }
+    .bad { color:var(--red); }
+    .card { margin:18px 0; overflow-x:auto; }
+    .formula { background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:14px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-x:auto; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>SupraScore Formula Analysis</h1>
+  <div class="meta">Captured from Convex Production on 2026-06-22T21:32:54.770Z · 126 models · 18 benches · 495 submissions</div>
+
+  <section class="card recommendation">
+    <h2>Recommendation</h2>
+    <p><strong>Do not keep the current production formula as the only headline score if SupraScore is meant to mean "real model ability".</strong> The current formula is internally coherent, but it measures <em>ability times evidence coverage</em>. That is why a broadly tested Gemini row can outrank a likely stronger but sparsely measured Fable row.</p>
+    <p>Best product change: split the concept into two public numbers.</p>
+    <p><span class="pill">AbilityScore</span> weighted mean over intrinsic benchmark weights <code>Q x difficulty x headroom</code>, optionally with benchmark trust damping. This should drive "best model" ranking.</p>
+    <p><span class="pill">Evidence</span> coverage/confidence percentage from accumulated benchmark weight. This should be shown next to the score and used as a badge or tie-breaker, not multiplied hard into ability.</p>
+    <p>If you need one number for launch, use Variant F or G: rank by AbilityScore, but require a minimum evidence floor before a model can appear in the main ranking. Under-threshold models should still be visible as <em>provisional</em>, with their evidence percentage shown.</p>
+  </section>
+
+  <section class="card warning">
+    <h2>What is wrong in the current mental model?</h2>
+    <p>The current production score answers: "How good is this model, adjusted downward by how much evidence we have?" That is a confidence-adjusted leaderboard, not a pure capability leaderboard.</p>
+    <div class="formula">Current: model score = weighted mean(model scores) x sqrt(model accumulated bench weight / max accumulated bench weight)</div>
+    <p>That final multiplier is the reason <strong>Claude Fable 5 (xhigh)</strong> gets pushed down: it has a very strong DeepSWE score but only one contributing benchmark, so its confidence multiplier is about 30% in production.</p>
+  </section>
+
+  <section class="card">
+    <h2>Tracked Model Ranks Across Variants</h2>
+    <table>
+      <thead><tr><th>Model</th><th>current</th><th>ability_raw</th><th>ability_bench_trust</th><th>soft_model</th><th>soft_all</th><th>eligible_3</th><th>eligible_weight_140</th></tr></thead>
+      <tbody><tr><td>Claude Fable 5 (xhigh)</td><td>#40<br><span class="muted">20.8 · 1 benches · conf 30%</span></td><td>#18<br><span class="muted">69.9 · 1 benches · conf 100%</span></td><td>#18<br><span class="muted">69.9 · 1 benches · conf 100%</span></td><td>#15<br><span class="muted">60.1 · 1 benches · conf 86%</span></td><td>#15<br><span class="muted">65.3 · 1 benches · conf 93%</span></td><td>#72<br><span class="muted">0.0 · 1 benches · conf 100%</span></td><td>#71<br><span class="muted">0.0 · 1 benches · conf 100%</span></td></tr>
+<tr><td>Claude Opus 4.8</td><td>#3<br><span class="muted">44.7 · 9 benches · conf 84%</span></td><td>#36<br><span class="muted">53.8 · 9 benches · conf 100%</span></td><td>#37<br><span class="muted">53.2 · 9 benches · conf 100%</span></td><td>#29<br><span class="muted">51.5 · 9 benches · conf 97%</span></td><td>#35<br><span class="muted">52.7 · 9 benches · conf 98%</span></td><td>#5<br><span class="muted">53.8 · 9 benches · conf 100%</span></td><td>#5<br><span class="muted">53.8 · 9 benches · conf 100%</span></td></tr>
+<tr><td>GPT-5.5</td><td>#2<br><span class="muted">47.1 · 9 benches · conf 84%</span></td><td>#32<br><span class="muted">56.9 · 9 benches · conf 100%</span></td><td>#32<br><span class="muted">55.9 · 9 benches · conf 100%</span></td><td>#24<br><span class="muted">54.2 · 9 benches · conf 97%</span></td><td>#27<br><span class="muted">55.6 · 9 benches · conf 98%</span></td><td>#3<br><span class="muted">56.9 · 9 benches · conf 100%</span></td><td>#3<br><span class="muted">56.9 · 9 benches · conf 100%</span></td></tr>
+<tr><td>Gemini 3.1 Pro Preview</td><td>#1<br><span class="muted">53.4 · 15 benches · conf 100%</span></td><td>#37<br><span class="muted">53.4 · 15 benches · conf 100%</span></td><td>#36<br><span class="muted">53.4 · 15 benches · conf 100%</span></td><td>#25<br><span class="muted">53.4 · 15 benches · conf 100%</span></td><td>#32<br><span class="muted">53.4 · 15 benches · conf 100%</span></td><td>#6<br><span class="muted">53.4 · 15 benches · conf 100%</span></td><td>#6<br><span class="muted">53.4 · 15 benches · conf 100%</span></td></tr></tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>A. Current Production SupraScore</h2>
+    <p>Deployed formula: ability mean multiplied by sqrt(model total weight share). This is conservative and strongly rewards broad measurement coverage.</p>
+    <table>
+      <thead><tr><th>#</th><th>Model</th><th>Shown Score</th><th>Ability Mean</th><th>Confidence</th><th>Benches</th><th>Weight</th><th>Main scored benches</th></tr></thead>
+      <tbody><tr>
+      <td>1</td>
+      <td><a href="https://suprabench.com/#model/gemini-3-1-pro-preview">Gemini 3.1 Pro Preview</a><div class="muted">Google · Gemini 3.1</div></td>
+      <td class="num">53.4</td>
+      <td class="num">53.4</td>
+      <td class="num">100%</td>
+      <td class="num">15</td>
+      <td class="num">443.1</td>
+      <td>Humanity's Last Exam 45.3; SWE-Bench Pro 46.7; APEX-Agents-AA 32.0; ARC-AGI-2 73.3</td>
+    </tr>
+<tr>
+      <td>2</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5">GPT-5.5</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">47.1</td>
+      <td class="num">55.9</td>
+      <td class="num">84%</td>
+      <td class="num">9</td>
+      <td class="num">313.8</td>
+      <td>Humanity's Last Exam 43.6; SWE-Bench Pro 53.4; ARC-AGI-2 77.5; SpatialViz 74.2</td>
+    </tr>
+<tr>
+      <td>3</td>
+      <td><a href="https://suprabench.com/#model/claude-opus-4-8">Claude Opus 4.8</a><div class="muted">Anthropic · Claude Opus 4.8</div></td>
+      <td class="num">44.7</td>
+      <td class="num">53.2</td>
+      <td class="num">84%</td>
+      <td class="num">9</td>
+      <td class="num">313.8</td>
+      <td>Humanity's Last Exam 42.2; SWE-Bench Pro 65.4; ARC-AGI-2 67.5; SpatialViz 65.2</td>
+    </tr>
+<tr>
+      <td>4</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-4">GPT-5.4</a><div class="muted">OpenAI · GPT-5.4</div></td>
+      <td class="num">42.7</td>
+      <td class="num">50.7</td>
+      <td class="num">84%</td>
+      <td class="num">9</td>
+      <td class="num">313.8</td>
+      <td>Humanity's Last Exam 40.3; SWE-Bench Pro 49.7; ARC-AGI-2 65.0; SpatialViz 69.3</td>
+    </tr>
+<tr>
+      <td>5</td>
+      <td><a href="https://suprabench.com/#model/gemini-3-flash">Gemini 3 Flash</a><div class="muted">Google · Gemini 3 Flash</div></td>
+      <td class="num">40.9</td>
+      <td class="num">43.0</td>
+      <td class="num">95%</td>
+      <td class="num">12</td>
+      <td class="num">400.5</td>
+      <td>Humanity's Last Exam 35.7; SWE-Bench Pro 38.6; APEX-Agents-AA 27.7; ARC-AGI-2 30.8</td>
+    </tr>
+<tr>
+      <td>6</td>
+      <td><a href="https://suprabench.com/#model/claude-opus-4-7">Claude Opus 4.7</a><div class="muted">Anthropic · Claude Opus 4.7</div></td>
+      <td class="num">40.8</td>
+      <td class="num">48.4</td>
+      <td class="num">84%</td>
+      <td class="num">9</td>
+      <td class="num">313.8</td>
+      <td>Humanity's Last Exam 39.0; SWE-Bench Pro 60.9; ARC-AGI-2 50.8; SpatialViz 62.6</td>
+    </tr>
+<tr>
+      <td>7</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5-xhigh">GPT-5.5 (xhigh)</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">40.0</td>
+      <td class="num">53.6</td>
+      <td class="num">75%</td>
+      <td class="num">7</td>
+      <td class="num">247.5</td>
+      <td>Humanity's Last Exam 44.3; DeepSWE 67.0; APEX-Agents-AA 37.7; SciCode 56.1</td>
+    </tr>
+<tr>
+      <td>8</td>
+      <td><a href="https://suprabench.com/#model/kimi-k2-6">Kimi K2.6</a><div class="muted">Moonshot AI · Kimi K2.6</div></td>
+      <td class="num">39.5</td>
+      <td class="num">43.7</td>
+      <td class="num">91%</td>
+      <td class="num">12</td>
+      <td class="num">363.1</td>
+      <td>Humanity's Last Exam 32.9; SWE-Bench Pro 50.1; ARC-AGI-2 18.1; SciCode 53.5</td>
+    </tr>
+<tr>
+      <td>9</td>
+      <td><a href="https://suprabench.com/#model/claude-opus-4-6">Claude Opus 4.6</a><div class="muted">Anthropic · Claude Opus 4.6</div></td>
+      <td class="num">38.7</td>
+      <td class="num">45.3</td>
+      <td class="num">85%</td>
+      <td class="num">10</td>
+      <td class="num">323.8</td>
+      <td>Humanity's Last Exam 34.2; SWE-Bench Pro 56.7; ARC-AGI-2 44.3; SpatialViz 55.7</td>
+    </tr>
+<tr>
+      <td>10</td>
+      <td><a href="https://suprabench.com/#model/gemini-3-pro">Gemini 3 Pro</a><div class="muted">Google · Gemini 3 Pro</div></td>
+      <td class="num">38.2</td>
+      <td class="num">44.7</td>
+      <td class="num">85%</td>
+      <td class="num">10</td>
+      <td class="num">323.8</td>
+      <td>Humanity's Last Exam 38.3; SWE-Bench Pro 43.3; ARC-AGI-2 31.1; SpatialViz 63.2</td>
+    </tr>
+<tr>
+      <td>11</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5-high">GPT-5.5 (high)</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">38.0</td>
+      <td class="num">55.4</td>
+      <td class="num">69%</td>
+      <td class="num">6</td>
+      <td class="num">209.2</td>
+      <td>Humanity's Last Exam 43.0; DeepSWE 64.4; SciCode 55.9; Terminal-Bench Hard 59.8</td>
+    </tr>
+<tr>
+      <td>12</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-4-xhigh">GPT-5.4 (xhigh)</a><div class="muted">OpenAI · GPT-5.4</div></td>
+      <td class="num">36.8</td>
+      <td class="num">49.2</td>
+      <td class="num">75%</td>
+      <td class="num">7</td>
+      <td class="num">247.5</td>
+      <td>Humanity's Last Exam 41.6; DeepSWE 51.8; APEX-Agents-AA 33.3; SciCode 56.6</td>
+    </tr>
+<tr>
+      <td>13</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5-medium">GPT-5.5 (medium)</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">34.3</td>
+      <td class="num">50.9</td>
+      <td class="num">67%</td>
+      <td class="num">5</td>
+      <td class="num">201.4</td>
+      <td>Humanity's Last Exam 40.6; DeepSWE 54.0; SciCode 53.5; Terminal-Bench Hard 57.6</td>
+    </tr>
+<tr>
+      <td>14</td>
+      <td><a href="https://suprabench.com/#model/claude-4-5-opus">Claude 4.5 Opus</a><div class="muted">Anthropic · Claude 4.5 Opus</div></td>
+      <td class="num">33.4</td>
+      <td class="num">39.2</td>
+      <td class="num">85%</td>
+      <td class="num">10</td>
+      <td class="num">321.6</td>
+      <td>Humanity's Last Exam 25.8; SWE-Bench Pro 51.4; ARC-AGI-2 30.6; SpatialViz 43.0</td>
+    </tr>
+<tr>
+      <td>15</td>
+      <td><a href="https://suprabench.com/#model/claude-fable-5-adaptive-max-fallback">Claude Fable 5 (adaptive max/fallback)</a><div class="muted">Anthropic · Claude Fable 5</div></td>
+      <td class="num">33.2</td>
+      <td class="num">57.1</td>
+      <td class="num">58%</td>
+      <td class="num">3</td>
+      <td class="num">149.6</td>
+      <td>Humanity's Last Exam 53.3; SciCode 60.2; Terminal-Bench Hard 62.9</td>
+    </tr></tbody>
+    </table>
+  </section>
+<section class="card">
+    <h2>B. AbilityScore: intrinsic bench weights only</h2>
+    <p>Uses raw Q x difficulty x headroom bench weights. No bench coverage damping and no model coverage damping. Best estimate of measured capability, but sparse models can rank very high.</p>
+    <table>
+      <thead><tr><th>#</th><th>Model</th><th>Shown Score</th><th>Ability Mean</th><th>Confidence</th><th>Benches</th><th>Weight</th><th>Main scored benches</th></tr></thead>
+      <tbody><tr>
+      <td>1</td>
+      <td><a href="https://suprabench.com/#model/jt-35b-flash">JT-35B-Flash</a><div class="muted">China Mobile · JT-35B</div></td>
+      <td class="num">99.1</td>
+      <td class="num">99.1</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">1.9</td>
+      <td>Tau2-Bench Telecom 99.1</td>
+    </tr>
+<tr>
+      <td>2</td>
+      <td><a href="https://suprabench.com/#model/glm-4-7-flash">GLM-4.7 Flash</a><div class="muted">Zhipu AI · GLM-4.7 Flash</div></td>
+      <td class="num">98.8</td>
+      <td class="num">98.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">1.9</td>
+      <td>Tau2-Bench Telecom 98.8</td>
+    </tr>
+<tr>
+      <td>3</td>
+      <td><a href="https://suprabench.com/#model/glm-5-turbo">GLM-5 Turbo</a><div class="muted">Zhipu AI · GLM-5 Turbo</div></td>
+      <td class="num">98.5</td>
+      <td class="num">98.5</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">1.9</td>
+      <td>Tau2-Bench Telecom 98.5</td>
+    </tr>
+<tr>
+      <td>4</td>
+      <td><a href="https://suprabench.com/#model/glm-5v-turbo">GLM-5V Turbo</a><div class="muted">Zhipu AI · GLM-5V Turbo</div></td>
+      <td class="num">98.5</td>
+      <td class="num">98.5</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">1.9</td>
+      <td>Tau2-Bench Telecom 98.5</td>
+    </tr>
+<tr>
+      <td>5</td>
+      <td><a href="https://suprabench.com/#model/qwen-3-6-plus">Qwen 3.6 Plus</a><div class="muted">Alibaba · Qwen 3.6 Plus</div></td>
+      <td class="num">97.7</td>
+      <td class="num">97.7</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">1.9</td>
+      <td>Tau2-Bench Telecom 97.7</td>
+    </tr>
+<tr>
+      <td>6</td>
+      <td><a href="https://suprabench.com/#model/claude-4-5-opus-high-reasoning">Claude 4.5 Opus (high reasoning)</a><div class="muted">Anthropic · Claude 4.5 Opus</div></td>
+      <td class="num">76.8</td>
+      <td class="num">76.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">19.9</td>
+      <td>SWE-bench Verified 76.8</td>
+    </tr>
+<tr>
+      <td>7</td>
+      <td><a href="https://suprabench.com/#model/gemini-3-flash-high-reasoning">Gemini 3 Flash (high reasoning)</a><div class="muted">Google · Gemini 3 Flash</div></td>
+      <td class="num">75.8</td>
+      <td class="num">75.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">19.9</td>
+      <td>SWE-bench Verified 75.8</td>
+    </tr>
+<tr>
+      <td>8</td>
+      <td><a href="https://suprabench.com/#model/minimax-m2-5-high-reasoning">MiniMax M2.5 (high reasoning)</a><div class="muted">MiniMax · MiniMax M2.5</div></td>
+      <td class="num">75.8</td>
+      <td class="num">75.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">19.9</td>
+      <td>SWE-bench Verified 75.8</td>
+    </tr>
+<tr>
+      <td>9</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-high">GPT-5 (high)</a><div class="muted">OpenAI · GPT-5</div></td>
+      <td class="num">75.6</td>
+      <td class="num">75.6</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">16.7</td>
+      <td>AA Long Context Reasoning 75.6</td>
+    </tr>
+<tr>
+      <td>10</td>
+      <td><a href="https://suprabench.com/#model/gpt-6-3-codex-xhigh">GPT-6.3 Codex (xhigh)</a><div class="muted">OpenAI · GPT-6.3 Codex</div></td>
+      <td class="num">74.0</td>
+      <td class="num">74.0</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">16.7</td>
+      <td>AA Long Context Reasoning 74.0</td>
+    </tr>
+<tr>
+      <td>11</td>
+      <td><a href="https://suprabench.com/#model/kat-coder-pro-v1">KAT-Coder-Pro V1</a><div class="muted">Kuaishou · KAT-Coder-Pro</div></td>
+      <td class="num">74.0</td>
+      <td class="num">74.0</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">16.7</td>
+      <td>AA Long Context Reasoning 74.0</td>
+    </tr>
+<tr>
+      <td>12</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-2-codex">GPT-5-2 Codex</a><div class="muted">OpenAI · GPT-5-2 Codex</div></td>
+      <td class="num">72.8</td>
+      <td class="num">72.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">19.9</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>13</td>
+      <td><a href="https://suprabench.com/#model/glm-5-high-reasoning">GLM-5 (high reasoning)</a><div class="muted">Zhipu AI · GLM-5</div></td>
+      <td class="num">72.8</td>
+      <td class="num">72.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">19.9</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>14</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-2-high-reasoning">GPT-5-2 (high reasoning)</a><div class="muted">OpenAI · GPT-5-2</div></td>
+      <td class="num">72.8</td>
+      <td class="num">72.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">19.9</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>15</td>
+      <td><a href="https://suprabench.com/#model/claude-4-5-sonnet-high-reasoning">Claude 4.5 Sonnet (high reasoning)</a><div class="muted">Anthropic · Claude 4.5 Sonnet</div></td>
+      <td class="num">71.4</td>
+      <td class="num">71.4</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">19.9</td>
+      <td>SWE-bench Verified 71.4</td>
+    </tr></tbody>
+    </table>
+  </section>
+<section class="card">
+    <h2>C. AbilityScore with bench trust damping only</h2>
+    <p>Keeps the anti-vanity damping on benchmarks, but removes the model-side coverage multiplier from the headline model score.</p>
+    <table>
+      <thead><tr><th>#</th><th>Model</th><th>Shown Score</th><th>Ability Mean</th><th>Confidence</th><th>Benches</th><th>Weight</th><th>Main scored benches</th></tr></thead>
+      <tbody><tr>
+      <td>1</td>
+      <td><a href="https://suprabench.com/#model/jt-35b-flash">JT-35B-Flash</a><div class="muted">China Mobile · JT-35B</div></td>
+      <td class="num">99.1</td>
+      <td class="num">99.1</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">0.8</td>
+      <td>Tau2-Bench Telecom 99.1</td>
+    </tr>
+<tr>
+      <td>2</td>
+      <td><a href="https://suprabench.com/#model/glm-4-7-flash">GLM-4.7 Flash</a><div class="muted">Zhipu AI · GLM-4.7 Flash</div></td>
+      <td class="num">98.8</td>
+      <td class="num">98.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">0.8</td>
+      <td>Tau2-Bench Telecom 98.8</td>
+    </tr>
+<tr>
+      <td>3</td>
+      <td><a href="https://suprabench.com/#model/glm-5-turbo">GLM-5 Turbo</a><div class="muted">Zhipu AI · GLM-5 Turbo</div></td>
+      <td class="num">98.5</td>
+      <td class="num">98.5</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">0.8</td>
+      <td>Tau2-Bench Telecom 98.5</td>
+    </tr>
+<tr>
+      <td>4</td>
+      <td><a href="https://suprabench.com/#model/glm-5v-turbo">GLM-5V Turbo</a><div class="muted">Zhipu AI · GLM-5V Turbo</div></td>
+      <td class="num">98.5</td>
+      <td class="num">98.5</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">0.8</td>
+      <td>Tau2-Bench Telecom 98.5</td>
+    </tr>
+<tr>
+      <td>5</td>
+      <td><a href="https://suprabench.com/#model/qwen-3-6-plus">Qwen 3.6 Plus</a><div class="muted">Alibaba · Qwen 3.6 Plus</div></td>
+      <td class="num">97.7</td>
+      <td class="num">97.7</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">0.8</td>
+      <td>Tau2-Bench Telecom 97.7</td>
+    </tr>
+<tr>
+      <td>6</td>
+      <td><a href="https://suprabench.com/#model/claude-4-5-opus-high-reasoning">Claude 4.5 Opus (high reasoning)</a><div class="muted">Anthropic · Claude 4.5 Opus</div></td>
+      <td class="num">76.8</td>
+      <td class="num">76.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 76.8</td>
+    </tr>
+<tr>
+      <td>7</td>
+      <td><a href="https://suprabench.com/#model/gemini-3-flash-high-reasoning">Gemini 3 Flash (high reasoning)</a><div class="muted">Google · Gemini 3 Flash</div></td>
+      <td class="num">75.8</td>
+      <td class="num">75.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 75.8</td>
+    </tr>
+<tr>
+      <td>8</td>
+      <td><a href="https://suprabench.com/#model/minimax-m2-5-high-reasoning">MiniMax M2.5 (high reasoning)</a><div class="muted">MiniMax · MiniMax M2.5</div></td>
+      <td class="num">75.8</td>
+      <td class="num">75.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 75.8</td>
+    </tr>
+<tr>
+      <td>9</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-high">GPT-5 (high)</a><div class="muted">OpenAI · GPT-5</div></td>
+      <td class="num">75.6</td>
+      <td class="num">75.6</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">7.8</td>
+      <td>AA Long Context Reasoning 75.6</td>
+    </tr>
+<tr>
+      <td>10</td>
+      <td><a href="https://suprabench.com/#model/gpt-6-3-codex-xhigh">GPT-6.3 Codex (xhigh)</a><div class="muted">OpenAI · GPT-6.3 Codex</div></td>
+      <td class="num">74.0</td>
+      <td class="num">74.0</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">7.8</td>
+      <td>AA Long Context Reasoning 74.0</td>
+    </tr>
+<tr>
+      <td>11</td>
+      <td><a href="https://suprabench.com/#model/kat-coder-pro-v1">KAT-Coder-Pro V1</a><div class="muted">Kuaishou · KAT-Coder-Pro</div></td>
+      <td class="num">74.0</td>
+      <td class="num">74.0</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">7.8</td>
+      <td>AA Long Context Reasoning 74.0</td>
+    </tr>
+<tr>
+      <td>12</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-2-codex">GPT-5-2 Codex</a><div class="muted">OpenAI · GPT-5-2 Codex</div></td>
+      <td class="num">72.8</td>
+      <td class="num">72.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>13</td>
+      <td><a href="https://suprabench.com/#model/glm-5-high-reasoning">GLM-5 (high reasoning)</a><div class="muted">Zhipu AI · GLM-5</div></td>
+      <td class="num">72.8</td>
+      <td class="num">72.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>14</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-2-high-reasoning">GPT-5-2 (high reasoning)</a><div class="muted">OpenAI · GPT-5-2</div></td>
+      <td class="num">72.8</td>
+      <td class="num">72.8</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>15</td>
+      <td><a href="https://suprabench.com/#model/claude-4-5-sonnet-high-reasoning">Claude 4.5 Sonnet (high reasoning)</a><div class="muted">Anthropic · Claude 4.5 Sonnet</div></td>
+      <td class="num">71.4</td>
+      <td class="num">71.4</td>
+      <td class="num">100%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 71.4</td>
+    </tr></tbody>
+    </table>
+  </section>
+<section class="card">
+    <h2>D. Soft Confidence SupraScore</h2>
+    <p>Same bench weights as production, but model coverage can only reduce the ability estimate by at most 20%. Coverage still matters, but it no longer dominates ability.</p>
+    <table>
+      <thead><tr><th>#</th><th>Model</th><th>Shown Score</th><th>Ability Mean</th><th>Confidence</th><th>Benches</th><th>Weight</th><th>Main scored benches</th></tr></thead>
+      <tbody><tr>
+      <td>1</td>
+      <td><a href="https://suprabench.com/#model/jt-35b-flash">JT-35B-Flash</a><div class="muted">China Mobile · JT-35B</div></td>
+      <td class="num">80.1</td>
+      <td class="num">99.1</td>
+      <td class="num">81%</td>
+      <td class="num">1</td>
+      <td class="num">0.8</td>
+      <td>Tau2-Bench Telecom 99.1</td>
+    </tr>
+<tr>
+      <td>2</td>
+      <td><a href="https://suprabench.com/#model/glm-4-7-flash">GLM-4.7 Flash</a><div class="muted">Zhipu AI · GLM-4.7 Flash</div></td>
+      <td class="num">79.9</td>
+      <td class="num">98.8</td>
+      <td class="num">81%</td>
+      <td class="num">1</td>
+      <td class="num">0.8</td>
+      <td>Tau2-Bench Telecom 98.8</td>
+    </tr>
+<tr>
+      <td>3</td>
+      <td><a href="https://suprabench.com/#model/glm-5-turbo">GLM-5 Turbo</a><div class="muted">Zhipu AI · GLM-5 Turbo</div></td>
+      <td class="num">79.6</td>
+      <td class="num">98.5</td>
+      <td class="num">81%</td>
+      <td class="num">1</td>
+      <td class="num">0.8</td>
+      <td>Tau2-Bench Telecom 98.5</td>
+    </tr>
+<tr>
+      <td>4</td>
+      <td><a href="https://suprabench.com/#model/glm-5v-turbo">GLM-5V Turbo</a><div class="muted">Zhipu AI · GLM-5V Turbo</div></td>
+      <td class="num">79.6</td>
+      <td class="num">98.5</td>
+      <td class="num">81%</td>
+      <td class="num">1</td>
+      <td class="num">0.8</td>
+      <td>Tau2-Bench Telecom 98.5</td>
+    </tr>
+<tr>
+      <td>5</td>
+      <td><a href="https://suprabench.com/#model/qwen-3-6-plus">Qwen 3.6 Plus</a><div class="muted">Alibaba · Qwen 3.6 Plus</div></td>
+      <td class="num">79.0</td>
+      <td class="num">97.7</td>
+      <td class="num">81%</td>
+      <td class="num">1</td>
+      <td class="num">0.8</td>
+      <td>Tau2-Bench Telecom 97.7</td>
+    </tr>
+<tr>
+      <td>6</td>
+      <td><a href="https://suprabench.com/#model/claude-4-5-opus-high-reasoning">Claude 4.5 Opus (high reasoning)</a><div class="muted">Anthropic · Claude 4.5 Opus</div></td>
+      <td class="num">63.7</td>
+      <td class="num">76.8</td>
+      <td class="num">83%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 76.8</td>
+    </tr>
+<tr>
+      <td>7</td>
+      <td><a href="https://suprabench.com/#model/gemini-3-flash-high-reasoning">Gemini 3 Flash (high reasoning)</a><div class="muted">Google · Gemini 3 Flash</div></td>
+      <td class="num">62.9</td>
+      <td class="num">75.8</td>
+      <td class="num">83%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 75.8</td>
+    </tr>
+<tr>
+      <td>8</td>
+      <td><a href="https://suprabench.com/#model/minimax-m2-5-high-reasoning">MiniMax M2.5 (high reasoning)</a><div class="muted">MiniMax · MiniMax M2.5</div></td>
+      <td class="num">62.9</td>
+      <td class="num">75.8</td>
+      <td class="num">83%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 75.8</td>
+    </tr>
+<tr>
+      <td>9</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-high">GPT-5 (high)</a><div class="muted">OpenAI · GPT-5</div></td>
+      <td class="num">62.5</td>
+      <td class="num">75.6</td>
+      <td class="num">83%</td>
+      <td class="num">1</td>
+      <td class="num">7.8</td>
+      <td>AA Long Context Reasoning 75.6</td>
+    </tr>
+<tr>
+      <td>10</td>
+      <td><a href="https://suprabench.com/#model/gpt-6-3-codex-xhigh">GPT-6.3 Codex (xhigh)</a><div class="muted">OpenAI · GPT-6.3 Codex</div></td>
+      <td class="num">61.2</td>
+      <td class="num">74.0</td>
+      <td class="num">83%</td>
+      <td class="num">1</td>
+      <td class="num">7.8</td>
+      <td>AA Long Context Reasoning 74.0</td>
+    </tr>
+<tr>
+      <td>11</td>
+      <td><a href="https://suprabench.com/#model/kat-coder-pro-v1">KAT-Coder-Pro V1</a><div class="muted">Kuaishou · KAT-Coder-Pro</div></td>
+      <td class="num">61.2</td>
+      <td class="num">74.0</td>
+      <td class="num">83%</td>
+      <td class="num">1</td>
+      <td class="num">7.8</td>
+      <td>AA Long Context Reasoning 74.0</td>
+    </tr>
+<tr>
+      <td>12</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-2-codex">GPT-5-2 Codex</a><div class="muted">OpenAI · GPT-5-2 Codex</div></td>
+      <td class="num">60.4</td>
+      <td class="num">72.8</td>
+      <td class="num">83%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>13</td>
+      <td><a href="https://suprabench.com/#model/glm-5-high-reasoning">GLM-5 (high reasoning)</a><div class="muted">Zhipu AI · GLM-5</div></td>
+      <td class="num">60.4</td>
+      <td class="num">72.8</td>
+      <td class="num">83%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>14</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-2-high-reasoning">GPT-5-2 (high reasoning)</a><div class="muted">OpenAI · GPT-5-2</div></td>
+      <td class="num">60.4</td>
+      <td class="num">72.8</td>
+      <td class="num">83%</td>
+      <td class="num">1</td>
+      <td class="num">9.9</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>15</td>
+      <td><a href="https://suprabench.com/#model/claude-fable-5-xhigh">Claude Fable 5 (xhigh)</a><div class="muted">Anthropic · Claude Fable 5</div></td>
+      <td class="num">60.1</td>
+      <td class="num">69.9</td>
+      <td class="num">86%</td>
+      <td class="num">1</td>
+      <td class="num">39.1</td>
+      <td>DeepSWE 69.9</td>
+    </tr></tbody>
+    </table>
+  </section>
+<section class="card">
+    <h2>E. Soft benchmark + soft model confidence</h2>
+    <p>Weakens both coverage dampers. New high-quality benchmarks and new models move up faster while still carrying a visible evidence penalty.</p>
+    <table>
+      <thead><tr><th>#</th><th>Model</th><th>Shown Score</th><th>Ability Mean</th><th>Confidence</th><th>Benches</th><th>Weight</th><th>Main scored benches</th></tr></thead>
+      <tbody><tr>
+      <td>1</td>
+      <td><a href="https://suprabench.com/#model/jt-35b-flash">JT-35B-Flash</a><div class="muted">China Mobile · JT-35B</div></td>
+      <td class="num">87.5</td>
+      <td class="num">99.1</td>
+      <td class="num">88%</td>
+      <td class="num">1</td>
+      <td class="num">1.3</td>
+      <td>Tau2-Bench Telecom 99.1</td>
+    </tr>
+<tr>
+      <td>2</td>
+      <td><a href="https://suprabench.com/#model/glm-4-7-flash">GLM-4.7 Flash</a><div class="muted">Zhipu AI · GLM-4.7 Flash</div></td>
+      <td class="num">87.2</td>
+      <td class="num">98.8</td>
+      <td class="num">88%</td>
+      <td class="num">1</td>
+      <td class="num">1.3</td>
+      <td>Tau2-Bench Telecom 98.8</td>
+    </tr>
+<tr>
+      <td>3</td>
+      <td><a href="https://suprabench.com/#model/glm-5-turbo">GLM-5 Turbo</a><div class="muted">Zhipu AI · GLM-5 Turbo</div></td>
+      <td class="num">87.0</td>
+      <td class="num">98.5</td>
+      <td class="num">88%</td>
+      <td class="num">1</td>
+      <td class="num">1.3</td>
+      <td>Tau2-Bench Telecom 98.5</td>
+    </tr>
+<tr>
+      <td>4</td>
+      <td><a href="https://suprabench.com/#model/glm-5v-turbo">GLM-5V Turbo</a><div class="muted">Zhipu AI · GLM-5V Turbo</div></td>
+      <td class="num">87.0</td>
+      <td class="num">98.5</td>
+      <td class="num">88%</td>
+      <td class="num">1</td>
+      <td class="num">1.3</td>
+      <td>Tau2-Bench Telecom 98.5</td>
+    </tr>
+<tr>
+      <td>5</td>
+      <td><a href="https://suprabench.com/#model/qwen-3-6-plus">Qwen 3.6 Plus</a><div class="muted">Alibaba · Qwen 3.6 Plus</div></td>
+      <td class="num">86.3</td>
+      <td class="num">97.7</td>
+      <td class="num">88%</td>
+      <td class="num">1</td>
+      <td class="num">1.3</td>
+      <td>Tau2-Bench Telecom 97.7</td>
+    </tr>
+<tr>
+      <td>6</td>
+      <td><a href="https://suprabench.com/#model/claude-4-5-opus-high-reasoning">Claude 4.5 Opus (high reasoning)</a><div class="muted">Anthropic · Claude 4.5 Opus</div></td>
+      <td class="num">69.9</td>
+      <td class="num">76.8</td>
+      <td class="num">91%</td>
+      <td class="num">1</td>
+      <td class="num">14.1</td>
+      <td>SWE-bench Verified 76.8</td>
+    </tr>
+<tr>
+      <td>7</td>
+      <td><a href="https://suprabench.com/#model/gemini-3-flash-high-reasoning">Gemini 3 Flash (high reasoning)</a><div class="muted">Google · Gemini 3 Flash</div></td>
+      <td class="num">69.0</td>
+      <td class="num">75.8</td>
+      <td class="num">91%</td>
+      <td class="num">1</td>
+      <td class="num">14.1</td>
+      <td>SWE-bench Verified 75.8</td>
+    </tr>
+<tr>
+      <td>8</td>
+      <td><a href="https://suprabench.com/#model/minimax-m2-5-high-reasoning">MiniMax M2.5 (high reasoning)</a><div class="muted">MiniMax · MiniMax M2.5</div></td>
+      <td class="num">69.0</td>
+      <td class="num">75.8</td>
+      <td class="num">91%</td>
+      <td class="num">1</td>
+      <td class="num">14.1</td>
+      <td>SWE-bench Verified 75.8</td>
+    </tr>
+<tr>
+      <td>9</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-high">GPT-5 (high)</a><div class="muted">OpenAI · GPT-5</div></td>
+      <td class="num">68.6</td>
+      <td class="num">75.6</td>
+      <td class="num">91%</td>
+      <td class="num">1</td>
+      <td class="num">11.4</td>
+      <td>AA Long Context Reasoning 75.6</td>
+    </tr>
+<tr>
+      <td>10</td>
+      <td><a href="https://suprabench.com/#model/gpt-6-3-codex-xhigh">GPT-6.3 Codex (xhigh)</a><div class="muted">OpenAI · GPT-6.3 Codex</div></td>
+      <td class="num">67.1</td>
+      <td class="num">74.0</td>
+      <td class="num">91%</td>
+      <td class="num">1</td>
+      <td class="num">11.4</td>
+      <td>AA Long Context Reasoning 74.0</td>
+    </tr>
+<tr>
+      <td>11</td>
+      <td><a href="https://suprabench.com/#model/kat-coder-pro-v1">KAT-Coder-Pro V1</a><div class="muted">Kuaishou · KAT-Coder-Pro</div></td>
+      <td class="num">67.1</td>
+      <td class="num">74.0</td>
+      <td class="num">91%</td>
+      <td class="num">1</td>
+      <td class="num">11.4</td>
+      <td>AA Long Context Reasoning 74.0</td>
+    </tr>
+<tr>
+      <td>12</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-2-codex">GPT-5-2 Codex</a><div class="muted">OpenAI · GPT-5-2 Codex</div></td>
+      <td class="num">66.3</td>
+      <td class="num">72.8</td>
+      <td class="num">91%</td>
+      <td class="num">1</td>
+      <td class="num">14.1</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>13</td>
+      <td><a href="https://suprabench.com/#model/glm-5-high-reasoning">GLM-5 (high reasoning)</a><div class="muted">Zhipu AI · GLM-5</div></td>
+      <td class="num">66.3</td>
+      <td class="num">72.8</td>
+      <td class="num">91%</td>
+      <td class="num">1</td>
+      <td class="num">14.1</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>14</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-2-high-reasoning">GPT-5-2 (high reasoning)</a><div class="muted">OpenAI · GPT-5-2</div></td>
+      <td class="num">66.3</td>
+      <td class="num">72.8</td>
+      <td class="num">91%</td>
+      <td class="num">1</td>
+      <td class="num">14.1</td>
+      <td>SWE-bench Verified 72.8</td>
+    </tr>
+<tr>
+      <td>15</td>
+      <td><a href="https://suprabench.com/#model/claude-fable-5-xhigh">Claude Fable 5 (xhigh)</a><div class="muted">Anthropic · Claude Fable 5</div></td>
+      <td class="num">65.3</td>
+      <td class="num">69.9</td>
+      <td class="num">93%</td>
+      <td class="num">1</td>
+      <td class="num">52.3</td>
+      <td>DeepSWE 69.9</td>
+    </tr></tbody>
+    </table>
+  </section>
+<section class="card">
+    <h2>F. AbilityScore with minimum evidence gate</h2>
+    <p>Ranks by measured ability, but only if a model has at least 3 contributing benchmarks. Sparse models get a score of 0 until enough evidence exists.</p>
+    <table>
+      <thead><tr><th>#</th><th>Model</th><th>Shown Score</th><th>Ability Mean</th><th>Confidence</th><th>Benches</th><th>Weight</th><th>Main scored benches</th></tr></thead>
+      <tbody><tr>
+      <td>1</td>
+      <td><a href="https://suprabench.com/#model/claude-fable-5-adaptive-max-fallback">Claude Fable 5 (adaptive max/fallback)</a><div class="muted">Anthropic · Claude Fable 5</div></td>
+      <td class="num">58.8</td>
+      <td class="num">58.8</td>
+      <td class="num">100%</td>
+      <td class="num">3</td>
+      <td class="num">237.5</td>
+      <td>Humanity's Last Exam 53.3; SciCode 60.2; Terminal-Bench Hard 62.9</td>
+    </tr>
+<tr>
+      <td>2</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5-high">GPT-5.5 (high)</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">57.9</td>
+      <td class="num">57.9</td>
+      <td class="num">100%</td>
+      <td class="num">6</td>
+      <td class="num">345.3</td>
+      <td>Humanity's Last Exam 43.0; SciCode 55.9; Terminal-Bench Hard 59.8; DeepSWE 64.4</td>
+    </tr>
+<tr>
+      <td>3</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5">GPT-5.5</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">56.9</td>
+      <td class="num">56.9</td>
+      <td class="num">100%</td>
+      <td class="num">9</td>
+      <td class="num">395.5</td>
+      <td>SWE-Bench Pro 53.4; Humanity's Last Exam 43.6; ARC-AGI-2 77.5; SpatialViz 74.2</td>
+    </tr>
+<tr>
+      <td>4</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5-xhigh">GPT-5.5 (xhigh)</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">54.7</td>
+      <td class="num">54.7</td>
+      <td class="num">100%</td>
+      <td class="num">7</td>
+      <td class="num">430.3</td>
+      <td>APEX-Agents-AA 37.7; Humanity's Last Exam 44.3; SciCode 56.1; Terminal-Bench Hard 60.6</td>
+    </tr>
+<tr>
+      <td>5</td>
+      <td><a href="https://suprabench.com/#model/claude-opus-4-8">Claude Opus 4.8</a><div class="muted">Anthropic · Claude Opus 4.8</div></td>
+      <td class="num">53.8</td>
+      <td class="num">53.8</td>
+      <td class="num">100%</td>
+      <td class="num">9</td>
+      <td class="num">395.5</td>
+      <td>SWE-Bench Pro 65.4; Humanity's Last Exam 42.2; ARC-AGI-2 67.5; SpatialViz 65.2</td>
+    </tr>
+<tr>
+      <td>6</td>
+      <td><a href="https://suprabench.com/#model/gemini-3-1-pro-preview">Gemini 3.1 Pro Preview</a><div class="muted">Google · Gemini 3.1</div></td>
+      <td class="num">53.4</td>
+      <td class="num">53.4</td>
+      <td class="num">100%</td>
+      <td class="num">15</td>
+      <td class="num">677.8</td>
+      <td>SWE-Bench Pro 46.7; APEX-Agents-AA 32.0; Humanity's Last Exam 45.3; SciCode 58.9</td>
+    </tr>
+<tr>
+      <td>7</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5-medium">GPT-5.5 (medium)</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">53.2</td>
+      <td class="num">53.2</td>
+      <td class="num">100%</td>
+      <td class="num">5</td>
+      <td class="num">328.6</td>
+      <td>Humanity's Last Exam 40.6; SciCode 53.5; Terminal-Bench Hard 57.6; DeepSWE 54.0</td>
+    </tr>
+<tr>
+      <td>8</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-4">GPT-5.4</a><div class="muted">OpenAI · GPT-5.4</div></td>
+      <td class="num">51.5</td>
+      <td class="num">51.5</td>
+      <td class="num">100%</td>
+      <td class="num">9</td>
+      <td class="num">395.5</td>
+      <td>SWE-Bench Pro 49.7; Humanity's Last Exam 40.3; ARC-AGI-2 65.0; SpatialViz 69.3</td>
+    </tr>
+<tr>
+      <td>9</td>
+      <td><a href="https://suprabench.com/#model/gemini-3-pro-preview-high">Gemini 3 Pro Preview (high)</a><div class="muted">Google · Gemini 3 Pro</div></td>
+      <td class="num">50.5</td>
+      <td class="num">50.5</td>
+      <td class="num">100%</td>
+      <td class="num">3</td>
+      <td class="num">180.4</td>
+      <td>Humanity's Last Exam 37.2; SciCode 56.1; MMMU-Pro 80.0</td>
+    </tr>
+<tr>
+      <td>10</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-4-xhigh">GPT-5.4 (xhigh)</a><div class="muted">OpenAI · GPT-5.4</div></td>
+      <td class="num">50.3</td>
+      <td class="num">50.3</td>
+      <td class="num">100%</td>
+      <td class="num">7</td>
+      <td class="num">430.3</td>
+      <td>APEX-Agents-AA 33.3; Humanity's Last Exam 41.6; SciCode 56.6; Terminal-Bench Hard 57.6</td>
+    </tr>
+<tr>
+      <td>11</td>
+      <td><a href="https://suprabench.com/#model/claude-opus-4-7-max">Claude Opus 4.7 (max)</a><div class="muted">Anthropic · Claude Opus 4.7</div></td>
+      <td class="num">49.9</td>
+      <td class="num">49.9</td>
+      <td class="num">100%</td>
+      <td class="num">4</td>
+      <td class="num">254.2</td>
+      <td>Humanity's Last Exam 39.6; SciCode 54.5; Terminal-Bench Hard 51.5; AA Long Context Reasoning 70.3</td>
+    </tr>
+<tr>
+      <td>12</td>
+      <td><a href="https://suprabench.com/#model/muse-spark">Muse Spark</a><div class="muted">Meta · Muse Spark</div></td>
+      <td class="num">49.8</td>
+      <td class="num">49.8</td>
+      <td class="num">100%</td>
+      <td class="num">3</td>
+      <td class="num">180.4</td>
+      <td>Humanity's Last Exam 39.9; SciCode 51.5; MMMU-Pro 81.0</td>
+    </tr>
+<tr>
+      <td>13</td>
+      <td><a href="https://suprabench.com/#model/claude-opus-4-7">Claude Opus 4.7</a><div class="muted">Anthropic · Claude Opus 4.7</div></td>
+      <td class="num">49.0</td>
+      <td class="num">49.0</td>
+      <td class="num">100%</td>
+      <td class="num">9</td>
+      <td class="num">395.5</td>
+      <td>SWE-Bench Pro 60.9; Humanity's Last Exam 39.0; ARC-AGI-2 50.8; SpatialViz 62.6</td>
+    </tr>
+<tr>
+      <td>14</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-3-codex-xhigh">GPT-5.3 Codex (xhigh)</a><div class="muted">OpenAI · GPT-5.3 Codex</div></td>
+      <td class="num">48.7</td>
+      <td class="num">48.7</td>
+      <td class="num">100%</td>
+      <td class="num">3</td>
+      <td class="num">237.5</td>
+      <td>Humanity's Last Exam 39.9; SciCode 53.2; Terminal-Bench Hard 53.0</td>
+    </tr>
+<tr>
+      <td>15</td>
+      <td><a href="https://suprabench.com/#model/claude-opus-4-6">Claude Opus 4.6</a><div class="muted">Anthropic · Claude Opus 4.6</div></td>
+      <td class="num">46.5</td>
+      <td class="num">46.5</td>
+      <td class="num">100%</td>
+      <td class="num">10</td>
+      <td class="num">415.4</td>
+      <td>SWE-Bench Pro 56.7; Humanity's Last Exam 34.2; ARC-AGI-2 44.3; SpatialViz 55.7</td>
+    </tr></tbody>
+    </table>
+  </section>
+<section class="card">
+    <h2>G. AbilityScore with minimum evidence-weight gate</h2>
+    <p>Ranks by measured ability, but only if the model has accumulated at least 140 points of intrinsic benchmark weight. This is less arbitrary than a raw bench-count gate.</p>
+    <table>
+      <thead><tr><th>#</th><th>Model</th><th>Shown Score</th><th>Ability Mean</th><th>Confidence</th><th>Benches</th><th>Weight</th><th>Main scored benches</th></tr></thead>
+      <tbody><tr>
+      <td>1</td>
+      <td><a href="https://suprabench.com/#model/claude-fable-5-adaptive-max-fallback">Claude Fable 5 (adaptive max/fallback)</a><div class="muted">Anthropic · Claude Fable 5</div></td>
+      <td class="num">58.8</td>
+      <td class="num">58.8</td>
+      <td class="num">100%</td>
+      <td class="num">3</td>
+      <td class="num">237.5</td>
+      <td>Humanity's Last Exam 53.3; SciCode 60.2; Terminal-Bench Hard 62.9</td>
+    </tr>
+<tr>
+      <td>2</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5-high">GPT-5.5 (high)</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">57.9</td>
+      <td class="num">57.9</td>
+      <td class="num">100%</td>
+      <td class="num">6</td>
+      <td class="num">345.3</td>
+      <td>Humanity's Last Exam 43.0; SciCode 55.9; Terminal-Bench Hard 59.8; DeepSWE 64.4</td>
+    </tr>
+<tr>
+      <td>3</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5">GPT-5.5</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">56.9</td>
+      <td class="num">56.9</td>
+      <td class="num">100%</td>
+      <td class="num">9</td>
+      <td class="num">395.5</td>
+      <td>SWE-Bench Pro 53.4; Humanity's Last Exam 43.6; ARC-AGI-2 77.5; SpatialViz 74.2</td>
+    </tr>
+<tr>
+      <td>4</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5-xhigh">GPT-5.5 (xhigh)</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">54.7</td>
+      <td class="num">54.7</td>
+      <td class="num">100%</td>
+      <td class="num">7</td>
+      <td class="num">430.3</td>
+      <td>APEX-Agents-AA 37.7; Humanity's Last Exam 44.3; SciCode 56.1; Terminal-Bench Hard 60.6</td>
+    </tr>
+<tr>
+      <td>5</td>
+      <td><a href="https://suprabench.com/#model/claude-opus-4-8">Claude Opus 4.8</a><div class="muted">Anthropic · Claude Opus 4.8</div></td>
+      <td class="num">53.8</td>
+      <td class="num">53.8</td>
+      <td class="num">100%</td>
+      <td class="num">9</td>
+      <td class="num">395.5</td>
+      <td>SWE-Bench Pro 65.4; Humanity's Last Exam 42.2; ARC-AGI-2 67.5; SpatialViz 65.2</td>
+    </tr>
+<tr>
+      <td>6</td>
+      <td><a href="https://suprabench.com/#model/gemini-3-1-pro-preview">Gemini 3.1 Pro Preview</a><div class="muted">Google · Gemini 3.1</div></td>
+      <td class="num">53.4</td>
+      <td class="num">53.4</td>
+      <td class="num">100%</td>
+      <td class="num">15</td>
+      <td class="num">677.8</td>
+      <td>SWE-Bench Pro 46.7; APEX-Agents-AA 32.0; Humanity's Last Exam 45.3; SciCode 58.9</td>
+    </tr>
+<tr>
+      <td>7</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-5-medium">GPT-5.5 (medium)</a><div class="muted">OpenAI · GPT-5.5</div></td>
+      <td class="num">53.2</td>
+      <td class="num">53.2</td>
+      <td class="num">100%</td>
+      <td class="num">5</td>
+      <td class="num">328.6</td>
+      <td>Humanity's Last Exam 40.6; SciCode 53.5; Terminal-Bench Hard 57.6; DeepSWE 54.0</td>
+    </tr>
+<tr>
+      <td>8</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-4">GPT-5.4</a><div class="muted">OpenAI · GPT-5.4</div></td>
+      <td class="num">51.5</td>
+      <td class="num">51.5</td>
+      <td class="num">100%</td>
+      <td class="num">9</td>
+      <td class="num">395.5</td>
+      <td>SWE-Bench Pro 49.7; Humanity's Last Exam 40.3; ARC-AGI-2 65.0; SpatialViz 69.3</td>
+    </tr>
+<tr>
+      <td>9</td>
+      <td><a href="https://suprabench.com/#model/gemini-3-pro-preview-high">Gemini 3 Pro Preview (high)</a><div class="muted">Google · Gemini 3 Pro</div></td>
+      <td class="num">50.5</td>
+      <td class="num">50.5</td>
+      <td class="num">100%</td>
+      <td class="num">3</td>
+      <td class="num">180.4</td>
+      <td>Humanity's Last Exam 37.2; SciCode 56.1; MMMU-Pro 80.0</td>
+    </tr>
+<tr>
+      <td>10</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-4-xhigh">GPT-5.4 (xhigh)</a><div class="muted">OpenAI · GPT-5.4</div></td>
+      <td class="num">50.3</td>
+      <td class="num">50.3</td>
+      <td class="num">100%</td>
+      <td class="num">7</td>
+      <td class="num">430.3</td>
+      <td>APEX-Agents-AA 33.3; Humanity's Last Exam 41.6; SciCode 56.6; Terminal-Bench Hard 57.6</td>
+    </tr>
+<tr>
+      <td>11</td>
+      <td><a href="https://suprabench.com/#model/claude-opus-4-7-max">Claude Opus 4.7 (max)</a><div class="muted">Anthropic · Claude Opus 4.7</div></td>
+      <td class="num">49.9</td>
+      <td class="num">49.9</td>
+      <td class="num">100%</td>
+      <td class="num">4</td>
+      <td class="num">254.2</td>
+      <td>Humanity's Last Exam 39.6; SciCode 54.5; Terminal-Bench Hard 51.5; AA Long Context Reasoning 70.3</td>
+    </tr>
+<tr>
+      <td>12</td>
+      <td><a href="https://suprabench.com/#model/muse-spark">Muse Spark</a><div class="muted">Meta · Muse Spark</div></td>
+      <td class="num">49.8</td>
+      <td class="num">49.8</td>
+      <td class="num">100%</td>
+      <td class="num">3</td>
+      <td class="num">180.4</td>
+      <td>Humanity's Last Exam 39.9; SciCode 51.5; MMMU-Pro 81.0</td>
+    </tr>
+<tr>
+      <td>13</td>
+      <td><a href="https://suprabench.com/#model/claude-opus-4-7">Claude Opus 4.7</a><div class="muted">Anthropic · Claude Opus 4.7</div></td>
+      <td class="num">49.0</td>
+      <td class="num">49.0</td>
+      <td class="num">100%</td>
+      <td class="num">9</td>
+      <td class="num">395.5</td>
+      <td>SWE-Bench Pro 60.9; Humanity's Last Exam 39.0; ARC-AGI-2 50.8; SpatialViz 62.6</td>
+    </tr>
+<tr>
+      <td>14</td>
+      <td><a href="https://suprabench.com/#model/gpt-5-3-codex-xhigh">GPT-5.3 Codex (xhigh)</a><div class="muted">OpenAI · GPT-5.3 Codex</div></td>
+      <td class="num">48.7</td>
+      <td class="num">48.7</td>
+      <td class="num">100%</td>
+      <td class="num">3</td>
+      <td class="num">237.5</td>
+      <td>Humanity's Last Exam 39.9; SciCode 53.2; Terminal-Bench Hard 53.0</td>
+    </tr>
+<tr>
+      <td>15</td>
+      <td><a href="https://suprabench.com/#model/claude-opus-4-6">Claude Opus 4.6</a><div class="muted">Anthropic · Claude Opus 4.6</div></td>
+      <td class="num">46.5</td>
+      <td class="num">46.5</td>
+      <td class="num">100%</td>
+      <td class="num">10</td>
+      <td class="num">415.4</td>
+      <td>SWE-Bench Pro 56.7; Humanity's Last Exam 34.2; ARC-AGI-2 44.3; SpatialViz 55.7</td>
+    </tr></tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>DeepSWE vs SWE-Bench Pro</h2>
+    <p>DeepSWE is not below old SWE-bench Verified. It is below <strong>SWE-Bench Pro</strong> in the current Bench Weight ranking because both have the same manual ratings, but SWE-Bench Pro has more model coverage and more headroom.</p>
+    <h3>Current benchmark damping</h3>
+    <table>
+      <thead><tr><th>Bench</th><th>Quality</th><th>Raw QDH</th><th>Displayed Weight</th><th>Headroom</th><th>Frontier Mean</th><th>Models</th></tr></thead>
+      <tbody><tr>
+    <td><a href="https://suprabench.com/#bench/swe-bench-pro">SWE-Bench Pro</a></td>
+    <td class="num">95</td>
+    <td class="num">87.8</td>
+    <td class="num">67.7</td>
+    <td class="num">0.92</td>
+    <td class="num">53.8</td>
+    <td class="num">38/64</td>
+  </tr>
+<tr>
+    <td><a href="https://suprabench.com/#bench/deepswe">DeepSWE</a></td>
+    <td class="num">95</td>
+    <td class="num">69.9</td>
+    <td class="num">39.1</td>
+    <td class="num">0.74</td>
+    <td class="num">63.2</td>
+    <td class="num">20/64</td>
+  </tr>
+<tr>
+    <td><a href="https://suprabench.com/#bench/swe-bench-verified">SWE-bench Verified</a></td>
+    <td class="num">75</td>
+    <td class="num">19.9</td>
+    <td class="num">9.9</td>
+    <td class="num">0.53</td>
+    <td class="num">73.5</td>
+    <td class="num">16/64</td>
+  </tr></tbody>
+    </table>
+    <h3>With softened benchmark coverage damping</h3>
+    <table>
+      <thead><tr><th>Bench</th><th>Quality</th><th>Raw QDH</th><th>Displayed Weight</th><th>Headroom</th><th>Frontier Mean</th><th>Models</th></tr></thead>
+      <tbody><tr>
+    <td><a href="https://suprabench.com/#bench/swe-bench-pro">SWE-Bench Pro</a></td>
+    <td class="num">95</td>
+    <td class="num">87.8</td>
+    <td class="num">77.1</td>
+    <td class="num">0.92</td>
+    <td class="num">53.8</td>
+    <td class="num">38/64</td>
+  </tr>
+<tr>
+    <td><a href="https://suprabench.com/#bench/deepswe">DeepSWE</a></td>
+    <td class="num">95</td>
+    <td class="num">69.9</td>
+    <td class="num">52.3</td>
+    <td class="num">0.74</td>
+    <td class="num">63.2</td>
+    <td class="num">20/64</td>
+  </tr>
+<tr>
+    <td><a href="https://suprabench.com/#bench/swe-bench-verified">SWE-bench Verified</a></td>
+    <td class="num">75</td>
+    <td class="num">19.9</td>
+    <td class="num">14.1</td>
+    <td class="num">0.53</td>
+    <td class="num">73.5</td>
+    <td class="num">16/64</td>
+  </tr></tbody>
+    </table>
+    <p>My take: DeepSWE should be visibly promoted as a high-quality modern coding-agent benchmark, but forcing it above SWE-Bench Pro in the weight formula is not obviously correct from the current data. It has fewer models and its frontier is already higher. The bigger bug is the label: this table is a <em>weight/contribution</em> ranking, not a pure "quality" ranking.</p>
+  </section>
+
+  <section class="card">
+    <h2>Implementation Options</h2>
+    <table>
+      <thead><tr><th>Option</th><th>Change</th><th>Upside</th><th>Risk</th><th>My recommendation</th></tr></thead>
+      <tbody>
+        <tr><td>Keep current</td><td>No formula change</td><td>Defensive against sparse rows</td><td>Headline score contradicts intuition about ability; new frontier models rank too low</td><td class="bad">No, unless renamed to ConfidenceScore</td></tr>
+        <tr><td>Split Ability + Evidence</td><td>Rank by ability mean after an evidence gate; display evidence separately</td><td>Most honest semantics; Fable can surface while evidence remains transparent</td><td>Requires UI/schema/API updates</td><td class="good">Best</td></tr>
+        <tr><td>Soft final multiplier</td><td>Replace <code>sqrt(W/W*)</code> with a floored multiplier</td><td>Small code change</td><td>Still lets one-benchmark saturated rows dominate unless the floor is very low</td><td class="bad">Not enough by itself</td></tr>
+        <tr><td>Minimum evidence gate</td><td>Rank by ability only after 3 benches or intrinsic weight ≥ 140</td><td>Produces the intuitive frontier order while avoiding one-bench #1 rows</td><td>Threshold needs to be shown clearly as "provisional"</td><td class="good">Best launch patch</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>
