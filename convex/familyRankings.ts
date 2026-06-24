@@ -16,10 +16,11 @@
 //     family should I use?" actually wants — median tracks that.
 //
 // Then the family's supraScore is the bench-weighted mean of those
-// family medians, scaled by √(family_totalWeight / max_family_totalWeight)
-// exactly like the per-model SupraScore. Coverage-share is computed
-// within the family scale (max over all families, not over all models)
-// so the leaderboard's top family always has share=1.
+// family medians, adjusted by evidence confidence around the neutral
+// 50-point midpoint exactly like the per-model SupraScore. Evidence
+// share is computed within the family scale (max over all families,
+// not over all models) so the leaderboard's top-evidence family has
+// share=1.
 //
 // ── What counts as a family ─────────────────────────────────
 // Models with `familyTag === undefined` or empty string are NOT
@@ -53,8 +54,8 @@ import { v } from "convex/values";
 import { recomputeAllUnifiedImpl } from "./rankings";
 
 // Recompute a single family (identified by familyTag, optionally
-// scoped to a provider). Because the coverage-share factor compares
-// this family's totalWeight against the max over ALL families, a
+// scoped to a provider). Because the evidence-confidence factor compares
+// this family's evidence weight against the max over ALL families, a
 // "single family" update is never actually local — we always
 // full-rebuild. Args are accepted for backwards compatibility with
 // the entity-vote cascade in entityVotes.ts and ignored.

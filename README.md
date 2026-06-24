@@ -43,22 +43,29 @@ For a model $m$, with valid normalised per-bench medians $\mu_{m,b}$ over its
 evaluated benches $\mathcal{B}_m$:
 
 ```
-BenchScore(b)   = Q(b) · D(b) · H(b) · √(u(b)/U*) · √(N(b)/N*)
-                                  ↑              ↑              ↑
-                          quality·diff·headroom  upvote-share   model-count-share
-                                              U* = max u over non-hidden benches
-                                              N* = max N over non-hidden benches
-weightedMean(m) = Σ_b μ(m,b) · BenchScore(b)  /  W(m)
-W(m)            = Σ_b BenchScore(b)                   ← accumulated coverage
-SupraScore(m)   = weightedMean(m) · √(W(m) / W*)      ← W* = max over non-hidden models
-                                              ∈ [0, 100]
+BenchScore(b)   = Q(b) · D(b) · H(b) · (u(b)/U*)        ← ability weight A(b)
+                          ↑              ↑
+                  quality·diff·headroom  net-upvote share (linear)
+                                         U* = max u over non-hidden benches
+evidence(b)     = A(b) · √(N(b)/N*)                     ← E(b), confidence only
+                                         N* = max N over non-hidden benches
+weightedMean(m) = Σ_b μ(m,b) · A(b)  /  Σ_b A(b)        ← ability mean μ_m
+E(m)            = Σ_b E(b)                              ← accumulated evidence
+SupraScore(m)   = 50 + √(E(m) / E*) · (μ_m − 50)        ← E* = max over non-hidden models
+                                                          ∈ [0, 100]
 ```
 
-- **Bench Score** $\operatorname{BenchScore}(b) \in [0,100]$ — the bench's
-  contribution to a model's SupraScore, and the headline number shown for
-  each bench in the UI. Multiplicative product of the five factors below;
-  the natural range is $[0,100]$ because difficulty, headroom, and both
-  coverage-share factors are all on $[0,1]$.
+The math splits into two semantically distinct halves. **Ability** decides
+*how good* a model looks — community endorsement (upvote-share) sets how much
+a bench counts. **Evidence** decides *how confident* we are — broad model
+coverage only changes how far the estimate is shrunk toward the neutral
+midpoint. Users still see a single SupraScore; the split is internal.
+
+- **Bench Score** $\operatorname{BenchScore}(b) = A(b) \in [0,100]$ — the
+  bench's *ability weight*, the headline number shown for each bench in the
+  UI, and the multiplier applied to a model's normalised score on $b$.
+  Product of the four factors below; the natural range is $[0,100]$ because
+  difficulty, headroom, and the upvote-share are all on $[0,1]$.
 - **Quality** $Q(b) \in [0,100]$ — mean of community ratings on relevance,
   contamination resistance, discriminability, reproducibility, then ×20.
 - **Difficulty** $D(b) \in [0,1]$ — median rater difficulty, scaled
@@ -66,34 +73,38 @@ SupraScore(m)   = weightedMean(m) · √(W(m) / W*)      ← W* = max over non-h
 - **Headroom** $H(b) \in [0.1,1]$ — automatic saturation penalty: shrinks as
   the top-K models converge on 100 %, with a floor at 0.1 so historic benches
   never disappear.
-- **Upvote-coverage share** $\sqrt{u(b)/U^\star}$ — every bench has a net
-  entityVote count $u(b) = \max(0, \text{ups} - \text{downs})$, and $U^\star$
-  is the maximum across non-hidden benches. The same $\sqrt{\cdot}$ shrinkage
-  used on the model side is applied here so a one-account vanity bench can't
-  appear at #1 on the bench leaderboard with a self-rated $Q\!=\!100$. The
-  most-upvoted bench has share $=1$ (no self-penalty); $U^\star = 0$ disables
-  the factor on a fresh deployment.
-- **Model-count-coverage share** $\sqrt{N(b)/N^\star}$ — $N(b)$ is the number
+- **Net-upvote share** $u(b)/U^\star$ — every bench has a net entityVote
+  count $u(b) = \max(0, \text{ups} - \text{downs})$, and $U^\star$ is the
+  maximum across non-hidden benches. This is the **user-trust** signal and it
+  is **linear on purpose**: a bench the community strongly endorses must be
+  able to out-weigh a broader but less-trusted bench, and a one-account
+  vanity bench at a self-rated $Q\!=\!100$ is worth only $1/U^\star$ of an
+  established peer. The most-upvoted bench has share $=1$ (no self-penalty);
+  $U^\star = 0$ disables the factor on a fresh deployment.
+- **Model-count evidence share** $\sqrt{N(b)/N^\star}$ — $N(b)$ is the number
   of distinct (non-hidden) models with a net-positive submission on $b$, and
-  $N^\star$ is the maximum across non-hidden benches. Encodes "how widely is
-  this bench used to rank models?" — a bench tested by 1 model gives almost
-  no comparative information; one tested by 30 models gives strong signal.
-  Defends "spawn a community bench and test only your own model on it"
-  cleanly: such a bench has $N(b)=1$ and so contributes $\sqrt{1/N^\star}$
-  of the weight an established bench at the same Q·D·H would. Modality
-  asymmetry (image benches naturally cover fewer models than text benches)
-  is intentional — those benches genuinely tell us less about the broader
-  model population. Most-tested bench has share $=1$; $N^\star = 0$ disables
-  the factor on a fresh deployment.
+  $N^\star$ is the maximum across non-hidden benches. This feeds **evidence
+  confidence only** — it no longer reduces the bench's ability weight, so a
+  high-trust specialist bench is not buried just because fewer models have
+  been run on it yet. It still encodes "how much comparative information do we
+  have?": a bench tested by 1 model contributes $\sqrt{1/N^\star}$ of the
+  evidence an established bench would. Most-tested bench has share $=1$;
+  $N^\star = 0$ disables the factor on a fresh deployment.
 - **Per-(model, bench) score** $\mu_{m,b}$ — median of all valid (net-positive
   vote) normalised submissions, robust to a single outlier.
-- **Model coverage share** $W(m)/W^\star$ — the fraction of the best-covered
-  model's accumulated Bench-Score weight that $m$ has been evaluated against.
-  The $\sqrt{\cdot}$ shape mirrors the $1/\sqrt{N}$ standard-error falloff of
-  a sample mean — halving coverage shrinks the score by $\sqrt{2}$, not by 2.
-  Zero hyperparameters: $W^\star$ comes from the DB, not a prior. The
-  best-covered model has share $=1$ and no self-penalty. Hidden models are
-  excluded from $W^\star$.
+- **Ability mean** $\mu_m$ — the model's per-bench scores averaged by ability
+  weight $A(b)$, i.e. $\sum_b \mu_{m,b} A(b) / \sum_b A(b)$.
+- **Evidence confidence** $\sqrt{E(m)/E^\star}$ — the model's accumulated
+  evidence weight $E(m) = \sum_b E(b)$, normalised by the best-covered model's
+  $E^\star$. Instead of multiplying the score toward zero, it **shrinks the
+  ability mean toward the neutral midpoint of 50**: a sparse model is treated
+  as *uncertain*, not *bad*, so "not tested on weak benches" is not negative
+  evidence. The $\sqrt{\cdot}$ shape mirrors the $1/\sqrt{N}$ standard-error
+  falloff — halving evidence shrinks the distance from 50 by $\sqrt{2}$, not
+  by 2. Zero hyperparameters: $E^\star$ and the midpoint $50$ both come
+  straight from the data and the normalised $[0,100]$ scale. The best-covered
+  model has confidence $=1$ and no self-penalty; hidden models are excluded
+  from $E^\star$.
 
 Worked example, full math, and trajectory tables: [About page on the live site](https://suprabench.com/#about).
 
@@ -244,28 +255,28 @@ suprabench/
   becomes robust to outliers as soon as $n \ge 2$ submissions exist; a
   single attacker submission is replaced by the community median the
   moment a second honest submission lands
-- **One bench can't carry a model** — SupraScore averages across all benches
-  weighted by trust × difficulty × headroom, then shrinks the result by the
-  coverage-share factor $\sqrt{W(m)/W^\star}$. A model with only 1 bench loses
-  roughly $\sqrt{1/N^\star}$ of its score versus the best-covered rival;
-  bench-maxing via a single vanity bench is mathematically impossible.
-- **One user can't carry a bench** — every Bench Score is also multiplied by
-  $\sqrt{u(b)/U^\star}$ where $u(b)$ is the bench's net entityVote count and
-  $U^\star$ is the leader's. A self-rated 100/100 vanity bench from a single
-  account is worth $\sqrt{1/U^\star}$ of an established bench at the same
-  Q·D·H — you'd need $U^\star$ separate accounts upvoting your bench just to
-  tie. Same defence applies to the bench leaderboard ordering and to the
-  bench's contribution to any model's SupraScore, so spawning a custom
+- **One bench can't carry a model** — SupraScore is the ability mean across
+  all benches (weighted by trust × difficulty × headroom × upvote-share),
+  then shrunk toward the neutral midpoint of 50 by the evidence-confidence
+  factor $\sqrt{E(m)/E^\star}$. A model with only 1 bench has little evidence,
+  so its estimate is pulled hard toward 50 instead of keeping its lone peak;
+  bench-maxing via a single vanity bench is mathematically defused.
+- **One user can't carry a bench** — every Bench Score is multiplied by the
+  **linear** upvote-share $u(b)/U^\star$ where $u(b)$ is the bench's net
+  entityVote count and $U^\star$ is the leader's. A self-rated 100/100 vanity
+  bench from a single account is worth $1/U^\star$ of an established bench at
+  the same Q·D·H — you'd need $U^\star$ separate accounts upvoting your bench
+  just to tie. The same factor applies to the bench leaderboard ordering and
+  to the bench's contribution to any model's SupraScore, so spawning a custom
   bench to pump one model is also blocked.
-- **Single-model vanity benches don't count** — every Bench Score is
-  *additionally* multiplied by $\sqrt{N(b)/N^\star}$ where $N(b)$ is the
-  number of distinct models scored on the bench. A "community bench" used
-  to test only the attacker's own model has $N(b)=1$ and thus contributes
-  $\sqrt{1/N^\star}$ of the weight a well-used bench would. Combined with
-  the upvote-share, a 1-rater + 1-model vanity bench is worth
-  $\sqrt{1/(U^\star \!\cdot\! N^\star)}$ of an established peer — for an
-  ecosystem with $U^\star = N^\star = 10$, that's $\approx 10\,\%$ of an
-  established bench's weight.
+- **Single-model vanity benches don't count for confidence** — the bench's
+  evidence weight is *additionally* multiplied by $\sqrt{N(b)/N^\star}$ where
+  $N(b)$ is the number of distinct models scored on the bench. A "community
+  bench" used to test only the attacker's own model has $N(b)=1$ and thus
+  contributes $\sqrt{1/N^\star}$ of the evidence a well-used bench would. So a
+  model standing only on a 1-rater + 1-model vanity bench earns both a tiny
+  ability weight ($1/U^\star$) *and* near-zero evidence, leaving its
+  SupraScore parked close to the neutral 50.
 - **Verifiable robustness** — every defensive claim above is encoded
   as an executable test in
   [`tests/convex/adversarial-robustness.test.ts`](tests/convex/adversarial-robustness.test.ts);
@@ -289,7 +300,7 @@ suprabench/
 Every claim in [Anti-Gaming Rules](#anti-gaming-rules) is encoded as an
 executable test in
 [`tests/convex/adversarial-robustness.test.ts`](tests/convex/adversarial-robustness.test.ts).
-The whole suite runs in **~1.7 s on CI** (103 tests across 9 files,
+The whole suite runs in **~1.7 s on CI** (104 tests across 9 files,
 14 of them adversarial). When the math regresses, a named test fails with a
 descriptive message — instead of someone discovering the regression
 on the production leaderboard.
@@ -322,11 +333,11 @@ exact invariant id + the data that violates it is reported.
 | --- | -------------------------------------------------------------------------------- |
 | I1  | Every SupraScore is a finite number in $[0, 100]$                                |
 | I2  | Every BenchScore (`effectiveWeight`) is finite in $[0, 100]$                     |
-| I3  | The bench at the maximum on **both** axes ($u_b\!=\!U^\star$ and $N_b\!=\!N^\star$) has `effectiveWeight == rawWeight` (no self-penalty) |
+| I3  | The bench at the maximum upvote axis ($u_b\!=\!U^\star$) has `effectiveWeight == rawWeight` (no self-penalty; model count is evidence-only) |
 | I4  | Rankings table is sorted by `supraScore` (no row outranks the leader)            |
 | I5  | Hidden benches do not appear in the public `listRanked` payload                  |
-| I6  | Every model with at least one bench has `supraScore > 0`                         |
-| I7  | Every BenchScore equals `rawWeight × √((u/U*)·(N/N*))` exactly (formula sanity)  |
+| I6  | Every model with at least one bench has `supraScore > 0` (unless its ability mean is genuinely 0) |
+| I7  | Every BenchScore equals `rawWeight × (u/U*)` exactly — the linear upvote-share (formula sanity) |
 
 ### Layer 2 — Attack catalog
 
@@ -338,33 +349,38 @@ counts as two regressions, not one.
 
 | ID          | Scenario                                                                           | Status                |
 | ----------- | ---------------------------------------------------------------------------------- | --------------------- |
-| A1          | Self-rated vanity bench tries to claim **#1 on the bench leaderboard** (1 upvote, single account, $Q\!=\!100$)         | Defended by upvote √-share |
-| A2          | Vanity bench used to vault attacker's model into top SupraScore (single self-scored bench)                              | Defended by both √-shares |
+| A1          | Self-rated vanity bench tries to claim **#1 on the bench leaderboard** (1 upvote, single account, $Q\!=\!100$)         | Defended by linear upvote-share |
+| A2          | Vanity bench used to vault attacker's model into top SupraScore (single self-scored bench)                              | Defended by upvote-share + evidence confidence |
 | A3          | **3-bench vanity stack** — 3 self-rated benches, all testing only the attacker's model, vs frontier-class legit ecosystem | Defended by combined math |
-| A3-extreme  | **8-bench industrial vanity farm** — same shape, scaled up                          | **DOCUMENTED LIMITATION** — pure math overwhelmed; blocked operationally by rate-limit, community downvotes, anti-resurrection, moderation |
+| A3-extreme  | **8-bench industrial vanity farm** — same shape, scaled up                          | Defended by the linear upvote-share; operational defenses (rate-limit, downvotes, anti-resurrection, moderation) back it up |
 | A4          | Sockpuppet upvote attack — 3 fake accounts upvoting a vanity bench against an ecosystem with 8 legit voters per bench    | Defended (sockpuppet count $\ll U^\star$) |
-| A5          | Single-bench peak attack — model with one $\mu\!=\!100$ vs a model with three $\mu\!=\!80$                              | Defended by model-side $\sqrt{W_m/W^\star}$ |
+| A5          | Single-bench peak attack — model with one $\mu\!=\!100$ vs a model with three $\mu\!=\!80$                              | Defended by evidence confidence $\sqrt{E_m/E^\star}$ |
 | A6          | Hidden vanity bench tries to leak its high `cachedNetUpvotes` into $U^\star$ / $N^\star$                                  | Defended (hidden benches excluded from maxima) |
 
-`A3-extreme` deserves a closer look: the test **asserts the
-limitation exists** (i.e. the attacker *does* outscore the top legit
-model). If the math is ever strengthened enough to defeat 8-bench
-vanity farms, this test fails with a message asking the next engineer
-to either delete the case or raise its bench-count threshold and
-re-document the new bound. We chose not to over-engineer the math
-here because the same attack would require:
+`A3-extreme` used to be a **documented limitation** — under the old
+$\sqrt{u/U^\star}$ upvote-share, the pure math was overwhelmed once an
+attacker stacked 8 self-rated vanity benches. Switching the upvote-share
+to **linear** $u/U^\star$ tightened the bound enough that the test now
+**asserts the attacker stays below the legit frontier**: each vanity bench
+contributes only $1/U^\star$ of ability weight, and the attacker model's
+sparse evidence keeps its score shrunk toward the neutral midpoint. If a
+future change ever lets an 8-bench farm break through again, this test
+fails with a message asking the next engineer to either restore the
+documented-limitation framing or raise the bench-count threshold.
+
+Even so, the math doesn't have to do *all* the work — the same attack is
+independently defeated operationally, because it would require:
 
 1. Creating 8 benches under one account (highly visible to moderation).
 2. Submitting 8+ self-scores in 24 h — under the 30/day rate limit
    but still highly visible.
 3. Hoping no one notices and downvotes them. As soon as $\geq 5$
    downvotes land, the bench is hidden and excluded from $U^\star$,
-   $N^\star$, $W^\star$, and the leaderboard — the attack collapses.
+   $N^\star$, $E^\star$, and the leaderboard — the attack collapses.
 4. Anti-resurrection then prevents re-creating the same benches under
    the same name.
 
-The cost-benefit clearly favours legitimate contribution; the math
-just doesn't have to do *all* the work.
+The cost-benefit clearly favours legitimate contribution.
 
 ### Layer 3 — Seeded fuzz
 

@@ -73,7 +73,7 @@
     name: "SupraBench AI Model Rankings",
     alternateName: "SupraScore Leaderboard",
     description:
-      "Community-curated, trustworthiness-weighted rankings of large language models across crowd-rated benchmarks. Each model receives a SupraScore — the bench-weighted mean of its per-bench medians, shrunk by a coverage-share factor so that models tested on few benches cannot outrank well-covered rivals. Benchmarks themselves are rated by the community on relevance, contamination resistance, discriminability, reproducibility and difficulty. The dataset is updated continuously as new submissions, votes and quality ratings land — the snapshot a crawler sees reflects the state at request time; consult the HTTP Last-Modified header on the page response, or fetch /v1/export.json, for the most recent values.",
+      "Community-curated, trustworthiness-weighted rankings of large language models across crowd-rated benchmarks. Each model receives a SupraScore: the bench-weighted mean of its per-bench medians, adjusted by evidence confidence around the neutral midpoint so sparse models are treated as uncertain rather than bad. Benchmarks themselves are rated by the community on relevance, contamination resistance, discriminability, reproducibility and difficulty. The dataset is updated continuously as new submissions, votes and quality ratings land — the snapshot a crawler sees reflects the state at request time; consult the HTTP Last-Modified header on the page response, or fetch /v1/export.json, for the most recent values.",
     url: SITE_URL,
     identifier: SITE_URL,
     keywords: [
@@ -105,7 +105,7 @@
         "@type": "PropertyValue",
         name: "Bench Score",
         description:
-          "A benchmark's contribution weight, combining community quality ratings, difficulty, headroom and coverage shares (range 0–100).",
+          "A benchmark's contribution weight, combining community quality ratings, difficulty, headroom and net-upvote share (range 0–100).",
       },
       {
         "@type": "PropertyValue",

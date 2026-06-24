@@ -8,61 +8,57 @@ import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { fetchAllScoresFromD1, D1ScoreRow } from "./scoresWorker";
 
-// ── SupraScore: three √-coverage factors stacked ──
+// ── SupraScore: user-trust first, coverage as evidence ──
 //
-//   per-bench:  effectiveWeight(b) = Q·D·H · √(u_b/U*) · √(N_b/N*)
-//   per-model:  SupraScore(m)      = weightedMean(m)  · √(W_m/W*)
+//   per-bench ability:
+//      A_b = Q·D·H · (u_b/U*)
 //
-// Each √ defends against a distinct, intuitive attack:
+//   per-bench evidence:
+//      E_b = A_b · √(N_b/N*)
+//
+//   per-model ability:
+//      μ_m = weightedMean(score_m,b, A_b)
+//
+//   per-model SupraScore:
+//      SupraScore(m) = 50 + √(E_m/E*) · (μ_m − 50)
+//
+// The point of the split is semantic, not product-facing: users still
+// see one SupraScore. Internally, community endorsement decides how much
+// a benchmark counts for ability; model-count coverage only changes how
+// confident we are in a sparse estimate.
 //
 // • U* = max `cachedNetUpvotes` across non-hidden benches. The
-//   upvote-share defends "create a vanity bench, self-rate it
-//   5/5/5/5, ranks #1 on the bench leaderboard". Scale-invariant
-//   (works on a 5-bench platform exactly as well as on a 500-bench
-//   one), so it has to be enforced even at small scale.
+//   upvote-share is the user-driven trust signal. A benchmark that the
+//   community strongly endorses must be able to beat a broader but less
+//   trusted benchmark.
 //
 // • N* = max `cachedModelCount` across non-hidden benches. The
-//   model-count-share encodes "how widely is this bench used to
-//   evaluate models?" — a bench tested by 1 model gives almost no
-//   comparative information; one tested by 30 models gives strong
-//   signal. Defends "spawn a community bench and test only your
-//   own model on it" without needing any heuristic tuning. Modality
-//   asymmetry (image benches naturally cover fewer models than text
-//   benches) is intentional: those benches genuinely tell us less
-//   about the broader model population.
+//   model-count-share encodes evidence breadth only. It no longer
+//   reduces the central ability estimate, so a high-trust specialist
+//   benchmark is not buried just because fewer models have paid to run
+//   it yet.
 //
-// • W* = max W_m across non-hidden models, where W_m is the model's
-//   accumulated bench-weight (already including BOTH per-bench
-//   √-factors above). The model-side √ kills the original Sonnet
-//   bug where a model tested on a single favourable bench could
-//   outrank well-covered competitors.
+// • E* = max E_m across non-hidden models, where E_m is the model's
+//   accumulated evidence weight. Sparse models are not multiplied
+//   toward zero anymore; they are shrunk toward the neutral midpoint
+//   of the normalized score scale (50). That means "not tested on weak
+//   benches" is uncertainty, not negative evidence.
 //
 // Properties of the joint formula:
 //   • score stays in [0, 100]
-//   • zero hyperparameters — U*, N*, W* all come straight from the DB
-//   • √-shape mirrors the 1/√N standard-error falloff
-//   • monotonic in the model's own scores and coverage
-//   • top-covered model always has W_m/W* = 1 (no self-penalty)
+//   • zero tuning hyperparameters — U*, N*, E* all come straight from the DB
+//     and 50 is the midpoint of the normalized [0, 100] score scale
+//   • evidence √-shape mirrors the 1/√N standard-error falloff
+//   • monotonic in the model's own scores and evidence
+//   • top-evidence model always has E_m/E* = 1 (no self-penalty)
 //   • top-upvoted bench always has u_b/U* = 1 (no self-penalty)
-//   • most-tested bench always has N_b/N* = 1 (no self-penalty)
 //   • IIA is intentionally violated on every axis: the table is a
-//     relative comparison, so "coverage" only exists in comparison
+//     relative comparison, so "evidence" only exists in comparison
 //     to what else exists.
 //
 // The catalog of attacks the formula is *meant* to defend against
 // is enumerated in tests/convex/adversarial-robustness.test.ts and
 // is verified end-to-end on every CI run.
-//
-// Properties:
-//   • score stays in [0, 100]
-//   • zero hyperparameters — max totalWeight comes straight from the DB
-//   • √-shape mirrors the statistical √N standard-error falloff
-//   • monotonic in the model's own scores and coverage
-//   • top-covered model always has share=1 (no self-penalty)
-//   • IIA is intentionally violated: a new well-tested model moving the
-//     max shifts every other model's score proportionally. We accept
-//     this because "coverage" is only meaningful relative to the rest
-//     of the table.
 //
 // Everything below is the per-bench weight math — unchanged from before.
 //
@@ -90,6 +86,7 @@ export const HEADROOM_TOP_K = 10;
 export const HEADROOM_MIN_N = 3;
 export const HEADROOM_FLOOR = 0.1;
 export const HEADROOM_PIVOT = 50;
+export const NORMALIZED_SCORE_MIDPOINT = 50;
 
 export async function getBenchWeights(
   ctx: any,
@@ -184,16 +181,16 @@ export async function getBenchWeights(
   };
 }
 
-// Per-bench coverage snapshot used by every consumer of the
+// Per-bench trust/evidence snapshot used by every consumer of the
 // SupraScore math (rankings, familyRankings, benches.listRanked,
 // benches.getBySlug). Single source of truth — guarantees the bench
 // leaderboard's headline number matches what the bench actually
-// contributes to a model's SupraScore.
+// contributes to a model's ability mean, while the evidence path uses
+// the same denominators for confidence.
 //
 // Two axes per bench:
-//   • net upvotes u_b  (defends self-rated vanity bench attacks)
-//   • distinct model count N_b  (defends single-model vanity bench
-//     attacks AND surfaces whether a bench is "actually used")
+//   • net upvotes u_b  (community trust and bench ability weight)
+//   • distinct model count N_b  (evidence breadth / confidence only)
 //
 // Both have a max-across-non-hidden-benches denominator (U*, N*),
 // which is why this snapshot is built once and reused — otherwise
@@ -252,15 +249,14 @@ export async function getBenchCoverageIndex(
   return { upvoteMap, upvoteMax, modelCountMap, modelCountMax };
 }
 
-// Pure fn: per-bench √((u_b/U*) · (N_b/N*)) shrinkage applied to
-// the raw Q·D·H weight.
+// Pure fn: per-bench u_b/U* trust multiplier applied to the raw
+// Q·D·H weight. This is the central ability weight used in weighted
+// means and displayed as Bench Weight.
 //
 // Bootstrap behaviour: if a denominator is 0 (no benches have
-// votes / no benches have any scored model) that axis is disabled
-// for everybody — otherwise BenchScore would collapse to 0 across
-// the board on a brand-new deployment. Each axis is bootstrapped
-// independently so a young deployment with votes-but-no-scores
-// still gets the upvote defence.
+// votes anywhere) this axis is disabled for everybody — otherwise
+// BenchWeight would collapse to 0 across the board on a brand-new
+// deployment.
 export function effectiveBenchWeight(
   rawWeight: number,
   upvotes: number,
@@ -270,11 +266,48 @@ export function effectiveBenchWeight(
 ): number {
   const uShare =
     upvoteMax > 0 ? Math.min(1, Math.max(0, upvotes) / upvoteMax) : 1;
+  void modelCount;
+  void modelCountMax;
+  return rawWeight * uShare;
+}
+
+// Evidence weight keeps the same user-trust multiplier, then applies
+// the model-count share only to confidence/evidence. So a specialist
+// benchmark can carry ability when users endorse it, while very sparse
+// benchmarks still produce lower confidence until they have broader
+// comparative coverage.
+export function evidenceBenchWeight(
+  rawWeight: number,
+  upvotes: number,
+  upvoteMax: number,
+  modelCount: number,
+  modelCountMax: number
+): number {
   const nShare =
     modelCountMax > 0
       ? Math.min(1, Math.max(0, modelCount) / modelCountMax)
       : 1;
-  return rawWeight * Math.sqrt(uShare * nShare);
+  return effectiveBenchWeight(
+    rawWeight,
+    upvotes,
+    upvoteMax,
+    modelCount,
+    modelCountMax
+  ) * Math.sqrt(nShare);
+}
+
+export function confidenceAdjustedSupraScore(
+  weightedMean: number,
+  evidenceWeight: number,
+  maxEvidenceWeight: number
+): number {
+  if (evidenceWeight <= 0 || maxEvidenceWeight <= 0) return 0;
+  const share = Math.min(1, evidenceWeight / maxEvidenceWeight);
+  const confidence = Math.sqrt(share);
+  return (
+    NORMALIZED_SCORE_MIDPOINT +
+    confidence * (weightedMean - NORMALIZED_SCORE_MIDPOINT)
+  );
 }
 
 // ════════════════════════════════════════════════════════════
@@ -443,6 +476,7 @@ function buildRankingsFromInputs(args: {
     modelId: Id<"models">;
     model: any;
     weightedMean: number;
+    abilityWeight: number;
     totalWeight: number;
     benchCount: number;
   };
@@ -461,7 +495,8 @@ function buildRankingsFromInputs(args: {
     }
 
     let weightedSum = 0;
-    let weightTotal = 0;
+    let abilityWeightTotal = 0;
+    let evidenceWeightTotal = 0;
     let benchCount = 0;
     const perBench = new Map<string, number>();
 
@@ -472,10 +507,24 @@ function buildRankingsFromInputs(args: {
       const rawW = benchWeightCache.get(benchId) ?? 0;
       const u = upvoteMap.get(benchId) ?? 1;
       const n = modelCountMap.get(benchId) ?? 0;
-      const eff = effectiveBenchWeight(rawW, u, upvoteMax, n, modelCountMax);
-      if (eff <= 0) continue;
-      weightedSum += eff * med;
-      weightTotal += eff;
+      const abilityWeight = effectiveBenchWeight(
+        rawW,
+        u,
+        upvoteMax,
+        n,
+        modelCountMax
+      );
+      const evidenceWeight = evidenceBenchWeight(
+        rawW,
+        u,
+        upvoteMax,
+        n,
+        modelCountMax
+      );
+      if (abilityWeight <= 0) continue;
+      weightedSum += abilityWeight * med;
+      abilityWeightTotal += abilityWeight;
+      evidenceWeightTotal += evidenceWeight;
       benchCount++;
     }
     medianByModelBench.set(m._id as string, perBench);
@@ -483,8 +532,10 @@ function buildRankingsFromInputs(args: {
     modelAggregates.push({
       modelId: m._id as Id<"models">,
       model: m,
-      weightedMean: weightTotal > 0 ? weightedSum / weightTotal : 0,
-      totalWeight: weightTotal,
+      weightedMean:
+        abilityWeightTotal > 0 ? weightedSum / abilityWeightTotal : 0,
+      abilityWeight: abilityWeightTotal,
+      totalWeight: evidenceWeightTotal,
       benchCount,
     });
   }
@@ -494,6 +545,7 @@ function buildRankingsFromInputs(args: {
     familyTag: string;
     provider: string;
     weightedMean: number;
+    abilityWeight: number;
     totalWeight: number;
     benchCount: number;
     modelCount: number;
@@ -532,17 +584,32 @@ function buildRankingsFromInputs(args: {
     }
 
     let weightedSum = 0;
-    let weightTotal = 0;
+    let abilityWeightTotal = 0;
+    let evidenceWeightTotal = 0;
     let benchCount = 0;
     for (const [benchId, memberMedians] of Object.entries(perBench)) {
       const familyMedian = medianOf(memberMedians);
       const rawW = benchWeightCache.get(benchId) ?? 0;
       const u = upvoteMap.get(benchId) ?? 1;
       const n = modelCountMap.get(benchId) ?? 0;
-      const eff = effectiveBenchWeight(rawW, u, upvoteMax, n, modelCountMax);
-      if (eff <= 0) continue;
-      weightedSum += eff * familyMedian;
-      weightTotal += eff;
+      const abilityWeight = effectiveBenchWeight(
+        rawW,
+        u,
+        upvoteMax,
+        n,
+        modelCountMax
+      );
+      const evidenceWeight = evidenceBenchWeight(
+        rawW,
+        u,
+        upvoteMax,
+        n,
+        modelCountMax
+      );
+      if (abilityWeight <= 0) continue;
+      weightedSum += abilityWeight * familyMedian;
+      abilityWeightTotal += abilityWeight;
+      evidenceWeightTotal += evidenceWeight;
       benchCount++;
     }
 
@@ -552,8 +619,10 @@ function buildRankingsFromInputs(args: {
     familyAggregates.push({
       familyTag,
       provider,
-      weightedMean: weightTotal > 0 ? weightedSum / weightTotal : 0,
-      totalWeight: weightTotal,
+      weightedMean:
+        abilityWeightTotal > 0 ? weightedSum / abilityWeightTotal : 0,
+      abilityWeight: abilityWeightTotal,
+      totalWeight: evidenceWeightTotal,
       benchCount,
       modelCount: visible.length,
       tags: Array.from(tagSet),
@@ -561,24 +630,28 @@ function buildRankingsFromInputs(args: {
     });
   }
 
-  // ─── 5. Apply √(W_m / W*) and √(W_f / W*) shrinkage ───
-  let maxModelTotalWeight = 0;
+  // ─── 5. Apply evidence confidence around the neutral midpoint ───
+  let maxModelEvidenceWeight = 0;
   for (const a of modelAggregates) {
     if (a.model.hidden) continue;
-    if (a.totalWeight > maxModelTotalWeight) maxModelTotalWeight = a.totalWeight;
+    if (a.totalWeight > maxModelEvidenceWeight) {
+      maxModelEvidenceWeight = a.totalWeight;
+    }
   }
-  let maxFamilyTotalWeight = 0;
+  let maxFamilyEvidenceWeight = 0;
   for (const a of familyAggregates) {
     if (a.hidden) continue;
-    if (a.totalWeight > maxFamilyTotalWeight) maxFamilyTotalWeight = a.totalWeight;
+    if (a.totalWeight > maxFamilyEvidenceWeight) {
+      maxFamilyEvidenceWeight = a.totalWeight;
+    }
   }
 
   const modelRows: ModelRankingData[] = modelAggregates.map((a) => {
-    const share =
-      maxModelTotalWeight > 0
-        ? Math.min(1, a.totalWeight / maxModelTotalWeight)
-        : 0;
-    const supraScore = a.weightedMean * Math.sqrt(share);
+    const supraScore = confidenceAdjustedSupraScore(
+      a.weightedMean,
+      a.totalWeight,
+      maxModelEvidenceWeight
+    );
     return {
       modelId: a.modelId,
       name: a.model.name,
@@ -595,11 +668,11 @@ function buildRankingsFromInputs(args: {
   const validFamilyKeys = new Set<string>();
   const familyRows: FamilyRankingData[] = familyAggregates.map((a) => {
     validFamilyKeys.add(`${a.familyTag}\u0000${a.provider}`);
-    const share =
-      maxFamilyTotalWeight > 0
-        ? Math.min(1, a.totalWeight / maxFamilyTotalWeight)
-        : 0;
-    const supraScore = a.weightedMean * Math.sqrt(share);
+    const supraScore = confidenceAdjustedSupraScore(
+      a.weightedMean,
+      a.totalWeight,
+      maxFamilyEvidenceWeight
+    );
     return {
       familyTag: a.familyTag,
       provider: a.provider,
@@ -729,8 +802,8 @@ export async function recomputeAllUnifiedImpl(ctx: any): Promise<{
 export const recomputeModel = internalMutation({
   args: { modelId: v.id("models") },
   handler: async (ctx) => {
-    // Coverage-share couples every model's score to every other
-    // model's totalWeight, so even a single-model update triggers
+    // Evidence share couples every model's score to every other
+    // model's evidence weight, so even a single-model update triggers
     // a full re-rank. Used by tests + seed only — production
     // submissions/votes call recomputeFromD1 instead.
     await recomputeAllUnifiedImpl(ctx);
@@ -857,7 +930,7 @@ async function recomputeFromD1Impl(ctx: any) {
 // mutation entries so callers only swap the module path. We
 // intentionally do NOT discriminate on `modelId` / `benchId`:
 // the SupraScore is globally coupled (every model's score depends
-// on every other model's totalWeight), so any change requires a
+// on every other model's evidence weight), so any change requires a
 // full rebuild regardless. The arg lets future incremental work
 // route differently without changing the caller contract.
 export const recomputeFromD1 = internalAction({

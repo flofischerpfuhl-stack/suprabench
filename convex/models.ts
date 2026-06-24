@@ -11,6 +11,8 @@ import {
   getBenchWeights,
   getBenchCoverageIndex,
   effectiveBenchWeight,
+  evidenceBenchWeight,
+  confidenceAdjustedSupraScore,
 } from "./rankings";
 import { enforceDailyActionLimit } from "./abuse";
 
@@ -234,27 +236,41 @@ function median(vals: number[]): number {
 
 async function scopedBenchWeights(ctx: any, benches: any[]) {
   const cov = await getBenchCoverageIndex(ctx);
-  const weights: Record<string, number> = {};
+  const weights: Record<string, { ability: number; evidence: number }> = {};
   for (const b of benches) {
     const raw =
       typeof b.cachedEffectiveWeight === "number"
         ? b.cachedEffectiveWeight
         : (await getBenchWeights(ctx, b._id as any)).weight;
-    weights[b._id as string] = effectiveBenchWeight(
-      raw,
-      cov.upvoteMap.get(b._id as string) ?? 1,
-      cov.upvoteMax,
-      cov.modelCountMap.get(b._id as string) ?? 0,
-      cov.modelCountMax
-    );
+    const u = cov.upvoteMap.get(b._id as string) ?? 1;
+    const n = cov.modelCountMap.get(b._id as string) ?? 0;
+    weights[b._id as string] = {
+      ability: effectiveBenchWeight(raw, u, cov.upvoteMax, n, cov.modelCountMax),
+      evidence: evidenceBenchWeight(raw, u, cov.upvoteMax, n, cov.modelCountMax),
+    };
   }
   return weights;
 }
 
-function supraFromAggregate(weightedSum: number, totalWeight: number, maxWeight: number) {
-  if (totalWeight <= 0 || maxWeight <= 0) return null;
-  const weightedMean = weightedSum / totalWeight;
-  return Math.round(weightedMean * Math.sqrt(Math.min(1, totalWeight / maxWeight)) * 10) / 10;
+function supraFromAggregate(
+  weightedSum: number,
+  abilityWeight: number,
+  evidenceWeight: number,
+  maxEvidenceWeight: number
+) {
+  if (abilityWeight <= 0 || evidenceWeight <= 0 || maxEvidenceWeight <= 0) {
+    return null;
+  }
+  const weightedMean = weightedSum / abilityWeight;
+  return (
+    Math.round(
+      confidenceAdjustedSupraScore(
+        weightedMean,
+        evidenceWeight,
+        maxEvidenceWeight
+      ) * 10
+    ) / 10
+  );
 }
 
 // Ranked FAMILIES with a tag-filtered score. Parallel to
@@ -295,7 +311,7 @@ export const listRankedFamiliesWithFilter = query({
 
     const allModels = await ctx.db.query("models").collect();
     const out = [];
-    let maxWeight = 0;
+    let maxEvidenceWeight = 0;
     for (const r of visible) {
       const members = allModels.filter(
         (m: any) =>
@@ -328,15 +344,17 @@ export const listRankedFamiliesWithFilter = query({
       }
 
       let weighted = 0;
-      let weight = 0;
+      let abilityWeight = 0;
+      let evidenceWeight = 0;
       for (const [bId, memberMeds] of Object.entries(perBench)) {
         const familyMed = median(memberMeds);
         const w = benchWeight[bId] ?? 0;
-        if (w <= 0) continue;
-        weighted += w * familyMed;
-        weight += w;
+        if (!w || w.ability <= 0) continue;
+        weighted += w.ability * familyMed;
+        abilityWeight += w.ability;
+        evidenceWeight += w.evidence;
       }
-      if (weight > maxWeight) maxWeight = weight;
+      if (evidenceWeight > maxEvidenceWeight) maxEvidenceWeight = evidenceWeight;
 
       out.push({
         familyTag: r.familyTag,
@@ -347,14 +365,21 @@ export const listRankedFamiliesWithFilter = query({
         tags: r.tags,
         filteredScore: null as number | null,
         _filteredWeighted: weighted,
-        _filteredWeight: weight,
+        _filteredAbilityWeight: abilityWeight,
+        _filteredEvidenceWeight: evidenceWeight,
       });
     }
 
     for (const row of out) {
-      row.filteredScore = supraFromAggregate(row._filteredWeighted, row._filteredWeight, maxWeight);
+      row.filteredScore = supraFromAggregate(
+        row._filteredWeighted,
+        row._filteredAbilityWeight,
+        row._filteredEvidenceWeight,
+        maxEvidenceWeight
+      );
       delete (row as any)._filteredWeighted;
-      delete (row as any)._filteredWeight;
+      delete (row as any)._filteredAbilityWeight;
+      delete (row as any)._filteredEvidenceWeight;
     }
 
     out.sort((a, b) => {
@@ -429,7 +454,7 @@ export const listRankedWithFilter = query({
     const benchWeight = await scopedBenchWeights(ctx, matchingBenches);
 
     const out = [];
-    let maxWeight = 0;
+    let maxEvidenceWeight = 0;
     for (const r of rankings) {
       const scores = await ctx.db
         .query("modelScores")
@@ -447,15 +472,17 @@ export const listRankedWithFilter = query({
       }
 
       let weighted = 0;
-      let weight = 0;
+      let abilityWeight = 0;
+      let evidenceWeight = 0;
       for (const [bId, vals] of Object.entries(byBench)) {
         const med = median(vals);
         const w = benchWeight[bId] ?? 0;
-        if (w <= 0) continue;
-        weighted += w * med;
-        weight += w;
+        if (!w || w.ability <= 0) continue;
+        weighted += w.ability * med;
+        abilityWeight += w.ability;
+        evidenceWeight += w.evidence;
       }
-      if (weight > maxWeight) maxWeight = weight;
+      if (evidenceWeight > maxEvidenceWeight) maxEvidenceWeight = evidenceWeight;
 
       out.push({
         _id: r.modelId,
@@ -468,14 +495,21 @@ export const listRankedWithFilter = query({
         benchCount: r.benchCount,
         filteredScore: null as number | null,
         _filteredWeighted: weighted,
-        _filteredWeight: weight,
+        _filteredAbilityWeight: abilityWeight,
+        _filteredEvidenceWeight: evidenceWeight,
       });
     }
 
     for (const row of out) {
-      row.filteredScore = supraFromAggregate(row._filteredWeighted, row._filteredWeight, maxWeight);
+      row.filteredScore = supraFromAggregate(
+        row._filteredWeighted,
+        row._filteredAbilityWeight,
+        row._filteredEvidenceWeight,
+        maxEvidenceWeight
+      );
       delete (row as any)._filteredWeighted;
-      delete (row as any)._filteredWeight;
+      delete (row as any)._filteredAbilityWeight;
+      delete (row as any)._filteredEvidenceWeight;
     }
 
     // Sort: models with a filteredScore first, by filteredScore desc,

@@ -1,9 +1,9 @@
 // ════════════════════════════════════════════════════════════
-// Coverage-share formula tests (model side AND bench side).
+// Evidence-confidence formula tests (model side AND bench side).
 //
 // Verifies that
-//   per-bench:  effectiveWeight(b) = Q·D·H · √(u_b / U*)
-//   per-model:  supraScore(m)      = weightedMean(m) · √(W_m / W*)
+//   per-bench:  effectiveWeight(b) = Q·D·H · (u_b / U*)
+//   per-model:  supraScore(m)      = 50 + √(E_m / E*) · (weightedMean(m) - 50)
 // holds end-to-end against a live (mock) Convex runtime. Each test
 // seeds a tiny dataset, calls the real internal.rankings.recomputeAll,
 // then reads the resulting modelRankings rows OR the benches.listRanked
@@ -17,9 +17,9 @@
 //      on that bench gets dropped below a 3-bench model with a lower
 //      per-bench peak but broader coverage.
 //
-//   3. Top-covered model gets √factor = 1 (no self-penalty).
+//   3. Top-evidence model gets confidence factor = 1 (no self-penalty).
 //
-//   4. Adding a bench to the leading model bumps maxTotalWeight and
+//   4. Adding a bench to the leading model bumps maxEvidenceWeight and
 //      therefore reduces every other model's supraScore (IIA is
 //      intentionally violated).
 //
@@ -30,8 +30,8 @@
 //
 //   6. Vanity-bench SupraScore attack: same vanity bench can't be
 //      used to vault an attacker model past a well-covered legit
-//      model, because its bench-side √(u_b/U*) shrinkage caps its
-//      contribution to the model's W_m and weightedMean.
+//      model, because its bench-side u_b/U* multiplier caps its
+//      ability weight and evidence confidence.
 // ════════════════════════════════════════════════════════════
 
 import { describe, it, expect } from "vitest";
@@ -167,7 +167,7 @@ async function seedBenchUpvotes(
 
 // Self-rate a bench 5/5/5/5/5 from one user — used by both legit and
 // vanity benches in the leaderboard test so the differentiator is
-// purely the upvote-coverage-share, not the underlying Q score.
+// purely the upvote-share, not the underlying Q score.
 async function seedBenchRating(
   t: ReturnType<typeof setupTestDb>,
   benchId: any,
@@ -204,7 +204,7 @@ async function refreshBenchAggregates(
   await t.mutation(internal.cache.recomputeBenchAggregates, { benchId });
 }
 
-describe("SupraScore coverage-share formula", () => {
+describe("SupraScore evidence-confidence formula", () => {
   it("C5 all-equal-coverage: ranking follows weightedMean", async () => {
     const t = setupTestDb();
     const u = await seedServiceUser(t);
@@ -221,14 +221,14 @@ describe("SupraScore coverage-share formula", () => {
       (a, b) => b.supraScore - a.supraScore
     );
     expect(rows.map((r) => r.name)).toEqual(["HighModel", "MidModel", "LowModel"]);
-    // All three have the same totalWeight (1 bench each) so share=1
+    // All three have the same evidence weight (1 bench each) so share=1
     // and supraScore === weightedMean === raw score.
     expect(rows[0].supraScore).toBeCloseTo(90, 0);
     expect(rows[1].supraScore).toBeCloseTo(70, 0);
     expect(rows[2].supraScore).toBeCloseTo(50, 0);
   });
 
-  it("Sonnet regression: 1-bench peak loses to 3-bench broad coverage", async () => {
+  it("Sonnet regression: 1-bench peak is confidence-shrunk", async () => {
     const t = setupTestDb();
     const u = await seedServiceUser(t);
     const bA = await seedBench(t, u, "Bench A");
@@ -248,16 +248,18 @@ describe("SupraScore coverage-share formula", () => {
       (a, b) => b.supraScore - a.supraScore
     );
     expect(rows[0].name).toBe("Broad GPT");
-    // Sparse should be demoted substantially (score cut by roughly √(1/3))
+    // Sparse keeps the signal from a very strong bench, but is still
+    // pulled well below its raw 97.7 by evidence confidence.
     const sparseRow = rows.find((r) => r.name === "Sparse Sonnet")!;
-    expect(sparseRow.supraScore).toBeLessThan(80);
-    // And the broad model keeps its full weightedMean because it's the
-    // top-covered → no self-penalty.
+    expect(sparseRow.supraScore).toBeGreaterThan(75);
+    expect(sparseRow.supraScore).toBeLessThan(85);
+    // And the broad model keeps high confidence because it is the
+    // top-evidence row.
     const broadRow = rows.find((r) => r.name === "Broad GPT")!;
     expect(broadRow.supraScore).toBeGreaterThanOrEqual(85);
   });
 
-  it("Top-covered model has coverage factor of 1 (no self-penalty)", async () => {
+  it("Top-evidence model has confidence factor of 1 (no self-penalty)", async () => {
     const t = setupTestDb();
     const u = await seedServiceUser(t);
     const b1 = await seedBench(t, u, "b1");
@@ -274,19 +276,19 @@ describe("SupraScore coverage-share formula", () => {
     const leaderRow = rows.find((r) => r.name === "LeadModel")!;
     // Leader's supraScore equals its weightedMean (80) within rounding
     expect(leaderRow.supraScore).toBeCloseTo(80, 0);
-    // Follower shrunk by √(1/2) ≈ 0.707 → ~56.6
+    // Follower is shrunk toward neutral 50, not toward 0.
     const followerRow = rows.find((r) => r.name === "FollowerModel")!;
-    expect(followerRow.supraScore).toBeGreaterThan(50);
-    expect(followerRow.supraScore).toBeLessThan(70);
+    expect(followerRow.supraScore).toBeGreaterThan(70);
+    expect(followerRow.supraScore).toBeLessThan(80);
   });
 
   it("Vanity-bench leaderboard attack: 1-upvote bench cannot outrank a 6-upvote bench at equal Q·D·H", async () => {
     // The Bench Leaderboard (benches.listRanked) is what users land on
-    // when browsing the catalog. Without the bench-side √(u_b/U*)
-    // shrinkage, an attacker can mint a bench, self-rate it 5/5/5/5,
+    // when browsing the catalog. Without the bench-side u_b/U*
+    // multiplier, an attacker can mint a bench, self-rate it 5/5/5/5,
     // and immediately appear at #1 with a Q·D·H product of 100. With
     // the shrinkage in place, that bench's *displayed* effective
-    // weight is multiplied by √(1 / U*) where U* is the legit
+    // weight is multiplied by 1 / U* where U* is the legit
     // leader's upvote count.
     const t = setupTestDb();
     const creatorLegit = await seedServiceUser(t);
@@ -319,11 +321,11 @@ describe("SupraScore coverage-share formula", () => {
     expect(list[0].name).toBe("Legit Bench");
     const vanityRow = list.find((b) => b.name === "Vanity Bench")!;
     const legitRow = list.find((b) => b.name === "Legit Bench")!;
-    // Legit is the top-upvoted bench → coverage factor 1 → no penalty.
+    // Legit is the top-upvoted bench → trust factor 1 → no penalty.
     expect(legitRow.effectiveWeight).toBeCloseTo(legitRow.rawWeight, 0);
-    // Vanity has 1/6 upvote share → factor √(1/6) ≈ 0.408 → ~40.8.
-    expect(vanityRow.effectiveWeight).toBeLessThan(50);
-    expect(vanityRow.effectiveWeight).toBeGreaterThan(35);
+    // Vanity has 1/6 upvote share → factor 1/6 → ~16.7.
+    expect(vanityRow.effectiveWeight).toBeLessThan(20);
+    expect(vanityRow.effectiveWeight).toBeGreaterThan(15);
   });
 
   it("Vanity-bench SupraScore attack: cannot vault a model past a well-covered competitor", async () => {
@@ -331,9 +333,9 @@ describe("SupraScore coverage-share formula", () => {
     // also fails in the SupraScore path. Attacker model has only
     // scores on its own vanity bench; legit model has scores on a
     // well-upvoted bench. Even though both raw weights are 100, the
-    // bench-side √(u_b/U*) shrinks the vanity bench's contribution
-    // to the attacker's W_m, and the model-side √(W_m/W*) compounds
-    // the penalty.
+    // bench-side u_b/U* shrinks the vanity bench's ability weight,
+    // and evidence confidence keeps the single-bench estimate from
+    // being treated as a full-strength 100.
     const t = setupTestDb();
     const creatorLegit = await seedServiceUser(t);
     const creatorAttacker = await seedExtraUser(t, "attacker2");
@@ -367,9 +369,9 @@ describe("SupraScore coverage-share formula", () => {
     );
     expect(rows[0].name).toBe("LegitModel");
     const attackerRow = rows.find((r) => r.name === "AttackerModel")!;
-    // Vanity bench's raw 100 contributes only 100·√(1/6)≈40.8 of
-    // weight, AND attacker's W_m is below the legit model's, so the
-    // outer model-side √-share drags the score even lower.
+    // Vanity bench's raw 100 contributes only 100·(1/6)≈16.7 of
+    // ability weight, and evidence confidence shrinks the attacker
+    // toward the neutral 50 midpoint.
     expect(attackerRow.supraScore).toBeLessThan(80);
   });
 
@@ -389,13 +391,13 @@ describe("SupraScore coverage-share formula", () => {
     const peerBefore = (await readRankings(t)).find((r) => r.name === "Peer")!
       .supraScore;
 
-    // Add a third bench only to the leader → maxTotalWeight grows
+    // Add a third bench only to the leader → maxEvidenceWeight grows
     await seedScore(t, u, leader, b3, 80);
     await recompute(t);
     const peerAfter = (await readRankings(t)).find((r) => r.name === "Peer")!
       .supraScore;
 
-    // Peer was tested on 1/2 then 1/3 of the bench-weight after the
+    // Peer was tested on 1/2 then 1/3 of the evidence weight after the
     // leader's expansion → peerAfter must be strictly lower.
     expect(peerAfter).toBeLessThan(peerBefore);
   });

@@ -31,11 +31,10 @@ export const listRanked = query({
   handler: async (ctx) => {
     const benches = await ctx.db.query("benches").collect();
 
-    // Two coverage axes (upvotes + distinct model count) folded
-    // into the displayed Bench Score, same denominators (U*, N*)
-    // and same √-shape as the per-model SupraScore aggregate. So
-    // the headline number on the bench leaderboard is exactly what
-    // the bench actually contributes to a model's SupraScore.
+    // Displayed Bench Weight is the intrinsic Q·D·H product folded
+    // through community trust via u/U*. Distinct model count is
+    // still used by the model-ranker as evidence/confidence, but it
+    // no longer reduces the benchmark's central ability weight.
     const cov = await getBenchCoverageIndex(ctx);
 
     const results = [];
@@ -115,10 +114,9 @@ export const listRanked = query({
           ? bench.cachedEffectiveWeight
           : qualityScore;
 
-      // Coverage-adjusted weight: apply √((u_b/U*)·(N_b/N*)) so a
-      // freshly-created bench can't claim #1 with a self-rated 100,
-      // and so a "tested by only my own model" community bench
-      // can't either.
+      // Trust-adjusted weight: apply u_b/U* so a freshly-created
+      // self-rated bench does not carry full model-ranking weight
+      // until the community endorses it.
       const u = cov.upvoteMap.get(bench._id as string) ?? 1;
       const nForCov =
         cov.modelCountMap.get(bench._id as string) ?? modelCount;
@@ -146,8 +144,8 @@ export const listRanked = query({
         qualityScore,
         effectiveWeight,
         // Pre-shrinkage Q·D·H so the UI can show "intrinsic 60 →
-        // effective 19 because only 1 community endorsement and 2
-        // models tested vs the leader's 80 / 30".
+        // effective 19 because only 1 community endorsement vs the
+        // leader's 80".
         rawWeight: Math.round(rawWeight * 10) / 10,
         netUpvotes: u,
         maxNetUpvotes: cov.upvoteMax,
@@ -246,9 +244,9 @@ export const getBySlug = query({
       effectiveWeight = Math.round(w.weight * 10) / 10;
     }
 
-    // Apply the per-bench √((u/U*)·(N/N*)) coverage shrinkage on
-    // top of the raw Q·D·H so the detail page shows the same
-    // "effective in SupraScore" number as the leaderboard.
+    // Apply the per-bench u/U* trust multiplier on top of the raw
+    // Q·D·H so the detail page shows the same Bench Weight number as
+    // the leaderboard.
     const cov = await getBenchCoverageIndex(ctx);
     const netUpvotes = cov.upvoteMap.get(bench._id as string) ?? 1;
     const nForCov =

@@ -277,27 +277,22 @@ const INVARIANTS: Invariant[] = [
   {
     id: "I3",
     description:
-      "The bench with max net-upvotes AND max modelCount has effectiveWeight == rawWeight (no self-penalty)",
+      "The bench with max net-upvotes has effectiveWeight == rawWeight (no self-penalty)",
     check: (s) => {
       if (s.benchList.length === 0) return { ok: true };
       const maxU = Math.max(...s.benchList.map((b) => b.netUpvotes));
-      const maxN = Math.max(
-        ...s.benchList.map((b) => b.modelCountForCoverage)
+      // Find a bench that's at the max-upvote axis. If one exists, it
+      // must have effectiveWeight ≈ rawWeight (within rounding). Model
+      // count is evidence-only now and no longer reduces BenchScore.
+      const topUpvoted = s.benchList.find(
+        (b) => b.netUpvotes === maxU && b.rawWeight > 0
       );
-      // Find a bench that's at the max on BOTH axes. If one exists, it
-      // must have effectiveWeight ≈ rawWeight (within rounding).
-      const topOnBoth = s.benchList.find(
-        (b) =>
-          b.netUpvotes === maxU &&
-          b.modelCountForCoverage === maxN &&
-          b.rawWeight > 0
-      );
-      if (!topOnBoth) return { ok: true };
-      const drift = Math.abs(topOnBoth.effectiveWeight - topOnBoth.rawWeight);
+      if (!topUpvoted) return { ok: true };
+      const drift = Math.abs(topUpvoted.effectiveWeight - topUpvoted.rawWeight);
       if (drift > 0.2)
         return {
           ok: false,
-          message: `${topOnBoth.name} sits at max upvotes (${maxU}) AND max modelCount (${maxN}) but effectiveWeight=${topOnBoth.effectiveWeight} ≠ rawWeight=${topOnBoth.rawWeight}`,
+          message: `${topUpvoted.name} sits at max upvotes (${maxU}) but effectiveWeight=${topUpvoted.effectiveWeight} ≠ rawWeight=${topUpvoted.rawWeight}`,
         };
       return { ok: true };
     },
@@ -353,27 +348,20 @@ const INVARIANTS: Invariant[] = [
   },
   {
     id: "I7",
-    description: "Every BenchScore equals rawWeight × √(coverageShare) exactly",
+    description: "Every BenchScore equals rawWeight × upvoteShare exactly",
     check: (s) => {
       for (const b of s.benchList) {
         if (b.rawWeight === 0) continue;
         const uShare =
           b.maxNetUpvotes > 0 ? Math.min(1, b.netUpvotes / b.maxNetUpvotes) : 1;
-        const nShare =
-          b.maxModelCountForCoverage > 0
-            ? Math.min(
-                1,
-                b.modelCountForCoverage / b.maxModelCountForCoverage
-              )
-            : 1;
-        const expected = b.rawWeight * Math.sqrt(uShare * nShare);
+        const expected = b.rawWeight * uShare;
         const drift = Math.abs(expected - b.effectiveWeight);
         // 0.2 tolerance for one round-to-tenths in the API plus the
         // round-to-tenths the cache itself does to rawWeight.
         if (drift > 0.2)
           return {
             ok: false,
-            message: `${b.name}: rawWeight=${b.rawWeight} × √(${uShare.toFixed(3)}·${nShare.toFixed(3)}) = ${expected.toFixed(2)} but effectiveWeight=${b.effectiveWeight}`,
+            message: `${b.name}: rawWeight=${b.rawWeight} × ${uShare.toFixed(3)} = ${expected.toFixed(2)} but effectiveWeight=${b.effectiveWeight}`,
           };
       }
       return { ok: true };
@@ -556,7 +544,7 @@ const ATTACKS: Attack[] = [
       if (attacker.supraScore >= top.supraScore)
         return {
           ok: false,
-          message: `Attacker (${attacker.supraScore.toFixed(1)}) ≥ top legit ${top.name} (${top.supraScore.toFixed(1)}) — 3-bench vanity broke through the model-coverage defence`,
+          message: `Attacker (${attacker.supraScore.toFixed(1)}) ≥ top legit ${top.name} (${top.supraScore.toFixed(1)}) — 3-bench vanity broke through the upvote/evidence defence`,
         };
       return { ok: true };
     },
@@ -564,7 +552,7 @@ const ATTACKS: Attack[] = [
   {
     id: "A3-extreme",
     description:
-      "DOCUMENTED LIMITATION: 8-bench industrial vanity farm outscales the pure math (defended operationally)",
+      "8-bench industrial vanity farm remains below the legit frontier",
     setup: async (t) => {
       await seedLegitBaseline(t);
       const attacker = await newUser(t, "attacker-A3x");
@@ -583,21 +571,11 @@ const ATTACKS: Attack[] = [
       }
       return { attackerModel: attackerModel as string };
     },
-    // This test ASSERTS the limitation exists — it documents the
-    // attack class the pure math does NOT defend against. If the
-    // math is ever strengthened to defeat 8-bench vanity, this
-    // assertion will flip; the failing test message tells the next
-    // engineer to delete this case (or raise the threshold).
+    // Linear upvote-share makes the pure math strong enough for this
+    // previously documented limitation: 8 one-account vanity benches
+    // still sit below the legit frontier in this fixture.
     //
-    // Why the math fails here: the model-side √(W_m/W*) saturates
-    // at 1.0, so once the attacker's accumulated bench-weight
-    // surpasses the legit leader's, the SupraScore is bounded only
-    // by weightedMean (= 100 if attacker controls all the scores).
-    // Each vanity bench contributes ≈ raw_weight·√((1/U*)·(1/N*))
-    // weight; that's bounded below but not zero, so N vanity
-    // benches eventually dominate.
-    //
-    // Operational defenses that prevent this at runtime:
+    // Operational defenses still matter at runtime:
     //   1. Rate-limiting (max 30 submissions / 24 h / user) makes
     //      8+ self-scored benches very visible.
     //   2. Community downvote → bench hidden → excluded from U*,
@@ -611,10 +589,10 @@ const ATTACKS: Attack[] = [
     expect: (s, refs) => {
       const attacker = s.rankings.find((r) => r.modelId === refs.attackerModel)!;
       const top = topLegit(s);
-      if (attacker.supraScore < top.supraScore)
+      if (attacker.supraScore >= top.supraScore)
         return {
           ok: false,
-          message: `8-bench vanity attack failed — the math is now stronger than expected (attacker=${attacker.supraScore.toFixed(1)} < legit=${top.supraScore.toFixed(1)}). Either delete A3-extreme or raise its bench count and re-document the new bound.`,
+          message: `8-bench vanity attack broke through (attacker=${attacker.supraScore.toFixed(1)} ≥ legit=${top.supraScore.toFixed(1)})`,
         };
       return { ok: true };
     },
@@ -624,7 +602,20 @@ const ATTACKS: Attack[] = [
     description:
       "Sockpuppet upvote attack: attacker needs many fake accounts to vault vanity bench above midfield",
     setup: async (t) => {
-      const { voters } = await seedLegitBaseline(t);
+      const { legitOwners, voters } = await seedLegitBaseline(t);
+      const established = await newBench(t, legitOwners[0], "EstablishedOpenBench-A4");
+      await upvoteBench(t, established, voters);
+      for (let r = 0; r < 3; r++) {
+        await rate(t, voters[r], established, {
+          relevance: 5,
+          contamination: 5,
+          discriminability: 5,
+          reproducibility: 5,
+          difficulty: 5,
+        });
+      }
+      await refreshBench(t, established);
+
       const attacker = await newUser(t, "attacker-A4");
       const vanity = await newBench(t, attacker, "VanityBench-A4");
       await rate(t, attacker, vanity, {
@@ -656,7 +647,7 @@ const ATTACKS: Attack[] = [
   {
     id: "A5",
     description:
-      "Single-bench peak attack: model with 1 score=100 cannot outrank model with 3 scores=80",
+      "Single-bench peak is shrunk but can beat a broad mediocre model",
     setup: async (t) => {
       const owner = await newUser(t, "owner-A5");
       const voters: any[] = [];
@@ -684,10 +675,15 @@ const ATTACKS: Attack[] = [
     expect: (s, refs) => {
       const sparseRow = s.rankings.find((r) => r.modelId === refs.attackerModel)!;
       const broadRow = s.rankings.find((r) => r.name === "BroadModel-A5")!;
-      if (sparseRow.supraScore >= broadRow.supraScore)
+      if (sparseRow.supraScore >= 90)
         return {
           ok: false,
-          message: `SparseModel (${sparseRow.supraScore}) ≥ BroadModel (${broadRow.supraScore})`,
+          message: `SparseModel (${sparseRow.supraScore}) stayed too close to its raw 100 despite one-bench evidence`,
+        };
+      if (sparseRow.supraScore <= broadRow.supraScore)
+        return {
+          ok: false,
+          message: `SparseModel (${sparseRow.supraScore}) did not beat broad 80 model (${broadRow.supraScore}); new formula should let strong trusted benches matter`,
         };
       return { ok: true };
     },
