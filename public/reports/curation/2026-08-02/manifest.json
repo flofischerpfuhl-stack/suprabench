@@ -1,13 +1,20 @@
 {
   "schemaVersion": 1,
   "runId": "2026-08-02",
-  "generatedAt": "2026-08-02T23:21:07.4971230+02:00",
+  "generatedAt": "2026-08-02T23:52:17.6712987+02:00",
   "reportPath": "public/reports/curation/2026-08-02/index.html",
   "sources": [
-    { "title": "OpenAI — Introducing GPT-5.6", "url": "https://openai.com/index/gpt-5-6/", "accessedAt": "2026-08-02T23:21:07.4971230+02:00" },
+    { "title": "OpenAI — Introducing GPT-5.6", "url": "https://openai.com/index/gpt-5-6/", "accessedAt": "2026-08-02T23:52:17.6712987+02:00" },
     { "title": "ARC Prize — ARC-AGI-3 competition", "url": "https://arcprize.org/competitions/2026/arc-agi-3", "accessedAt": "2026-08-02T23:21:07.4971230+02:00" },
     { "title": "ARC Prize — ARC-AGI-3 technical report", "url": "https://arcprize.org/media/ARC_AGI_3_Technical_Report.pdf", "accessedAt": "2026-08-02T23:21:07.4971230+02:00" },
-    { "title": "ARC Prize — ARC-AGI repository", "url": "https://github.com/arcprize/ARC-AGI", "accessedAt": "2026-08-02T23:21:07.4971230+02:00" }
+    { "title": "ARC Prize — ARC-AGI repository", "url": "https://github.com/arcprize/ARC-AGI", "accessedAt": "2026-08-02T23:21:07.4971230+02:00" },
+    { "title": "Moonshot AI — Kimi K3", "url": "https://github.com/MoonshotAI/Kimi-K3", "accessedAt": "2026-08-02T23:52:17.6712987+02:00" },
+    { "title": "ARC Prize — Kimi K3 verified results", "url": "https://arcprize.org/results/moonshot-kimi-k3", "accessedAt": "2026-08-02T23:52:17.6712987+02:00" },
+    { "title": "xAI — Grok 4.5", "url": "https://x.ai/news/grok-4-5", "accessedAt": "2026-08-02T23:52:17.6712987+02:00" },
+    { "title": "ARC Prize — Grok 4.5 verified results", "url": "https://arcprize.org/results/xai-grok-4-5", "accessedAt": "2026-08-02T23:52:17.6712987+02:00" },
+    { "title": "Anthropic — Claude Opus 5", "url": "https://www.anthropic.com/news/claude-opus-5", "accessedAt": "2026-08-02T23:52:17.6712987+02:00" },
+    { "title": "ARC Prize — Claude Opus 5 verified results", "url": "https://arcprize.org/results/anthropic-claude-opus-5", "accessedAt": "2026-08-02T23:52:17.6712987+02:00" },
+    { "title": "Anthropic — Claude Sonnet 5 system card", "url": "https://www-cdn.anthropic.com/73ad94ca3c0502e75e46637cc62c8bd9532a7f2c/Claude%20Sonnet%205%20System%20Card.pdf", "accessedAt": "2026-08-02T23:52:17.6712987+02:00" }
   ],
   "evidence": [
     { "sourceUrl": "https://openai.com/index/gpt-5-6/", "screenshotUrl": "https://openai.com/de-DE/index/gpt-5-6/", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/openai-gpt-5-6-benchmarks.jpg" },
@@ -15,13 +22,26 @@
     { "sourceUrl": "https://openai.com/index/gpt-5-6/", "screenshotUrl": "https://openai.com/de-DE/index/gpt-5-6/", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/openai-gpt-5-6-mmmu-pro.jpg" },
     { "sourceUrl": "https://openai.com/index/gpt-5-6/", "screenshotUrl": "https://openai.com/de-DE/index/gpt-5-6/", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/openai-gpt-5-6-arc-agi-3.jpg" },
     { "sourceUrl": "https://openai.com/index/gpt-5-6/", "screenshotUrl": "https://openai.com/de-DE/index/gpt-5-6/", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/openai-gpt-5-6-arc-agi-3-right.jpg" },
-    { "sourceUrl": "https://arcprize.org/competitions/2026/arc-agi-3", "screenshotUrl": "https://arcprize.org/competitions/2026/arc-agi-3", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/arc-agi-3-official.jpg" }
+    { "sourceUrl": "https://arcprize.org/competitions/2026/arc-agi-3", "screenshotUrl": "https://arcprize.org/competitions/2026/arc-agi-3", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/arc-agi-3-official.jpg" },
+    { "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3", "screenshotUrl": "https://github.com/MoonshotAI/Kimi-K3", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/kimi-k3-reasoning.jpg" },
+    { "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3", "screenshotUrl": "https://github.com/MoonshotAI/Kimi-K3", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/kimi-k3-coding.jpg" },
+    { "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3", "screenshotUrl": "https://github.com/MoonshotAI/Kimi-K3", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/kimi-k3-mmmu-pro.jpg" },
+    { "sourceUrl": "https://arcprize.org/results/moonshot-kimi-k3", "screenshotUrl": "https://arcprize.org/results/moonshot-kimi-k3", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/kimi-k3-arc-agi-2.jpg" },
+    { "sourceUrl": "https://x.ai/news/grok-4-5", "screenshotUrl": "https://x.ai/news/grok-4-5", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/grok-4-5-deepswe-1-1.jpg" },
+    { "sourceUrl": "https://x.ai/news/grok-4-5", "screenshotUrl": "https://x.ai/news/grok-4-5", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/grok-4-5-swe-bench-pro.jpg" },
+    { "sourceUrl": "https://arcprize.org/results/xai-grok-4-5", "screenshotUrl": "https://arcprize.org/results/xai-grok-4-5", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/grok-4-5-arc.jpg" },
+    { "sourceUrl": "https://arcprize.org/results/anthropic-claude-opus-5", "screenshotUrl": "https://arcprize.org/results/anthropic-claude-opus-5", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/claude-opus-5-arc.jpg" },
+    { "sourceUrl": "https://www-cdn.anthropic.com/73ad94ca3c0502e75e46637cc62c8bd9532a7f2c/Claude%20Sonnet%205%20System%20Card.pdf", "screenshotUrl": "https://www-cdn.anthropic.com/73ad94ca3c0502e75e46637cc62c8bd9532a7f2c/Claude%20Sonnet%205%20System%20Card.pdf#page=115", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/claude-sonnet-5-swe-pro.jpg" }
   ],
   "models": [
     { "name": "GPT-5.6 Sol", "provider": "OpenAI", "familyTag": "GPT-5.6", "tags": ["coding", "multimodal", "reasoning"] },
     { "name": "GPT-5.6 Terra", "provider": "OpenAI", "familyTag": "GPT-5.6", "tags": ["coding", "multimodal", "reasoning"] },
     { "name": "GPT-5.6 Luna", "provider": "OpenAI", "familyTag": "GPT-5.6", "tags": ["coding", "multimodal", "reasoning"] },
-    { "name": "Claude Mythos 5", "provider": "Anthropic", "familyTag": "Claude Mythos 5", "tags": ["coding", "reasoning"] }
+    { "name": "Claude Mythos 5", "provider": "Anthropic", "familyTag": "Claude Mythos 5", "tags": ["coding", "reasoning"] },
+    { "name": "Kimi K3 (max)", "provider": "Moonshot AI", "familyTag": "Kimi K3", "tags": ["coding", "multimodal", "reasoning", "agents"] },
+    { "name": "Grok 4.5", "provider": "xAI", "familyTag": "Grok 4.5", "tags": ["coding", "multimodal", "reasoning", "agents"] },
+    { "name": "Claude Opus 5 (High)", "provider": "Anthropic", "familyTag": "Claude Opus 5", "tags": ["coding", "multimodal", "reasoning", "agents"] },
+    { "name": "Claude Sonnet 5 (Max)", "provider": "Anthropic", "familyTag": "Claude Sonnet 5", "tags": ["coding", "reasoning", "agents"] }
   ],
   "benches": [
     {
@@ -40,21 +60,35 @@
     { "modelName": "GPT-5.6 Terra", "benchSlug": "swe-bench-pro", "rawScore": 634, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
     { "modelName": "GPT-5.6 Luna", "benchSlug": "swe-bench-pro", "rawScore": 627, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
     { "modelName": "Claude Mythos 5", "benchSlug": "swe-bench-pro", "rawScore": 803, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
-    { "modelName": "GPT-5.6 Sol", "benchSlug": "mmmu-pro", "rawScore": 84.6, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
-    { "modelName": "GPT-5.6 Terra", "benchSlug": "mmmu-pro", "rawScore": 82, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
-    { "modelName": "GPT-5.6 Luna", "benchSlug": "mmmu-pro", "rawScore": 79.5, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "GPT-5.6 Sol", "benchSlug": "mmmu-pro", "rawScore": 83, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785707537671, "operation": "replace" },
+    { "modelName": "GPT-5.6 Terra", "benchSlug": "mmmu-pro", "rawScore": 80.7, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785707537671, "operation": "replace" },
+    { "modelName": "GPT-5.6 Luna", "benchSlug": "mmmu-pro", "rawScore": 78.4, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785707537671, "operation": "replace" },
     { "modelName": "GPT-5.6 Sol", "benchSlug": "arc-agi-3", "rawScore": 7.78, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
     { "modelName": "GPT-5.6 Terra", "benchSlug": "arc-agi-3", "rawScore": 0.8, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
     { "modelName": "GPT-5.6 Luna", "benchSlug": "arc-agi-3", "rawScore": 0.18, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
     { "modelName": "GPT-5.5", "benchSlug": "arc-agi-3", "rawScore": 0.43, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
     { "modelName": "Claude Opus 4.8", "benchSlug": "arc-agi-3", "rawScore": 1.5, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
-    { "modelName": "Gemini 3.1 Pro Preview", "benchSlug": "arc-agi-3", "rawScore": 0.42, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" }
+    { "modelName": "Gemini 3.1 Pro Preview", "benchSlug": "arc-agi-3", "rawScore": 0.42, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "Kimi K3 (max)", "benchSlug": "humanity-s-last-exam", "rawScore": 435, "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Kimi K3 (max)", "benchSlug": "aa-long-context-reasoning", "rawScore": 747, "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Kimi K3 (max)", "benchSlug": "deepswe", "rawScore": 675, "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Kimi K3 (max)", "benchSlug": "scicode", "rawScore": 587, "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Kimi K3 (max)", "benchSlug": "mmmu-pro", "rawScore": 81.6, "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Kimi K3 (max)", "benchSlug": "arc-agi-2", "rawScore": 604, "sourceUrl": "https://arcprize.org/results/moonshot-kimi-k3", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Grok 4.5", "benchSlug": "swe-bench-pro", "rawScore": 647, "sourceUrl": "https://x.ai/news/grok-4-5", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Grok 4.5", "benchSlug": "deepswe", "rawScore": 530, "sourceUrl": "https://x.ai/news/grok-4-5", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Grok 4.5", "benchSlug": "arc-agi-2", "rawScore": 526, "sourceUrl": "https://arcprize.org/results/xai-grok-4-5", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Grok 4.5", "benchSlug": "arc-agi-3", "rawScore": 0.3, "sourceUrl": "https://arcprize.org/results/xai-grok-4-5", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Claude Opus 5 (High)", "benchSlug": "arc-agi-2", "rawScore": 883, "sourceUrl": "https://arcprize.org/results/anthropic-claude-opus-5", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Claude Opus 5 (High)", "benchSlug": "arc-agi-3", "rawScore": 30.16, "sourceUrl": "https://arcprize.org/results/anthropic-claude-opus-5", "accessedAt": 1785707537671, "operation": "insert" },
+    { "modelName": "Claude Sonnet 5 (Max)", "benchSlug": "swe-bench-pro", "rawScore": 632, "sourceUrl": "https://www-cdn.anthropic.com/73ad94ca3c0502e75e46637cc62c8bd9532a7f2c/Claude%20Sonnet%205%20System%20Card.pdf", "accessedAt": 1785707537671, "operation": "insert" }
   ],
   "learnings": [
-      "The production database stores percentage-like values on each benchmark's declared scale: SWE-Bench Pro uses 0–1000, while MMMU-Pro and ARC-AGI-3 use 0–100.",
-    "Wide publisher tables may require multiple left/right screenshots for one source URL; all views must remain linked to the same canonical source.",
-    "Benchmark version names are semantic identities. Terminal-Bench 2.1 must not be mapped onto the existing Terminal-Bench Hard record.",
-    "Localized source redirects must preserve the canonical source URL while screenshot metadata records the URL actually displayed.",
-    "Reasoning effort or tool-mode qualifiers should be attached only when the source table explicitly specifies them."
+    "Every run must begin with a top-row diff for every tracked benchmark: compare the leading models in each official source with the complete production model inventory.",
+    "Run an independent recent-release sweep across major providers even when those releases are absent from the first source encountered.",
+    "Evaluation protocol dimensions such as tool mode, reasoning effort, harness, and dataset version must be recorded and must not be mixed in one leaderboard.",
+    "MMMU-Pro is tracked in the no-tools mode unless a separately named benchmark record explicitly identifies a tool-assisted protocol.",
+    "DeepSWE scores in this correction are specifically supported as v1.1 results; future rows must retain version evidence.",
+    "Terminal-Bench 2.1 must not be mapped onto the existing Terminal-Bench Hard record."
   ]
 }

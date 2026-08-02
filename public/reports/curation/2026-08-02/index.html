@@ -2,79 +2,79 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SupraBench curation report — 2 August 2026</title>
   <style>
-    :root { color-scheme: dark; --bg:#0b0d10; --card:#14181d; --line:#29313a; --text:#edf1f5; --muted:#aab4bf; --accent:#69d7b1; --warn:#f0bd68; }
-    * { box-sizing:border-box } body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,sans-serif }
-    main { width:min(1080px,calc(100% - 32px)); margin:48px auto 80px } a { color:var(--accent) }
-    header,section { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:24px; margin:18px 0 }
-    h1,h2 { line-height:1.2 } h1 { margin-top:0 } .meta,.note { color:var(--muted) }
-    .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px }
-    .stat { border:1px solid var(--line); border-radius:12px; padding:14px } .stat strong { display:block; font-size:1.8rem; color:var(--accent) }
-    table { width:100%; border-collapse:collapse } th,td { text-align:left; border-bottom:1px solid var(--line); padding:10px 8px; vertical-align:top }
-    img { width:100%; height:auto; border:1px solid var(--line); border-radius:10px; margin-top:12px }
-    code { background:#090b0e; padding:2px 6px; border-radius:5px } .deferred { border-left:4px solid var(--warn) }
-    @media(max-width:700px){ .stats{grid-template-columns:1fr 1fr} section,header{padding:18px} table{font-size:.9rem} }
+    :root{color-scheme:dark;--bg:#0b0d10;--card:#14181d;--line:#29313a;--text:#edf1f5;--muted:#aab4bf;--accent:#69d7b1;--warn:#f0bd68}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,sans-serif}main{width:min(1080px,calc(100% - 32px));margin:48px auto 80px}a{color:var(--accent)}header,section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;margin:18px 0}h1,h2{line-height:1.2}h1{margin-top:0}.meta,.note{color:var(--muted)}.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.stat{border:1px solid var(--line);border-radius:12px;padding:14px}.stat strong{display:block;font-size:1.8rem;color:var(--accent)}table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px 8px;vertical-align:top}img{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;margin-top:12px}code{background:#090b0e;padding:2px 6px;border-radius:5px}.deferred{border-left:4px solid var(--warn)}@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}section,header{padding:18px}table{font-size:.9rem}}
   </style>
 </head>
-<body>
-<main>
+<body><main>
   <header>
-    <p class="meta"><a href="../">All curation runs</a> · Run 2026-08-02 · generated 23:21 CEST</p>
+    <p class="meta"><a href="../">All curation runs</a> · Run 2026-08-02 · corrected 23:52 CEST</p>
     <h1>SupraBench curation report</h1>
-    <p>First evidence-backed maintenance run. Every accepted score below was checked against the visible publisher page and tied to the corresponding screenshot.</p>
-    <div class="stats">
-      <div class="stat"><strong>4</strong>models added</div><div class="stat"><strong>1</strong>benchmark added</div>
-      <div class="stat"><strong>13</strong>scores added</div><div class="stat"><strong>6</strong>source screenshots</div>
-    </div>
+    <p>This report includes a same-day coverage correction. The first pass was too narrowly anchored on the GPT-5.6 launch and did not diff the top rows of every tracked benchmark against the production model inventory.</p>
+    <div class="stats"><div class="stat"><strong>8</strong>models added</div><div class="stat"><strong>1</strong>benchmark added</div><div class="stat"><strong>26</strong>scores present</div><div class="stat"><strong>3</strong>scores corrected</div><div class="stat"><strong>15</strong>screenshots</div></div>
   </header>
+
   <section>
-    <h2>Accepted changes</h2>
-    <p>Added GPT-5.6 Sol, Terra, and Luna plus Claude Mythos 5. Added ARC-AGI-3 as a separate interactive-reasoning benchmark.</p>
-    <table>
-      <thead><tr><th>Benchmark</th><th>Model</th><th>Published result</th><th>Stored raw score</th></tr></thead>
-      <tbody>
-        <tr><td>SWE-Bench Pro</td><td>GPT-5.6 Sol</td><td>64.6%</td><td>646 on 0–1000 scale</td></tr>
-        <tr><td>SWE-Bench Pro</td><td>GPT-5.6 Terra</td><td>63.4%</td><td>634 on 0–1000 scale</td></tr>
-        <tr><td>SWE-Bench Pro</td><td>GPT-5.6 Luna</td><td>62.7%</td><td>627 on 0–1000 scale</td></tr>
-        <tr><td>SWE-Bench Pro</td><td>Claude Mythos 5</td><td>80.3%</td><td>803 on 0–1000 scale</td></tr>
-        <tr><td>MMMU-Pro (with tools)</td><td>GPT-5.6 Sol / Terra / Luna</td><td>84.6 / 82.0 / 79.5</td><td>84.6 / 82.0 / 79.5</td></tr>
-        <tr><td>ARC-AGI-3</td><td>GPT-5.6 Sol / Terra / Luna</td><td>7.78 / 0.80 / 0.18</td><td>same</td></tr>
-        <tr><td>ARC-AGI-3</td><td>GPT-5.5 / Claude Opus 4.8 / Gemini 3.1 Pro Preview</td><td>0.43 / 1.50 / 0.42</td><td>same</td></tr>
-      </tbody>
-    </table>
-    <p class="note">Source: <a href="https://openai.com/index/gpt-5-6/">OpenAI, Introducing GPT-5.6</a>. The publisher redirected the visible browser to its German locale; the canonical URL remains attached to the database rows.</p>
-    <a href="screenshots/openai-gpt-5-6-benchmarks.jpg"><img src="screenshots/openai-gpt-5-6-benchmarks.jpg" alt="Visible OpenAI coding benchmark table, left columns"></a>
-    <a href="screenshots/openai-gpt-5-6-coding-right.jpg"><img src="screenshots/openai-gpt-5-6-coding-right.jpg" alt="Visible OpenAI coding benchmark table, right columns"></a>
-    <a href="screenshots/openai-gpt-5-6-mmmu-pro.jpg"><img src="screenshots/openai-gpt-5-6-mmmu-pro.jpg" alt="Visible OpenAI MMMU-Pro table"></a>
-    <a href="screenshots/openai-gpt-5-6-arc-agi-3.jpg"><img src="screenshots/openai-gpt-5-6-arc-agi-3.jpg" alt="Visible OpenAI ARC-AGI-3 table, left columns"></a>
-    <a href="screenshots/openai-gpt-5-6-arc-agi-3-right.jpg"><img src="screenshots/openai-gpt-5-6-arc-agi-3-right.jpg" alt="Visible OpenAI ARC-AGI-3 table, right columns"></a>
+    <h2>Coverage correction</h2>
+    <p>A top-row inventory diff found four additional frontier models that were missing completely. Only values with matching benchmark versions and visible primary-source evidence were accepted.</p>
+    <table><thead><tr><th>Model</th><th>Accepted results</th><th>Stored values</th><th>Protocol</th></tr></thead><tbody>
+      <tr><td>Kimi K3 (max)</td><td>HLE 43.5%; AA-LCR 74.7%; DeepSWE 67.5%; SciCode 58.7%; MMMU-Pro 81.6%; ARC-AGI-2 60.4%</td><td>435; 747; 675; 587; 81.6; 604</td><td>No-tools values for HLE/MMMU-Pro; max effort for ARC-AGI-2; DeepSWE v1.1</td></tr>
+      <tr><td>Grok 4.5</td><td>SWE-Bench Pro 64.7%; DeepSWE 1.1 53%; ARC-AGI-2 52.6%; ARC-AGI-3 0.30%</td><td>647; 530; 526; 0.30</td><td>xAI published configuration; ARC rows use High reasoning</td></tr>
+      <tr><td>Claude Opus 5 (High)</td><td>ARC-AGI-2 88.3%; ARC-AGI-3 30.16%</td><td>883; 30.16</td><td>Verified High reasoning variant</td></tr>
+      <tr><td>Claude Sonnet 5 (Max)</td><td>SWE-Bench Pro 63.2%</td><td>632</td><td>System-card standard configuration: adaptive thinking at max effort, five-trial average</td></tr>
+    </tbody></table>
   </section>
+
   <section>
-    <h2>Why ARC-AGI-3 was added</h2>
-    <p>The official competition describes ARC-AGI-3 as an interactive benchmark in which an agent must explore unfamiliar environments, infer their dynamics and goals, and act efficiently. The active 2026 competition, technical report, and public toolkit make it sufficiently relevant and reproducible to track as its own benchmark.</p>
-    <p>Sources: <a href="https://arcprize.org/competitions/2026/arc-agi-3">competition page</a>, <a href="https://arcprize.org/media/ARC_AGI_3_Technical_Report.pdf">technical report</a>, and <a href="https://github.com/arcprize/ARC-AGI">public repository</a>.</p>
-    <a href="screenshots/arc-agi-3-official.jpg"><img src="screenshots/arc-agi-3-official.jpg" alt="Visible ARC Prize explanation of what ARC-AGI-3 tests"></a>
+    <h2>Protocol correction</h2>
+    <p>The first pass mixed GPT-5.6 tool-assisted MMMU-Pro values into a leaderboard otherwise represented as no-tools. The three rows are explicitly replaced with the newer, protocol-compatible values: Sol <strong>83.0</strong>, Terra <strong>80.7</strong>, and Luna <strong>78.4</strong>. Tool-assisted results remain visible in the source screenshot but are not stored in this benchmark record.</p>
   </section>
+
+  <section>
+    <h2>Original accepted changes retained</h2>
+    <p>GPT-5.6 Sol, Terra, Luna, and Claude Mythos 5 remain added. Their SWE-Bench Pro scores are 646, 634, 627, and 803 on the 0–1000 scale. ARC-AGI-3 remains a separate 0–100 benchmark with the previously accepted GPT-5.6, GPT-5.5, Claude Opus 4.8, and Gemini 3.1 Pro Preview results.</p>
+    <p>Sources: <a href="https://openai.com/index/gpt-5-6/">OpenAI GPT-5.6</a>, <a href="https://arcprize.org/competitions/2026/arc-agi-3">ARC-AGI-3 competition</a>, <a href="https://arcprize.org/media/ARC_AGI_3_Technical_Report.pdf">technical report</a>, and <a href="https://github.com/arcprize/ARC-AGI">repository</a>.</p>
+    <a href="screenshots/openai-gpt-5-6-benchmarks.jpg"><img src="screenshots/openai-gpt-5-6-benchmarks.jpg" alt="OpenAI GPT-5.6 benchmark table"></a>
+    <a href="screenshots/openai-gpt-5-6-coding-right.jpg"><img src="screenshots/openai-gpt-5-6-coding-right.jpg" alt="OpenAI GPT-5.6 coding table right side"></a>
+    <a href="screenshots/openai-gpt-5-6-mmmu-pro.jpg"><img src="screenshots/openai-gpt-5-6-mmmu-pro.jpg" alt="OpenAI MMMU-Pro no-tools and with-tools rows"></a>
+    <a href="screenshots/openai-gpt-5-6-arc-agi-3.jpg"><img src="screenshots/openai-gpt-5-6-arc-agi-3.jpg" alt="OpenAI ARC-AGI-3 table left side"></a>
+    <a href="screenshots/openai-gpt-5-6-arc-agi-3-right.jpg"><img src="screenshots/openai-gpt-5-6-arc-agi-3-right.jpg" alt="OpenAI ARC-AGI-3 table right side"></a>
+    <a href="screenshots/arc-agi-3-official.jpg"><img src="screenshots/arc-agi-3-official.jpg" alt="ARC Prize explanation of ARC-AGI-3"></a>
+  </section>
+
+  <section>
+    <h2>Kimi K3 evidence</h2>
+    <p>Sources: <a href="https://github.com/MoonshotAI/Kimi-K3">Moonshot AI model card</a> and <a href="https://arcprize.org/results/moonshot-kimi-k3">ARC Prize verified results</a>.</p>
+    <a href="screenshots/kimi-k3-reasoning.jpg"><img src="screenshots/kimi-k3-reasoning.jpg" alt="Kimi K3 reasoning benchmark table"></a>
+    <a href="screenshots/kimi-k3-coding.jpg"><img src="screenshots/kimi-k3-coding.jpg" alt="Kimi K3 coding benchmark table"></a>
+    <a href="screenshots/kimi-k3-mmmu-pro.jpg"><img src="screenshots/kimi-k3-mmmu-pro.jpg" alt="Kimi K3 MMMU-Pro table"></a>
+    <a href="screenshots/kimi-k3-arc-agi-2.jpg"><img src="screenshots/kimi-k3-arc-agi-2.jpg" alt="Verified Kimi K3 ARC scores"></a>
+  </section>
+
+  <section>
+    <h2>Grok 4.5 evidence</h2>
+    <p>Sources: <a href="https://x.ai/news/grok-4-5">xAI launch results</a> and <a href="https://arcprize.org/results/xai-grok-4-5">ARC Prize verified results</a>.</p>
+    <a href="screenshots/grok-4-5-deepswe-1-1.jpg"><img src="screenshots/grok-4-5-deepswe-1-1.jpg" alt="Grok 4.5 DeepSWE 1.1 result"></a>
+    <a href="screenshots/grok-4-5-swe-bench-pro.jpg"><img src="screenshots/grok-4-5-swe-bench-pro.jpg" alt="Grok 4.5 SWE-Bench Pro result"></a>
+    <a href="screenshots/grok-4-5-arc.jpg"><img src="screenshots/grok-4-5-arc.jpg" alt="Verified Grok 4.5 ARC scores"></a>
+  </section>
+
+  <section>
+    <h2>Claude 5 evidence</h2>
+    <p>Sources: <a href="https://arcprize.org/results/anthropic-claude-opus-5">ARC Prize verified Claude Opus 5 results</a> and the <a href="https://www-cdn.anthropic.com/73ad94ca3c0502e75e46637cc62c8bd9532a7f2c/Claude%20Sonnet%205%20System%20Card.pdf">Claude Sonnet 5 system card</a>.</p>
+    <a href="screenshots/claude-opus-5-arc.jpg"><img src="screenshots/claude-opus-5-arc.jpg" alt="Verified Claude Opus 5 ARC scores"></a>
+    <a href="screenshots/claude-sonnet-5-swe-pro.jpg"><img src="screenshots/claude-sonnet-5-swe-pro.jpg" alt="Claude Sonnet 5 SWE-Bench Pro system-card result"></a>
+  </section>
+
   <section class="deferred">
     <h2>Checked, but deliberately not written</h2>
-    <ul>
-      <li><strong>Terminal-Bench 2.1:</strong> not mapped to the existing <em>Terminal-Bench Hard</em> record because those names identify different benchmark versions.</li>
-      <li><strong>DeepSWE v1.1:</strong> deferred until the existing unversioned SupraBench record can be confirmed as exactly the same version.</li>
-      <li><strong>AIR-BENCH Live, AGC-Bench, and ProgramBench:</strong> monitored as discovery candidates; no entry until stable public results and stronger adoption/reproducibility evidence are available.</li>
-    </ul>
+    <ul><li><strong>Terminal-Bench 2.1:</strong> not mapped to Terminal-Bench Hard because they are distinct versions.</li><li><strong>Claude Opus 5 (Max):</strong> not created as a second sparse model variant; ARC-AGI-3 was not evaluated at Max.</li><li><strong>Newer niche release candidates:</strong> retained as leads until an exact overlap with a tracked benchmark and primary-source protocol evidence are available.</li></ul>
   </section>
+
   <section>
-    <h2>Controls and learnings</h2>
-    <ul>
-      <li>The machine-readable batch is in <a href="manifest.json"><code>manifest.json</code></a>.</li>
-      <li>Scores are validated against each benchmark's declared numeric scale.</li>
-      <li>Every accepted score source and new benchmark URL requires stored screenshot evidence.</li>
-      <li>Repeated runs are idempotent; changing a curated value requires an explicit, newer replacement.</li>
-      <li>Future runs must match versions exactly and record localized redirects separately from canonical sources.</li>
-    </ul>
+    <h2>Controls and next-run learning</h2>
+    <ul><li>The reviewed batch is in <a href="manifest.json"><code>manifest.json</code></a>.</li><li>Manifest validation passed with 8 models, 1 benchmark, 26 scores, 15 screenshots, and 11 sources; all 108 automated tests passed.</li><li>The reviewed production plan created exactly 4 models and 13 scores and explicitly replaced exactly 3 MMMU-Pro rows. The second dry-run reported all 26 batch rows unchanged.</li><li>Post-apply mirror verification reported 521 Convex scores, 521 D1 scores, and drift 0.</li><li>Every accepted score is tied to a screenshot that visibly contains the row or table.</li><li>Every future run must start with a top-row diff for all tracked benchmark sources, followed by an independent provider release sweep.</li><li>Tool mode, reasoning effort, harness, and dataset version are compatibility dimensions, not incidental notes.</li></ul>
   </section>
-</main>
-</body>
-</html>
+</main></body></html>

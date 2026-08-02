@@ -24,11 +24,17 @@ the public website, then preserve concrete learnings for the next run.
    `scoresWorker:verifyMirror`. Do not continue to writes if access fails or D1
    already has unexplained drift.
 3. Inventory current production models, benchmarks, score scales, source URLs,
-   and coverage gaps. Never infer a benchmark version from a similar name.
-4. Research new models, new results for existing benchmarks, and popular new
-   benchmarks using normal web research. Prefer original publisher pages,
-   official leaderboards, papers, repositories, and benchmark documentation.
-   Treat third-party roundups as discovery leads, not final score evidence.
+   and coverage gaps. For **every tracked benchmark**, inspect the current top
+   rows in its official source and diff those model names against the complete
+   production model inventory. This top-row diff is mandatory even when the
+   previous run found no changes. Never infer a benchmark version from a
+   similar name.
+4. Independently sweep recent releases from all major model providers, then
+   research new results for existing benchmarks and popular new benchmarks.
+   Do not let the first release or leaderboard encountered define the search
+   space. Prefer original publisher pages, official leaderboards, papers,
+   repositories, and benchmark documentation. Treat third-party roundups as
+   discovery leads, not final score evidence.
 5. Open every source used for an accepted score or benchmark in the visible
    in-app browser. Visually locate the exact model name, benchmark version,
    evaluation mode, numeric value, scale, and source URL. Capture one or more
@@ -40,6 +46,10 @@ the public website, then preserve concrete learnings for the next run.
    contamination, and reproducible from public documentation or tooling.
    Document candidates that are promising but not ready. Do not write any
    ambiguous, contradictory, inaccessible, or version-mismatched item.
+   Record protocol dimensions (including benchmark version, tool mode,
+   reasoning effort, and harness) for every candidate. Never mix incompatible
+   protocols in the same leaderboard; create a clearly separate benchmark or
+   defer the result instead.
 7. Create `public/reports/curation/YYYY-MM-DD/index.html`, `manifest.json`, and
    `screenshots/` using schema version 1. The HTML report must list all sources,
    exact accepted changes, stored scale conversions, deferrals and reasons,
