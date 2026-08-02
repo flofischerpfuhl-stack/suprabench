@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-08-02",
+  "generatedAt": "2026-08-02T23:21:07.4971230+02:00",
+  "reportPath": "public/reports/curation/2026-08-02/index.html",
+  "sources": [
+    { "title": "OpenAI — Introducing GPT-5.6", "url": "https://openai.com/index/gpt-5-6/", "accessedAt": "2026-08-02T23:21:07.4971230+02:00" },
+    { "title": "ARC Prize — ARC-AGI-3 competition", "url": "https://arcprize.org/competitions/2026/arc-agi-3", "accessedAt": "2026-08-02T23:21:07.4971230+02:00" },
+    { "title": "ARC Prize — ARC-AGI-3 technical report", "url": "https://arcprize.org/media/ARC_AGI_3_Technical_Report.pdf", "accessedAt": "2026-08-02T23:21:07.4971230+02:00" },
+    { "title": "ARC Prize — ARC-AGI repository", "url": "https://github.com/arcprize/ARC-AGI", "accessedAt": "2026-08-02T23:21:07.4971230+02:00" }
+  ],
+  "evidence": [
+    { "sourceUrl": "https://openai.com/index/gpt-5-6/", "screenshotUrl": "https://openai.com/de-DE/index/gpt-5-6/", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/openai-gpt-5-6-benchmarks.jpg" },
+    { "sourceUrl": "https://openai.com/index/gpt-5-6/", "screenshotUrl": "https://openai.com/de-DE/index/gpt-5-6/", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/openai-gpt-5-6-coding-right.jpg" },
+    { "sourceUrl": "https://openai.com/index/gpt-5-6/", "screenshotUrl": "https://openai.com/de-DE/index/gpt-5-6/", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/openai-gpt-5-6-mmmu-pro.jpg" },
+    { "sourceUrl": "https://openai.com/index/gpt-5-6/", "screenshotUrl": "https://openai.com/de-DE/index/gpt-5-6/", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/openai-gpt-5-6-arc-agi-3.jpg" },
+    { "sourceUrl": "https://openai.com/index/gpt-5-6/", "screenshotUrl": "https://openai.com/de-DE/index/gpt-5-6/", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/openai-gpt-5-6-arc-agi-3-right.jpg" },
+    { "sourceUrl": "https://arcprize.org/competitions/2026/arc-agi-3", "screenshotUrl": "https://arcprize.org/competitions/2026/arc-agi-3", "screenshotPath": "public/reports/curation/2026-08-02/screenshots/arc-agi-3-official.jpg" }
+  ],
+  "models": [
+    { "name": "GPT-5.6 Sol", "provider": "OpenAI", "familyTag": "GPT-5.6", "tags": ["coding", "multimodal", "reasoning"] },
+    { "name": "GPT-5.6 Terra", "provider": "OpenAI", "familyTag": "GPT-5.6", "tags": ["coding", "multimodal", "reasoning"] },
+    { "name": "GPT-5.6 Luna", "provider": "OpenAI", "familyTag": "GPT-5.6", "tags": ["coding", "multimodal", "reasoning"] },
+    { "name": "Claude Mythos 5", "provider": "Anthropic", "familyTag": "Claude Mythos 5", "tags": ["coding", "reasoning"] }
+  ],
+  "benches": [
+    {
+      "name": "ARC-AGI-3",
+      "slug": "arc-agi-3",
+      "description": "ARC-AGI-3 is an interactive reasoning benchmark in which agents must explore novel environments without instructions, infer goals and dynamics, and plan and execute actions efficiently.",
+      "url": "https://arcprize.org/competitions/2026/arc-agi-3",
+      "scaleMin": 0,
+      "scaleMax": 100,
+      "tags": ["reasoning", "agentic", "interactive"],
+      "rating": { "relevance": 5, "contamination": 5, "discriminability": 5, "reproducibility": 4, "difficulty": 5 }
+    }
+  ],
+  "scores": [
+    { "modelName": "GPT-5.6 Sol", "benchSlug": "swe-bench-pro", "rawScore": 646, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "GPT-5.6 Terra", "benchSlug": "swe-bench-pro", "rawScore": 634, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "GPT-5.6 Luna", "benchSlug": "swe-bench-pro", "rawScore": 627, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "Claude Mythos 5", "benchSlug": "swe-bench-pro", "rawScore": 803, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "GPT-5.6 Sol", "benchSlug": "mmmu-pro", "rawScore": 84.6, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "GPT-5.6 Terra", "benchSlug": "mmmu-pro", "rawScore": 82, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "GPT-5.6 Luna", "benchSlug": "mmmu-pro", "rawScore": 79.5, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "GPT-5.6 Sol", "benchSlug": "arc-agi-3", "rawScore": 7.78, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "GPT-5.6 Terra", "benchSlug": "arc-agi-3", "rawScore": 0.8, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "GPT-5.6 Luna", "benchSlug": "arc-agi-3", "rawScore": 0.18, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "GPT-5.5", "benchSlug": "arc-agi-3", "rawScore": 0.43, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "Claude Opus 4.8", "benchSlug": "arc-agi-3", "rawScore": 1.5, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" },
+    { "modelName": "Gemini 3.1 Pro Preview", "benchSlug": "arc-agi-3", "rawScore": 0.42, "sourceUrl": "https://openai.com/index/gpt-5-6/", "accessedAt": 1785705667498, "operation": "insert" }
+  ],
+  "learnings": [
+      "The production database stores percentage-like values on each benchmark's declared scale: SWE-Bench Pro uses 0–1000, while MMMU-Pro and ARC-AGI-3 use 0–100.",
+    "Wide publisher tables may require multiple left/right screenshots for one source URL; all views must remain linked to the same canonical source.",
+    "Benchmark version names are semantic identities. Terminal-Bench 2.1 must not be mapped onto the existing Terminal-Bench Hard record.",
+    "Localized source redirects must preserve the canonical source URL while screenshot metadata records the URL actually displayed.",
+    "Reasoning effort or tool-mode qualifiers should be attached only when the source table explicitly specifies them."
+  ]
+}

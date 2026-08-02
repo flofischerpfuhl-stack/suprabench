@@ -7,6 +7,9 @@
     "dev": "npx convex dev",
     "deploy": "npx convex deploy",
     "check:tiers": "node scripts/check-tier-consistency.mjs",
+    "curation:validate": "node scripts/curation-run.mjs validate",
+    "curation:dry-run": "node scripts/curation-run.mjs dry-run",
+    "curation:apply": "node scripts/curation-run.mjs apply",
     "test": "cd tests/convex && npm test",
     "test:install": "cd tests/convex && npm install"
   },

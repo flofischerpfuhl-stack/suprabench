@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SupraBench curation report — 2 August 2026</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0b0d10; --card:#14181d; --line:#29313a; --text:#edf1f5; --muted:#aab4bf; --accent:#69d7b1; --warn:#f0bd68; }
+    * { box-sizing:border-box } body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,sans-serif }
+    main { width:min(1080px,calc(100% - 32px)); margin:48px auto 80px } a { color:var(--accent) }
+    header,section { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:24px; margin:18px 0 }
+    h1,h2 { line-height:1.2 } h1 { margin-top:0 } .meta,.note { color:var(--muted) }
+    .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px }
+    .stat { border:1px solid var(--line); border-radius:12px; padding:14px } .stat strong { display:block; font-size:1.8rem; color:var(--accent) }
+    table { width:100%; border-collapse:collapse } th,td { text-align:left; border-bottom:1px solid var(--line); padding:10px 8px; vertical-align:top }
+    img { width:100%; height:auto; border:1px solid var(--line); border-radius:10px; margin-top:12px }
+    code { background:#090b0e; padding:2px 6px; border-radius:5px } .deferred { border-left:4px solid var(--warn) }
+    @media(max-width:700px){ .stats{grid-template-columns:1fr 1fr} section,header{padding:18px} table{font-size:.9rem} }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="meta"><a href="../">All curation runs</a> · Run 2026-08-02 · generated 23:21 CEST</p>
+    <h1>SupraBench curation report</h1>
+    <p>First evidence-backed maintenance run. Every accepted score below was checked against the visible publisher page and tied to the corresponding screenshot.</p>
+    <div class="stats">
+      <div class="stat"><strong>4</strong>models added</div><div class="stat"><strong>1</strong>benchmark added</div>
+      <div class="stat"><strong>13</strong>scores added</div><div class="stat"><strong>6</strong>source screenshots</div>
+    </div>
+  </header>
+  <section>
+    <h2>Accepted changes</h2>
+    <p>Added GPT-5.6 Sol, Terra, and Luna plus Claude Mythos 5. Added ARC-AGI-3 as a separate interactive-reasoning benchmark.</p>
+    <table>
+      <thead><tr><th>Benchmark</th><th>Model</th><th>Published result</th><th>Stored raw score</th></tr></thead>
+      <tbody>
+        <tr><td>SWE-Bench Pro</td><td>GPT-5.6 Sol</td><td>64.6%</td><td>646 on 0–1000 scale</td></tr>
+        <tr><td>SWE-Bench Pro</td><td>GPT-5.6 Terra</td><td>63.4%</td><td>634 on 0–1000 scale</td></tr>
+        <tr><td>SWE-Bench Pro</td><td>GPT-5.6 Luna</td><td>62.7%</td><td>627 on 0–1000 scale</td></tr>
+        <tr><td>SWE-Bench Pro</td><td>Claude Mythos 5</td><td>80.3%</td><td>803 on 0–1000 scale</td></tr>
+        <tr><td>MMMU-Pro (with tools)</td><td>GPT-5.6 Sol / Terra / Luna</td><td>84.6 / 82.0 / 79.5</td><td>84.6 / 82.0 / 79.5</td></tr>
+        <tr><td>ARC-AGI-3</td><td>GPT-5.6 Sol / Terra / Luna</td><td>7.78 / 0.80 / 0.18</td><td>same</td></tr>
+        <tr><td>ARC-AGI-3</td><td>GPT-5.5 / Claude Opus 4.8 / Gemini 3.1 Pro Preview</td><td>0.43 / 1.50 / 0.42</td><td>same</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Source: <a href="https://openai.com/index/gpt-5-6/">OpenAI, Introducing GPT-5.6</a>. The publisher redirected the visible browser to its German locale; the canonical URL remains attached to the database rows.</p>
+    <a href="screenshots/openai-gpt-5-6-benchmarks.jpg"><img src="screenshots/openai-gpt-5-6-benchmarks.jpg" alt="Visible OpenAI coding benchmark table, left columns"></a>
+    <a href="screenshots/openai-gpt-5-6-coding-right.jpg"><img src="screenshots/openai-gpt-5-6-coding-right.jpg" alt="Visible OpenAI coding benchmark table, right columns"></a>
+    <a href="screenshots/openai-gpt-5-6-mmmu-pro.jpg"><img src="screenshots/openai-gpt-5-6-mmmu-pro.jpg" alt="Visible OpenAI MMMU-Pro table"></a>
+    <a href="screenshots/openai-gpt-5-6-arc-agi-3.jpg"><img src="screenshots/openai-gpt-5-6-arc-agi-3.jpg" alt="Visible OpenAI ARC-AGI-3 table, left columns"></a>
+    <a href="screenshots/openai-gpt-5-6-arc-agi-3-right.jpg"><img src="screenshots/openai-gpt-5-6-arc-agi-3-right.jpg" alt="Visible OpenAI ARC-AGI-3 table, right columns"></a>
+  </section>
+  <section>
+    <h2>Why ARC-AGI-3 was added</h2>
+    <p>The official competition describes ARC-AGI-3 as an interactive benchmark in which an agent must explore unfamiliar environments, infer their dynamics and goals, and act efficiently. The active 2026 competition, technical report, and public toolkit make it sufficiently relevant and reproducible to track as its own benchmark.</p>
+    <p>Sources: <a href="https://arcprize.org/competitions/2026/arc-agi-3">competition page</a>, <a href="https://arcprize.org/media/ARC_AGI_3_Technical_Report.pdf">technical report</a>, and <a href="https://github.com/arcprize/ARC-AGI">public repository</a>.</p>
+    <a href="screenshots/arc-agi-3-official.jpg"><img src="screenshots/arc-agi-3-official.jpg" alt="Visible ARC Prize explanation of what ARC-AGI-3 tests"></a>
+  </section>
+  <section class="deferred">
+    <h2>Checked, but deliberately not written</h2>
+    <ul>
+      <li><strong>Terminal-Bench 2.1:</strong> not mapped to the existing <em>Terminal-Bench Hard</em> record because those names identify different benchmark versions.</li>
+      <li><strong>DeepSWE v1.1:</strong> deferred until the existing unversioned SupraBench record can be confirmed as exactly the same version.</li>
+      <li><strong>AIR-BENCH Live, AGC-Bench, and ProgramBench:</strong> monitored as discovery candidates; no entry until stable public results and stronger adoption/reproducibility evidence are available.</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Controls and learnings</h2>
+    <ul>
+      <li>The machine-readable batch is in <a href="manifest.json"><code>manifest.json</code></a>.</li>
+      <li>Scores are validated against each benchmark's declared numeric scale.</li>
+      <li>Every accepted score source and new benchmark URL requires stored screenshot evidence.</li>
+      <li>Repeated runs are idempotent; changing a curated value requires an explicit, newer replacement.</li>
+      <li>Future runs must match versions exactly and record localized redirects separately from canonical sources.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
