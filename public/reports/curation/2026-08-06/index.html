@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SupraBench curation report — 6 August 2026</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b0d10;--card:#14181d;--line:#29313a;--text:#edf1f5;--muted:#aab4bf;--accent:#69d7b1;--warn:#f0bd68}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,sans-serif}main{width:min(1120px,calc(100% - 32px));margin:48px auto 80px}a{color:var(--accent)}header,section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;margin:18px 0}h1,h2{line-height:1.2}h1{margin-top:0}.meta,.note{color:var(--muted)}.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.stat{border:1px solid var(--line);border-radius:12px;padding:14px}.stat strong{display:block;font-size:1.8rem;color:var(--accent)}table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px 8px;vertical-align:top}img{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;margin-top:12px}code{background:#090b0e;padding:2px 6px;border-radius:5px}.deferred{border-left:4px solid var(--warn)}@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}section,header{padding:18px}table{font-size:.9rem}}
+  </style>
+</head>
+<body><main>
+  <header>
+    <p class="meta">Evidence-backed production curation · 2026-08-06 · deployment <code>upbeat-clam-790</code></p>
+    <h1>Frontier coverage refresh across eight tracked benchmarks</h1>
+    <p>The mandatory top-row diff covered all 19 production benchmarks and the complete 134-model inventory. The reviewed batch adds four configuration/version-specific model records and 21 scores. No benchmark record is created, no existing score is silently overwritten, and no incompatible protocol is merged.</p>
+    <div class="stats"><div class="stat"><strong>19/19</strong>benchmarks checked</div><div class="stat"><strong>4</strong>models proposed</div><div class="stat"><strong>21</strong>scores proposed</div><div class="stat"><strong>0</strong>replacements</div><div class="stat"><strong>0</strong>pre-run drift</div></div>
+  </header>
+
+  <section>
+    <h2>Accepted changes and stored conversions</h2>
+    <p>Percentages on 0–1000 benchmarks are multiplied by ten. ARC-AGI-2 and HLE values follow their existing scales. DeepSWE uses the whole percentages visibly published in the v1.1 table, not hidden JSON precision.</p>
+    <table><thead><tr><th>Benchmark</th><th>Models</th><th>Visible values</th><th>Stored values</th><th>Protocol</th></tr></thead><tbody>
+      <tr><td>APEX-Agents-AA</td><td>Kimi K3 (max); GPT-5.6 Terra</td><td>41.3%; 38.9%</td><td>413; 389</td><td>AA Pass@1, Stirrup harness; max effort shown</td></tr>
+      <tr><td>DeepSWE v1.1</td><td>Claude Opus 5 (Max); GPT-5.6 Sol/Terra/Luna; Claude Sonnet 5 (Max); DeepSeek V4 Flash (Max); Muse Spark 1.1</td><td>74%; 73%; 70%; 67%; 54%; 53%; 53%</td><td>740; 730; 700; 670; 540; 530; 530</td><td>113 tasks, mini-swe-agent; displayed effort per row</td></tr>
+      <tr><td>SWE-Bench Pro</td><td>Muse Spark 1.1</td><td>61.50%</td><td>615</td><td>Public dataset, mini-swe-agent, uncapped cost, 250-turn limit</td></tr>
+      <tr><td>Terminal-Bench Hard</td><td>GPT-5.6 Sol; GPT-5.6 Terra</td><td>65.9%; 62.9%</td><td>659; 629</td><td>AA Hard subset; Sol max, Terra xhigh</td></tr>
+      <tr><td>Humanity's Last Exam</td><td>Claude Opus 5 adaptive max; adaptive xhigh</td><td>52.6%; 52.5%</td><td>526; 525</td><td>AA text-only HLE, adaptive reasoning at stated effort</td></tr>
+      <tr><td>EnigmaEval</td><td>Claude Fable 5 high; GPT-5.6 Sol high; Gemini 3.1 Pro high; Gemini 3.5 Flash high; Claude Opus 4.8 xhigh</td><td>39.28%; 37.12%; 36.78%; 25.41%; 23.51%</td><td>392.8; 371.2; 367.8; 254.1; 235.1</td><td>Pass@1, 95% CI, open-source July 2026 dataset</td></tr>
+      <tr><td>ARC-AGI-2</td><td>GPT-5.6 Sol</td><td>92.5%</td><td>925</td><td>ARC Prize verified, Max reasoning</td></tr>
+      <tr><td>TextQuests</td><td>GPT-5.6 Sol</td><td>51.5%</td><td>515</td><td>No Clues progress; With Clues is not mixed</td></tr>
+    </tbody></table>
+  </section>
+
+  <section>
+    <h2>Visible evidence</h2>
+    <p><a href="https://artificialanalysis.ai/evaluations/apex-agents-aa">APEX-Agents-AA source</a></p><a href="screenshots/apex-agents-aa-top.png"><img src="screenshots/apex-agents-aa-top.png" alt="APEX Kimi K3 and GPT-5.6 Terra rows"></a>
+    <p><a href="https://deepswe.datacurve.ai/">DeepSWE v1.1 source</a></p><a href="screenshots/deepswe-v1-1-top.png"><img src="screenshots/deepswe-v1-1-top.png" alt="DeepSWE v1.1 date and benchmark version"></a><a href="screenshots/deepswe-v1-1-score-rows-1.png"><img src="screenshots/deepswe-v1-1-score-rows-1.png" alt="DeepSWE v1.1 accepted rows and protocols"></a>
+    <p><a href="https://labs.scale.com/leaderboard/swe_bench_pro_public">SWE-Bench Pro source</a></p><a href="screenshots/swe-bench-pro-muse-spark-1-1.png"><img src="screenshots/swe-bench-pro-muse-spark-1-1.png" alt="SWE-Bench Pro Muse Spark 1.1 score"></a>
+    <p><a href="https://artificialanalysis.ai/evaluations/terminalbench-hard">Terminal-Bench Hard source</a></p><a href="screenshots/terminal-bench-hard-score-card.png"><img src="screenshots/terminal-bench-hard-score-card.png" alt="Terminal-Bench Hard GPT-5.6 rows"></a>
+    <p><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">Humanity's Last Exam source</a></p><a href="screenshots/humanitys-last-exam-opus-5-score-card-final.png"><img src="screenshots/humanitys-last-exam-opus-5-score-card-final.png" alt="HLE Claude Opus 5 adaptive scores"></a>
+    <p><a href="https://labs.scale.com/leaderboard/enigma_eval">EnigmaEval source</a></p><a href="screenshots/enigmaeval-top-five.png"><img src="screenshots/enigmaeval-top-five.png" alt="EnigmaEval top five rows"></a>
+    <p><a href="https://arcprize.org/results/openai-gpt-5-6">ARC Prize GPT-5.6 source</a></p><a href="screenshots/arc-agi-2-gpt-5-6-sol-max.png"><img src="screenshots/arc-agi-2-gpt-5-6-sol-max.png" alt="ARC verified GPT-5.6 Sol max ARC-AGI-2 score"></a>
+    <p><a href="https://www.textquests.ai/">TextQuests source</a></p><a href="screenshots/textquests-no-clues-top.png"><img src="screenshots/textquests-no-clues-top.png" alt="TextQuests no-clues leaderboard"></a>
+  </section>
+
+  <section>
+    <h2>Mandatory 19-benchmark top-row sweep</h2>
+    <table><thead><tr><th>Tracked benchmark</th><th>Official/current source outcome</th><th>Decision</th></tr></thead><tbody>
+      <tr><td>ARC-AGI-3</td><td>Competition and verified GPT-5.6 page checked; current production ARC-AGI-3 rows already cover the visible frontier configs.</td><td>No ARC-AGI-3 write.</td></tr>
+      <tr><td>APEX-Agents-AA</td><td>Kimi K3 max 41.3 and GPT-5.6 Terra max 38.9 were absent.</td><td>2 inserts.</td></tr>
+      <tr><td>Humanity's Last Exam</td><td>Fable adaptive max/fallback already present; Opus 5 adaptive max/xhigh absent.</td><td>2 inserts, 2 model configs.</td></tr>
+      <tr><td>SciCode</td><td>Fable adaptive max/fallback, Gemini 3.1 Pro and Kimi K3 top rows already covered.</td><td>No write.</td></tr>
+      <tr><td>Terminal-Bench Hard</td><td>Sol max and Terra xhigh absent; Sol medium is a second incompatible config for the same benchmark.</td><td>2 inserts; medium deferred.</td></tr>
+      <tr><td>SWE-Bench Pro</td><td>Muse Spark 1.1 at 61.50% is a new versioned top row.</td><td>1 model + 1 insert.</td></tr>
+      <tr><td>DeepSWE</td><td>v1.1 updated 6 August; seven compatible absent rows accepted.</td><td>7 inserts; conflicting/uncorroborated rows deferred.</td></tr>
+      <tr><td>SpatialViz</td><td>Paper v7 checked; no fresh compatible official leaderboard rows.</td><td>No write.</td></tr>
+      <tr><td>ARC-AGI-2</td><td>Verified GPT-5.6 Sol max 92.5% absent.</td><td>1 insert.</td></tr>
+      <tr><td>EnigmaEval</td><td>July open-source leaderboard top five absent under matching configurations.</td><td>5 inserts.</td></tr>
+      <tr><td>TextQuests</td><td>No Clues top table exposes GPT-5.6 Sol 51.5%; Fable identity is ambiguous.</td><td>1 insert; Fable deferred.</td></tr>
+      <tr><td>IntPhys 2</td><td>Official Meta publication remains a static benchmark result set.</td><td>No write.</td></tr>
+      <tr><td>ERQA</td><td>Official repository/harness checked; no fresh scored frontier table.</td><td>No write.</td></tr>
+      <tr><td>MMMU-Pro</td><td>Official page remains dated 5 September 2025; current no-tools production rows are newer and already covered.</td><td>No write.</td></tr>
+      <tr><td>SWE-bench Verified</td><td>Official bash-only page and release protocol checked; no compatible fresh visible row beyond current production inventory.</td><td>No write.</td></tr>
+      <tr><td>MindCube</td><td>Paper source checked; no fresh compatible official leaderboard rows.</td><td>No write.</td></tr>
+      <tr><td>AA Long Context Reasoning</td><td>Header says GPT-5.2 Codex xhigh 75.7%; FAQ says Kimi K3 74.7% is highest.</td><td>Deferred for source contradiction.</td></tr>
+      <tr><td>Tau2-Bench Telecom</td><td>Current top rows JT-35B-Flash and GLM-5.2 max at 99.1% are already present.</td><td>No write.</td></tr>
+      <tr><td>SkateBench</td><td>v2 top rows and protocol checked; production already matches.</td><td>No write.</td></tr>
+    </tbody></table>
+  </section>
+
+  <section class="deferred">
+    <h2>Deferred and deliberately not written</h2>
+    <ul>
+      <li><strong>DeepSWE Kimi K3 and Grok 4.5:</strong> newer source values would create a second curated source and change the effective score by averaging old and new evidence. A source-retirement migration is required first.</li>
+      <li><strong>Qwen 3.8 Max xhigh and Gemini 3.6 Flash high:</strong> visible on DeepSWE, but no reliable first-party release/model-card source was found in the provider sweep.</li>
+      <li><strong>Terminal-Bench 2.1:</strong> distinct from Terminal-Bench Hard and not merged. A separate benchmark remains a candidate, but the current 89% frontier is already close to saturation and configuration identity needs a dedicated review.</li>
+      <li><strong>TextQuests Claude Fable 5:</strong> the page omits the adaptive/effort identity used by existing production models. GPT-5.5's newer official-page score uses a different source identity from its existing curated row and is not duplicated.</li>
+      <li><strong>AA-LCR:</strong> contradictory top-model summaries on the same source page.</li>
+      <li><strong>AA-Briefcase, GDPval-AA v2, AutomationBench-AA, LAB-AA and EnterpriseOps-Gym-AA:</strong> promising discovery leads, but public reproducibility/adoption evidence is not yet sufficient for a new tracked benchmark.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Provider release sweep</h2>
+    <p>OpenAI, Anthropic, Google/DeepMind, SpaceXAI, Moonshot, DeepSeek, Qwen/Alibaba and major open-weight discovery paths were checked independently. No new provider release after the already tracked GPT-5.6, Claude 5, Grok 4.5 and Kimi K3 launches was accepted. Qwen 3.8 Max and Gemini 3.6 Flash remain leaderboard-only discovery leads.</p>
+    <p>Primary references included <a href="https://openai.com/index/gpt-5-6/">OpenAI GPT-5.6</a>, <a href="https://www.anthropic.com/news">Anthropic newsroom</a>, <a href="https://x.ai/news/grok-4-5">Grok 4.5</a>, <a href="https://api-docs.deepseek.com/updates/">DeepSeek changelog</a>, and <a href="https://github.com/MoonshotAI/Kimi-K3">Kimi K3</a>.</p>
+  </section>
+
+  <section>
+    <h2>Controls and publish checks</h2>
+    <ul>
+      <li>Pre-write production inventory: 134 models, 19 benchmarks, Convex 521, D1 521, drift 0.</li>
+      <li>Screenshot control on <code>https://example.com/</code> succeeded before research.</li>
+      <li id="validation-status">Local validation passed (4 models, 0 benchmarks, 21 scores, 9 evidence files, 27 sources); 108 tests passed; the first dry-run planned 4 model creates and 21 score inserts with no refreshes or replacements; apply matched that plan; Convex and D1 are aligned at 542/542 with drift 0; the post-apply dry-run reports all 21 scores unchanged; credential scan passed. Commit, push, and live checks are pending.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Next-run learnings</h2>
+    <ul><li>Run the static screenshot control first.</li><li>DeepSWE can change on the run date; re-check its visible update timestamp.</li><li>Never add a second source merely to simulate replacement.</li><li>Keep TextQuests No Clues separate from With Clues.</li><li>Do not merge Terminal-Bench 2.1 with Terminal-Bench Hard.</li><li>Require first-party release identity for Qwen 3.8 Max and Gemini 3.6 Flash.</li><li>Re-check AA-LCR's contradictory summaries before any write.</li></ul>
+  </section>
+</main></body></html>
