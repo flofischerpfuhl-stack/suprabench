@@ -91,8 +91,16 @@
     <ul>
       <li>Pre-write production inventory: 134 models, 19 benchmarks, Convex 521, D1 521, drift 0.</li>
       <li>Screenshot control on <code>https://example.com/</code> succeeded before research.</li>
-      <li id="validation-status">Local validation passed (4 models, 0 benchmarks, 21 scores, 9 evidence files, 27 sources); 108 tests passed; the first dry-run planned 4 model creates and 21 score inserts with no refreshes or replacements; apply matched that plan; Convex and D1 are aligned at 542/542 with drift 0; the post-apply dry-run reports all 21 scores unchanged; credential scan passed. Commit, push, and live checks are pending.</li>
+      <li id="validation-status">Local validation passed (4 models, 0 benchmarks, 21 scores, 9 source-evidence files, 27 sources); 108 tests passed; the first dry-run planned 4 model creates and 21 score inserts with no refreshes or replacements; apply matched that plan; Convex and D1 are aligned at 542/542 with drift 0; the post-apply dry-run reports all 21 scores unchanged; credential scan, fast-forward commit/push, public report deployment, and all 22 affected live-page checks passed.</li>
     </ul>
+  </section>
+
+  <section>
+    <h2>Post-publish live verification</h2>
+    <p>The public report loaded after the Pages deployment. Visible in-app browser checks passed for all 14 affected model pages and all eight affected benchmark pages: APEX-Agents-AA, ARC-AGI-2, DeepSWE, EnigmaEval, Humanity's Last Exam, SWE-Bench Pro, Terminal-Bench Hard, and TextQuests.</p>
+    <p><a href="https://suprabench.com/reports/curation/2026-08-06/">Public report</a></p><a href="screenshots/live-report.jpg"><img src="screenshots/live-report.jpg" alt="Published 2026-08-06 curation report"></a>
+    <p><a href="https://suprabench.com/#model/muse-spark-1-1">Representative affected model page: Muse Spark 1.1</a></p><a href="screenshots/live-model-muse-spark-1-1.jpg"><img src="screenshots/live-model-muse-spark-1-1.jpg" alt="Published Muse Spark 1.1 model page with DeepSWE and SWE-Bench Pro scores"></a>
+    <p><a href="https://suprabench.com/#bench/deepswe">Representative affected benchmark page: DeepSWE</a></p><a href="screenshots/live-benchmark-deepswe.jpg"><img src="screenshots/live-benchmark-deepswe.jpg" alt="Published DeepSWE benchmark page"></a>
   </section>
 
   <section>
