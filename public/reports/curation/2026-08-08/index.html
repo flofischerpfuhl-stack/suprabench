@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SupraBench curation report — 2026-08-08</title>
+  <style>
+    :root{color-scheme:light;--ink:#13202b;--muted:#586875;--line:#d9e2e8;--card:#f5f8fa;--accent:#0d6b57;--warn:#8a5a00}*{box-sizing:border-box}body{margin:0;font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:#fff}main{max-width:1120px;margin:auto;padding:42px 24px 80px}h1{font-size:clamp(2rem,5vw,4rem);line-height:1.02;margin:.2em 0}h2{margin-top:2.4rem;border-bottom:1px solid var(--line);padding-bottom:.35rem}h3{margin-top:1.6rem}.meta,.muted{color:var(--muted)}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin:24px 0}.stat{padding:18px;background:var(--card);border:1px solid var(--line);border-radius:12px}.stat strong{display:block;font-size:1.7rem;color:var(--accent)}table{width:100%;border-collapse:collapse;margin:14px 0 24px}th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line)}th{background:var(--card)}code{background:#eef3f5;padding:.1em .35em;border-radius:4px}.ok{color:var(--accent);font-weight:650}.defer{color:var(--warn);font-weight:650}.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}.shots figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}.shots img{width:100%;display:block}.shots figcaption{padding:10px 12px}.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:3px 9px;margin:2px 3px 2px 0}.sources li{margin:.35rem 0}a{color:#075ea8}.note{border-left:4px solid var(--accent);padding:12px 16px;background:var(--card)}
+  </style>
+</head>
+<body><main>
+  <header>
+    <p class="meta">Evidence-backed production curation · 2026-08-08 · deployment <code>upbeat-clam-790</code></p>
+    <h1>Muse Spark 1.2 and four leaderboard deltas</h1>
+    <p>The mandatory top-row diff covered all 19 production benchmarks against the complete 138-model inventory. The reviewed batch creates three configuration-specific model records and carries six insertions plus three explicit same-source replacements. No benchmark is created and no incompatible protocol or ambiguous configuration is merged.</p>
+    <div class="stats"><div class="stat"><strong>19/19</strong>benchmarks checked</div><div class="stat"><strong>3</strong>models proposed</div><div class="stat"><strong>9</strong>scores proposed</div><div class="stat"><strong>3</strong>replacements</div><div class="stat"><strong>0</strong>pre-run drift</div></div>
+  </header>
+
+  <section>
+    <h2>Accepted production changes</h2>
+    <p>All five affected benchmarks use a stored scale of 0–1000, so a displayed percentage is multiplied by ten. Examples: 83.3% → <code>833</code>, 55.5% → <code>555</code>, and 37.9% → <code>379</code>.</p>
+    <table><thead><tr><th>Operation</th><th>Model</th><th>Benchmark</th><th>Visible value</th><th>Stored raw</th><th>Evidence</th></tr></thead><tbody>
+      <tr><td>Insert</td><td>Muse Spark 1.2 (xhigh)</td><td>AA Long Context Reasoning</td><td>83.3%</td><td>833</td><td><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning">AA-LCR current score card</a></td></tr>
+      <tr><td>Insert</td><td>Muse Spark 1.1 (xhigh)</td><td>AA Long Context Reasoning</td><td>81.3%</td><td>813</td><td><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning">AA-LCR current score card</a></td></tr>
+      <tr><td>Replace 53.3%</td><td>Claude Fable 5 (adaptive max/fallback)</td><td>Humanity's Last Exam</td><td>55.5%</td><td>555</td><td><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">Artificial Analysis HLE</a></td></tr>
+      <tr><td>Replace 52.6%</td><td>Claude Opus 5 (adaptive max)</td><td>Humanity's Last Exam</td><td>54.9%</td><td>549</td><td><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">Artificial Analysis HLE</a></td></tr>
+      <tr><td>Replace 52.5%</td><td>Claude Opus 5 (adaptive xhigh)</td><td>Humanity's Last Exam</td><td>54.4%</td><td>544</td><td><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">Artificial Analysis HLE</a></td></tr>
+      <tr><td>Insert</td><td>Muse Spark 1.2 (xhigh)</td><td>Humanity's Last Exam</td><td>44%</td><td>440</td><td><a href="https://artificialanalysis.ai/articles/muse-spark-1-2">Muse Spark 1.2 analysis</a></td></tr>
+      <tr><td>Insert</td><td>Muse Spark 1.2 (xhigh)</td><td>SciCode</td><td>56%</td><td>560</td><td><a href="https://artificialanalysis.ai/articles/muse-spark-1-2">Muse Spark 1.2 analysis</a></td></tr>
+      <tr><td>Insert</td><td>GPT-5.6 Sol (medium)</td><td>Terminal-Bench Hard</td><td>62.9%</td><td>629</td><td><a href="https://artificialanalysis.ai/evaluations/terminalbench-hard">Terminal-Bench Hard score card</a></td></tr>
+      <tr><td>Insert</td><td>GPT-5.6 Terra</td><td>TextQuests, No Clues</td><td>37.9%</td><td>379</td><td><a href="https://www.textquests.ai/">TextQuests current table</a></td></tr>
+    </tbody></table>
+    <p class="note"><a href="https://developer.meta.com/ai/resources/blog/build-with-muse-code/">Meta's first-party release</a> identifies Muse Spark 1.2 as a coding-optimized, reasoning-capable model released on 5 August 2026 with a 1M-token context window. Artificial Analysis identifies the evaluated configuration as <strong>xhigh</strong>. The bare Muse Spark 1.1 record used by Scale remains distinct from the new AA <strong>Muse Spark 1.1 (xhigh)</strong> record.</p>
+  </section>
+
+  <section>
+    <h2>Mandatory 19-benchmark top-row sweep</h2>
+    <table><thead><tr><th>Tracked benchmark</th><th>Current official/source observation</th><th>Decision</th></tr></thead><tbody>
+      <tr><td>ARC-AGI-3</td><td>Competition, benchmark page, and verified leaderboard opened; no fresh compatible model row beyond current production coverage.</td><td>No write.</td></tr>
+      <tr><td>APEX-Agents-AA</td><td>Current summary remains Gemini 3.5 Flash (high) 47.1%, Kimi K3 (max) 41.3%, GPT-5.6 Terra (max) 38.9%.</td><td>No delta.</td></tr>
+      <tr><td>Humanity's Last Exam</td><td>AA now shows Fable adaptive max/fallback 55.5%, Opus adaptive max 54.9%, Opus adaptive xhigh 54.4%; its Muse 1.2 analysis shows 44%.</td><td class="ok">Three same-source replacements and one insert.</td></tr>
+      <tr><td>SciCode</td><td>The official project leaderboard remains its older direct-model table; AA's release evaluation shows Muse Spark 1.2 (xhigh) at 56% under the same SciCode protocol used by existing curated AA rows.</td><td class="ok">Insert Muse 1.2.</td></tr>
+      <tr><td>Terminal-Bench Hard</td><td>AA's separate Hard protocol shows GPT-5.6 Sol (max) 65.9%, Sol (medium) 62.9%, Terra (xhigh) 62.9%.</td><td class="ok">Insert only Sol medium.</td></tr>
+      <tr><td>SWE-Bench Pro</td><td>Scale's public, mini-SWE-agent table still leads with Muse Spark 1.1 at 61.50%; no new compatible row since the prior run.</td><td>No write.</td></tr>
+      <tr><td>DeepSWE</td><td>Visible update date changed to 7 August; top rows remain Opus 5 max 74% and GPT-5.6 Sol max 73%. Qwen3.8-Max xhigh 57% still lacks reliable first-party identity.</td><td>No write; Qwen deferred.</td></tr>
+      <tr><td>SpatialViz</td><td>Paper remains v7 (16 March 2026) with public code/data and no fresh compatible frontier table.</td><td>No write.</td></tr>
+      <tr><td>EnigmaEval</td><td>Scale still labels the table update 23 July; visible top five match production after the 6 August batch.</td><td>No delta.</td></tr>
+      <tr><td>ARC-AGI-2</td><td>ARC Prize benchmark and verified leaderboard opened; no fresh verified model row beyond the currently curated frontier.</td><td>No write.</td></tr>
+      <tr><td>TextQuests</td><td>No Clues now shows Fable 5 54.5%, GPT-5.6 Sol 51.5%, GPT-5.5 48.9%, and Terra 37.9%. The page globally says reasoning models use high settings but does not configure every row name.</td><td class="ok">Insert Terra; defer ambiguous/source-migration rows.</td></tr>
+      <tr><td>IntPhys 2</td><td>Meta's benchmark publication remains dated June 2025; no fresh official scored frontier table.</td><td>No write.</td></tr>
+      <tr><td>ERQA</td><td>Official repository and harness remain public; no fresh scored frontier table is exposed.</td><td>No write.</td></tr>
+      <tr><td>MMMU-Pro</td><td>Official page still says last updated 5 September 2025 and exposes no newer compatible top rows.</td><td>No write.</td></tr>
+      <tr><td>SWE-bench Verified</td><td>Official bash-only protocol and leaderboard checked; no clearly compatible fresh row absent from production.</td><td>No write.</td></tr>
+      <tr><td>MindCube</td><td>Paper remains v2 (31 March 2026) and offers no new compatible official leaderboard row.</td><td>No write.</td></tr>
+      <tr><td>AA Long Context Reasoning</td><td>The prior contradiction is resolved: both summary and FAQ identify Muse Spark 1.2 xhigh 83.3% as highest; Kimi K3 max is 82.7% and Muse Spark 1.1 xhigh is 81.3%.</td><td class="ok">Insert both Muse configs; defer Kimi source migration.</td></tr>
+      <tr><td>Tau2-Bench Telecom</td><td>Official research page and protocol checked; no fresh compatible scored row beyond production.</td><td>No write.</td></tr>
+      <tr><td>SkateBench</td><td>SkateBench v2 still shows Gemini 3.1 Pro as the visible leader and the current GPT-5.4 effort rows; production already covers them.</td><td>No delta.</td></tr>
+    </tbody></table>
+  </section>
+
+  <section>
+    <h2>Provider release sweep</h2>
+    <p><span class="pill">OpenAI</span> The newsroom's latest general model remains GPT-5.6; no new released text model after the prior run. <span class="pill">Anthropic</span> Opus 5 (24 July) remains the latest product model. <span class="pill">Google DeepMind</span> August news is scientific forecasting; no new general Gemini release. <span class="pill">SpaceXAI</span> Imagine Image 2.0 launched 7 August but is outside the tracked text-model scope. <span class="pill">DeepSeek</span> The latest API changelog entry remains the 31 July V4-Flash update. <span class="pill">Qwen</span> The current research feed does not provide a trustworthy first-party identity for the DeepSWE label Qwen3.8-Max. <span class="pill">Meta</span> Muse Spark 1.2 launched 5 August and is accepted with configuration-specific evidence. <span class="pill">Moonshot</span> Kimi K3 remains the current first-party release; the AA-LCR value is not written because the curated pair currently belongs to a different source identity.</p>
+  </section>
+
+  <section>
+    <h2>Deferred items and new benchmark candidates</h2>
+    <table><thead><tr><th>Candidate</th><th>Why it is not written</th></tr></thead><tbody>
+      <tr><td>Kimi K3 (max) — AA-LCR 82.7%</td><td>The existing curated pair uses the Moonshot repository as its source. Adding AA as a second source would average old and new evidence; source retirement needs an explicit migration path.</td></tr>
+      <tr><td>GPT-5.5 — TextQuests 48.9%</td><td>The existing curated pair uses <code>dashboard.safe.ai</code>; the current table is <code>www.textquests.ai</code>. Same source-migration blocker.</td></tr>
+      <tr><td>Claude Fable 5 — TextQuests 54.5%</td><td>Row name omits the exact Fable effort/fallback configuration. The page-wide “high reasoning” note is insufficient to distinguish existing Fable variants.</td></tr>
+      <tr><td>Gemini 3.5 Flash — TextQuests 35.7%</td><td>Row name omits the medium/high variant; no safe mapping.</td></tr>
+      <tr><td>Qwen3.8-Max — DeepSWE 57%</td><td>No reliable first-party release/model-card identity found in Qwen's current research feed.</td></tr>
+      <tr><td><a href="https://artificialanalysis.ai/evaluations/enterprise-ops-gym-aa">EnterpriseOps-Gym-AA</a></td><td>Promising, authoritative enterprise-workflow benchmark with live tool use, but still new. Re-check adoption, harness/version stability, public reproducibility, and score spread next run.</td></tr>
+      <tr><td><a href="https://arxiv.org/abs/2608.03070">AI Security Leaderboard / FAR.AI Minimal Standard</a></td><td>Public and relevant to safeguards, but it measures defense coverage rather than general model capability; fit with SupraBench dimensions needs methodology review.</td></tr>
+      <tr><td><a href="https://www.tbench.ai/leaderboard/terminal-bench/2.1">Terminal-Bench 2.1</a></td><td>Separate 89-task verified refresh; never map its results into Terminal-Bench Hard.</td></tr>
+    </tbody></table>
+  </section>
+
+  <section>
+    <h2>Visible evidence</h2>
+    <div class="shots">
+      <figure><a href="https://developer.meta.com/ai/resources/blog/build-with-muse-code/"><img src="screenshots/meta-muse-spark-1-2-release.png" alt="Meta Muse Spark 1.2 release"></a><figcaption>Meta's 5 August first-party Muse Spark 1.2 release.</figcaption></figure>
+      <figure><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning"><img src="screenshots/aa-lcr-top-complete.png" alt="AA-LCR top three"></a><figcaption>AA-LCR: Muse 1.2 xhigh 83.3%, Kimi K3 max 82.7%, Muse 1.1 xhigh 81.3%.</figcaption></figure>
+      <figure><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam"><img src="screenshots/humanitys-last-exam-score-card.png" alt="Humanity's Last Exam top scores"></a><figcaption>HLE current top three, including all three replacements.</figcaption></figure>
+      <figure><a href="https://artificialanalysis.ai/evaluations/terminalbench-hard"><img src="screenshots/terminal-bench-hard-score-card.png" alt="Terminal-Bench Hard top scores"></a><figcaption>Terminal-Bench Hard keeps max/medium/xhigh configurations distinct.</figcaption></figure>
+      <figure><a href="https://www.textquests.ai/"><img src="screenshots/textquests-top.png" alt="TextQuests upper leaderboard"></a><figcaption>TextQuests No Clues upper rows; ambiguous Fable and GPT-5.5 source-migration cases are visible but deferred.</figcaption></figure>
+      <figure><a href="https://www.textquests.ai/"><img src="screenshots/textquests-gpt-5-6-terra.png" alt="TextQuests full leaderboard including GPT-5.6 Terra"></a><figcaption>TextQuests No Clues explicitly shows GPT-5.6 Terra at 37.9% and the page-wide high-reasoning note.</figcaption></figure>
+      <figure><a href="https://artificialanalysis.ai/articles/muse-spark-1-2"><img src="screenshots/muse-spark-1-2-scicode-hle.png" alt="Muse Spark 1.2 SciCode and HLE values"></a><figcaption>Artificial Analysis reports Muse 1.2 xhigh at 56% SciCode and 44% HLE.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Controls and publish checks</h2>
+    <ul>
+      <li>Pre-write production inventory: 138 models, 19 benchmarks, Convex 542, D1 542, drift 0.</li>
+      <li>Filesystem lifecycle, HTTPS, Git remote, and the static <code>example.com</code> in-app-browser screenshot control passed before research.</li>
+      <li id="validation-status">Local validation passed (3 models, 0 benchmarks, 9 scores, 7 evidence files, 35 sources); 108/108 tests passed; the reviewed dry-run planned exactly 3 model creates, 6 score inserts, and 3 same-source replacements; production apply matched that plan; Convex and D1 are aligned at 548/548 with drift 0; the post-apply dry-run reports all 9 scores unchanged; the credential scan is clean. Fast-forward push, Pages deployment, and visible live-page verification remain pending.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Sources</h2>
+    <p>The complete machine-readable source list, access timestamps, accepted batch, and screenshot mapping are in <a href="manifest.json">manifest.json</a>. Primary or official pages were used wherever available; third-party discovery results were not accepted as final evidence.</p>
+  </section>
+
+  <section>
+    <h2>Next-run learnings</h2>
+    <ul><li>Keep the static screenshot control first.</li><li>Re-check AA pages after evaluator/index patch releases; same-source values can move materially.</li><li>Do not add a second source merely to update an existing model-benchmark pair.</li><li>Resolve TextQuests row configurations before writing Fable or Gemini values.</li><li>Keep Terminal-Bench 2.1 separate from Terminal-Bench Hard.</li><li>Re-check Qwen3.8-Max only after first-party identity is available.</li><li>Reassess EnterpriseOps-Gym-AA adoption and reproducibility.</li></ul>
+  </section>
+</main></body></html>
