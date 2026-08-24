@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SupraBench curation report — 2026-08-24</title>
+  <style>
+    :root{color-scheme:dark;--bg:#080b12;--card:#111827;--ink:#e5e7eb;--muted:#9ca3af;--line:#283246;--cyan:#67e8f9;--green:#86efac;--amber:#fcd34d}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top left,#14213d 0,#080b12 42%);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,sans-serif}main{max-width:1180px;margin:auto;padding:56px 24px 90px}h1{font-size:clamp(2.2rem,5vw,4.4rem);line-height:1.02;margin:.2em 0}.eyebrow{color:var(--cyan);text-transform:uppercase;letter-spacing:.18em;font-weight:700}.lede{max-width:850px;color:#cbd5e1;font-size:1.15rem}.metrics,.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:30px 0}.card{background:rgba(17,24,39,.88);border:1px solid var(--line);border-radius:16px;padding:20px}.metric strong{display:block;font-size:2rem;color:white}.ok{color:var(--green)}.defer{color:var(--amber)}h2{margin-top:52px;font-size:1.7rem}h3{margin:.1em 0 .5em}table{width:100%;border-collapse:collapse;background:rgba(17,24,39,.72);border-radius:14px;overflow:hidden}th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line)}th{color:var(--cyan);font-size:.8rem;text-transform:uppercase;letter-spacing:.08em}.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}.shot{background:#111827;border:1px solid var(--line);border-radius:14px;padding:12px}.shot img{width:100%;border-radius:8px;background:white}.shot a,.sources a{color:var(--cyan)}code{color:#a7f3d0}.sources{columns:2;column-gap:32px}.sources li{break-inside:avoid;margin-bottom:7px}@media(max-width:700px){.sources{columns:1}}
+  </style>
+</head>
+<body><main>
+  <p class="eyebrow">Scheduled curation · 24 August 2026</p>
+  <h1>New coding-agent frontier</h1>
+  <p class="lede">A full 19/19 tracked-benchmark sweep found five evidence-backed DeepSWE additions. A separate protocol review accepted Artificial Analysis' Terminal-Bench v2.1 implementation with its exact Terminus 2 harness and ten visible top rows.</p>
+  <section class="metrics">
+    <div class="card metric"><strong>19 / 19</strong>tracked benchmarks checked</div>
+    <div class="card metric"><strong>9</strong>new exact model configurations</div>
+    <div class="card metric"><strong>1</strong>new benchmark protocol</div>
+    <div class="card metric"><strong>15</strong>evidence-backed scores</div>
+  </section>
+
+  <h2>Accepted changes</h2>
+  <div class="grid">
+    <article class="card"><h3>DeepSWE v1.1</h3><p>Added the visible Best rows for GLM-5.3 max (69), Grok 4.6 xhigh (67), Gemini 3.7 Flash high (65), DeepSeek V4 Pro max (63), and Qwen3.8-Max xhigh (57).</p><p class="ok">Five inserts; no existing source identity replaced.</p></article>
+    <article class="card"><h3>Terminal-Bench v2.1</h3><p>Accepted as <code>Terminal-Bench v2.1 (AA Terminus 2)</code>: 89 refreshed tasks, Terminus 2 in e2b, pass@1 averaged over three repeats.</p><p class="ok">One benchmark and ten top-row inserts.</p></article>
+  </div>
+  <table>
+    <thead><tr><th>Benchmark</th><th>Model configuration</th><th>Score</th><th>Operation</th></tr></thead>
+    <tbody>
+      <tr><td>DeepSWE</td><td>GLM-5.3 (max)</td><td>69.0</td><td>insert</td></tr>
+      <tr><td>DeepSWE</td><td>Grok 4.6 (xhigh)</td><td>67.0</td><td>insert</td></tr>
+      <tr><td>DeepSWE</td><td>Gemini 3.7 Flash (high)</td><td>65.0</td><td>insert</td></tr>
+      <tr><td>DeepSWE</td><td>DeepSeek V4 Pro (Max)</td><td>63.0</td><td>insert</td></tr>
+      <tr><td>DeepSWE</td><td>Qwen3.8-Max (xhigh)</td><td>57.0</td><td>insert</td></tr>
+      <tr><td>TB v2.1 AA</td><td>GPT-5.6 Sol (xhigh)</td><td>89.5</td><td>insert</td></tr>
+      <tr><td>TB v2.1 AA</td><td>Claude Opus 5 (Max)</td><td>89.1</td><td>insert</td></tr>
+      <tr><td>TB v2.1 AA</td><td>Grok 4.6 (high)</td><td>88.4</td><td>insert</td></tr>
+      <tr><td>TB v2.1 AA</td><td>Claude Opus 5 (xhigh)</td><td>88.0</td><td>insert</td></tr>
+      <tr><td>TB v2.1 AA</td><td>GPT-5.6 Sol (max)</td><td>88.0</td><td>insert</td></tr>
+      <tr><td>TB v2.1 AA</td><td>GPT-5.6 Terra (max)</td><td>88.0</td><td>insert</td></tr>
+      <tr><td>TB v2.1 AA</td><td>Gemini 3.7 Flash (high)</td><td>85.8</td><td>insert</td></tr>
+      <tr><td>TB v2.1 AA</td><td>Kimi K3 (max)</td><td>85.0</td><td>insert</td></tr>
+      <tr><td>TB v2.1 AA</td><td>Claude Fable 5 (adaptive max/fallback)</td><td>84.6</td><td>insert</td></tr>
+      <tr><td>TB v2.1 AA</td><td>GLM-5.3 (max)</td><td>83.9</td><td>insert</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Mandatory benchmark sweep</h2>
+  <p>Checked top rows and source freshness for ARC-AGI-3, APEX-Agents-AA, Humanity's Last Exam, SciCode, Terminal-Bench Hard, SWE-Bench Pro, DeepSWE, SpatialViz-Bench, EnigmaEval, ARC-AGI-2, TextQuests, IntPhys 2, ERQA, MMMU-Pro, SWE-bench Verified, MindCube, AA Long Context Reasoning, Tau2-Bench, and SkateBench v2. Only DeepSWE yielded new rows that met identity and screenshot requirements.</p>
+
+  <h2>Provider sweep</h2>
+  <p>OpenAI, Anthropic, Google, xAI, Z.ai, DeepSeek, Qwen/Alibaba, Moonshot, Meta, and MiniMax were checked. Gemini 3.7 Flash, Grok 4.6, GLM-5.3, and Qwen3.8-Max entered this batch only where an accepted benchmark exposed their exact effort configuration. No unconfigured family-level score was inferred.</p>
+
+  <h2>Benchmark discovery decisions</h2>
+  <div class="grid">
+    <article class="card"><h3 class="ok">Accept: TB v2.1 AA</h3><p>Current, authoritative, public methodology, strong frontier relevance, and score dispersion. The protocol-specific name preserves harness identity.</p></article>
+    <article class="card"><h3 class="defer">Defer: FrontierBench / TB 3.0</h3><p>The public leaderboard mixes Codex, Claude Code, Grok Build, and mini-SWE-agent harnesses. SupraBench needs a first-class harness dimension before ingestion.</p></article>
+    <article class="card"><h3 class="defer">Defer: AA-Briefcase</h3><p>The scored four-project suite is private; only a Lite example is public, preventing reproducibility.</p></article>
+    <article class="card"><h3 class="defer">Defer: GDPval-AA v2</h3><p>Promising, but pairwise Elo and the web/shell harness need stable scale and protocol treatment. EnterpriseOps-Gym-AA remains in the watchlist.</p></article>
+  </div>
+
+  <h2>Visible source evidence</h2>
+  <div class="shots">
+    <figure class="shot"><img src="screenshots/deepswe-top.png" alt="DeepSWE leaderboard update"><figcaption><a href="https://deepswe.datacurve.ai/">DeepSWE</a> update and leaderboard.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/deepswe-deltas-rows.png" alt="DeepSWE exact best rows"><figcaption>Exact GLM, Grok, Gemini, and DeepSeek Best rows.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/deepswe-qwen-row.png" alt="DeepSWE Qwen row"><figcaption>Exact Qwen3.8-Max row and neighboring identity context.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/terminal-bench-v2-1-top.png" alt="Terminal-Bench v2.1 top scores"><figcaption><a href="https://artificialanalysis.ai/evaluations/terminalbench-v2-1">AA Terminal-Bench v2.1</a> visible top score chart.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/terminal-bench-v2-1-methodology.png" alt="Terminal-Bench v2.1 methodology"><figcaption>Protocol overview and task refresh.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/terminal-bench-v2-1-harness.png" alt="Terminal-Bench v2.1 harness"><figcaption>89 tasks, Terminus 2/e2b, pass@1, three repeats.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/google-gemini-3-7-flash.png" alt="Gemini 3.7 Flash release"><figcaption><a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/">Google</a> model identity.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/xai-grok-4-6.png" alt="Grok 4.6 release"><figcaption><a href="https://x.ai/news/grok-4-6">xAI</a> model identity.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/zai-glm-5-3.png" alt="GLM-5.3 release"><figcaption><a href="https://z.ai/blog/glm-5.3">Z.ai</a> model identity.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/qwen-3-8-max-intro.png" alt="Qwen3.8-Max introduction"><figcaption><a href="https://github.com/QwenLM/Qwen3.8">QwenLM</a> Max-class identity and reasoning control.</figcaption></figure>
+  </div>
+
+  <h2>Publication gates</h2>
+  <div class="card"><p id="publication-status"><strong class="ok">Production data applied:</strong> manifest validation passed; the reviewed dry-run planned 9 models, 1 benchmark, and 15 inserts; 108/108 tests passed before and after apply; all 15 scores were mirrored; Convex and D1 both contain 563 scores with zero drift; the post-apply dry-run reports all 15 rows unchanged. Git publication and visible live-page verification follow this data gate.</p></div>
+
+  <h2>Sources</h2>
+  <ol class="sources">
+    <li><a href="https://arcprize.org/competitions/2026/arc-agi-3">ARC-AGI-3</a></li><li><a href="https://artificialanalysis.ai/evaluations/apex-agents-aa">APEX-Agents-AA</a></li><li><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">HLE</a></li><li><a href="https://scicode-bench.github.io/leaderboard/">SciCode</a></li><li><a href="https://artificialanalysis.ai/evaluations/terminalbench-hard">Terminal-Bench Hard</a></li><li><a href="https://labs.scale.com/leaderboard/swe_bench_pro_public">SWE-Bench Pro</a></li><li><a href="https://deepswe.datacurve.ai/">DeepSWE</a></li><li><a href="https://arxiv.org/abs/2507.07610">SpatialViz</a></li><li><a href="https://labs.scale.com/leaderboard/enigma_eval">EnigmaEval</a></li><li><a href="https://arcprize.org/arc-agi/2">ARC-AGI-2</a></li><li><a href="https://www.textquests.ai/">TextQuests</a></li><li><a href="https://ai.meta.com/research/publications/intphys-2-benchmarking-intuitive-physics-understanding-in-complex-synthetic-environments/">IntPhys 2</a></li><li><a href="https://github.com/embodiedreasoning/ERQA">ERQA</a></li><li><a href="https://mmmu-benchmark.github.io/">MMMU-Pro</a></li><li><a href="https://www.swebench.com/verified.html">SWE-bench Verified</a></li><li><a href="https://arxiv.org/abs/2506.21458">MindCube</a></li><li><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning">AA-LCR</a></li><li><a href="https://sierra.ai/resources/research/tau-squared-bench">Tau2</a></li><li><a href="https://skatebench.t3.gg/">SkateBench</a></li><li><a href="https://www.tbench.ai/leaderboard/terminal-bench/2.1">Terminal-Bench official</a></li><li><a href="https://www.tbench.ai/leaderboard/terminal-bench/3.0">FrontierBench</a></li><li><a href="https://artificialanalysis.ai/evaluations/aa-briefcase">AA-Briefcase</a></li><li><a href="https://artificialanalysis.ai/evaluations/gdpval-aa">GDPval-AA</a></li><li><a href="https://artificialanalysis.ai/evaluations/enterprise-ops-gym-aa">EnterpriseOps-Gym-AA</a></li><li><a href="https://openai.com/index/gpt-5-6/">OpenAI</a></li><li><a href="https://www.anthropic.com/news">Anthropic</a></li><li><a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/">Google</a></li><li><a href="https://x.ai/news/grok-4-6">xAI</a></li><li><a href="https://z.ai/blog/glm-5.3">Z.ai</a></li><li><a href="https://github.com/QwenLM/Qwen3.8">QwenLM</a></li><li><a href="https://api-docs.deepseek.com/updates/">DeepSeek</a></li><li><a href="https://github.com/MoonshotAI/Kimi-K3">Moonshot</a></li><li><a href="https://developer.meta.com/ai/resources/blog/build-with-muse-code/">Meta</a></li><li><a href="https://www.minimax.io/news">MiniMax</a></li>
+  </ol>
+</main></body></html>
