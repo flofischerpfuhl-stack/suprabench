@@ -74,7 +74,13 @@
   </div>
 
   <h2>Publication gates</h2>
-  <div class="card"><p id="publication-status"><strong class="ok">Production data applied:</strong> manifest validation passed; the reviewed dry-run planned 9 models, 1 benchmark, and 15 inserts; 108/108 tests passed before and after apply; all 15 scores were mirrored; Convex and D1 both contain 563 scores with zero drift; the post-apply dry-run reports all 15 rows unchanged. Git publication and visible live-page verification follow this data gate.</p></div>
+  <div class="card"><p id="publication-status"><strong class="ok">Published and live-verified:</strong> manifest validation passed; the reviewed dry-run planned 9 models, 1 benchmark, and 15 inserts; 108/108 tests passed before and after apply; all 15 scores were mirrored; Convex and D1 both contain 563 scores with zero drift; the post-apply dry-run reports all 15 rows unchanged. Commit <code>6ab9968</code> deployed successfully. The report, both affected benchmark pages, and all 13 affected model pages were opened in the visible browser; every expected heading, benchmark label, and score was present.</p></div>
+  <div class="shots" style="margin-top:18px">
+    <figure class="shot"><img src="screenshots/live-report.png" alt="Live deployed curation report"><figcaption>Deployed report at <a href="https://suprabench.com/reports/curation/2026-08-24/">suprabench.com</a>.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/live-terminal-bench-v2-1.png" alt="Live Terminal-Bench v2.1 page"><figcaption>Live benchmark detail with ten model-score rows.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/live-deepswe.png" alt="Live DeepSWE page"><figcaption>Live DeepSWE detail with 34 score rows.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/live-glm-5-3-max.png" alt="Live GLM-5.3 model page"><figcaption>Representative model page showing both new benchmark values.</figcaption></figure>
+  </div>
 
   <h2>Sources</h2>
   <ol class="sources">
