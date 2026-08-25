@@ -300,6 +300,16 @@ function buildFamilyAggregates(models, modelPerBench, modelRowsById, benchInfo, 
 
   const familyAggregates = [];
   for (const group of groups.values()) {
+    const familyBenchIds = new Set();
+    for (const model of group.members) {
+      for (const benchId of modelPerBench.get(String(model._id))?.keys() ?? []) {
+        familyBenchIds.add(benchId);
+      }
+    }
+    const familyEvidenceWeight = [...familyBenchIds].reduce(
+      (sum, benchId) => sum + (benchInfo.get(benchId)?.evidence ?? 0),
+      0,
+    );
     if (scenario.familyAggregation === "best-config") {
       const candidates = group.members
         .map((model) => modelRowsById.get(String(model._id)))
@@ -321,6 +331,8 @@ function buildFamilyAggregates(models, modelPerBench, modelRowsById, benchInfo, 
         representative: best?.name ?? null,
         provisional: (best?.benchCount ?? 0) < minBenchCount,
         modelCount: group.members.length,
+        familyEvidenceWeight,
+        familyBenchCount: familyBenchIds.size,
       });
       continue;
     }
@@ -346,6 +358,8 @@ function buildFamilyAggregates(models, modelPerBench, modelRowsById, benchInfo, 
       ...aggregate(perBench, benchInfo),
       representative: null,
       modelCount: group.members.length,
+      familyEvidenceWeight,
+      familyBenchCount: familyBenchIds.size,
     });
   }
   return familyAggregates;
@@ -378,6 +392,7 @@ export function buildRanking(snapshot, inputScenario = {}) {
     trustMode: "current",
     confidenceMode: "current",
     benchCoverageMode: "evidence-only",
+    familyConfidenceMode: "representative",
     familyAggregation: "median-per-bench",
     taxonomyMode: "database",
     ...inputScenario,
@@ -418,10 +433,23 @@ export function buildRanking(snapshot, inputScenario = {}) {
     scenario,
   );
   const maxFamilyEvidence = Math.max(0, ...familyAggregates.map((row) => row.evidenceWeight));
+  const maxFamilyUnionEvidence = Math.max(
+    0,
+    ...familyAggregates.map((row) => row.familyEvidenceWeight),
+  );
   const familyRows = familyAggregates.map((row) => {
     const adjusted =
       scenario.familyAggregation === "best-config"
-        ? { score: row.score, confidence: row.confidence }
+        ? scenario.familyConfidenceMode === "family-union"
+          ? applyConfidence(
+              {
+                weightedMean: row.weightedMean,
+                evidenceWeight: row.familyEvidenceWeight,
+              },
+              maxFamilyUnionEvidence,
+              scenario.confidenceMode,
+            )
+          : { score: row.score, confidence: row.confidence }
         : applyConfidence(row, maxFamilyEvidence, scenario.confidenceMode);
     return {
       name: row.familyTag,
@@ -434,6 +462,8 @@ export function buildRanking(snapshot, inputScenario = {}) {
       abilityWeight: row.abilityWeight,
       evidenceWeight: row.evidenceWeight,
       benchCount: row.benchCount,
+      familyBenchCount: row.familyBenchCount,
+      familyEvidenceWeight: row.familyEvidenceWeight,
       ...adjusted,
     };
   });
@@ -550,6 +580,53 @@ export function analyzeLeaveOneBenchOut(snapshot, inputScenario = {}, trackedFam
       provisionalRuns: row.provisionalRuns,
     })),
   };
+}
+
+/**
+ * Check whether adjacent claims in a proposed family order have direct,
+ * same-benchmark evidence between the selected concrete representatives.
+ * This is an identifiability audit, not a scoring input.
+ */
+export function auditTargetPairEvidence(snapshot, inputScenario = {}, targetOrder = []) {
+  const ranking = buildRanking(snapshot, inputScenario);
+  const { models, benches, scores } = validVisibleSnapshot(snapshot);
+  const raw = perModelBenchMedians(models, benches, scores);
+  const modelByName = new Map(models.map((model) => [model.name, model]));
+  const benchById = new Map(benches.map((bench) => [String(bench._id), bench]));
+  const familyByTag = new Map(ranking.familyRanking.map((row) => [row.familyTag, row]));
+
+  return targetOrder.slice(0, -1).map((higher, index) => {
+    const lower = targetOrder[index + 1];
+    const higherRow = familyByTag.get(higher);
+    const lowerRow = familyByTag.get(lower);
+    const higherModel = modelByName.get(higherRow?.representative);
+    const lowerModel = modelByName.get(lowerRow?.representative);
+    const higherScores = raw.byModel.get(String(higherModel?._id)) ?? new Map();
+    const lowerScores = raw.byModel.get(String(lowerModel?._id)) ?? new Map();
+    const shared = [...higherScores.keys()].filter((benchId) => lowerScores.has(benchId));
+    const comparisons = shared.map((benchId) => {
+      const higherScore = higherScores.get(benchId);
+      const lowerScore = lowerScores.get(benchId);
+      return {
+        bench: benchById.get(benchId)?.name ?? benchId,
+        higherScore,
+        lowerScore,
+        winner:
+          higherScore === lowerScore ? "tie" : higherScore > lowerScore ? higher : lower,
+      };
+    });
+    return {
+      higher,
+      lower,
+      higherRepresentative: higherRow?.representative ?? null,
+      lowerRepresentative: lowerRow?.representative ?? null,
+      commonBenchCount: comparisons.length,
+      higherWins: comparisons.filter((row) => row.winner === higher).length,
+      lowerWins: comparisons.filter((row) => row.winner === lower).length,
+      ties: comparisons.filter((row) => row.winner === "tie").length,
+      comparisons,
+    };
+  });
 }
 
 export function compareTargetOrder(familyRanking, target) {

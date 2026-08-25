@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import {
   auditFamilyTags,
   analyzeLeaveOneBenchOut,
+  auditTargetPairEvidence,
   buildRanking,
   compareTargetOrder,
   describeBenchRatings,
@@ -143,6 +144,7 @@ function compactRow(row) {
     capability: row.weightedMean,
     confidence: row.confidence,
     benches: row.benchCount,
+    familyBenches: row.familyBenchCount,
     models: row.modelCount,
     representative: row.representative,
     eligible: row.eligible,
@@ -170,10 +172,10 @@ function markdownReport(result) {
       `Target pair agreement: ${(scenario.target.agreement * 100).toFixed(1)}% · top-${result.targetOrder.length} recall: ${(scenario.target.topKRecall * 100).toFixed(1)}% · capped rank error: ${scenario.target.meanCappedRankError.toFixed(2)}`,
       "",
     );
-    lines.push("| Desired family | Rank | Score | Capability | Confidence | Benches | Representative |", "|---|---:|---:|---:|---:|---:|---|");
+    lines.push("| Desired family | Rank | Score | Capability | Confidence | Representative benches | Family benches | Representative |", "|---|---:|---:|---:|---:|---:|---:|---|");
     for (const row of scenario.target.rows) {
       const rank = row.eligible === false ? `provisional ${row.provisionalRank}` : (row.rank ?? "—");
-      lines.push(`| ${row.familyTag} | ${rank} | ${row.score ?? "—"} | ${row.weightedMean ?? "—"} | ${row.confidence ?? "—"} | ${row.benchCount ?? "—"} | ${row.representative ?? ""} |`);
+      lines.push(`| ${row.familyTag} | ${rank} | ${row.score ?? "—"} | ${row.weightedMean ?? "—"} | ${row.confidence ?? "—"} | ${row.benchCount ?? "—"} | ${row.familyBenchCount ?? "—"} | ${row.representative ?? ""} |`);
     }
     lines.push("", "Top 12:", "");
     for (const row of scenario.top) {
@@ -189,6 +191,12 @@ function markdownReport(result) {
   lines.push("## Highest structural matches", "");
   for (const row of result.search.slice(0, 12)) {
     lines.push(`- top-${result.targetOrder.length} ${(row.topKRecall * 100).toFixed(1)}%, rank error ${row.meanCappedRankError.toFixed(2)}, pair agreement ${(row.agreement * 100).toFixed(1)}% — ${JSON.stringify(row.scenario)}`);
+  }
+  lines.push("", "## Adjacent target-pair evidence", "");
+  for (const row of result.targetPairEvidence) {
+    lines.push(
+      `- ${row.higher} > ${row.lower}: ${row.commonBenchCount} common representative benches; ${row.higherWins}-${row.lowerWins}-${row.ties} wins-losses-ties`,
+    );
   }
   lines.push("", "## Family-tag audit", "", `Mismatches: ${result.familyAudit.filter((row) => row.differs).length}/${result.familyAudit.length}`, "");
   for (const row of result.familyAudit.filter((row) => row.differs)) {
@@ -258,6 +266,19 @@ async function analyzeCommand(options) {
     ratingParticipation: describeBenchRatings(snapshot),
     scenarios,
     search,
+    targetPairEvidence: auditTargetPairEvidence(
+      snapshot,
+      {
+        scoreTransform: "percentile",
+        ratingMode: "current",
+        confidenceMode: "separate",
+        familyConfidenceMode: "family-union",
+        familyAggregation: "best-config",
+        taxonomyMode: "inferred",
+        representativeMinBenchCount: 3,
+      },
+      config.targetOrder,
+    ),
     familyAudit: auditFamilyTags(snapshot, config.familyOverrides),
   };
   await writeJson(output, result);

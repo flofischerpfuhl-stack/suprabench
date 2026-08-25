@@ -75,16 +75,65 @@ to 95 moves Sol merely from 52.06 to about 53.48 in the raw formula. The
 failure is cross-benchmark scale comparability, dominated by ARC-AGI-3, not the
 DeepSWE rating.
 
-## Decision
+## Follow-up: capability and evidence must not be one hidden trade-off
 
-The clean production candidate is **empirical percentile + the existing
-confidence calculation + a three-benchmark numbered-rank gate**.
+The first percentile scenario still pushed Fable behind older, broader-tested
+families because the production confidence multiplier changes the point
+estimate itself. A follow-up therefore tested two parameter-free separations:
+
+1. keep the representative's concrete performance but compute family
+   confidence from the union of distinct benchmarks across that release's
+   configurations; and
+2. rank by calibrated observed capability while publishing confidence as a
+   separate evidence axis.
+
+Family-union confidence moves Fable from rank 6 to 5, but still rewards older
+families with 16 covered benchmarks enough to keep GPT-5.4 and GPT-5.5 ahead.
+Separating capability from evidence produces this evidence-backed main list:
+
+| Rank | Family | Calibrated capability | Family confidence | Representative benches | Family benches |
+|---:|---|---:|---:|---:|---:|
+| 1 | Gemini 3.5 Flash | 93.06 | 0.49 | 3 | 4 |
+| 2 | GPT-5.6 Sol | 92.01 | 0.72 | 8 | 9 |
+| 3 | Claude Fable 5 | 88.14 | 0.67 | 4 | 6 |
+| 4 | Kimi K3 | 81.84 | 0.71 | 8 | 8 |
+| 5 | GPT-5.4 | 80.84 | 0.97 | 9 | 16 |
+| 6 | GPT-5.5 | 79.70 | 1.00 | 10 | 16 |
+
+Mythos leads the separate provisional frontier at 98.89 but has only one
+benchmark. Presenting that signal is useful; presenting it as equally
+triangulated with Sol or Fable is not.
+
+The automatic adjacent-pair audit also shows that the preferred exact order is
+not identifiable from the current matrix:
+
+| Proposed comparison | Common representative benches | Direct result |
+|---|---:|---|
+| Mythos > Fable | 0 | no direct evidence |
+| Fable > Sol | 1 | Sol wins Terminal-Bench Hard 65.9 to 62.9 |
+| Sol > Kimi | 3 | Sol wins all 3 |
+| Kimi > GLM-5.3 | 2 | 1-1 split |
+| GLM-5.3 > Grok 4.6 | 1 | Grok wins |
+| Grok 4.6 > Muse Spark 1.2 | 0 | no direct evidence |
+
+Across all configurations, Fable and Sol overlap on four benchmarks; Sol wins
+DeepSWE, Terminal-Bench Hard, and Terminal-Bench v2.1, while Fable wins
+EnigmaEval. A formula that puts Fable above Sol from these rows alone would need
+an additional task-category preference, an external prior, or a fitted weight.
+It cannot be justified as a neutral consequence of the recorded measurements.
+
+## Revised decision
+
+Do **not** activate a percentile-derived single canonical score yet. The clean
+shadow candidate is a two-axis view: **empirical percentile capability plus
+separately displayed family evidence**, with provisional families shown as a
+frontier-signal group rather than silently mixed into the evidence-backed rank.
 
 - Percentile calibration directly fixes the invalid cross-benchmark unit
   assumption and gives the conservative 81.2 value, rather than a near-ceiling
   robust-z value, for Sol's second place on the eight-model ARC-AGI-3 table.
-- The evidence gate fixes a separate presentation problem and prevents one- or
-  two-benchmark families from being presented as equally triangulated.
+- The evidence gate remains useful as a presentation boundary, not as a claim
+  that three benchmarks suddenly make uncertainty disappear.
 - Applying coverage reliability to ability weight is statistically coherent,
   but adds only 0.1 percentage point of pairwise LOBO stability after percentile
   calibration. Keep it as a shadow metric initially instead of bundling it into
@@ -93,7 +142,8 @@ confidence calculation + a three-benchmark numbered-rank gate**.
   leaderboards and its output is harder for users to interpret.
 - Do not change DeepSWE's rating to repair a model rank.
 
-Before production activation, freeze the percentile rule as a versioned score
-method, show both raw result and calibrated contribution on benchmark detail
-pages, and run a public shadow leaderboard. No production score change was made
-by this experiment.
+Before production activation, add the missing cross-family benchmark results,
+freeze the percentile rule as a versioned method, show raw result, calibrated
+contribution, representative evidence, and family evidence separately, and run
+a public shadow leaderboard. No production score change was made by this
+experiment.

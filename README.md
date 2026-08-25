@@ -163,7 +163,8 @@ and the proposed [user-controlled category weighting](docs/research/CATEGORY_WEI
 The [benchmark-scale calibration experiment](docs/research/BENCHMARK_SCALE_CALIBRATION_EXPERIMENT.md)
 tests raw, empirical-percentile, robust-z, coverage-reliability, and evidence-gate
 variants with leave-one-benchmark-out stability. It recommends a transparent
-percentile shadow leaderboard but does not change the production formula.
+two-axis percentile capability plus family-evidence shadow view, not another
+hidden confidence blend, and does not change the production formula.
 
 ### Official vs Community sources
 
@@ -318,7 +319,7 @@ suprabench/
 Every claim in [Anti-Gaming Rules](#anti-gaming-rules) is encoded as an
 executable test in
 [`tests/convex/adversarial-robustness.test.ts`](tests/convex/adversarial-robustness.test.ts).
-The suite includes **121 tests across 13 files** (14 adversarial at the time of
+The suite includes **123 tests across 13 files** (14 adversarial at the time of
 this methodology update). When the math regresses, a named test fails with a
 descriptive message — instead of someone discovering the regression
 on the production leaderboard.

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   auditFamilyTags,
   analyzeLeaveOneBenchOut,
+  auditTargetPairEvidence,
   buildRanking,
   inferFamilyTag,
 } from "../../scripts/lib/ranking-lab-core.mjs";
@@ -198,5 +199,80 @@ describe("ranking lab", () => {
     expect(result.meanPairwiseStability).toBeLessThanOrEqual(1);
     expect(result.tracked[0].familyTag).toBe("GPT-5.6 Sol");
     expect(JSON.stringify(input)).toBe(before);
+  });
+
+  it("can use family-wide evidence without mixing configuration performance", () => {
+    const input = snapshot();
+    input.models.push({
+      _id: "m4",
+      name: "GPT-5.6 Sol (max)",
+      provider: "OpenAI",
+      familyTag: "GPT-5.6",
+      hidden: false,
+    });
+    input.benches.push({
+      _id: "b3",
+      name: "Third",
+      slug: "third",
+      hidden: false,
+      cachedEffectiveWeight: 30,
+      cachedHeadroom: 1,
+      cachedModelCount: 2,
+      cachedNetUpvotes: 1,
+      cachedRaterCount: 1,
+      cachedDimensions: {
+        relevance: 4,
+        contamination: 4,
+        discriminability: 4,
+        reproducibility: 4,
+        difficulty: 4,
+      },
+    });
+    input.scores.push(
+      { modelId: "m4", benchId: "b3", normalizedScore: 75, upvotes: 1, downvotes: 0 },
+      { modelId: "m3", benchId: "b3", normalizedScore: 50, upvotes: 1, downvotes: 0 },
+    );
+    const representativeOnly = buildRanking(input, {
+      scoreTransform: "percentile",
+      confidenceMode: "current",
+      familyConfidenceMode: "representative",
+      familyAggregation: "best-config",
+      taxonomyMode: "inferred",
+    });
+    const familyWide = buildRanking(input, {
+      scoreTransform: "percentile",
+      confidenceMode: "current",
+      familyConfidenceMode: "family-union",
+      familyAggregation: "best-config",
+      taxonomyMode: "inferred",
+    });
+    const representativeRow = representativeOnly.familyRanking.find(
+      (row) => row.familyTag === "GPT-5.6 Sol",
+    );
+    const familyRow = familyWide.familyRanking.find(
+      (row) => row.familyTag === "GPT-5.6 Sol",
+    );
+    expect(familyRow?.representative).toBe(representativeRow?.representative);
+    expect(familyRow?.weightedMean).toBe(representativeRow?.weightedMean);
+    expect(familyRow?.familyBenchCount).toBeGreaterThan(
+      representativeRow?.benchCount ?? Infinity,
+    );
+  });
+
+  it("audits direct representative overlap for a proposed family order", () => {
+    const rows = auditTargetPairEvidence(
+      snapshot(),
+      {
+        scoreTransform: "percentile",
+        confidenceMode: "separate",
+        familyAggregation: "best-config",
+        taxonomyMode: "inferred",
+      },
+      ["GPT-5.6 Sol", "GPT-5.6 Terra", "Claude Fable 5"],
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0].commonBenchCount).toBe(2);
+    expect(rows[0].higherWins + rows[0].lowerWins + rows[0].ties).toBe(2);
+    expect(rows[1].commonBenchCount).toBe(2);
   });
 });

@@ -183,6 +183,44 @@
       "minBenchCount": 3
     },
     {
+      "name": "percentile-family-union-confidence",
+      "scoreTransform": "percentile",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "benchCoverageMode": "evidence-only",
+      "familyConfidenceMode": "family-union",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3
+    },
+    {
+      "name": "percentile-family-union-confidence-gated",
+      "scoreTransform": "percentile",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "benchCoverageMode": "evidence-only",
+      "familyConfidenceMode": "family-union",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3,
+      "minBenchCount": 3
+    },
+    {
+      "name": "percentile-capability-with-evidence-separate",
+      "scoreTransform": "percentile",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "separate",
+      "benchCoverageMode": "evidence-only",
+      "familyConfidenceMode": "family-union",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3,
+      "minBenchCount": 3
+    },
+    {
       "name": "robust-z-current-confidence-gated",
       "scoreTransform": "robust-z",
       "ratingMode": "current",
@@ -253,6 +291,7 @@
     "trustMode": ["current"],
     "confidenceMode": ["current", "separate"],
     "benchCoverageMode": ["evidence-only", "ability-and-evidence"],
+    "familyConfidenceMode": ["representative", "family-union"],
     "familyAggregation": ["median-per-bench", "best-per-bench", "best-config"],
     "taxonomyMode": ["inferred"]
   }

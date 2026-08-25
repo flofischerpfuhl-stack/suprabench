@@ -36,6 +36,8 @@ constants to a desired leaderboard:
 - an optional minimum-evidence gate that marks sparse entries provisional;
 - the existing square-root benchmark-coverage reliability applied to evidence
   only or to both evidence and ability weight;
+- representative-only confidence versus family-wide distinct-benchmark
+  confidence without mixing configuration performance;
 - leave-one-benchmark-out stability for every named scenario.
 
 The grid search is diagnostic. A scenario matching a preferred ordering is not,
@@ -46,7 +48,9 @@ held-out validation.
 The current scale-comparability experiment and its recommendation are recorded
 in [`BENCHMARK_SCALE_CALIBRATION_EXPERIMENT.md`](BENCHMARK_SCALE_CALIBRATION_EXPERIMENT.md).
 It isolates the evidence gate, coverage reliability, empirical percentile, and
-robust-z alternatives before combining any of them.
+robust-z alternatives before combining any of them. The follow-up also audits
+direct representative overlap and treats capability and evidence as separate
+axes when the matrix cannot identify a total order.
 
 ## Family identity policy
 
