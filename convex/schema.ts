@@ -167,23 +167,22 @@ export default defineSchema({
   // counted anywhere (we don't invent a pseudo-family from the
   // model's own name — that creates noise in the ranking table).
   //
-  // supraScore here is the FAMILY score:
-  //   • represented by the highest-SupraScore concrete configuration with at
-  //     least FAMILY_REPRESENTATIVE_MIN_BENCHES distinct benchmarks
-  //   • falls back to the best available configuration and marks the family
-  //     provisional when no member meets that minimum
-  //   • never synthesizes a configuration from different family members
+  // supraScore here is the opponent-adjusted FAMILY ceiling:
+  //   • each family keeps its best concrete configuration on each benchmark
+  //   • within-benchmark wins/losses are joined globally with Bradley-Terry
+  //   • individual model/configuration rows remain unchanged and reproducible
   // See rankings.buildRankingsFromInputs for the implementation.
   familyRankings: defineTable({
     familyTag: v.string(),
     provider: v.string(),
     supraScore: v.number(),
-    benchCount: v.number(),     // representative configuration's distinct valid benches
+    benchCount: v.number(),     // family's distinct valid benches
     modelCount: v.number(),     // # non-hidden models in the family
     representativeModelId: v.optional(v.id("models")),
     representativeName: v.optional(v.string()),
     representativeSlug: v.optional(v.string()),
-    provisional: v.optional(v.boolean()), // true when representative has < minimum benches
+    aggregationMethod: v.optional(v.literal("family-ceiling-pairwise")),
+    provisional: v.optional(v.boolean()), // true when family has < minimum benches
     tags: v.array(v.string()),  // union of member models' tags (for tag-filter)
     updatedAt: v.number(),
     hidden: v.optional(v.boolean()), // true when every member model is hidden

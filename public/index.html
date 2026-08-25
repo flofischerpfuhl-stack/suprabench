@@ -250,7 +250,7 @@
          representatives cached per (familyTag, provider). Click on
          a row drills down: switches back to models mode with that
          family filter applied, so the user immediately sees which
-         member models belong to the family and which one represents it. -->
+         concrete member models belong to the opponent-adjusted family row. -->
     <div class="table-scroll" x-show="leaderboardScope === 'families' && filteredRankedFamilies.length > 0">
     <table class="models-list">
         <thead>
@@ -264,10 +264,10 @@
                           @click="setLeaderboardScope('families')">Model-Family</span>
                 </th>
                 <th>Provider</th>
-                <th title="Family SupraScore of the disclosed concrete representative. We prefer the highest-scoring member with at least three benchmarks; sparse fallbacks are marked provisional. See About for the full rule.">SupraScore</th>
-                <th x-show="activeTags.length > 0" title="Tag-filtered SupraScore of the disclosed concrete representative; no synthetic mixing across family members.">Filtered Score</th>
-                <th title="Number of visible configurations in the family. Only the disclosed representative produces the score.">Members</th>
-                <th title="Number of distinct benchmarks measured for the representative configuration.">Coverage</th>
+                <th title="Opponent-adjusted family ceiling. Each benchmark uses the family's best valid concrete configuration; Bradley-Terry joins wins and losses across participant fields.">SupraScore</th>
+                <th x-show="activeTags.length > 0" title="The same opponent-adjusted family calculation, restricted to benchmarks with the selected tags.">Filtered Score</th>
+                <th title="Number of visible concrete configurations in the family.">Members</th>
+                <th title="Number of distinct benchmarks with at least one valid family configuration.">Coverage</th>
             </tr>
         </thead>
         <tbody>
@@ -276,13 +276,10 @@
                     <td class="m-rank"><span class="rank-num" x-text="i+1"></span></td>
                     <td class="m-name">
                         <a href="#" @click.prevent x-text="f.familyTag" style="font-weight:500"></a>
-                        <template x-if="f.representativeName">
-                            <div style="font-size:.76rem;color:var(--text3);margin-top:.2rem">
-                                via <a href="#" @click.stop.prevent="navigate('model', {slug: f.representativeSlug})"
-                                       x-text="f.representativeName" style="color:var(--text2)"></a>
-                                <span x-show="f.provisional" class="tag-sm" style="margin-left:.3rem" title="No family member currently has three distinct benchmark results.">provisional</span>
-                            </div>
-                        </template>
+                        <div style="font-size:.76rem;color:var(--text3);margin-top:.2rem">
+                            opponent-adjusted family ceiling
+                            <span x-show="f.provisional" class="tag-sm" style="margin-left:.3rem" title="This family currently has fewer than three distinct benchmark results.">provisional</span>
+                        </div>
                     </td>
                     <td class="m-provider" style="color:var(--text2)" x-text="f.provider"></td>
                     <td class="m-supra"><span class="score-cell" x-text="f.supraScore.toFixed(1)"></span></td>
@@ -2139,13 +2136,14 @@
             </table>
             <p>Common suffixes you'll see: <code>(low)</code> / <code>(med)</code> / <code>(high)</code> / <code>(xhigh)</code>, <code>(thinking)</code>, <code>(max)</code>, <code>(128k)</code> / <code>(200k)</code> / <code>(1M)</code> for context-length SKUs, <code>(instruct)</code> / <code>(chat)</code> / <code>(base)</code> for open-weight post-training variants.</p>
 
-            <h4 class="qa-subheader">One real configuration represents the family</h4>
-            <p>A family score is never assembled from different configurations. We select the visible member with the highest ordinary model SupraScore among those measured on at least <strong>three distinct benchmarks</strong>. The family row displays that representative by name and uses its exact score and coverage.</p>
-            <p>If no member reaches three benchmarks, the best available concrete member remains visible but is marked <strong>provisional</strong>. This preserves new-model discovery without presenting a one-benchmark spike as well-triangulated evidence. Tag-filtered family views apply the same concrete-member rule and disclose which member produced the filtered score.</p>
+            <h4 class="qa-subheader">Opponent-adjusted family ceiling</h4>
+            <p>Every concrete configuration and source score remains separate. For the family view only, each benchmark contributes the family's best valid configuration result. That result becomes pairwise wins, losses or ties against the families that actually ran the same benchmark. A regularized Bradley-Terry model then joins all connected comparison fields, so beating strong opponents is worth more than topping a weak field.</p>
+            <p>Community quality ratings and benchmark upvotes control comparison weight. With few ratings, dimensions are pulled toward neutral by a three-rater Bayesian prior. A family with fewer than <strong>three distinct benchmarks</strong> remains visible but is marked <strong>provisional</strong>. Tag filters rerun the same calculation on matching benchmarks instead of selecting a different hidden formula.</p>
+            <p>This method was chosen by held-out prediction: complete benchmarks were removed, fitted from the rest, and predicted afterward. Against the strongest concrete-configuration opponent baseline, it improved quality-weighted pairwise accuracy from 76.45% to 79.01%; a deterministic paired 20-benchmark bootstrap with 20,000 resamples put the gain at +2.56 points with a 95% interval of +0.40 to +4.78. Desired model order was not used as the optimization target.</p>
 
             <h4 class="qa-subheader">What if the community disagrees with a grouping?</h4>
             <p>New submissions still propose their family tag, and ambiguous provider taxonomies are not guessed automatically. A small reviewed normalizer only enforces unambiguous distinctions already present in the official model name, such as GPT-5.6 Sol versus Terra or Muse Spark 1.1 versus 1.2. Corrections can be proposed with evidence through the public repository; the mapping and its tests are auditable.</p>
-            <p class="helper-text">A one-off release with no variants is fine to have <code>familyTag == name</code>. It appears as a one-member family and stays provisional until that concrete model has three benchmark results.</p>
+            <p class="helper-text">A one-off release with no variants is fine to have <code>familyTag == name</code>. It appears as a one-member family and stays provisional until the family has three benchmark results.</p>
         </div>
     </div>
 

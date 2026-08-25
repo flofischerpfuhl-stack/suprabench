@@ -39,6 +39,8 @@ constants to a desired leaderboard:
 - representative-only confidence versus family-wide distinct-benchmark
   confidence without mixing configuration performance;
 - leave-one-benchmark-out stability for every named scenario.
+- opponent-adjusted Bradley-Terry, pairwise PageRank, multidimensional IRT,
+  family-median, and family-ceiling experiments with held-out validation.
 
 The grid search is diagnostic. A scenario matching a preferred ordering is not,
 by itself, evidence that the method is valid. Production changes should be based
@@ -63,13 +65,14 @@ tiers such as Muse Spark 1.1 and 1.2 are also separate families.
 The inferred-family audit is deliberately a review aid, not an automatic data
 migration. Ambiguous names must be confirmed before changing stored family tags.
 
-## Production family representative
+## Production family ranking
 
-Production now selects one concrete family member rather than computing a
-median-per-benchmark synthetic family. The preferred member must cover at least
-three distinct benchmarks; if none does, the best available member is retained
-and marked provisional. The representative name and slug are exposed in the
-family leaderboard.
+Production uses the opponent-adjusted family ceiling documented in
+[`OPPONENT_ADJUSTED_FAMILY_RANKING.md`](OPPONENT_ADJUSTED_FAMILY_RANKING.md).
+Concrete configuration rows stay unchanged. The family view takes the best
+valid concrete result per family and benchmark, then joins weighted pairwise
+outcomes globally with Bradley-Terry. Fewer than three family benchmarks remains
+provisional.
 
 Bayesian rating-prior results are recorded in
 `docs/research/BAYESIAN_RATING_PRIOR_EXPERIMENT.md`. The category-mass design is

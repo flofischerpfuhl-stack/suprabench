@@ -1,6 +1,7 @@
 # Bayesian benchmark-rating prior experiment
 
-Status: tested offline; not enabled in production.
+Status: original raw-score test superseded. A three-rater prior is now enabled
+only inside the opponent-adjusted family calculation after held-out validation.
 
 Snapshot: `2026-08-25T15:56:04.732Z`, SHA-256
 `821103117329dc002039ee9c2db0b016bd0a89502a6678e4acb6b121b33ceb7c`.
@@ -40,8 +41,10 @@ target fitting.
 
 ## Decision
 
-Do not enable Bayesian shrinkage in production yet. Keep it in the ranking lab,
-collect more independent ratings, and repeat the experiment against held-out
-rankings. Before deployment, the prior strength should be fixed from an
-explicit reliability model or historical prediction error, not selected from
-leaderboard resemblance.
+This raw-score experiment did not justify a production change. The later
+opponent-adjusted experiment supplied the missing held-out test: complete
+benchmarks were removed and predicted from the remainder. In that family model,
+a prior of 3 performed at least as well as 1, 10, or 30 on quality-weighted
+held-out order and is enabled for family weights. Concrete-model SupraScore V1
+still uses its existing production rating path. See
+[`OPPONENT_ADJUSTED_FAMILY_RANKING.md`](OPPONENT_ADJUSTED_FAMILY_RANKING.md).

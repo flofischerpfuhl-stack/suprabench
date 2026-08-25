@@ -6,13 +6,12 @@
 // between a "models" view and a "families" view without an O(M×B)
 // re-scan on every frontend subscription.
 //
-// ── Representative semantics ───────────────────────────────
-// A family row is one reproducible concrete configuration, never a synthetic
-// median assembled from different members. We select the highest-SupraScore
-// visible member measured on at least three distinct benchmarks. If no member
-// reaches that minimum, the best available member is shown and the family row
-// is explicitly marked provisional. The selected name/slug is cached so the
-// UI can disclose exactly which configuration produced the family score.
+// ── Family-ceiling semantics ───────────────────────────────
+// Each benchmark keeps the family's best valid concrete configuration, without
+// mutating or merging the source rows. Weighted pairwise wins/losses are joined
+// across benchmark participant fields with a regularized Bradley-Terry fit.
+// Families with fewer than three distinct benchmarks stay visible but are
+// explicitly marked provisional.
 //
 // ── What counts as a family ─────────────────────────────────
 // Models with `familyTag === undefined` or empty string are NOT
@@ -46,9 +45,9 @@ import { v } from "convex/values";
 import { recomputeAllUnifiedImpl } from "./rankings";
 
 // Recompute a single family (identified by familyTag, optionally
-// scoped to a provider). Because the representative's evidence-confidence
-// factor compares against the max over ALL concrete models, a "single family"
-// update is never actually local — we always full-rebuild. Args are accepted
+// scoped to a provider). Pairwise ability is relative to all participating
+// families, so a "single family" update is never actually local — we always
+// full-rebuild. Args are accepted
 // for backwards compatibility with
 // the entity-vote cascade in entityVotes.ts and ignored.
 export const recomputeFamily = internalMutation({

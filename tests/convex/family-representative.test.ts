@@ -1,9 +1,144 @@
 import { describe, expect, it } from "vitest";
 import { internal, setupTestDb } from "./_fixtures";
-import { FAMILY_REPRESENTATIVE_MIN_BENCHES } from "../../convex/rankings";
+import {
+  buildPairwiseFamilyRankings,
+  FAMILY_REPRESENTATIVE_MIN_BENCHES,
+} from "../../convex/rankings";
+import {
+  bootstrapPairedValidationDifference,
+  buildFamilyAggregateSnapshot,
+  buildPairwiseRanking,
+} from "../../scripts/lib/pairwise-ranking.mjs";
 
-describe("family representative selection", () => {
-  it("prefers the best sufficiently-covered concrete configuration", async () => {
+describe("opponent-adjusted family ceiling", () => {
+  it("bootstraps held-out benchmark differences as paired samples", () => {
+    const candidate = {
+      runs: [
+        { benchId: "one", accuracy: 0.8, heldOutQuality: 1 },
+        { benchId: "two", accuracy: 0.6, heldOutQuality: 1 },
+      ],
+    };
+    const baseline = {
+      runs: [
+        { benchId: "one", accuracy: 0.7, heldOutQuality: 1 },
+        { benchId: "two", accuracy: 0.4, heldOutQuality: 1 },
+      ],
+    };
+    const result = bootstrapPairedValidationDifference(candidate, baseline, {
+      samples: 1_000,
+      seed: 7,
+    });
+    expect(result.difference).toBeCloseTo(0.15);
+    expect(result.interval95[0]).toBeGreaterThan(0);
+    expect(result.positiveRate).toBe(1);
+  });
+
+  it("uses the best configuration per benchmark without changing concrete rows", () => {
+    const models = [
+      { _id: "a1", name: "Alpha (high)", provider: "A", familyTag: "Alpha" },
+      { _id: "a2", name: "Alpha (max)", provider: "A", familyTag: "Alpha" },
+      { _id: "b1", name: "Beta", provider: "B", familyTag: "Beta" },
+    ];
+    const benches = ["one", "two", "three"].map((id) => ({
+      _id: id,
+      hidden: false,
+      cachedHeadroom: 1,
+      cachedNetUpvotes: 1,
+      cachedRaterCount: 1,
+      cachedDimensions: {
+        relevance: 5,
+        contamination: 5,
+        discriminability: 5,
+        reproducibility: 5,
+        difficulty: 5,
+      },
+    }));
+    const score = (modelId: string, benchId: string, normalizedScore: number) => ({
+      modelId,
+      benchId,
+      normalizedScore,
+      upvotes: 1,
+      downvotes: 0,
+    });
+    const scores = [
+      score("a1", "one", 90),
+      score("a1", "two", 10),
+      score("a2", "one", 20),
+      score("a2", "two", 90),
+      score("a2", "three", 90),
+      score("b1", "one", 80),
+      score("b1", "two", 80),
+      score("b1", "three", 80),
+    ];
+
+    const result = buildPairwiseFamilyRankings({ models, benches, scores });
+    const alpha = result.rows.find((row) => row.familyTag === "Alpha")!;
+    const beta = result.rows.find((row) => row.familyTag === "Beta")!;
+    expect(alpha.benchCount).toBe(3);
+    expect(alpha.supraScore).toBeGreaterThan(beta.supraScore);
+    expect(result.ceilingScores.filter((row) => row.familyTag === "Alpha"))
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ benchId: "one", score: 90 }),
+        expect.objectContaining({ benchId: "two", score: 90 }),
+        expect.objectContaining({ benchId: "three", score: 90 }),
+      ]));
+    expect(scores.find((row) => row.modelId === "a1" && row.benchId === "two")?.normalizedScore)
+      .toBe(10);
+  });
+
+  it("keeps the production Newton solver in rank parity with the offline reference", () => {
+    const models = [
+      { _id: "a", name: "Alpha (max)", provider: "A", familyTag: "Alpha", hidden: false },
+      { _id: "b", name: "Beta (max)", provider: "B", familyTag: "Beta", hidden: false },
+      { _id: "c", name: "Gamma (max)", provider: "C", familyTag: "Gamma", hidden: false },
+    ];
+    const benches = ["one", "two", "three"].map((id) => ({
+      _id: id,
+      name: id,
+      slug: id,
+      hidden: false,
+      cachedHeadroom: 1,
+      cachedNetUpvotes: 1,
+      cachedRaterCount: 1,
+      cachedDimensions: {
+        relevance: 4,
+        contamination: 4,
+        discriminability: 4,
+        reproducibility: 4,
+        difficulty: 4,
+      },
+    }));
+    const values = [
+      ["a", "one", 90], ["b", "one", 80], ["c", "one", 70],
+      ["b", "two", 90], ["a", "two", 80], ["c", "two", 70],
+      ["a", "three", 90], ["c", "three", 80], ["b", "three", 70],
+    ];
+    const scores = values.map(([modelId, benchId, normalizedScore]) => ({
+      modelId: modelId as string,
+      benchId: benchId as string,
+      normalizedScore: normalizedScore as number,
+      upvotes: 1,
+      downvotes: 0,
+    }));
+    const snapshot = { models, benches, scores };
+    const production = buildPairwiseFamilyRankings(snapshot).rows
+      .sort((left, right) => right.supraScore - left.supraScore)
+      .map((row) => row.familyTag);
+    const offline = buildPairwiseRanking(
+      buildFamilyAggregateSnapshot(snapshot, "max"),
+      {
+        outcomeMode: "binary",
+        benchmarkWeightMode: "bayesian",
+        priorRaters: 3,
+        regularization: 0.15,
+        iterations: 2_000,
+        representativeMinBenchCount: 1,
+      },
+    ).familyRanking.map((row) => row.familyTag);
+    expect(production).toEqual(offline);
+  });
+
+  it("combines the best concrete result on each family benchmark", async () => {
     const t = setupTestDb();
     const seeded = await t.run(async (ctx) => {
       const userId = await ctx.db.insert("users", {
@@ -79,12 +214,14 @@ describe("family representative selection", () => {
         .unique(),
     }));
 
-    expect(result.family?.representativeModelId).toBe(seeded.coveredId);
-    expect(result.family?.representativeName).toBe("Family Model (covered)");
+    expect(result.family?.aggregationMethod).toBe("family-ceiling-pairwise");
+    expect(result.family?.representativeModelId).toBeUndefined();
+    expect(result.family?.representativeName).toBeUndefined();
     expect(result.family?.benchCount).toBe(FAMILY_REPRESENTATIVE_MIN_BENCHES);
     expect(result.family?.provisional).toBe(false);
-    expect(result.family?.supraScore).toBe(result.covered?.supraScore);
-    expect(result.family?.representativeModelId).not.toBe(seeded.sparseId);
+    expect(result.family?.supraScore).toBe(50);
+    expect(result.covered?.supraScore).not.toBeUndefined();
+    expect(seeded.sparseId).not.toBe(seeded.coveredId);
   });
 
   it("keeps a sparse family visible but marks its best member provisional", async () => {
@@ -143,8 +280,10 @@ describe("family representative selection", () => {
         .unique()
     );
 
-    expect(family?.representativeModelId).toBe(modelId);
+    expect(family?.aggregationMethod).toBe("family-ceiling-pairwise");
+    expect(family?.representativeModelId).toBeUndefined();
     expect(family?.benchCount).toBe(1);
     expect(family?.provisional).toBe(true);
+    expect(modelId).toBeDefined();
   });
 });

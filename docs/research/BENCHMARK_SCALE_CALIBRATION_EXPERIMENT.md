@@ -1,5 +1,10 @@
 # Benchmark-scale calibration experiment
 
+> Superseded for the production family leaderboard by
+> [`OPPONENT_ADJUSTED_FAMILY_RANKING.md`](OPPONENT_ADJUSTED_FAMILY_RANKING.md).
+> Empirical percentiles fixed raw-score scale mismatch but ignored participant
+> field strength, which allowed three selective Gemini results to rank first.
+
 Snapshot: `2026-08-25T15:56:04.732Z`
 SHA-256: `821103117329dc002039ee9c2db0b016bd0a89502a6678e4acb6b121b33ceb7c`
 

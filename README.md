@@ -149,12 +149,22 @@ and `Luna` are separate families, as are `Muse Spark 1.1` and `1.2`. The shared
 unambiguous mappings; unknown provider taxonomies keep the submitted family tag
 instead of being guessed automatically.
 
-The family leaderboard is represented by one concrete configuration. It picks
-the highest-SupraScore visible member with at least **three distinct
-benchmarks**. If no member reaches that minimum, the best available member is
-shown with a **provisional** label. The cached row exposes the representative's
-name and slug, so the score is reproducible and never a synthetic mix of
-different configurations. Full rationale lives in About Q9b on the live site.
+The family leaderboard is an opponent-adjusted **family ceiling**. On each
+benchmark it keeps the best valid concrete configuration in that family, then
+turns the benchmark result into weighted pairwise wins, losses, or ties against
+the families that actually participated. A regularized Bradley-Terry fit joins
+those comparison fields globally, so first place against a strong field is not
+treated like first place against a weak one. Individual configuration rows and
+their source identity remain unchanged. Families with fewer than **three
+distinct benchmarks** remain visible but are marked **provisional**.
+
+Benchmark weights still come from community quality ratings and upvotes. With
+only a few raters, each 1-5 quality dimension is shrunk toward neutral with a
+three-rater Bayesian prior; the prior strength and Bradley-Terry regularization
+were selected by held-out benchmark prediction rather than target-order fit.
+Full validation is in
+[`OPPONENT_ADJUSTED_FAMILY_RANKING.md`](docs/research/OPPONENT_ADJUSTED_FAMILY_RANKING.md)
+and the user-facing rule lives in About Q9b on the live site.
 
 Ranking research tools and decisions are documented in
 [`docs/research/RANKING_LAB.md`](docs/research/RANKING_LAB.md), including the
@@ -162,9 +172,10 @@ offline [Bayesian rating-prior experiment](docs/research/BAYESIAN_RATING_PRIOR_E
 and the proposed [user-controlled category weighting](docs/research/CATEGORY_WEIGHTING_CONCEPT.md).
 The [benchmark-scale calibration experiment](docs/research/BENCHMARK_SCALE_CALIBRATION_EXPERIMENT.md)
 tests raw, empirical-percentile, robust-z, coverage-reliability, and evidence-gate
-variants with leave-one-benchmark-out stability. It recommends a transparent
-two-axis percentile capability plus family-evidence shadow view, not another
-hidden confidence blend, and does not change the production formula.
+variants. Its percentile recommendation was superseded after participant-field
+bias made Gemini 3.5 Flash rank first. The follow-up
+[opponent-adjusted experiment](docs/research/OPPONENT_ADJUSTED_FAMILY_RANKING.md)
+adds strength of schedule and held-out predictive validation.
 
 ### Official vs Community sources
 
@@ -219,7 +230,7 @@ suprabench/
 │   ├── benchQualityRatings.ts    # 5-dimension quality ratings
 │   ├── tags.ts                   # Tag aggregation (cached)
 │   ├── rankings.ts               # SupraScore + headroom math
-│   ├── familyRankings.ts         # Concrete family representative cache entry points
+│   ├── familyRankings.ts         # Opponent-adjusted family-ceiling cache entry points
 │   ├── modelFamilies.ts          # Conservative cross-provider family normalization
 │   ├── cache.ts                  # Denormalized aggregate recompute helpers
 │   ├── migrations.ts             # One-off backfill mutations

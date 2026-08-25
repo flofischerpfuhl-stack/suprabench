@@ -7,6 +7,7 @@ import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { fetchAllScoresFromD1, D1ScoreRow } from "./scoresWorker";
+import { canonicalFamilyTag } from "./modelFamilies";
 
 // ── SupraScore: user-trust first, coverage as evidence ──
 //
@@ -394,10 +395,231 @@ type FamilyRankingData = {
   representativeModelId?: Id<"models">;
   representativeName?: string;
   representativeSlug?: string;
+  aggregationMethod: "family-ceiling-pairwise";
   provisional: boolean;
   tags: string[];
   hidden: boolean;
 };
+
+export const FAMILY_PAIRWISE_PRIOR_RATERS = 3;
+export const FAMILY_PAIRWISE_REGULARIZATION = 0.15;
+export const FAMILY_PAIRWISE_ITERATIONS = 40;
+
+function shrinkRatingDimension(
+  value: number | undefined,
+  raterCount: number,
+  priorRaters: number
+): number {
+  const observed = raterCount > 0 && typeof value === "number" ? value : 3;
+  return (observed * raterCount + 3 * priorRaters) / (raterCount + priorRaters);
+}
+
+function familyPairwiseBenchWeight(bench: any, upvoteMax: number): number {
+  const dimensions = bench.cachedDimensions ?? {};
+  const raterCount = Math.max(0, bench.cachedRaterCount ?? 0);
+  const trustDimensions = [
+    dimensions.relevance,
+    dimensions.contamination,
+    dimensions.discriminability,
+    dimensions.reproducibility,
+  ].map((value) =>
+    shrinkRatingDimension(value, raterCount, FAMILY_PAIRWISE_PRIOR_RATERS)
+  );
+  const quality =
+    (trustDimensions.reduce((sum, value) => sum + value, 0) /
+      trustDimensions.length) * 20;
+  const difficulty = shrinkRatingDimension(
+    dimensions.difficulty,
+    raterCount,
+    FAMILY_PAIRWISE_PRIOR_RATERS
+  );
+  const difficultyMultiplier = Math.min(1, Math.max(0, (difficulty - 1) / 4));
+  const headroom =
+    typeof bench.cachedHeadroom === "number" ? bench.cachedHeadroom : 1;
+  const upvotes =
+    typeof bench.cachedNetUpvotes === "number" ? bench.cachedNetUpvotes : 1;
+  const trust =
+    upvoteMax > 0 ? Math.min(1, Math.max(0, upvotes) / upvoteMax) : 1;
+  return quality * difficultyMultiplier * headroom * trust;
+}
+
+type FamilyCeilingScore = {
+  familyKey: string;
+  familyTag: string;
+  provider: string;
+  benchId: string;
+  score: number;
+};
+
+export function buildPairwiseFamilyRankings(args: {
+  models: any[];
+  benches: any[];
+  scores: ScoreLike[];
+}): {
+  rows: Array<{
+    familyKey: string;
+    familyTag: string;
+    provider: string;
+    supraScore: number;
+    benchCount: number;
+  }>;
+  ceilingScores: FamilyCeilingScore[];
+} {
+  const visibleModels = args.models.filter((model) => !model.hidden);
+  const modelById = new Map(
+    visibleModels.map((model) => [model._id as string, model])
+  );
+  const perModelBench = new Map<string, number[]>();
+  for (const score of args.scores) {
+    if (score.upvotes <= score.downvotes || !modelById.has(score.modelId)) continue;
+    const key = `${score.modelId}\u0000${score.benchId}`;
+    const values = perModelBench.get(key) ?? [];
+    values.push(score.normalizedScore);
+    perModelBench.set(key, values);
+  }
+
+  const familyMeta = new Map<
+    string,
+    { familyTag: string; provider: string; benchScores: Map<string, number> }
+  >();
+  for (const model of visibleModels) {
+    const familyTag = normalizeFamilyKey(
+      canonicalFamilyTag(model.name, model.familyTag)
+    );
+    if (!familyTag) continue;
+    const familyKey = `${familyTag}\u0000${model.provider}`;
+    if (!familyMeta.has(familyKey)) {
+      familyMeta.set(familyKey, {
+        familyTag,
+        provider: model.provider,
+        benchScores: new Map(),
+      });
+    }
+  }
+  for (const [key, values] of perModelBench) {
+    const [modelId, benchId] = key.split("\u0000");
+    const model = modelById.get(modelId);
+    if (!model) continue;
+    const familyTag = normalizeFamilyKey(
+      canonicalFamilyTag(model.name, model.familyTag)
+    );
+    if (!familyTag) continue;
+    const familyKey = `${familyTag}\u0000${model.provider}`;
+    const meta = familyMeta.get(familyKey);
+    if (!meta) continue;
+    const concreteScore = medianOf(values);
+    const previous = meta.benchScores.get(benchId);
+    if (previous === undefined || concreteScore > previous) {
+      meta.benchScores.set(benchId, concreteScore);
+    }
+  }
+
+  const visibleBenches = args.benches.filter((bench) => !bench.hidden);
+  const upvoteMax = Math.max(
+    0,
+    ...visibleBenches.map((bench) => bench.cachedNetUpvotes ?? 1)
+  );
+  const rawWeight = new Map<string, number>();
+  for (const bench of visibleBenches) {
+    rawWeight.set(
+      bench._id as string,
+      familyPairwiseBenchWeight(bench, upvoteMax)
+    );
+  }
+  const positiveWeights = [...rawWeight.values()].filter((weight) => weight > 0);
+  const meanWeight =
+    positiveWeights.length > 0
+      ? positiveWeights.reduce((sum, weight) => sum + weight, 0) /
+        positiveWeights.length
+      : 1;
+
+  const familyKeys = [...familyMeta.keys()];
+  const familyIndex = new Map(familyKeys.map((key, index) => [key, index]));
+  const comparisons: Array<{
+    left: number;
+    right: number;
+    outcome: number;
+    weight: number;
+  }> = [];
+  const ceilingScores: FamilyCeilingScore[] = [];
+  for (const bench of visibleBenches) {
+    const benchId = bench._id as string;
+    const rows: Array<{ familyKey: string; score: number }> = [];
+    for (const [familyKey, meta] of familyMeta) {
+      const score = meta.benchScores.get(benchId);
+      if (score === undefined) continue;
+      rows.push({ familyKey, score });
+      ceilingScores.push({
+        familyKey,
+        familyTag: meta.familyTag,
+        provider: meta.provider,
+        benchId,
+        score,
+      });
+    }
+    if (rows.length < 2) continue;
+    const benchmarkWeight = (rawWeight.get(benchId) ?? 0) / meanWeight;
+    if (benchmarkWeight <= 0) continue;
+    const pairWeight = benchmarkWeight / (rows.length - 1);
+    for (let left = 0; left < rows.length; left++) {
+      for (let right = left + 1; right < rows.length; right++) {
+        comparisons.push({
+          left: familyIndex.get(rows[left].familyKey)!,
+          right: familyIndex.get(rows[right].familyKey)!,
+          outcome:
+            rows[left].score === rows[right].score
+              ? 0.5
+              : rows[left].score > rows[right].score
+                ? 1
+                : 0,
+          weight: pairWeight,
+        });
+      }
+    }
+  }
+
+  const ability = new Float64Array(familyKeys.length);
+  const gradient = new Float64Array(familyKeys.length);
+  const information = new Float64Array(familyKeys.length);
+  for (let iteration = 0; iteration < FAMILY_PAIRWISE_ITERATIONS; iteration++) {
+    gradient.fill(0);
+    information.fill(FAMILY_PAIRWISE_REGULARIZATION);
+    for (const comparison of comparisons) {
+      const difference = Math.max(
+        -30,
+        Math.min(30, ability[comparison.left] - ability[comparison.right])
+      );
+      const probability = 1 / (1 + Math.exp(-difference));
+      const residual = comparison.weight * (comparison.outcome - probability);
+      const curvature = comparison.weight * probability * (1 - probability);
+      gradient[comparison.left] += residual;
+      gradient[comparison.right] -= residual;
+      information[comparison.left] += curvature;
+      information[comparison.right] += curvature;
+    }
+    let center = 0;
+    for (let index = 0; index < ability.length; index++) {
+      gradient[index] -= FAMILY_PAIRWISE_REGULARIZATION * ability[index];
+      const step = Math.max(-1, Math.min(1, gradient[index] / information[index]));
+      ability[index] += 0.8 * step;
+      center += ability[index];
+    }
+    center /= ability.length || 1;
+    for (let index = 0; index < ability.length; index++) ability[index] -= center;
+  }
+
+  const rows = familyKeys.map((familyKey, index) => {
+    const meta = familyMeta.get(familyKey)!;
+    return {
+      familyKey,
+      familyTag: meta.familyTag,
+      provider: meta.provider,
+      supraScore: 100 / (1 + Math.exp(-ability[index])),
+      benchCount: meta.benchScores.size,
+    };
+  });
+  return { rows, ceilingScores };
+}
 
 function buildRankingsFromInputs(args: {
   models: any[];
@@ -550,14 +772,12 @@ function buildRankingsFromInputs(args: {
     }
   }
 
-  const unroundedModelScore = new Map<string, number>();
   const modelRows: ModelRankingData[] = modelAggregates.map((a) => {
     const supraScore = confidenceAdjustedSupraScore(
       a.weightedMean,
       a.totalWeight,
       maxModelEvidenceWeight
     );
-    unroundedModelScore.set(a.modelId as string, supraScore);
     return {
       modelId: a.modelId,
       name: a.model.name,
@@ -571,18 +791,14 @@ function buildRankingsFromInputs(args: {
     };
   });
 
-  const aggregateByModel = new Map(
-    modelAggregates.map((aggregate) => [aggregate.modelId as string, aggregate])
-  );
-
-  // ─── 5. Per-family concrete representative ───
+  // ─── 5. Opponent-adjusted family ceiling ───
 
   const pairs = new Map<
     string,
     { familyTag: string; provider: string; members: any[] }
   >();
   for (const m of allModels) {
-    const k = normalizeFamilyKey(m.familyTag);
+    const k = normalizeFamilyKey(canonicalFamilyTag(m.name, m.familyTag));
     if (!k) continue;
     const key = `${k}\u0000${m.provider}`;
     let pair = pairs.get(key);
@@ -593,6 +809,14 @@ function buildRankingsFromInputs(args: {
     pair.members.push(m);
   }
 
+  const pairwise = buildPairwiseFamilyRankings({
+    models: allModels,
+    benches: allBenches,
+    scores,
+  });
+  const pairwiseByKey = new Map(
+    pairwise.rows.map((row) => [row.familyKey, row])
+  );
   const validFamilyKeys = new Set<string>();
   const familyRows: FamilyRankingData[] = [];
   for (const { familyTag, provider, members } of pairs.values()) {
@@ -602,40 +826,19 @@ function buildRankingsFromInputs(args: {
     const tagSet = new Set<string>();
     for (const m of visible) for (const t of (m.tags ?? [])) tagSet.add(t);
 
-    const scored = visible
-      .map((model: any) => ({
-        model,
-        aggregate: aggregateByModel.get(model._id as string),
-        score: unroundedModelScore.get(model._id as string) ?? 0,
-      }))
-      .filter((candidate) => (candidate.aggregate?.benchCount ?? 0) > 0);
-    const sufficientlyCovered = scored.filter(
-      (candidate) =>
-        (candidate.aggregate?.benchCount ?? 0) >= FAMILY_REPRESENTATIVE_MIN_BENCHES
-    );
-    const candidates = sufficientlyCovered.length > 0 ? sufficientlyCovered : scored;
-    candidates.sort(
-      (left, right) =>
-        right.score - left.score ||
-        (right.aggregate?.benchCount ?? 0) - (left.aggregate?.benchCount ?? 0) ||
-        (right.aggregate?.totalWeight ?? 0) - (left.aggregate?.totalWeight ?? 0) ||
-        left.model.name.localeCompare(right.model.name)
-    );
-    const representative = candidates[0];
-    const representativeBenchCount = representative?.aggregate?.benchCount ?? 0;
+    const familyKey = `${familyTag}\u0000${provider}`;
+    const ranking = pairwiseByKey.get(familyKey);
+    const familyBenchCount = ranking?.benchCount ?? 0;
 
-    validFamilyKeys.add(`${familyTag}\u0000${provider}`);
+    validFamilyKeys.add(familyKey);
     familyRows.push({
       familyTag,
       provider,
-      supraScore: Math.round((representative?.score ?? 0) * 10) / 10,
-      benchCount: representativeBenchCount,
+      supraScore: Math.round((ranking?.supraScore ?? 0) * 10) / 10,
+      benchCount: familyBenchCount,
       modelCount: visible.length,
-      representativeModelId: representative?.model._id,
-      representativeName: representative?.model.name,
-      representativeSlug: representative?.model.slug,
-      provisional:
-        representativeBenchCount < FAMILY_REPRESENTATIVE_MIN_BENCHES,
+      aggregationMethod: "family-ceiling-pairwise",
+      provisional: familyBenchCount < FAMILY_REPRESENTATIVE_MIN_BENCHES,
       tags: Array.from(tagSet),
       hidden: isAllHidden,
     });
@@ -842,6 +1045,7 @@ export const _persistRankings = internalMutation({
         representativeModelId: v.optional(v.id("models")),
         representativeName: v.optional(v.string()),
         representativeSlug: v.optional(v.string()),
+        aggregationMethod: v.literal("family-ceiling-pairwise"),
         provisional: v.boolean(),
         tags: v.array(v.string()),
         hidden: v.boolean(),

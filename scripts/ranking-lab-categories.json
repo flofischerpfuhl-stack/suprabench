@@ -1,0 +1,34 @@
+{
+  "software-engineering-coding": [
+    "swe-bench-verified",
+    "swe-bench-pro",
+    "scicode",
+    "terminal-bench-hard",
+    "deepswe",
+    "terminal-bench-v2-1-aa-terminus-2"
+  ],
+  "agents-tool-use": [
+    "textquests",
+    "tau2-bench-telecom",
+    "apex-agents-aa"
+  ],
+  "reasoning-puzzles": [
+    "arc-agi-2",
+    "enigmaeval",
+    "arc-agi-3"
+  ],
+  "multimodal-spatial-embodied": [
+    "erqa",
+    "mindcube",
+    "spatialviz",
+    "intphys-2",
+    "mmmu-pro"
+  ],
+  "knowledge-science": [
+    "humanity-s-last-exam",
+    "skatebench"
+  ],
+  "long-context-retrieval": [
+    "aa-long-context-reasoning"
+  ]
+}
