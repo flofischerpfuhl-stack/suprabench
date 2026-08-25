@@ -207,6 +207,7 @@ async function analyzeCommand(options) {
       settings: ranking.scenario,
       target,
       top: ranking.familyRanking.slice(0, 12).map(compactRow),
+      families: ranking.familyRanking.map(compactRow),
     };
   });
   const search = scenarioGrid(config.searchSpace).map((scenario, index) => {

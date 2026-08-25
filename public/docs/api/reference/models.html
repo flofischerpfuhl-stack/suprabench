@@ -125,7 +125,7 @@
         <tr><td><span class="name">slug</span></td><td><span class="type">string</span></td><td><span class="desc">Stable URL-safe identifier. Use this in <code>GET /v1/models/:slug</code>.</span></td></tr>
         <tr><td><span class="name">name</span></td><td><span class="type">string</span></td><td><span class="desc">Display name (e.g. <code>"Claude Opus 4.7"</code>).</span></td></tr>
         <tr><td><span class="name">provider</span></td><td><span class="type">string</span></td><td><span class="desc">Vendor (<code>"Anthropic"</code>, <code>"OpenAI"</code>, ...).</span></td></tr>
-        <tr><td><span class="name">familyTag</span></td><td><span class="type">string</span></td><td><span class="desc">Family identifier (<code>"claude"</code>, <code>"gpt"</code>, ...) for cross-version comparisons.</span></td></tr>
+        <tr><td><span class="name">familyTag</span></td><td><span class="type">string</span></td><td><span class="desc">Specific release and product-tier family (for example <code>"Claude Fable 5"</code> or <code>"GPT-5.6 Sol"</code>). Reasoning-effort variants share a family; Sol, Terra, and Luna do not.</span></td></tr>
         <tr><td><span class="name">tags</span></td><td><span class="type">string[]</span></td><td><span class="desc">Capability tags upvoted by the community (e.g. <code>["reasoning", "coding"]</code>).</span></td></tr>
         <tr><td><span class="name">supraScore</span></td><td><span class="type">number</span></td><td><span class="desc">Aggregate Supra-Score, 0&ndash;100, two decimals. See <a href="/#about">About</a> for the formula.</span></td></tr>
         <tr><td><span class="name">benchCount</span></td><td><span class="type">integer</span></td><td><span class="desc">Number of distinct benchmarks contributing to <code>supraScore</code>.</span></td></tr>
@@ -189,7 +189,7 @@ json.NewDecoder(resp.Body).Decode(&amp;models)</code></pre>
     "slug": "claude-opus-4-7",
     "name": "Claude Opus 4.7",
     "provider": "Anthropic",
-    "familyTag": "claude",
+    "familyTag": "Claude Opus 4.7",
     "tags": ["reasoning", "coding", "long-context"],
     "supraScore": 92.41,
     "benchCount": 28,
@@ -199,7 +199,7 @@ json.NewDecoder(resp.Body).Decode(&amp;models)</code></pre>
     "slug": "gpt-5-2026-q1",
     "name": "GPT-5 (Q1 2026)",
     "provider": "OpenAI",
-    "familyTag": "gpt",
+    "familyTag": "GPT-5",
     "tags": ["reasoning", "coding", "agentic"],
     "supraScore": 91.07,
     "benchCount": 31,
@@ -209,7 +209,7 @@ json.NewDecoder(resp.Body).Decode(&amp;models)</code></pre>
     "slug": "gemini-3-pro",
     "name": "Gemini 3 Pro",
     "provider": "Google",
-    "familyTag": "gemini",
+    "familyTag": "Gemini 3 Pro",
     "tags": ["coding", "multimodal"],
     "supraScore": 89.92,
     "benchCount": 22,
@@ -308,7 +308,7 @@ json.NewDecoder(resp.Body).Decode(&amp;detail)</code></pre>
   "slug": "claude-opus-4-7",
   "name": "Claude Opus 4.7",
   "provider": "Anthropic",
-  "familyTag": "claude",
+  "familyTag": "Claude Opus 4.7",
   "tags": ["reasoning", "coding", "long-context"],
   "supraScore": 92.41,
   "benchCount": 28,

@@ -35,7 +35,62 @@
       "trustMode": "current",
       "confidenceMode": "current",
       "familyAggregation": "best-config",
-      "taxonomyMode": "inferred"
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3
+    },
+    {
+      "name": "production-representative-current-ratings",
+      "scoreTransform": "raw",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3
+    },
+    {
+      "name": "production-representative-bayesian-prior-1",
+      "scoreTransform": "raw",
+      "ratingMode": "bayesian",
+      "priorRaters": 1,
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3
+    },
+    {
+      "name": "production-representative-bayesian-prior-3",
+      "scoreTransform": "raw",
+      "ratingMode": "bayesian",
+      "priorRaters": 3,
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3
+    },
+    {
+      "name": "production-representative-bayesian-prior-5",
+      "scoreTransform": "raw",
+      "ratingMode": "bayesian",
+      "priorRaters": 5,
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3
+    },
+    {
+      "name": "production-representative-bayesian-prior-10",
+      "scoreTransform": "raw",
+      "ratingMode": "bayesian",
+      "priorRaters": 10,
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3
     },
     {
       "name": "relative-percentile-best-config",

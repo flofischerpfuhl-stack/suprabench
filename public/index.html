@@ -246,11 +246,11 @@
     </div>
 
     <!-- ── Families Table (leaderboardScope === 'families') ──
-         Same five-column shape as the models table but rows are
-         (familyTag, provider) aggregates from familyRankings. Click on
+         Same five-column shape as the models table but rows are concrete
+         representatives cached per (familyTag, provider). Click on
          a row drills down: switches back to models mode with that
          family filter applied, so the user immediately sees which
-         member models compose the score. -->
+         member models belong to the family and which one represents it. -->
     <div class="table-scroll" x-show="leaderboardScope === 'families' && filteredRankedFamilies.length > 0">
     <table class="models-list">
         <thead>
@@ -264,10 +264,10 @@
                           @click="setLeaderboardScope('families')">Model-Family</span>
                 </th>
                 <th>Provider</th>
-                <th title="Family SupraScore: bench-weighted mean of the family's per-bench median-of-member-medians, adjusted by evidence confidence around the neutral 50-point midpoint. Same formula as the model SupraScore, just aggregated to the family level. See About for the full formula.">SupraScore</th>
-                <th x-show="activeTags.length > 0" title="Same math as the family SupraScore but restricted to benches matching the active tag filter.">Filtered Score</th>
-                <th title="Number of distinct member models in this family that contribute to the score.">Members</th>
-                <th title="Number of distinct benches the family has been measured on (union across all member models).">Coverage</th>
+                <th title="Family SupraScore of the disclosed concrete representative. We prefer the highest-scoring member with at least three benchmarks; sparse fallbacks are marked provisional. See About for the full rule.">SupraScore</th>
+                <th x-show="activeTags.length > 0" title="Tag-filtered SupraScore of the disclosed concrete representative; no synthetic mixing across family members.">Filtered Score</th>
+                <th title="Number of visible configurations in the family. Only the disclosed representative produces the score.">Members</th>
+                <th title="Number of distinct benchmarks measured for the representative configuration.">Coverage</th>
             </tr>
         </thead>
         <tbody>
@@ -276,6 +276,13 @@
                     <td class="m-rank"><span class="rank-num" x-text="i+1"></span></td>
                     <td class="m-name">
                         <a href="#" @click.prevent x-text="f.familyTag" style="font-weight:500"></a>
+                        <template x-if="f.representativeName">
+                            <div style="font-size:.76rem;color:var(--text3);margin-top:.2rem">
+                                via <a href="#" @click.stop.prevent="navigate('model', {slug: f.representativeSlug})"
+                                       x-text="f.representativeName" style="color:var(--text2)"></a>
+                                <span x-show="f.provisional" class="tag-sm" style="margin-left:.3rem" title="No family member currently has three distinct benchmark results.">provisional</span>
+                            </div>
+                        </template>
                     </td>
                     <td class="m-provider" style="color:var(--text2)" x-text="f.provider"></td>
                     <td class="m-supra"><span class="score-cell" x-text="f.supraScore.toFixed(1)"></span></td>
@@ -2113,8 +2120,8 @@
             <span>What counts as a "model family"?</span>
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q9b')" x-transition>
-            <p>A <strong>family</strong> is one specific lab release — <em>not</em> a vendor, a generation or an architecture line. "Claude Opus 4.6" and "Claude Opus 4.7" are separate families. "Claude" is not a family at all; it's a brand.</p>
-            <p>The reason is practical: a 0.1 version bump at a frontier lab usually means a different training run, different parameter count and measurably different benchmark behaviour. Grouping them defeats the point of a family ranking.</p>
+            <p>A <strong>family</strong> is one specific lab release and product tier — <em>not</em> a vendor, a broad generation or an architecture line. "Claude Opus 5" and "Claude Fable 5" are separate families; so are "GPT-5.6 Sol", "GPT-5.6 Terra" and "GPT-5.6 Luna". "Claude" or "GPT-5.6" alone is too broad for a family row.</p>
+            <p>The cross-provider rule is: provider + generation + product tier + release identify the family. Reasoning effort, harness and execution settings identify a concrete configuration inside it. Versioned releases such as Muse Spark 1.1 and 1.2 remain separate.</p>
 
             <h4 class="qa-subheader">Variants go in the model name, not the family</h4>
             <p>When a lab ships the same release at different effort levels — sampling temperature, reasoning mode, context window, fine-tune — we keep them in the same family and disambiguate with a parenthetical suffix on the model's display name:</p>
@@ -2123,17 +2130,19 @@
                 <tbody>
                     <tr><td><code>Claude Opus 4.7</code></td><td><code>Claude Opus 4.7</code>, <code>Claude Opus 4.7 (max)</code></td><td>Lab-branded "best-effort" sampling</td></tr>
                     <tr><td><code>GPT-5.3 Codex</code></td><td><code>… (low)</code>, <code>(med)</code>, <code>(high)</code>, <code>(xhigh)</code></td><td>Reasoning-effort level</td></tr>
+                    <tr><td><code>GPT-5.6 Sol</code></td><td><code>GPT-5.6 Sol</code>, <code>… (medium)</code>, <code>… (xhigh)</code>, <code>… (max)</code></td><td>Same product tier at different reasoning effort</td></tr>
                     <tr><td><code>Gemini 3.1</code></td><td><code>Gemini 3.1</code>, <code>Gemini 3.1 (thinking)</code></td><td>Explicit reasoning mode on/off</td></tr>
                 </tbody>
             </table>
             <p>Common suffixes you'll see: <code>(low)</code> / <code>(med)</code> / <code>(high)</code> / <code>(xhigh)</code>, <code>(thinking)</code>, <code>(max)</code>, <code>(128k)</code> / <code>(200k)</code> / <code>(1M)</code> for context-length SKUs, <code>(instruct)</code> / <code>(chat)</code> / <code>(base)</code> for open-weight post-training variants.</p>
 
-            <h4 class="qa-subheader">Family ranking &ne; average of member models</h4>
-            <p>When you click a family tag in the rankings table, we rebuild the SupraScore from the <em>union</em> of the family's member models per bench: for each bench any member scored on, we take the family's median-of-medians and weight it by the bench's own weight, exactly as we do for individual models. The evidence-confidence step then uses the max over all families (not over all models) as denominator so family scores stay on the same $[0,100]$ scale. A family with more variants doesn't automatically win — the per-bench median is still robust to one outlier variant.</p>
+            <h4 class="qa-subheader">One real configuration represents the family</h4>
+            <p>A family score is never assembled from different configurations. We select the visible member with the highest ordinary model SupraScore among those measured on at least <strong>three distinct benchmarks</strong>. The family row displays that representative by name and uses its exact score and coverage.</p>
+            <p>If no member reaches three benchmarks, the best available concrete member remains visible but is marked <strong>provisional</strong>. This preserves new-model discovery without presenting a one-benchmark spike as well-triangulated evidence. Tag-filtered family views apply the same concrete-member rule and disclose which member produced the filtered score.</p>
 
             <h4 class="qa-subheader">What if the community disagrees with a grouping?</h4>
-            <p>Anyone signed in can edit a model's <code>familyTag</code> via the model-detail page. Rankings refresh on the next tick. There's no canonical list and no admin curation — if the community thinks "GPT-5.3 Codex (high)" is actually a separate model from "(low)", they can split it off by assigning a new family tag to the "(high)" variant.</p>
-            <p class="helper-text">A one-off release with no variants and no expected follow-ups is fine to have <code>familyTag == name</code> — the family ranking then shows it with <code>modelCount: 1</code>.</p>
+            <p>New submissions still propose their family tag, and ambiguous provider taxonomies are not guessed automatically. A small reviewed normalizer only enforces unambiguous distinctions already present in the official model name, such as GPT-5.6 Sol versus Terra or Muse Spark 1.1 versus 1.2. Corrections can be proposed with evidence through the public repository; the mapping and its tests are auditable.</p>
+            <p class="helper-text">A one-off release with no variants is fine to have <code>familyTag == name</code>. It appears as a one-member family and stays provisional until that concrete model has three benchmark results.</p>
         </div>
     </div>
 
@@ -2167,6 +2176,21 @@
             <h4 class="qa-subheader">Can a tag be both?</h4>
             <p>Yes. <code>code</code> is the obvious one: HumanEval is a code <em>bench</em>, GPT-5.3 Codex is a code-tuned <em>model</em>. The tag exists once globally; it just appears in a chip bar if at least one bench carries it, and surfaces in search regardless of which side it lives on. The tag-counts API tracks both sides separately so this remains true even after extensive recategorisation.</p>
             <p class="helper-text">Implementation: the <code>tagCounts</code> Convex table keeps <code>{benches, models}</code> per tag; the chip bar reads <code>tags.listForBenches</code> and the autocomplete reads <code>tags.listAll</code>. See <code>convex/tags.ts</code>.</p>
+        </div>
+    </div>
+
+    <!-- Q9d — category mass is deliberately still a transparent research
+         question; current ratings are not silently overridden. -->
+    <div class="qa-item">
+        <button class="qa-question" :aria-expanded="aboutOpen.has('q9d')" @click="aboutToggle('q9d')">
+            <span class="expand-icon" :class="{'open': aboutOpen.has('q9d')}">▼</span>
+            <span>Can many similar benchmarks dominate the ranking?</span>
+        </button>
+        <div class="qa-answer" x-show="aboutOpen.has('q9d')" x-transition>
+            <p><strong>They can accumulate more total weight today.</strong> Community ratings determine how much each individual benchmark counts, but the production formula does not currently reserve fixed mass for coding, agents, reasoning, multimodal work, knowledge or long-context tasks.</p>
+            <p>We are researching hierarchical category weighting without replacing users' judgements. Ratings would still allocate weight <em>within</em> a category; the viewer would choose how categories share the total through an uncapped, community, balanced or custom profile. The active profile and every category contribution would always be visible.</p>
+            <p><strong>No category cap is active yet.</strong> The existing uncapped score remains the canonical leaderboard while primary-category assignments, preference participation and shadow rankings are audited. This avoids silently imposing a maintainer's idea of what intelligence should mean.</p>
+            <p class="helper-text">The full feasibility and governance proposal is published in <code>docs/research/CATEGORY_WEIGHTING_CONCEPT.md</code> in the source repository.</p>
         </div>
     </div>
 

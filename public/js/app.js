@@ -2096,6 +2096,7 @@ function supraBench() {
       if (!q) return list;
       return list.filter((f) =>
         (f.familyTag || "").toLowerCase().includes(q) ||
+        (f.representativeName || "").toLowerCase().includes(q) ||
         (f.provider || "").toLowerCase().includes(q) ||
         (f.tags || []).some((t) => t.includes(q))
       );

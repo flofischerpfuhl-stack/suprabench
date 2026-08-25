@@ -6,21 +6,13 @@
 // between a "models" view and a "families" view without an O(M×B)
 // re-scan on every frontend subscription.
 //
-// ── Aggregation semantics ───────────────────────────────────
-// A family's per-bench score is the MEDIAN of its constituent
-// models' per-bench medians. That median (not mean) is the right
-// choice because:
-//   • outlier models in a family (e.g. an accidentally-tested older
-//     variant) shouldn't drag the family score
-//   • "the family as a whole" is what a user browsing for "which GPT
-//     family should I use?" actually wants — median tracks that.
-//
-// Then the family's supraScore is the bench-weighted mean of those
-// family medians, adjusted by evidence confidence around the neutral
-// 50-point midpoint exactly like the per-model SupraScore. Evidence
-// share is computed within the family scale (max over all families,
-// not over all models) so the leaderboard's top-evidence family has
-// share=1.
+// ── Representative semantics ───────────────────────────────
+// A family row is one reproducible concrete configuration, never a synthetic
+// median assembled from different members. We select the highest-SupraScore
+// visible member measured on at least three distinct benchmarks. If no member
+// reaches that minimum, the best available member is shown and the family row
+// is explicitly marked provisional. The selected name/slug is cached so the
+// UI can disclose exactly which configuration produced the family score.
 //
 // ── What counts as a family ─────────────────────────────────
 // Models with `familyTag === undefined` or empty string are NOT
@@ -54,10 +46,10 @@ import { v } from "convex/values";
 import { recomputeAllUnifiedImpl } from "./rankings";
 
 // Recompute a single family (identified by familyTag, optionally
-// scoped to a provider). Because the evidence-confidence factor compares
-// this family's evidence weight against the max over ALL families, a
-// "single family" update is never actually local — we always
-// full-rebuild. Args are accepted for backwards compatibility with
+// scoped to a provider). Because the representative's evidence-confidence
+// factor compares against the max over ALL concrete models, a "single family"
+// update is never actually local — we always full-rebuild. Args are accepted
+// for backwards compatibility with
 // the entity-vote cascade in entityVotes.ts and ignored.
 export const recomputeFamily = internalMutation({
   args: { familyTag: v.string(), provider: v.optional(v.string()) },

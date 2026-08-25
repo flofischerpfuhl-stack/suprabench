@@ -168,19 +168,22 @@ export default defineSchema({
   // model's own name — that creates noise in the ranking table).
   //
   // supraScore here is the FAMILY score:
-  //   • rebuilt from the constituent models' per-bench medians
-  //   • same weighting formula as individual models (bench weight =
-  //     quality × difficulty × headroom)
-  //   • in plain words: "take every bench any family-member scored
-  //     on, compute the family's median score on that bench from the
-  //     members' own bench-medians, then weight-aggregate."
-  // See rankings.recomputeFamily for the implementation.
+  //   • represented by the highest-SupraScore concrete configuration with at
+  //     least FAMILY_REPRESENTATIVE_MIN_BENCHES distinct benchmarks
+  //   • falls back to the best available configuration and marks the family
+  //     provisional when no member meets that minimum
+  //   • never synthesizes a configuration from different family members
+  // See rankings.buildRankingsFromInputs for the implementation.
   familyRankings: defineTable({
     familyTag: v.string(),
     provider: v.string(),
     supraScore: v.number(),
-    benchCount: v.number(),     // # distinct benches ≥ 1 family-member has a valid score on
+    benchCount: v.number(),     // representative configuration's distinct valid benches
     modelCount: v.number(),     // # non-hidden models in the family
+    representativeModelId: v.optional(v.id("models")),
+    representativeName: v.optional(v.string()),
+    representativeSlug: v.optional(v.string()),
+    provisional: v.optional(v.boolean()), // true when representative has < minimum benches
     tags: v.array(v.string()),  // union of member models' tags (for tag-filter)
     updatedAt: v.number(),
     hidden: v.optional(v.boolean()), // true when every member model is hidden

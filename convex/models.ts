@@ -13,6 +13,7 @@ import {
   effectiveBenchWeight,
   evidenceBenchWeight,
   confidenceAdjustedSupraScore,
+  FAMILY_REPRESENTATIVE_MIN_BENCHES,
 } from "./rankings";
 import { enforceDailyActionLimit } from "./abuse";
 import { canonicalFamilyTag } from "./modelFamilies";
@@ -223,6 +224,10 @@ export const listRankedFamilies = query({
       supraScore: r.supraScore,
       benchCount: r.benchCount,
       modelCount: r.modelCount,
+      representativeModelId: r.representativeModelId,
+      representativeName: r.representativeName,
+      representativeSlug: r.representativeSlug,
+      provisional: r.provisional ?? true,
       tags: r.tags,
     }));
   },
@@ -274,11 +279,11 @@ function supraFromAggregate(
   );
 }
 
-// Ranked FAMILIES with a tag-filtered score. Parallel to
-// listRankedWithFilter, but the inner aggregation is the same
-// "median-of-member-medians, weighted by full bench weight" semantics
-// used by familyRankings.recomputeAll. activeTags is OR-matched
-// against bench tags (a bench counts if it has any of the tags).
+// Ranked FAMILIES with a tag-filtered score. Each row is still represented by
+// one concrete model configuration. For a filtered view we choose the best
+// sufficiently-covered member on the selected benches; the UI exposes that
+// representative instead of silently synthesizing a family configuration.
+// activeTags is OR-matched against bench tags.
 export const listRankedFamiliesWithFilter = query({
   args: { activeTags: v.array(v.string()) },
   handler: async (ctx, { activeTags }) => {
@@ -296,6 +301,10 @@ export const listRankedFamiliesWithFilter = query({
         supraScore: r.supraScore,
         benchCount: r.benchCount,
         modelCount: r.modelCount,
+        representativeModelId: r.representativeModelId,
+        representativeName: r.representativeName,
+        representativeSlug: r.representativeSlug,
+        provisional: r.provisional ?? true,
         tags: r.tags,
         filteredScore: null as number | null,
       }));
@@ -310,78 +319,107 @@ export const listRankedFamiliesWithFilter = query({
     );
     const benchWeight = await scopedBenchWeights(ctx, matchingBenches);
 
-    const allModels = await ctx.db.query("models").collect();
-    const out = [];
+    const allModels = (await ctx.db.query("models").collect()).filter(
+      (model: any) => !model.hidden
+    );
+    const modelRankings = await ctx.db.query("modelRankings").collect();
+    const rankingByModel = new Map(
+      modelRankings.map((ranking: any) => [ranking.modelId as string, ranking])
+    );
+
+    const filteredModels: Array<{
+      model: any;
+      weighted: number;
+      abilityWeight: number;
+      evidenceWeight: number;
+      filteredScore: number | null;
+    }> = [];
     let maxEvidenceWeight = 0;
-    for (const r of visible) {
-      const members = allModels.filter(
-        (m: any) =>
-          !m.hidden &&
-          (m.familyTag ?? "").trim() === r.familyTag &&
-          m.provider === r.provider
-      );
-
-      // perBench[benchId] = array of per-member medians on that bench,
-      // restricted to matching benches and net-positive scores. The
-      // outer median across that array is the family's score on that
-      // bench (matches familyRankings.recomputeAll semantics).
+    for (const model of allModels) {
+      const scores = await ctx.db
+        .query("modelScores")
+        .withIndex("by_model", (q) => q.eq("modelId", model._id))
+        .collect();
       const perBench: Record<string, number[]> = {};
-      for (const m of members) {
-        const scores = await ctx.db
-          .query("modelScores")
-          .withIndex("by_model", (q) => q.eq("modelId", m._id))
-          .collect();
-        const byBench: Record<string, number[]> = {};
-        for (const s of scores) {
-          const bId = s.benchId as string;
-          if (!matchingBenchIds.has(bId)) continue;
-          if (s.upvotes <= s.downvotes) continue;
-          (byBench[bId] ??= []).push(s.normalizedScore);
-        }
-        for (const [bId, vals] of Object.entries(byBench)) {
-          vals.sort((a, b) => a - b);
-          (perBench[bId] ??= []).push(median(vals));
-        }
+      for (const score of scores) {
+        const benchId = score.benchId as string;
+        if (!matchingBenchIds.has(benchId) || score.upvotes <= score.downvotes) continue;
+        (perBench[benchId] ??= []).push(score.normalizedScore);
       }
-
       let weighted = 0;
       let abilityWeight = 0;
       let evidenceWeight = 0;
-      for (const [bId, memberMeds] of Object.entries(perBench)) {
-        const familyMed = median(memberMeds);
+      for (const [bId, values] of Object.entries(perBench)) {
         const w = benchWeight[bId] ?? 0;
         if (!w || w.ability <= 0) continue;
-        weighted += w.ability * familyMed;
+        weighted += w.ability * median(values);
         abilityWeight += w.ability;
         evidenceWeight += w.evidence;
       }
       if (evidenceWeight > maxEvidenceWeight) maxEvidenceWeight = evidenceWeight;
-
-      out.push({
-        familyTag: r.familyTag,
-        provider: r.provider,
-        supraScore: r.supraScore,
-        benchCount: r.benchCount,
-        modelCount: r.modelCount,
-        tags: r.tags,
-        filteredScore: null as number | null,
-        _filteredWeighted: weighted,
-        _filteredAbilityWeight: abilityWeight,
-        _filteredEvidenceWeight: evidenceWeight,
+      filteredModels.push({
+        model,
+        weighted,
+        abilityWeight,
+        evidenceWeight,
+        filteredScore: null,
       });
     }
 
-    for (const row of out) {
+    for (const row of filteredModels) {
       row.filteredScore = supraFromAggregate(
-        row._filteredWeighted,
-        row._filteredAbilityWeight,
-        row._filteredEvidenceWeight,
+        row.weighted,
+        row.abilityWeight,
+        row.evidenceWeight,
         maxEvidenceWeight
       );
-      delete (row as any)._filteredWeighted;
-      delete (row as any)._filteredAbilityWeight;
-      delete (row as any)._filteredEvidenceWeight;
     }
+
+    const out = visible.map((family) => {
+      const members = filteredModels.filter(
+        ({ model }) =>
+          (model.familyTag ?? "").trim() === family.familyTag &&
+          model.provider === family.provider
+      );
+      const sufficientlyCovered = members.filter(({ model }) => {
+        const ranking: any = rankingByModel.get(model._id as string);
+        return (ranking?.benchCount ?? 0) >= FAMILY_REPRESENTATIVE_MIN_BENCHES;
+      });
+      const candidates = sufficientlyCovered.length > 0 ? sufficientlyCovered : members;
+      candidates.sort((left, right) => {
+        if (left.filteredScore !== null && right.filteredScore === null) return -1;
+        if (left.filteredScore === null && right.filteredScore !== null) return 1;
+        if (left.filteredScore !== null && right.filteredScore !== null) {
+          const scoreDiff = right.filteredScore - left.filteredScore;
+          if (scoreDiff !== 0) return scoreDiff;
+        }
+        const leftRanking: any = rankingByModel.get(left.model._id as string);
+        const rightRanking: any = rankingByModel.get(right.model._id as string);
+        return (
+          (rightRanking?.benchCount ?? 0) - (leftRanking?.benchCount ?? 0) ||
+          left.model.name.localeCompare(right.model.name)
+        );
+      });
+      const representative = candidates[0];
+      const representativeRanking: any = representative
+        ? rankingByModel.get(representative.model._id as string)
+        : undefined;
+      return {
+        familyTag: family.familyTag,
+        provider: family.provider,
+        supraScore: family.supraScore,
+        benchCount: representativeRanking?.benchCount ?? family.benchCount,
+        modelCount: family.modelCount,
+        representativeModelId: representative?.model._id ?? family.representativeModelId,
+        representativeName: representative?.model.name ?? family.representativeName,
+        representativeSlug: representative?.model.slug ?? family.representativeSlug,
+        provisional:
+          (representativeRanking?.benchCount ?? family.benchCount) <
+          FAMILY_REPRESENTATIVE_MIN_BENCHES,
+        tags: family.tags,
+        filteredScore: representative?.filteredScore ?? null,
+      };
+    });
 
     out.sort((a, b) => {
       if (a.filteredScore !== null && b.filteredScore === null) return -1;

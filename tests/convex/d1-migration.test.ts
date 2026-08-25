@@ -286,6 +286,10 @@ describe("D1 driver produces identical rankings to Convex driver", () => {
       supraScore: r.supraScore,
       benchCount: r.benchCount,
       modelCount: r.modelCount,
+      representativeModelId: r.representativeModelId,
+      representativeName: r.representativeName,
+      representativeSlug: r.representativeSlug,
+      provisional: r.provisional ?? true,
     }));
 
     await t.run(async (ctx) => {
@@ -312,6 +316,10 @@ describe("D1 driver produces identical rankings to Convex driver", () => {
       supraScore: r.supraScore,
       benchCount: r.benchCount,
       modelCount: r.modelCount,
+      representativeModelId: r.representativeModelId,
+      representativeName: r.representativeName,
+      representativeSlug: r.representativeSlug,
+      provisional: r.provisional ?? true,
     }));
 
     const sortKey = (r: { familyTag: string; provider: string }) =>

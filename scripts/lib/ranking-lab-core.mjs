@@ -303,11 +303,16 @@ function buildFamilyAggregates(models, modelPerBench, modelRowsById, benchInfo, 
             right.confidence - left.confidence ||
             right.benchCount - left.benchCount,
         );
-      const best = candidates[0];
+      const minBenchCount = scenario.representativeMinBenchCount ?? 0;
+      const sufficientlyCovered = candidates.filter(
+        (candidate) => candidate.benchCount >= minBenchCount,
+      );
+      const best = (sufficientlyCovered.length > 0 ? sufficientlyCovered : candidates)[0];
       familyAggregates.push({
         ...group,
         ...(best ?? { weightedMean: 0, abilityWeight: 0, evidenceWeight: 0, benchCount: 0 }),
         representative: best?.name ?? null,
+        provisional: (best?.benchCount ?? 0) < minBenchCount,
         modelCount: group.members.length,
       });
       continue;
@@ -406,12 +411,16 @@ export function buildRanking(snapshot, inputScenario = {}) {
   );
   const maxFamilyEvidence = Math.max(0, ...familyAggregates.map((row) => row.evidenceWeight));
   const familyRows = familyAggregates.map((row) => {
-    const adjusted = applyConfidence(row, maxFamilyEvidence, scenario.confidenceMode);
+    const adjusted =
+      scenario.familyAggregation === "best-config"
+        ? { score: row.score, confidence: row.confidence }
+        : applyConfidence(row, maxFamilyEvidence, scenario.confidenceMode);
     return {
       name: row.familyTag,
       familyTag: row.familyTag,
       provider: row.provider,
       representative: row.representative,
+      provisional: row.provisional ?? false,
       modelCount: row.modelCount,
       weightedMean: row.weightedMean,
       abilityWeight: row.abilityWeight,

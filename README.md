@@ -127,14 +127,15 @@ A **family** is one specific lab release — not a vendor, not a
 generation. `Claude Opus 4.6` and `Claude Opus 4.7` are separate
 families, `Claude` on its own is not a family.
 
-Variants of the same release (different sampling / reasoning effort,
-context-window SKUs, fine-tune modes) stay in the same family and
+Variants of the same release and product tier (different sampling / reasoning
+effort, context-window SKUs, fine-tune modes) stay in the same family and
 disambiguate via a parenthetical suffix on the model's display name:
 
 | Family              | Members                                                                |
 | ------------------- | ---------------------------------------------------------------------- |
 | `Claude Opus 4.7`   | `Claude Opus 4.7`, `Claude Opus 4.7 (max)`                             |
 | `GPT-5.3 Codex`     | `GPT-5.3 Codex (low)`, `… (med)`, `… (high)`, `… (xhigh)`              |
+| `GPT-5.6 Sol`       | `GPT-5.6 Sol`, `GPT-5.6 Sol (medium)`, `… (xhigh)`, `… (max)`           |
 | `Gemini 3.1`        | `Gemini 3.1`, `Gemini 3.1 (thinking)`                                  |
 
 Common suffixes: `(low)` / `(med)` / `(high)` / `(xhigh)`,
@@ -142,11 +143,23 @@ Common suffixes: `(low)` / `(med)` / `(high)` / `(xhigh)`,
 `(chat)` / `(base)`. A one-off release with no variants has
 `familyTag == name` and a family ranking with `modelCount: 1`.
 
-Users can edit `familyTag` on any model they have permission for and
-the [`familyRankings`](convex/familyRankings.ts) cache refreshes on
-the next mutation tick — there is no canonical list and no admin
-curation. The full rationale and worked examples live in the About
-page Q9b on the live site.
+Product tiers and versioned releases remain distinct: `GPT-5.6 Sol`, `Terra`,
+and `Luna` are separate families, as are `Muse Spark 1.1` and `1.2`. The shared
+[`modelFamilies.ts`](convex/modelFamilies.ts) helper enforces only these reviewed,
+unambiguous mappings; unknown provider taxonomies keep the submitted family tag
+instead of being guessed automatically.
+
+The family leaderboard is represented by one concrete configuration. It picks
+the highest-SupraScore visible member with at least **three distinct
+benchmarks**. If no member reaches that minimum, the best available member is
+shown with a **provisional** label. The cached row exposes the representative's
+name and slug, so the score is reproducible and never a synthetic mix of
+different configurations. Full rationale lives in About Q9b on the live site.
+
+Ranking research tools and decisions are documented in
+[`docs/research/RANKING_LAB.md`](docs/research/RANKING_LAB.md), including the
+offline [Bayesian rating-prior experiment](docs/research/BAYESIAN_RATING_PRIOR_EXPERIMENT.md)
+and the proposed [user-controlled category weighting](docs/research/CATEGORY_WEIGHTING_CONCEPT.md).
 
 ### Official vs Community sources
 
@@ -201,7 +214,8 @@ suprabench/
 │   ├── benchQualityRatings.ts    # 5-dimension quality ratings
 │   ├── tags.ts                   # Tag aggregation (cached)
 │   ├── rankings.ts               # SupraScore + headroom math
-│   ├── familyRankings.ts         # Family-level aggregate (delegates to rankings.ts)
+│   ├── familyRankings.ts         # Concrete family representative cache entry points
+│   ├── modelFamilies.ts          # Conservative cross-provider family normalization
 │   ├── cache.ts                  # Denormalized aggregate recompute helpers
 │   ├── migrations.ts             # One-off backfill mutations
 │   ├── users.ts                  # Viewer + activity feed
@@ -300,8 +314,8 @@ suprabench/
 Every claim in [Anti-Gaming Rules](#anti-gaming-rules) is encoded as an
 executable test in
 [`tests/convex/adversarial-robustness.test.ts`](tests/convex/adversarial-robustness.test.ts).
-The whole suite runs in **~1.7 s on CI** (104 tests across 9 files,
-14 of them adversarial). When the math regresses, a named test fails with a
+The suite includes **117 tests across 13 files** (14 adversarial at the time of
+this methodology update). When the math regresses, a named test fails with a
 descriptive message — instead of someone discovering the regression
 on the production leaderboard.
 

@@ -50,3 +50,16 @@ tiers such as Muse Spark 1.1 and 1.2 are also separate families.
 
 The inferred-family audit is deliberately a review aid, not an automatic data
 migration. Ambiguous names must be confirmed before changing stored family tags.
+
+## Production family representative
+
+Production now selects one concrete family member rather than computing a
+median-per-benchmark synthetic family. The preferred member must cover at least
+three distinct benchmarks; if none does, the best available member is retained
+and marked provisional. The representative name and slug are exposed in the
+family leaderboard.
+
+Bayesian rating-prior results are recorded in
+`docs/research/BAYESIAN_RATING_PRIOR_EXPERIMENT.md`. The category-mass design is
+kept separate in `docs/research/CATEGORY_WEIGHTING_CONCEPT.md` because it remains
+a user-control and governance concept, not production math.

@@ -87,6 +87,10 @@ export const HEADROOM_MIN_N = 3;
 export const HEADROOM_FLOOR = 0.1;
 export const HEADROOM_PIVOT = 50;
 export const NORMALIZED_SCORE_MIDPOINT = 50;
+// A family prefers a concrete configuration measured on at least three
+// distinct benchmarks. Three is the smallest coverage that triangulates
+// performance instead of selecting a one- or two-benchmark spike.
+export const FAMILY_REPRESENTATIVE_MIN_BENCHES = 3;
 
 export async function getBenchWeights(
   ctx: any,
@@ -387,6 +391,10 @@ type FamilyRankingData = {
   supraScore: number;
   benchCount: number;
   modelCount: number;
+  representativeModelId?: Id<"models">;
+  representativeName?: string;
+  representativeSlug?: string;
+  provisional: boolean;
   tags: string[];
   hidden: boolean;
 };
@@ -481,10 +489,6 @@ function buildRankingsFromInputs(args: {
     benchCount: number;
   };
   const modelAggregates: ModelAgg[] = [];
-  // medianByModelBench[modelId][benchId] = that model's median on
-  // that bench. The family aggregator reuses this.
-  const medianByModelBench = new Map<string, Map<string, number>>();
-
   for (const m of allModels) {
     const scores = scoresByModel.get(m._id as string) ?? [];
     const benchScores: Record<string, number[]> = {};
@@ -498,11 +502,8 @@ function buildRankingsFromInputs(args: {
     let abilityWeightTotal = 0;
     let evidenceWeightTotal = 0;
     let benchCount = 0;
-    const perBench = new Map<string, number>();
-
     for (const [benchId, vals] of Object.entries(benchScores)) {
       const med = medianOf(vals);
-      perBench.set(benchId, med);
 
       const rawW = benchWeightCache.get(benchId) ?? 0;
       const u = upvoteMap.get(benchId) ?? 1;
@@ -527,8 +528,6 @@ function buildRankingsFromInputs(args: {
       evidenceWeightTotal += evidenceWeight;
       benchCount++;
     }
-    medianByModelBench.set(m._id as string, perBench);
-
     modelAggregates.push({
       modelId: m._id as Id<"models">,
       model: m,
@@ -540,19 +539,43 @@ function buildRankingsFromInputs(args: {
     });
   }
 
-  // ─── 4. Per-family aggregate ───
-  type FamilyAgg = {
-    familyTag: string;
-    provider: string;
-    weightedMean: number;
-    abilityWeight: number;
-    totalWeight: number;
-    benchCount: number;
-    modelCount: number;
-    tags: string[];
-    hidden: boolean;
-  };
-  const familyAggregates: FamilyAgg[] = [];
+  // ─── 4. Apply evidence confidence to concrete models ───
+  // Family rows deliberately reuse these scores so a family is represented
+  // by one real, reproducible configuration rather than a synthetic mixture.
+  let maxModelEvidenceWeight = 0;
+  for (const a of modelAggregates) {
+    if (a.model.hidden) continue;
+    if (a.totalWeight > maxModelEvidenceWeight) {
+      maxModelEvidenceWeight = a.totalWeight;
+    }
+  }
+
+  const unroundedModelScore = new Map<string, number>();
+  const modelRows: ModelRankingData[] = modelAggregates.map((a) => {
+    const supraScore = confidenceAdjustedSupraScore(
+      a.weightedMean,
+      a.totalWeight,
+      maxModelEvidenceWeight
+    );
+    unroundedModelScore.set(a.modelId as string, supraScore);
+    return {
+      modelId: a.modelId,
+      name: a.model.name,
+      provider: a.model.provider,
+      slug: a.model.slug,
+      familyTag: a.model.familyTag,
+      tags: a.model.tags,
+      supraScore: Math.round(supraScore * 10) / 10,
+      benchCount: a.benchCount,
+      hidden: a.model.hidden ?? false,
+    };
+  });
+
+  const aggregateByModel = new Map(
+    modelAggregates.map((aggregate) => [aggregate.modelId as string, aggregate])
+  );
+
+  // ─── 5. Per-family concrete representative ───
 
   const pairs = new Map<
     string,
@@ -570,119 +593,53 @@ function buildRankingsFromInputs(args: {
     pair.members.push(m);
   }
 
+  const validFamilyKeys = new Set<string>();
+  const familyRows: FamilyRankingData[] = [];
   for (const { familyTag, provider, members } of pairs.values()) {
     const visible = members.filter((m: any) => !m.hidden);
     const isAllHidden = visible.length === 0 && members.length > 0;
 
-    const perBench: Record<string, number[]> = {};
-    for (const m of visible) {
-      const memberMedians = medianByModelBench.get(m._id as string);
-      if (!memberMedians) continue;
-      for (const [benchId, med] of memberMedians) {
-        (perBench[benchId] ??= []).push(med);
-      }
-    }
-
-    let weightedSum = 0;
-    let abilityWeightTotal = 0;
-    let evidenceWeightTotal = 0;
-    let benchCount = 0;
-    for (const [benchId, memberMedians] of Object.entries(perBench)) {
-      const familyMedian = medianOf(memberMedians);
-      const rawW = benchWeightCache.get(benchId) ?? 0;
-      const u = upvoteMap.get(benchId) ?? 1;
-      const n = modelCountMap.get(benchId) ?? 0;
-      const abilityWeight = effectiveBenchWeight(
-        rawW,
-        u,
-        upvoteMax,
-        n,
-        modelCountMax
-      );
-      const evidenceWeight = evidenceBenchWeight(
-        rawW,
-        u,
-        upvoteMax,
-        n,
-        modelCountMax
-      );
-      if (abilityWeight <= 0) continue;
-      weightedSum += abilityWeight * familyMedian;
-      abilityWeightTotal += abilityWeight;
-      evidenceWeightTotal += evidenceWeight;
-      benchCount++;
-    }
-
     const tagSet = new Set<string>();
     for (const m of visible) for (const t of (m.tags ?? [])) tagSet.add(t);
 
-    familyAggregates.push({
+    const scored = visible
+      .map((model: any) => ({
+        model,
+        aggregate: aggregateByModel.get(model._id as string),
+        score: unroundedModelScore.get(model._id as string) ?? 0,
+      }))
+      .filter((candidate) => (candidate.aggregate?.benchCount ?? 0) > 0);
+    const sufficientlyCovered = scored.filter(
+      (candidate) =>
+        (candidate.aggregate?.benchCount ?? 0) >= FAMILY_REPRESENTATIVE_MIN_BENCHES
+    );
+    const candidates = sufficientlyCovered.length > 0 ? sufficientlyCovered : scored;
+    candidates.sort(
+      (left, right) =>
+        right.score - left.score ||
+        (right.aggregate?.benchCount ?? 0) - (left.aggregate?.benchCount ?? 0) ||
+        (right.aggregate?.totalWeight ?? 0) - (left.aggregate?.totalWeight ?? 0) ||
+        left.model.name.localeCompare(right.model.name)
+    );
+    const representative = candidates[0];
+    const representativeBenchCount = representative?.aggregate?.benchCount ?? 0;
+
+    validFamilyKeys.add(`${familyTag}\u0000${provider}`);
+    familyRows.push({
       familyTag,
       provider,
-      weightedMean:
-        abilityWeightTotal > 0 ? weightedSum / abilityWeightTotal : 0,
-      abilityWeight: abilityWeightTotal,
-      totalWeight: evidenceWeightTotal,
-      benchCount,
+      supraScore: Math.round((representative?.score ?? 0) * 10) / 10,
+      benchCount: representativeBenchCount,
       modelCount: visible.length,
+      representativeModelId: representative?.model._id,
+      representativeName: representative?.model.name,
+      representativeSlug: representative?.model.slug,
+      provisional:
+        representativeBenchCount < FAMILY_REPRESENTATIVE_MIN_BENCHES,
       tags: Array.from(tagSet),
       hidden: isAllHidden,
     });
   }
-
-  // ─── 5. Apply evidence confidence around the neutral midpoint ───
-  let maxModelEvidenceWeight = 0;
-  for (const a of modelAggregates) {
-    if (a.model.hidden) continue;
-    if (a.totalWeight > maxModelEvidenceWeight) {
-      maxModelEvidenceWeight = a.totalWeight;
-    }
-  }
-  let maxFamilyEvidenceWeight = 0;
-  for (const a of familyAggregates) {
-    if (a.hidden) continue;
-    if (a.totalWeight > maxFamilyEvidenceWeight) {
-      maxFamilyEvidenceWeight = a.totalWeight;
-    }
-  }
-
-  const modelRows: ModelRankingData[] = modelAggregates.map((a) => {
-    const supraScore = confidenceAdjustedSupraScore(
-      a.weightedMean,
-      a.totalWeight,
-      maxModelEvidenceWeight
-    );
-    return {
-      modelId: a.modelId,
-      name: a.model.name,
-      provider: a.model.provider,
-      slug: a.model.slug,
-      familyTag: a.model.familyTag,
-      tags: a.model.tags,
-      supraScore: Math.round(supraScore * 10) / 10,
-      benchCount: a.benchCount,
-      hidden: a.model.hidden ?? false,
-    };
-  });
-
-  const validFamilyKeys = new Set<string>();
-  const familyRows: FamilyRankingData[] = familyAggregates.map((a) => {
-    validFamilyKeys.add(`${a.familyTag}\u0000${a.provider}`);
-    const supraScore = confidenceAdjustedSupraScore(
-      a.weightedMean,
-      a.totalWeight,
-      maxFamilyEvidenceWeight
-    );
-    return {
-      familyTag: a.familyTag,
-      provider: a.provider,
-      supraScore: Math.round(supraScore * 10) / 10,
-      benchCount: a.benchCount,
-      modelCount: a.modelCount,
-      tags: a.tags,
-      hidden: a.hidden,
-    };
-  });
 
   return { modelRows, familyRows, validFamilyKeys };
 }
@@ -882,6 +839,10 @@ export const _persistRankings = internalMutation({
         supraScore: v.number(),
         benchCount: v.number(),
         modelCount: v.number(),
+        representativeModelId: v.optional(v.id("models")),
+        representativeName: v.optional(v.string()),
+        representativeSlug: v.optional(v.string()),
+        provisional: v.boolean(),
         tags: v.array(v.string()),
         hidden: v.boolean(),
       })
