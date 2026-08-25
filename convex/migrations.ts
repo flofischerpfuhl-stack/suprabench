@@ -18,6 +18,31 @@ import {
   applyTagDeltaInline,
 } from "./cache";
 import { isOfficialUrl } from "./urls";
+import { canonicalFamilyTag } from "./modelFamilies";
+
+// Split product tiers/releases that were previously stored under a shared
+// umbrella family. Idempotent and intentionally limited to names for which the
+// canonical tier is explicit in the model name.
+//
+// Run once, then rebuild rankings from D1:
+//   npx convex run --prod migrations:splitTieredModelFamilies
+//   npx convex run --prod rankings:recomputeFromD1
+export const splitTieredModelFamilies = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const models = await ctx.db.query("models").collect();
+    const changed: Array<{ name: string; from: string | null; to: string }> = [];
+
+    for (const model of models) {
+      const desired = canonicalFamilyTag(model.name, model.familyTag);
+      if (!desired || desired === model.familyTag) continue;
+      await ctx.db.patch(model._id, { familyTag: desired });
+      changed.push({ name: model.name, from: model.familyTag ?? null, to: desired });
+    }
+
+    return { scanned: models.length, patched: changed.length, changed };
+  },
+});
 
 // 1. Mirror models.hidden → modelRankings.hidden for every existing row.
 export const backfillModelRankingHidden = internalMutation({

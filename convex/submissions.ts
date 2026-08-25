@@ -11,6 +11,7 @@ import {
 import { isOfficialUrl, normalizePublicHttpUrl } from "./urls";
 import { enforceDailyActionLimit } from "./abuse";
 import { recomputeBenchAggregatesInline } from "./cache";
+import { canonicalFamilyTag } from "./modelFamilies";
 
 const RATE_LIMIT_PER_DAY = 30;
 const MAX_NAME_LEN = 120;
@@ -146,6 +147,7 @@ async function resolveOrCreateModel(
   if (nm.provider.trim().length > MAX_PROVIDER_LEN) throw new Error("Provider too long");
   if ((nm.familyTag ?? "").trim().length > MAX_FAMILY_TAG_LEN) throw new Error("Family tag too long");
   await assertNotResurrectingOwnHidden(ctx, "model", nm.name, userId);
+  const familyTag = canonicalFamilyTag(nm.name, nm.familyTag);
 
   let slug = generateSlug(nm.name);
   let existing = await ctx.db
@@ -165,7 +167,7 @@ async function resolveOrCreateModel(
     name: nm.name,
     provider: nm.provider,
     slug,
-    familyTag: nm.familyTag,
+    familyTag,
     tags: [],
     addedBy: userId,
     createdAt: Date.now(),
@@ -175,7 +177,7 @@ async function resolveOrCreateModel(
     name: nm.name,
     provider: nm.provider,
     slug,
-    familyTag: nm.familyTag,
+    familyTag,
     tags: [],
     supraScore: 0,
     benchCount: 0,

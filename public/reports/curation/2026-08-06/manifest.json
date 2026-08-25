@@ -47,7 +47,7 @@
     { "name": "Claude Opus 5 (Max)", "provider": "Anthropic", "familyTag": "Claude Opus 5", "tags": ["agents", "coding", "multimodal", "reasoning"] },
     { "name": "Claude Opus 5 (adaptive max)", "provider": "Anthropic", "familyTag": "Claude Opus 5", "tags": ["reasoning"] },
     { "name": "Claude Opus 5 (adaptive xhigh)", "provider": "Anthropic", "familyTag": "Claude Opus 5", "tags": ["reasoning"] },
-    { "name": "Muse Spark 1.1", "provider": "Meta", "familyTag": "Muse Spark", "tags": ["agents", "coding"] }
+    { "name": "Muse Spark 1.1", "provider": "Meta", "familyTag": "Muse Spark 1.1", "tags": ["agents", "coding"] }
   ],
   "benches": [],
   "scores": [

@@ -58,10 +58,10 @@
     { "name": "Grok 4.6 (high)", "provider": "xAI", "familyTag": "Grok 4.6", "tags": ["agents", "coding", "multimodal", "reasoning"] },
     { "name": "Gemini 3.7 Flash (high)", "provider": "Google", "familyTag": "Gemini 3.7 Flash", "tags": ["agents", "coding", "multimodal", "reasoning"] },
     { "name": "Qwen3.8-Max (xhigh)", "provider": "Alibaba", "familyTag": "Qwen3.8-Max", "tags": ["agents", "coding", "multimodal", "reasoning"] },
-    { "name": "GPT-5.6 Sol (xhigh)", "provider": "OpenAI", "familyTag": "GPT-5.6", "tags": ["agents", "coding", "reasoning"] },
-    { "name": "GPT-5.6 Sol (max)", "provider": "OpenAI", "familyTag": "GPT-5.6", "tags": ["agents", "coding", "reasoning"] },
+    { "name": "GPT-5.6 Sol (xhigh)", "provider": "OpenAI", "familyTag": "GPT-5.6 Sol", "tags": ["agents", "coding", "reasoning"] },
+    { "name": "GPT-5.6 Sol (max)", "provider": "OpenAI", "familyTag": "GPT-5.6 Sol", "tags": ["agents", "coding", "reasoning"] },
     { "name": "Claude Opus 5 (xhigh)", "provider": "Anthropic", "familyTag": "Claude Opus 5", "tags": ["agents", "coding", "multimodal", "reasoning"] },
-    { "name": "GPT-5.6 Terra (max)", "provider": "OpenAI", "familyTag": "GPT-5.6", "tags": ["agents", "coding", "reasoning"] }
+    { "name": "GPT-5.6 Terra (max)", "provider": "OpenAI", "familyTag": "GPT-5.6 Terra", "tags": ["agents", "coding", "reasoning"] }
   ],
   "benches": [
     {

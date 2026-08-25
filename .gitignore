@@ -20,3 +20,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Local, immutable production snapshots and ranking-lab outputs
+.ranking-lab/

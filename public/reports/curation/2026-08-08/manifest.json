@@ -50,9 +50,9 @@
     { "sourceUrl": "https://artificialanalysis.ai/articles/muse-spark-1-2", "screenshotUrl": "https://artificialanalysis.ai/articles/muse-spark-1-2", "screenshotPath": "public/reports/curation/2026-08-08/screenshots/muse-spark-1-2-scicode-hle.png" }
   ],
   "models": [
-    { "name": "Muse Spark 1.2 (xhigh)", "provider": "Meta", "familyTag": "Muse Spark", "tags": ["agents", "coding", "multimodal", "reasoning"] },
-    { "name": "Muse Spark 1.1 (xhigh)", "provider": "Meta", "familyTag": "Muse Spark", "tags": ["agents", "coding", "reasoning"] },
-    { "name": "GPT-5.6 Sol (medium)", "provider": "OpenAI", "familyTag": "GPT-5.6", "tags": ["agents", "coding", "reasoning"] }
+    { "name": "Muse Spark 1.2 (xhigh)", "provider": "Meta", "familyTag": "Muse Spark 1.2", "tags": ["agents", "coding", "multimodal", "reasoning"] },
+    { "name": "Muse Spark 1.1 (xhigh)", "provider": "Meta", "familyTag": "Muse Spark 1.1", "tags": ["agents", "coding", "reasoning"] },
+    { "name": "GPT-5.6 Sol (medium)", "provider": "OpenAI", "familyTag": "GPT-5.6 Sol", "tags": ["agents", "coding", "reasoning"] }
   ],
   "benches": [],
   "scores": [

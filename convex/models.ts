@@ -15,6 +15,7 @@ import {
   confidenceAdjustedSupraScore,
 } from "./rankings";
 import { enforceDailyActionLimit } from "./abuse";
+import { canonicalFamilyTag } from "./modelFamilies";
 
 const MAX_NAME_LEN = 120;
 const MAX_PROVIDER_LEN = 80;
@@ -560,11 +561,12 @@ export const create = mutation({
       counter++;
     }
 
+    const familyTag = canonicalFamilyTag(args.name, args.familyTag);
     const modelId = await ctx.db.insert("models", {
       name: args.name,
       provider: args.provider,
       slug,
-      familyTag: args.familyTag,
+      familyTag,
       tags: [],
       addedBy: userId,
       createdAt: Date.now(),
@@ -575,7 +577,7 @@ export const create = mutation({
       name: args.name,
       provider: args.provider,
       slug,
-      familyTag: args.familyTag,
+      familyTag,
       tags: [],
       supraScore: 0,
       benchCount: 0,

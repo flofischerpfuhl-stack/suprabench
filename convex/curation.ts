@@ -7,6 +7,7 @@ import { recomputeBenchAggregatesInline } from "./cache";
 import { seedCreatorEntityVote } from "./entityVotes";
 import { recomputeEffectiveTags } from "./tagVotes";
 import { isOfficialUrl, normalizePublicHttpUrl } from "./urls";
+import { canonicalFamilyTag } from "./modelFamilies";
 
 const MAX_MODELS = 30;
 const MAX_BENCHES = 5;
@@ -131,10 +132,12 @@ function validateRating(rating: BenchInput["rating"], slug: string): void {
 }
 
 function normalizeModel(input: ModelInput): ModelInput {
+  const name = cleanText(input.name, "Model name", MAX_NAME_LEN);
+  const requestedFamilyTag = cleanText(input.familyTag, "Model familyTag", MAX_FAMILY_TAG_LEN);
   return {
-    name: cleanText(input.name, "Model name", MAX_NAME_LEN),
+    name,
     provider: cleanText(input.provider, "Model provider", MAX_PROVIDER_LEN),
-    familyTag: cleanText(input.familyTag, "Model familyTag", MAX_FAMILY_TAG_LEN),
+    familyTag: canonicalFamilyTag(name, requestedFamilyTag)!,
     tags: cleanTags(input.tags, input.name || "Model"),
   };
 }

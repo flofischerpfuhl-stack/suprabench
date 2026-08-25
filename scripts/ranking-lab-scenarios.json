@@ -1,0 +1,98 @@
+{
+  "targetOrder": [
+    "Claude Mythos 5",
+    "Claude Fable 5",
+    "GPT-5.6 Sol",
+    "Kimi K3",
+    "GLM-5.3",
+    "Grok 4.6",
+    "Muse Spark 1.2"
+  ],
+  "familyOverrides": {},
+  "scenarios": [
+    {
+      "name": "current-v1",
+      "scoreTransform": "raw",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "familyAggregation": "median-per-bench",
+      "taxonomyMode": "database"
+    },
+    {
+      "name": "current-math-consistent-taxonomy",
+      "scoreTransform": "raw",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "familyAggregation": "median-per-bench",
+      "taxonomyMode": "inferred"
+    },
+    {
+      "name": "current-math-best-concrete-config",
+      "scoreTransform": "raw",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred"
+    },
+    {
+      "name": "relative-percentile-best-config",
+      "scoreTransform": "percentile",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "separate",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred"
+    },
+    {
+      "name": "relative-robust-bayesian-ratings",
+      "scoreTransform": "robust-z",
+      "ratingMode": "bayesian",
+      "priorRaters": 3,
+      "trustMode": "current",
+      "confidenceMode": "separate",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred"
+    },
+    {
+      "name": "relative-robust-current-ratings",
+      "scoreTransform": "robust-z",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "separate",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred"
+    },
+    {
+      "name": "relative-robust-with-coverage-gate",
+      "scoreTransform": "robust-z",
+      "ratingMode": "bayesian",
+      "priorRaters": 3,
+      "trustMode": "current",
+      "confidenceMode": "separate",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "minBenchCount": 3
+    },
+    {
+      "name": "rating-neutralization-control",
+      "scoreTransform": "raw",
+      "ratingMode": "neutral",
+      "trustMode": "equal",
+      "confidenceMode": "current",
+      "familyAggregation": "median-per-bench",
+      "taxonomyMode": "database"
+    }
+  ],
+  "searchPriorRaters": 3,
+  "searchSpace": {
+    "scoreTransform": ["raw", "percentile", "robust-z"],
+    "ratingMode": ["current", "bayesian", "neutral"],
+    "trustMode": ["current"],
+    "confidenceMode": ["current", "separate"],
+    "familyAggregation": ["median-per-bench", "best-per-bench", "best-config"],
+    "taxonomyMode": ["inferred"]
+  }
+}
