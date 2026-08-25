@@ -33,12 +33,20 @@ constants to a desired leaderboard:
 - confidence folded into the score versus reported separately;
 - median-per-benchmark family synthesis versus one concrete representative;
 - database family tags versus a conservative inferred taxonomy;
-- an optional minimum-evidence gate that marks sparse entries provisional.
+- an optional minimum-evidence gate that marks sparse entries provisional;
+- the existing square-root benchmark-coverage reliability applied to evidence
+  only or to both evidence and ability weight;
+- leave-one-benchmark-out stability for every named scenario.
 
 The grid search is diagnostic. A scenario matching a preferred ordering is not,
 by itself, evidence that the method is valid. Production changes should be based
 on comparability, resistance to sparse evidence, provider-neutral taxonomy, and
 held-out validation.
+
+The current scale-comparability experiment and its recommendation are recorded
+in [`BENCHMARK_SCALE_CALIBRATION_EXPERIMENT.md`](BENCHMARK_SCALE_CALIBRATION_EXPERIMENT.md).
+It isolates the evidence gate, coverage reliability, empirical percentile, and
+robust-z alternatives before combining any of them.
 
 ## Family identity policy
 

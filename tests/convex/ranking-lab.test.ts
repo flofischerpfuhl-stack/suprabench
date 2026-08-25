@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   auditFamilyTags,
+  analyzeLeaveOneBenchOut,
   buildRanking,
   inferFamilyTag,
 } from "../../scripts/lib/ranking-lab-core.mjs";
@@ -90,6 +91,112 @@ describe("ranking lab", () => {
       "GPT-5.6 Sol (xhigh)",
       "GPT-5.6 Terra (max)",
     ]);
+    expect(JSON.stringify(input)).toBe(before);
+  });
+
+  it("treats a high placement on a low-scale benchmark as high relative performance", () => {
+    const values = [30.16, 7.78, 1.5, 0.8, 0.43, 0.42, 0.3, 0.18];
+    const input = {
+      models: values.map((_, index) => ({
+        _id: `m${index}`,
+        name: index === 1 ? "GPT-5.6 Sol" : `Other ${index}`,
+        provider: index === 1 ? "OpenAI" : "Other",
+        familyTag: index === 1 ? "GPT-5.6 Sol" : `Other ${index}`,
+        hidden: false,
+      })),
+      benches: [{
+        _id: "arc3",
+        name: "ARC-AGI-3",
+        slug: "arc-agi-3",
+        hidden: false,
+        cachedEffectiveWeight: 95,
+        cachedHeadroom: 1,
+        cachedModelCount: values.length,
+        cachedNetUpvotes: 1,
+      }],
+      scores: values.map((normalizedScore, index) => ({
+        modelId: `m${index}`,
+        benchId: "arc3",
+        normalizedScore,
+        upvotes: 1,
+        downvotes: 0,
+      })),
+    };
+    const result = buildRanking(input, {
+      scoreTransform: "percentile",
+      confidenceMode: "separate",
+      familyAggregation: "best-config",
+      taxonomyMode: "inferred",
+    });
+    const sol = result.modelRanking.find((row) => row.name === "GPT-5.6 Sol");
+    expect(sol?.weightedMean).toBe(81.25);
+  });
+
+  it("makes percentile and robust-z rankings invariant to positive affine score scales", () => {
+    for (const scoreTransform of ["percentile", "robust-z"]) {
+      const baseline = buildRanking(snapshot(), {
+        scoreTransform,
+        confidenceMode: "separate",
+        familyAggregation: "best-config",
+        taxonomyMode: "inferred",
+      });
+      const transformed = snapshot();
+      transformed.scores = transformed.scores.map((score) =>
+        score.benchId === "b1"
+          ? { ...score, normalizedScore: 10 + score.normalizedScore * 0.5 }
+          : score,
+      );
+      const changed = buildRanking(transformed, {
+        scoreTransform,
+        confidenceMode: "separate",
+        familyAggregation: "best-config",
+        taxonomyMode: "inferred",
+      });
+      expect(changed.modelRanking.map((row) => [row.name, row.score])).toEqual(
+        baseline.modelRanking.map((row) => [row.name, row.score]),
+      );
+    }
+  });
+
+  it("can apply the existing sqrt coverage reliability to ability weight", () => {
+    const input = snapshot();
+    input.benches[0].cachedModelCount = 1;
+    const current = buildRanking(input, {
+      scoreTransform: "raw",
+      confidenceMode: "separate",
+      benchCoverageMode: "evidence-only",
+      familyAggregation: "best-config",
+      taxonomyMode: "inferred",
+    });
+    const reliabilityWeighted = buildRanking(input, {
+      scoreTransform: "raw",
+      confidenceMode: "separate",
+      benchCoverageMode: "ability-and-evidence",
+      familyAggregation: "best-config",
+      taxonomyMode: "inferred",
+    });
+    const currentSol = current.modelRanking.find((row) => row.name === "GPT-5.6 Sol (xhigh)");
+    const weightedSol = reliabilityWeighted.modelRanking.find((row) => row.name === "GPT-5.6 Sol (xhigh)");
+    expect(weightedSol?.weightedMean).toBeGreaterThan(currentSol?.weightedMean ?? Infinity);
+  });
+
+  it("reports leave-one-benchmark-out stability without changing the input", () => {
+    const input = snapshot();
+    const before = JSON.stringify(input);
+    const result = analyzeLeaveOneBenchOut(
+      input,
+      {
+        scoreTransform: "percentile",
+        confidenceMode: "current",
+        familyAggregation: "best-config",
+        taxonomyMode: "inferred",
+      },
+      ["GPT-5.6 Sol"],
+    );
+    expect(result.runs).toBe(2);
+    expect(result.meanPairwiseStability).toBeGreaterThanOrEqual(0);
+    expect(result.meanPairwiseStability).toBeLessThanOrEqual(1);
+    expect(result.tracked[0].familyTag).toBe("GPT-5.6 Sol");
     expect(JSON.stringify(input)).toBe(before);
   });
 });

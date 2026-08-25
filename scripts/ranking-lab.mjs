@@ -8,6 +8,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
   auditFamilyTags,
+  analyzeLeaveOneBenchOut,
   buildRanking,
   compareTargetOrder,
   describeBenchRatings,
@@ -180,6 +181,10 @@ function markdownReport(result) {
       lines.push(`${rank} ${row.family} — ${row.score} (${row.benches} benches, confidence ${row.confidence})`);
     }
     lines.push("");
+    lines.push(
+      `Leave-one-benchmark-out: mean rank move ${scenario.robustness.meanAbsoluteRankMove.toFixed(2)} · pairwise stability ${(scenario.robustness.meanPairwiseStability * 100).toFixed(1)}% · worst bench ${scenario.robustness.worstBench}`,
+      "",
+    );
   }
   lines.push("## Highest structural matches", "");
   for (const row of result.search.slice(0, 12)) {
@@ -202,10 +207,16 @@ async function analyzeCommand(options) {
   const scenarios = config.scenarios.map((scenario) => {
     const ranking = buildRanking(snapshot, { ...scenario, familyOverrides: config.familyOverrides });
     const target = compareTargetOrder(ranking.familyRanking, config.targetOrder);
+    const robustness = analyzeLeaveOneBenchOut(
+      snapshot,
+      { ...scenario, familyOverrides: config.familyOverrides },
+      config.targetOrder,
+    );
     return {
       name: scenario.name,
       settings: ranking.scenario,
       target,
+      robustness,
       top: ranking.familyRanking.slice(0, 12).map(compactRow),
       families: ranking.familyRanking.map(compactRow),
     };

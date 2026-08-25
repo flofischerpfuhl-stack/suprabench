@@ -109,6 +109,9 @@ function perModelBenchMedians(models, benches, scores) {
 }
 
 function percentileMap(perModel) {
+  // Hazen plotting positions: (midrank - 0.5) / n. This non-parametric
+  // percentile estimator is monotone, scale-invariant, and never assigns an
+  // empirical 0 or 100 to a finite leaderboard.
   const groups = new Map();
   for (const [modelId, value] of perModel) {
     const group = groups.get(value) ?? [];
@@ -229,12 +232,16 @@ function buildBenchInfo(benches, scenario) {
       modelCountMax > 0
         ? clamp((bench.cachedModelCount ?? 0) / modelCountMax, 0, 1)
         : 1;
+    const coverageScale = Math.sqrt(coverage);
+    const abilityCoverageScale =
+      scenario.benchCoverageMode === "ability-and-evidence" ? coverageScale : 1;
     output.set(String(bench._id), {
-      ability: base * trust,
-      evidence: base * trust * Math.sqrt(coverage),
+      ability: base * trust * abilityCoverageScale,
+      evidence: base * trust * coverageScale,
       base,
       trust,
       coverage,
+      abilityCoverageScale,
     });
   }
   return output;
@@ -370,6 +377,7 @@ export function buildRanking(snapshot, inputScenario = {}) {
     ratingMode: "current",
     trustMode: "current",
     confidenceMode: "current",
+    benchCoverageMode: "evidence-only",
     familyAggregation: "median-per-bench",
     taxonomyMode: "database",
     ...inputScenario,
@@ -449,6 +457,98 @@ export function buildRanking(snapshot, inputScenario = {}) {
       evidenceWeight: round(row.evidenceWeight),
     })),
     benchInfo: [...benchInfo].map(([benchId, info]) => ({ benchId, ...info })),
+  };
+}
+
+/**
+ * Re-run one scenario after withholding each visible benchmark in turn.
+ * This measures structural sensitivity without consulting a desired ranking.
+ */
+export function analyzeLeaveOneBenchOut(snapshot, inputScenario = {}, trackedFamilies = []) {
+  const baseline = buildRanking(snapshot, inputScenario);
+  const baselineByFamily = new Map(
+    baseline.familyRanking.map((row) => [`${row.familyTag}\u0000${row.provider}`, row]),
+  );
+  const tracked = new Map(
+    trackedFamilies.map((familyTag) => [
+      familyTag,
+      {
+        familyTag,
+        baselineRank:
+          baseline.familyRanking.find((row) => row.familyTag === familyTag)?.rank ?? null,
+        ranks: [],
+        provisionalRuns: 0,
+      },
+    ]),
+  );
+
+  const runs = snapshot.benches
+    .filter((bench) => !bench.hidden)
+    .map((withheldBench) => {
+      const reduced = {
+        ...snapshot,
+        benches: snapshot.benches.filter(
+          (bench) => String(bench._id) !== String(withheldBench._id),
+        ),
+        scores: snapshot.scores.filter(
+          (score) => String(score.benchId) !== String(withheldBench._id),
+        ),
+      };
+      const ranking = buildRanking(reduced, inputScenario).familyRanking;
+      const byFamily = new Map(
+        ranking.map((row) => [`${row.familyTag}\u0000${row.provider}`, row]),
+      );
+      const common = [...baselineByFamily]
+        .map(([key, base]) => ({ base, variant: byFamily.get(key) }))
+        .filter(({ base, variant }) => base.rank !== null && variant?.rank !== null);
+      const rankMoves = common.map(({ base, variant }) =>
+        Math.abs(base.rank - variant.rank),
+      );
+
+      let stablePairs = 0;
+      let pairCount = 0;
+      for (let left = 0; left < common.length; left++) {
+        for (let right = left + 1; right < common.length; right++) {
+          const baseOrder = common[left].base.rank - common[right].base.rank;
+          const variantOrder = common[left].variant.rank - common[right].variant.rank;
+          if (baseOrder === 0 || variantOrder === 0) continue;
+          pairCount += 1;
+          if (Math.sign(baseOrder) === Math.sign(variantOrder)) stablePairs += 1;
+        }
+      }
+
+      for (const row of tracked.values()) {
+        const variant = ranking.find((candidate) => candidate.familyTag === row.familyTag);
+        if (variant?.rank !== null && variant?.rank !== undefined) row.ranks.push(variant.rank);
+        else row.provisionalRuns += 1;
+      }
+
+      return {
+        bench: withheldBench.name,
+        meanAbsoluteRankMove: mean(rankMoves),
+        maxRankMove: rankMoves.length > 0 ? Math.max(...rankMoves) : 0,
+        pairwiseStability: pairCount > 0 ? stablePairs / pairCount : 1,
+      };
+    });
+
+  return {
+    runs: runs.length,
+    meanAbsoluteRankMove: mean(runs.map((run) => run.meanAbsoluteRankMove)),
+    worstMeanAbsoluteRankMove:
+      runs.length > 0 ? Math.max(...runs.map((run) => run.meanAbsoluteRankMove)) : 0,
+    meanPairwiseStability: mean(runs.map((run) => run.pairwiseStability)),
+    worstBench:
+      [...runs].sort(
+        (left, right) => right.meanAbsoluteRankMove - left.meanAbsoluteRankMove,
+      )[0]?.bench ?? null,
+    tracked: [...tracked.values()].map((row) => ({
+      familyTag: row.familyTag,
+      baselineRank: row.baselineRank,
+      minRank: row.ranks.length > 0 ? Math.min(...row.ranks) : null,
+      maxRank: row.ranks.length > 0 ? Math.max(...row.ranks) : null,
+      meanRank: row.ranks.length > 0 ? mean(row.ranks) : null,
+      provisionalRuns: row.provisionalRuns,
+    })),
   };
 }
 

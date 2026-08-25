@@ -102,6 +102,111 @@
       "taxonomyMode": "inferred"
     },
     {
+      "name": "raw-current-gated",
+      "scoreTransform": "raw",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "benchCoverageMode": "evidence-only",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3,
+      "minBenchCount": 3
+    },
+    {
+      "name": "raw-coverage-weighted",
+      "scoreTransform": "raw",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "benchCoverageMode": "ability-and-evidence",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3
+    },
+    {
+      "name": "raw-coverage-weighted-gated",
+      "scoreTransform": "raw",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "benchCoverageMode": "ability-and-evidence",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3,
+      "minBenchCount": 3
+    },
+    {
+      "name": "percentile-current-confidence",
+      "scoreTransform": "percentile",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "benchCoverageMode": "evidence-only",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3
+    },
+    {
+      "name": "percentile-current-confidence-gated",
+      "scoreTransform": "percentile",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "benchCoverageMode": "evidence-only",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3,
+      "minBenchCount": 3
+    },
+    {
+      "name": "percentile-coverage-weighted",
+      "scoreTransform": "percentile",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "benchCoverageMode": "ability-and-evidence",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3
+    },
+    {
+      "name": "percentile-coverage-weighted-gated",
+      "scoreTransform": "percentile",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "benchCoverageMode": "ability-and-evidence",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3,
+      "minBenchCount": 3
+    },
+    {
+      "name": "robust-z-current-confidence-gated",
+      "scoreTransform": "robust-z",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "benchCoverageMode": "evidence-only",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3,
+      "minBenchCount": 3
+    },
+    {
+      "name": "robust-z-coverage-weighted-gated",
+      "scoreTransform": "robust-z",
+      "ratingMode": "current",
+      "trustMode": "current",
+      "confidenceMode": "current",
+      "benchCoverageMode": "ability-and-evidence",
+      "familyAggregation": "best-config",
+      "taxonomyMode": "inferred",
+      "representativeMinBenchCount": 3,
+      "minBenchCount": 3
+    },
+    {
       "name": "relative-robust-bayesian-ratings",
       "scoreTransform": "robust-z",
       "ratingMode": "bayesian",
@@ -147,6 +252,7 @@
     "ratingMode": ["current", "bayesian", "neutral"],
     "trustMode": ["current"],
     "confidenceMode": ["current", "separate"],
+    "benchCoverageMode": ["evidence-only", "ability-and-evidence"],
     "familyAggregation": ["median-per-bench", "best-per-bench", "best-config"],
     "taxonomyMode": ["inferred"]
   }
