@@ -1,10 +1,9 @@
-// Curated list of domains we consider "official" sources for benchmark
-// scores. Hitting one of these gives the submission an "Official source"
-// badge — everything else still works, just renders with the "Community"
-// badge instead. The list intentionally errs on the side of inclusion for
-// well-known academic / lab / leaderboard hosts; community sources like
-// YouTube, Substack, X/Twitter, personal blogs are valid sources for
-// community-evaluated benchmarks but do *not* get the official trust mark.
+// Curated list of domains we consider first-party/original sources for a
+// benchmark. Hitting one of these gives the benchmark an "Official source"
+// badge — it is provenance, not a quality endorsement. Everything else still
+// works and renders with the "Community source" badge. YouTube, Substack,
+// X/Twitter, personal blogs and third-party mirrors do not get the official
+// provenance mark.
 
 export const OFFICIAL_DOMAINS: ReadonlyArray<string> = [
   // ── Academic + paper hosts ──
@@ -63,8 +62,13 @@ export const OFFICIAL_DOMAINS: ReadonlyArray<string> = [
   "webarena.dev",         // WebArena
   "gaia-benchmark.github.io",
   "terminalbench.org",
+  "tbench.ai",           // Terminal-Bench project + leaderboards
   "livecodebench.github.io",
   "github.io",            // catch-all for academic GitHub Pages benches
+  "datacurve.ai",         // DeepSWE first-party project
+  "textquests.ai",        // TextQuests first-party project
+  "sierra.ai",            // tau / tau-squared benchmark publisher
+  "skatebench.t3.gg",     // SkateBench project leaderboard
 
   // ── Research labs + universities (research subdomains) ──
   "crfm.stanford.edu",
@@ -107,11 +111,32 @@ export const OFFICIAL_DOMAINS: ReadonlyArray<string> = [
   "fireworks.ai",
 ];
 
+// GitHub.com cannot be allowlisted wholesale: any user can create a repository
+// there. Exact reviewed project repositories are therefore represented as
+// path prefixes. A repository root and its descendants qualify, similarly
+// named sibling repositories do not.
+export const OFFICIAL_URL_PREFIXES: ReadonlyArray<string> = [
+  "https://github.com/embodiedreasoning/erqa",
+];
+
+function matchesOfficialPrefix(url: URL): boolean {
+  const originAndPath = `${url.origin}${url.pathname}`
+    .toLowerCase()
+    .replace(/\/+$/, "");
+  return OFFICIAL_URL_PREFIXES.some((prefix) => {
+    const normalized = prefix.toLowerCase().replace(/\/+$/, "");
+    return originAndPath === normalized || originAndPath.startsWith(`${normalized}/`);
+  });
+}
+
 export function isOfficialUrl(url: string): boolean {
   try {
-    const hostname = parsePublicHttpUrl(url).hostname.toLowerCase();
-    return OFFICIAL_DOMAINS.some(
-      (d) => hostname === d || hostname.endsWith("." + d)
+    const parsed = parsePublicHttpUrl(url);
+    const hostname = parsed.hostname.toLowerCase();
+    return (
+      OFFICIAL_DOMAINS.some(
+        (d) => hostname === d || hostname.endsWith("." + d)
+      ) || matchesOfficialPrefix(parsed)
     );
   } catch {
     return false;

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-08-25",
+  "generatedAt": "2026-08-25T21:31:43.8941885+02:00",
+  "reportPath": "public/reports/curation/2026-08-25/index.html",
+  "sources": [
+    { "title": "Terminal-Bench first-party project", "url": "https://www.tbench.ai/", "accessedAt": "2026-08-25T21:31:43.8941885+02:00" },
+    { "title": "Datacurve DeepSWE first-party leaderboard", "url": "https://deepswe.datacurve.ai/", "accessedAt": "2026-08-25T21:31:43.8941885+02:00" },
+    { "title": "TextQuests first-party project", "url": "https://www.textquests.ai/", "accessedAt": "2026-08-25T21:31:43.8941885+02:00" },
+    { "title": "ERQA author repository", "url": "https://github.com/embodiedreasoning/ERQA", "accessedAt": "2026-08-25T21:31:43.8941885+02:00" },
+    { "title": "Sierra tau-squared-bench research page", "url": "https://sierra.ai/resources/research/tau-squared-bench", "accessedAt": "2026-08-25T21:31:43.8941885+02:00" },
+    { "title": "SkateBench project leaderboard", "url": "https://skatebench.t3.gg/", "accessedAt": "2026-08-25T21:31:43.8941885+02:00" }
+  ],
+  "evidence": [
+    { "sourceUrl": "https://www.tbench.ai/", "screenshotUrl": "https://www.tbench.ai/", "screenshotPath": "public/reports/curation/2026-08-25/screenshots/terminal-bench-official.png" },
+    { "sourceUrl": "https://deepswe.datacurve.ai/", "screenshotUrl": "https://deepswe.datacurve.ai/", "screenshotPath": "public/reports/curation/2026-08-25/screenshots/deepswe-official.png" },
+    { "sourceUrl": "https://www.textquests.ai/", "screenshotUrl": "https://www.textquests.ai/", "screenshotPath": "public/reports/curation/2026-08-25/screenshots/textquests-official.png" },
+    { "sourceUrl": "https://github.com/embodiedreasoning/ERQA", "screenshotUrl": "https://github.com/embodiedreasoning/ERQA", "screenshotPath": "public/reports/curation/2026-08-25/screenshots/erqa-official-repository.png" },
+    { "sourceUrl": "https://sierra.ai/resources/research/tau-squared-bench", "screenshotUrl": "https://sierra.ai/resources/research/tau-squared-bench", "screenshotPath": "public/reports/curation/2026-08-25/screenshots/tau2-sierra-official.png" },
+    { "sourceUrl": "https://skatebench.t3.gg/", "screenshotUrl": "https://skatebench.t3.gg/", "screenshotPath": "public/reports/curation/2026-08-25/screenshots/skatebench-project.png" }
+  ],
+  "models": [],
+  "benches": [],
+  "scores": [],
+  "learnings": [
+    "The production inventory had 20 visible benchmarks: 14 already official and six false negatives caused by missing first-party source rules.",
+    "Official is source provenance, not a quality endorsement; SkateBench remains a low-weight niche benchmark even though its own project leaderboard is an official source.",
+    "GitHub.com must not be allowlisted by domain. Exact reviewed repository prefixes preserve ERQA provenance without promoting arbitrary repositories.",
+    "The browser URL preview and server source classifier need an executable consistency test because their previously duplicated lists had drifted.",
+    "All current benchmarks had one net upvote and one quality rater at audit time; the linear trust formula permits community override but real participation has not yet supplied it."
+  ]
+}

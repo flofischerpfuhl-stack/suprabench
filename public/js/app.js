@@ -3,29 +3,44 @@
 // ══════════════════════════════════════════
 
 const OFFICIAL_DOMAINS = [
-  "arxiv.org", "openreview.net", "aclanthology.org",
-  "neurips.cc", "iclr.cc", "icml.cc", "proceedings.mlr.press",
-  "paperswithcode.com", "huggingface.co",
-  "artificialanalysis.ai", "livebench.ai", "lmarena.ai",
-  "chat.lmsys.org", "lmsys.org", "openllm-leaderboard.com",
-  "swebench.com", "aider.chat", "evalplus.github.io",
-  "bigcode-bench.github.io", "bigcode-project.github.io",
-  "tau-bench.github.io", "math-eval.github.io",
-  "arcprize.org", "mlperf.org", "mlcommons.org",
-  "scale.com", "opencompass.org", "crfm.stanford.edu",
-  "nlp.stanford.edu", "github.io",
-  "openai.com", "anthropic.com", "deepmind.google", "deepmind.com",
-  "blog.google", "ai.google.dev", "ai.meta.com", "about.fb.com",
-  "mistral.ai", "x.ai", "cohere.com", "databricks.com",
-  "nvidia.com", "developer.nvidia.com", "blogs.nvidia.com",
-  "research.microsoft.com", "microsoft.com",
-  "qwenlm.github.io", "deepseek.com",
+  "arxiv.org", "openreview.net", "aclanthology.org", "neurips.cc", "iclr.cc",
+  "icml.cc", "proceedings.mlr.press", "proceedings.neurips.cc", "papers.nips.cc",
+  "nature.com", "science.org", "cell.com", "pnas.org", "link.springer.com",
+  "dl.acm.org", "ieeexplore.ieee.org", "ncbi.nlm.nih.gov", "pubmed.ncbi.nlm.nih.gov",
+  "paperswithcode.com", "huggingface.co", "artificialanalysis.ai", "livebench.ai",
+  "lmarena.ai", "chat.lmsys.org", "lmsys.org", "openllm-leaderboard.com",
+  "kaggle.com", "scale.com", "swebench.com", "aider.chat", "evalplus.github.io",
+  "bigcode-bench.github.io", "bigcode-project.github.io", "tau-bench.github.io",
+  "math-eval.github.io", "arcprize.org", "mlperf.org", "mlcommons.org",
+  "opencompass.org", "agi.safe.ai", "safe.ai", "epoch.ai", "epochai.org",
+  "simple-bench.com", "simplebench.io", "osworld.ai", "webarena.dev",
+  "gaia-benchmark.github.io", "terminalbench.org", "tbench.ai",
+  "livecodebench.github.io", "github.io", "datacurve.ai", "textquests.ai",
+  "sierra.ai", "skatebench.t3.gg", "crfm.stanford.edu", "nlp.stanford.edu",
+  "csail.mit.edu", "bair.berkeley.edu", "allenai.org", "allen.ai", "eleuther.ai",
+  "lifearchitect.ai", "openai.com", "anthropic.com", "deepmind.google",
+  "deepmind.com", "blog.google", "ai.google.dev", "ai.meta.com", "about.fb.com",
+  "mistral.ai", "x.ai", "cohere.com", "databricks.com", "nvidia.com",
+  "developer.nvidia.com", "blogs.nvidia.com", "research.microsoft.com", "microsoft.com",
+  "qwenlm.github.io", "deepseek.com", "moonshot.cn", "ai21.com", "stability.ai",
+  "perplexity.ai", "ollama.com", "together.ai", "groq.com", "replicate.com",
+  "fireworks.ai",
+];
+
+const OFFICIAL_URL_PREFIXES = [
+  "https://github.com/embodiedreasoning/erqa",
 ];
 
 function checkOfficialUrl(url) {
   try {
-    const hostname = new URL(url).hostname.toLowerCase();
-    return OFFICIAL_DOMAINS.some(d => hostname === d || hostname.endsWith("." + d));
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.toLowerCase();
+    const originAndPath = `${parsed.origin}${parsed.pathname}`.toLowerCase().replace(/\/+$/, "");
+    return OFFICIAL_DOMAINS.some(d => hostname === d || hostname.endsWith("." + d)) ||
+      OFFICIAL_URL_PREFIXES.some(prefix => {
+        const normalized = prefix.toLowerCase().replace(/\/+$/, "");
+        return originAndPath === normalized || originAndPath.startsWith(`${normalized}/`);
+      });
   } catch { return false; }
 }
 

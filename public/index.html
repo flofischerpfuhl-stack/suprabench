@@ -1418,7 +1418,7 @@
                     <input type="url" x-model="submitFormB.newBench.url" @input="checkBBenchUrl()" placeholder="https://… official source">
                     <div class="official-indicator" :class="submitFormB.isOfficialDetected ? 'official' : 'community'"
                          x-show="submitFormB.newBench.url.length > 5">
-                        <span x-text="submitFormB.isOfficialDetected ? '✓ Official source' : 'Community benchmark'"></span>
+                        <span x-text="submitFormB.isOfficialDetected ? '✓ Official source' : 'Community source'"></span>
                     </div>
                 </div>
                 <div style="display:flex;gap:1rem;flex-wrap:wrap">
@@ -1866,6 +1866,7 @@
             </ul>
 
             <p class="helper-text">The upvote share is linear on purpose: user trust should be able to dominate model coverage. Distinct-model coverage is still used later as evidence confidence, but it does not directly reduce the bench's ability weight.</p>
+            <p><strong>Can the community overturn the current default?</strong> Yes. If a new benchmark reaches 10 net upvotes while an older one remains at 1, the new benchmark receives its full quality × difficulty × headroom weight and the older benchmark receives a <code>1/10</code> trust factor. Many consistent quality ratings also overpower the three-neutral-rating prior used by the family ranking. Missing model coverage is not a negative score; it only keeps the evidence provisional until more comparisons exist.</p>
         </div>
     </div>
 
@@ -2087,8 +2088,9 @@
             <span>What counts as an "official" source?</span>
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q8')" x-transition>
-            <p>Any URL is a valid source — but only well-known academic, lab, and dedicated leaderboard hosts get an "Official source" badge. Everything else (YouTube, Substack, X/Twitter, personal blogs) is a valid <em>community source</em> and gets a "Community" badge instead. The submission is otherwise treated identically; the badge is a transparency signal, not a gatekeeper.</p>
-            <p class="helper-text">The whitelist lives in <code>convex/urls.ts</code> in the public source repository on GitLab — suggestions welcome via issues.</p>
+            <p>Any URL is a valid source. A reviewed first-party/original source — an academic or lab publisher, the benchmark's own project site, or an exact author-owned repository — gets an "Official source" badge. Third-party mirrors, videos, roundups, social posts and unreviewed repositories get a "Community source" badge.</p>
+            <p><strong>Official does not mean good or highly weighted.</strong> It only answers who published this source. Benchmark quality, difficulty, saturation and community trust are scored independently, so a niche benchmark can have an official project page and still contribute almost no ranking weight.</p>
+            <p class="helper-text">Reviewed domains and exact repository prefixes live in <code>convex/urls.ts</code> in the public source repository on GitLab. The browser preview is regression-tested against the same lists.</p>
         </div>
     </div>
 

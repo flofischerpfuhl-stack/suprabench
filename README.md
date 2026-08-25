@@ -81,6 +81,10 @@ midpoint. Users still see a single SupraScore; the split is internal.
   vanity bench at a self-rated $Q\!=\!100$ is worth only $1/U^\star$ of an
   established peer. The most-upvoted bench has share $=1$ (no self-penalty);
   $U^\star = 0$ disables the factor on a fresh deployment.
+  This is deliberately reversible: if a new benchmark earns 10 net upvotes
+  while an older benchmark remains at 1, the new benchmark keeps its full
+  intrinsic weight and the older benchmark receives a `1/10` trust factor.
+  Missing historical model coverage does not enter this ability weight.
 - **Model-count evidence share** $\sqrt{N(b)/N^\star}$ — $N(b)$ is the number
   of distinct (non-hidden) models with a net-positive submission on $b$, and
   $N^\star$ is the maximum across non-hidden benches. This feeds **evidence
@@ -179,10 +183,14 @@ adds strength of schedule and held-out predictive validation.
 
 ### Official vs Community sources
 
-Submissions from a curated whitelist of academic, lab, and dedicated
-leaderboard hosts get an "Official source" badge. Everything else is a
-"Community source". Both are accepted — the badge is a transparency signal,
-not a gatekeeper. Whitelist lives in [`convex/urls.ts`](convex/urls.ts).
+Benchmarks linked to a reviewed first-party/original source — an academic or
+lab publisher, the benchmark's own project site, or an exact author-owned
+repository — get an "Official source" badge. Third-party mirrors, videos,
+roundups, social posts, and unreviewed repositories are "Community sources".
+Both are accepted. The badge describes provenance, not benchmark quality or
+ranking weight; those remain community-controlled. Domain and exact-repository
+rules live in [`convex/urls.ts`](convex/urls.ts), and a regression test keeps
+the browser preview aligned with the server.
 
 ## Tech Stack
 

@@ -11,6 +11,54 @@ import {
 } from "../../scripts/lib/pairwise-ranking.mjs";
 
 describe("opponent-adjusted family ceiling", () => {
+  it("lets a community-endorsed new benchmark outweigh an old one-vote benchmark", () => {
+    const models = [
+      { _id: "old-winner", name: "Old winner", provider: "A", familyTag: "Old winner" },
+      { _id: "new-winner", name: "New winner", provider: "B", familyTag: "New winner" },
+    ];
+    const bench = (id: string, cachedNetUpvotes: number) => ({
+      _id: id,
+      hidden: false,
+      cachedHeadroom: 1,
+      cachedNetUpvotes,
+      cachedRaterCount: 10,
+      cachedDimensions: {
+        relevance: 5,
+        contamination: 5,
+        discriminability: 5,
+        reproducibility: 5,
+        difficulty: 5,
+      },
+    });
+    const score = (modelId: string, benchId: string, normalizedScore: number) => ({
+      modelId,
+      benchId,
+      normalizedScore,
+      upvotes: 1,
+      downvotes: 0,
+    });
+    const scores = [
+      score("old-winner", "old", 90),
+      score("new-winner", "old", 80),
+      score("old-winner", "new", 80),
+      score("new-winner", "new", 90),
+    ];
+
+    const oldConsensus = buildPairwiseFamilyRankings({
+      models,
+      benches: [bench("old", 10), bench("new", 1)],
+      scores,
+    }).rows.sort((left, right) => right.supraScore - left.supraScore);
+    const newConsensus = buildPairwiseFamilyRankings({
+      models,
+      benches: [bench("old", 1), bench("new", 10)],
+      scores,
+    }).rows.sort((left, right) => right.supraScore - left.supraScore);
+
+    expect(oldConsensus[0].familyTag).toBe("Old winner");
+    expect(newConsensus[0].familyTag).toBe("New winner");
+  });
+
   it("bootstraps held-out benchmark differences as paired samples", () => {
     const candidate = {
       runs: [

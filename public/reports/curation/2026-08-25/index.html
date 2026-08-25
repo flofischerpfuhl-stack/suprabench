@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SupraBench benchmark-source audit — 2026-08-25</title>
+  <style>
+    :root{color-scheme:dark;--bg:#080b12;--card:#111827;--ink:#e5e7eb;--muted:#9ca3af;--line:#283246;--cyan:#67e8f9;--green:#86efac;--amber:#fcd34d}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top left,#14213d 0,#080b12 42%);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,sans-serif}main{max-width:1180px;margin:auto;padding:56px 24px 90px}h1{font-size:clamp(2.2rem,5vw,4.4rem);line-height:1.02;margin:.2em 0}.eyebrow{color:var(--cyan);text-transform:uppercase;letter-spacing:.18em;font-weight:700}.lede{max-width:900px;color:#cbd5e1;font-size:1.15rem}.metrics,.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:30px 0}.card,.shot{background:rgba(17,24,39,.88);border:1px solid var(--line);border-radius:16px;padding:18px}.metric strong{display:block;font-size:2rem;color:white}h2{margin-top:48px}table{width:100%;border-collapse:collapse;background:rgba(17,24,39,.72)}th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}th{color:var(--cyan)}.ok{color:var(--green)}.muted{color:var(--muted)}.shot{margin:0}.shot img{width:100%;border-radius:9px;background:white}.shot a,a{color:var(--cyan)}code{color:#a7f3d0}
+  </style>
+</head>
+<body><main>
+  <p class="eyebrow">Source-provenance audit · 25 August 2026</p>
+  <h1>Official did not mean first-party consistently</h1>
+  <p class="lede">A complete one-shot production inventory found six first-party benchmark sources displayed as Community. The cause was missing dedicated project domains, an unreviewed-repository problem on GitHub, and drift between the browser preview and server classifier.</p>
+
+  <section class="metrics">
+    <div class="card metric"><strong>20 / 20</strong>visible benchmark origins audited</div>
+    <div class="card metric"><strong>6</strong>false Community badges corrected</div>
+    <div class="card metric"><strong>0</strong>score or ranking-value edits</div>
+    <div class="card metric"><strong>1 / 1</strong>current net-upvote maximum</div>
+  </section>
+
+  <h2>Classification rule</h2>
+  <div class="card"><p><strong>Official source</strong> now means a reviewed first-party/original publisher: an academic or lab host, the benchmark's own project site, or an exact author-owned repository. It does <em>not</em> mean that SupraBench endorses the benchmark's quality. Community ratings, difficulty, saturation, and upvotes remain independent.</p><p>GitHub is handled by exact repository prefixes rather than a blanket <code>github.com</code> allowlist. A similarly named or unrelated repository remains Community.</p></div>
+
+  <h2>Complete production audit</h2>
+  <table>
+    <thead><tr><th>Benchmark</th><th>Before</th><th>After</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td>ARC-AGI-3</td><td>Official</td><td>Official</td><td>ARC Prize project</td></tr>
+      <tr><td>APEX-Agents-AA</td><td>Official</td><td>Official</td><td>Artificial Analysis publisher</td></tr>
+      <tr><td>Humanity's Last Exam</td><td>Official</td><td>Official</td><td>CAIS project</td></tr>
+      <tr><td>SciCode</td><td>Official</td><td>Official</td><td>Project GitHub Pages</td></tr>
+      <tr><td>Terminal-Bench Hard</td><td>Community</td><td class="ok">Official</td><td>Terminal-Bench first-party project domain</td></tr>
+      <tr><td>SWE-Bench Pro</td><td>Official</td><td>Official</td><td>Scale publisher</td></tr>
+      <tr><td>DeepSWE</td><td>Community</td><td class="ok">Official</td><td>Datacurve first-party leaderboard</td></tr>
+      <tr><td>SpatialViz</td><td>Official</td><td>Official</td><td>Original paper</td></tr>
+      <tr><td>EnigmaEval</td><td>Official</td><td>Official</td><td>Scale publisher</td></tr>
+      <tr><td>ARC-AGI-2</td><td>Official</td><td>Official</td><td>ARC Prize project</td></tr>
+      <tr><td>TextQuests</td><td>Community</td><td class="ok">Official</td><td>First-party project and leaderboard</td></tr>
+      <tr><td>IntPhys 2</td><td>Official</td><td>Official</td><td>Meta research publication</td></tr>
+      <tr><td>ERQA</td><td>Community</td><td class="ok">Official</td><td>Exact author-owned public repository</td></tr>
+      <tr><td>MMMU-Pro</td><td>Official</td><td>Official</td><td>Project GitHub Pages</td></tr>
+      <tr><td>SWE-bench Verified</td><td>Official</td><td>Official</td><td>SWE-bench project</td></tr>
+      <tr><td>MindCube</td><td>Official</td><td>Official</td><td>Original paper</td></tr>
+      <tr><td>Terminal-Bench v2.1 (AA Terminus 2)</td><td>Official</td><td>Official</td><td>Artificial Analysis protocol publisher</td></tr>
+      <tr><td>AA Long Context Reasoning</td><td>Official</td><td>Official</td><td>Artificial Analysis publisher</td></tr>
+      <tr><td>Tau2-Bench Telecom</td><td>Community</td><td class="ok">Official</td><td>Sierra first-party research page</td></tr>
+      <tr><td>SkateBench</td><td>Community</td><td class="ok">Official</td><td>Own project leaderboard; quality remains independently near zero</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Can community consensus override the defaults?</h2>
+  <div class="card"><p>Yes. Benchmark ability weight is multiplied linearly by <code>u/U*</code>. At audit time every visible benchmark had one net upvote, so there was no actual majority signal. If a new benchmark receives 10 net upvotes while an older benchmark remains at 1, the new benchmark keeps its full intrinsic weight and the older benchmark receives a <code>1/10</code> trust factor. Ten consistent quality raters also dominate the three-neutral-rating Bayesian prior used by the family ranking.</p><p>Coverage is not negative evidence. Fewer model comparisons only make the family result provisional and more strongly regularized until the graph contains more evidence.</p></div>
+  <table style="margin-top:16px">
+    <thead><tr><th>New consensus</th><th>New all-5 benchmark weight</th><th>Current one-vote ARC-AGI-3 weight</th><th>Weight ratio</th></tr></thead>
+    <tbody>
+      <tr><td>1 rater / 1 upvote</td><td>43.75</td><td>42.97</td><td>1.02×</td></tr>
+      <tr><td>2 raters / 2 upvotes</td><td>53.20</td><td>21.48</td><td>2.48×</td></tr>
+      <tr><td>5 raters / 5 upvotes</td><td>69.06</td><td>8.59</td><td>8.04×</td></tr>
+      <tr><td>10 raters / 10 upvotes</td><td>80.30</td><td>4.30</td><td>18.69×</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Visible first-party evidence</h2>
+  <section class="shots">
+    <figure class="shot"><img src="screenshots/terminal-bench-official.png" alt="Terminal-Bench official project"><figcaption><a href="https://www.tbench.ai/">Terminal-Bench</a> project and leaderboard.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/deepswe-official.png" alt="DeepSWE official leaderboard"><figcaption><a href="https://deepswe.datacurve.ai/">Datacurve DeepSWE</a> first-party leaderboard.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/textquests-official.png" alt="TextQuests official project"><figcaption><a href="https://www.textquests.ai/">TextQuests</a> project, paper, code, and leaderboard.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/erqa-official-repository.png" alt="ERQA official repository"><figcaption><a href="https://github.com/embodiedreasoning/ERQA">ERQA</a> author repository with data and evaluation harness.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/tau2-sierra-official.png" alt="Sierra tau squared bench research"><figcaption><a href="https://sierra.ai/resources/research/tau-squared-bench">Sierra</a> first-party τ²-bench research page.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/skatebench-project.png" alt="SkateBench project leaderboard"><figcaption><a href="https://skatebench.t3.gg/">SkateBench</a> project leaderboard. Official provenance does not raise its quality weight.</figcaption></figure>
+  </section>
+
+  <h2>Publication status</h2>
+  <div class="card"><p id="publication-status"><strong class="muted">Backend verified, Pages publication pending:</strong> screenshot control and six source captures passed; the manifest validates; 139 tests and tier consistency pass; the curation dry-run is intentionally empty because the boolean repairs are derived from the reviewed source-classifier migration. Production deployed successfully and the idempotent migration reported exactly 6 promotions, 0 demotions, and all 20 benchmarks scanned. Convex and D1 both contain 563 scores with drift 0. Public report and badge checks follow after the fast-forward deployment.</p></div>
+</main></body>
+</html>
