@@ -41,7 +41,10 @@
     { "title": "DeepSeek API updates", "url": "https://api-docs.deepseek.com/updates/", "accessedAt": "2026-09-01T11:22:03.2525822+02:00" },
     { "title": "Moonshot AI — Kimi K3", "url": "https://github.com/MoonshotAI/Kimi-K3", "accessedAt": "2026-09-01T11:22:03.2525822+02:00" },
     { "title": "Meta — Muse Spark", "url": "https://developer.meta.com/ai/resources/blog/build-with-muse-code/", "accessedAt": "2026-09-01T11:22:03.2525822+02:00" },
-    { "title": "MiniMax newsroom", "url": "https://www.minimax.io/news", "accessedAt": "2026-09-01T11:22:03.2525822+02:00" }
+    { "title": "MiniMax newsroom", "url": "https://www.minimax.io/news", "accessedAt": "2026-09-01T11:22:03.2525822+02:00" },
+    { "title": "SupraBench — published curation report", "url": "https://suprabench.com/reports/curation/2026-09-01/", "accessedAt": "2026-09-01T11:31:42.3994423+02:00" },
+    { "title": "SupraBench — GLM-5.3-Flash max model", "url": "https://suprabench.com/#model/glm-5-3-flash-max", "accessedAt": "2026-09-01T11:31:42.3994423+02:00" },
+    { "title": "SupraBench — Agents' Last Exam v1 Codex benchmark", "url": "https://suprabench.com/#bench/agents-last-exam-v1-codex", "accessedAt": "2026-09-01T11:31:42.3994423+02:00" }
   ],
   "evidence": [
     { "sourceUrl": "https://artificialanalysis.ai/evaluations/apex-agents-aa", "screenshotUrl": "https://artificialanalysis.ai/evaluations/apex-agents-aa", "screenshotPath": "public/reports/curation/2026-09-01/screenshots/apex-luna-max.png" },
@@ -57,7 +60,10 @@
     { "sourceUrl": "https://agents-last-exam.org/leaderboard", "screenshotUrl": "https://agents-last-exam.org/leaderboard", "screenshotPath": "public/reports/curation/2026-09-01/screenshots/agents-last-exam-leaderboard-top.png" },
     { "sourceUrl": "https://agents-last-exam.org/leaderboard", "screenshotUrl": "https://agents-last-exam.org/leaderboard", "screenshotPath": "public/reports/curation/2026-09-01/screenshots/agents-last-exam-codex-rows.png" },
     { "sourceUrl": "https://autoclaw.z.ai/blog/model/glm-5.3-flash/", "screenshotUrl": "https://autoclaw.z.ai/blog/model/glm-5.3-flash/", "screenshotPath": "public/reports/curation/2026-09-01/screenshots/glm-5-3-flash-release.png" },
-    { "sourceUrl": "https://build.nvidia.com/nvidia/nemotron-3.5-lightning-30b-a3b/modelcard", "screenshotUrl": "https://build.nvidia.com/nvidia/nemotron-3.5-lightning-30b-a3b/modelcard", "screenshotPath": "public/reports/curation/2026-09-01/screenshots/nemotron-3-5-lightning-modelcard.png" }
+    { "sourceUrl": "https://build.nvidia.com/nvidia/nemotron-3.5-lightning-30b-a3b/modelcard", "screenshotUrl": "https://build.nvidia.com/nvidia/nemotron-3.5-lightning-30b-a3b/modelcard", "screenshotPath": "public/reports/curation/2026-09-01/screenshots/nemotron-3-5-lightning-modelcard.png" },
+    { "sourceUrl": "https://suprabench.com/reports/curation/2026-09-01/", "screenshotUrl": "https://suprabench.com/reports/curation/2026-09-01/", "screenshotPath": "public/reports/curation/2026-09-01/screenshots/live-report.png" },
+    { "sourceUrl": "https://suprabench.com/#model/glm-5-3-flash-max", "screenshotUrl": "https://suprabench.com/#model/glm-5-3-flash-max", "screenshotPath": "public/reports/curation/2026-09-01/screenshots/live-model-glm-5-3-flash-max.png" },
+    { "sourceUrl": "https://suprabench.com/#bench/agents-last-exam-v1-codex", "screenshotUrl": "https://suprabench.com/#bench/agents-last-exam-v1-codex", "screenshotPath": "public/reports/curation/2026-09-01/screenshots/live-benchmark-agents-last-exam-v1-codex.png" }
   ],
   "models": [
     { "name": "GLM-5.3-Flash (max)", "provider": "Zhipu AI", "familyTag": "GLM-5.3-Flash", "tags": ["agents", "coding", "multimodal", "reasoning"] },

@@ -87,7 +87,12 @@
   </div>
 
   <h2>Validation and publication</h2>
-  <div class="card"><p id="publication-status"><strong>Applied; publication pending:</strong> the manifest validates at 4 models, 1 benchmark, 30 scores, 14 evidence screenshots, and 38 sources. The reviewed dry-run contained exactly those inserts and no replacements. The apply created all five entities, inserted and mirrored all 30 scores, and the idempotence dry-run reports all 30 unchanged. Convex and D1 both contain 593 scores with drift 0. All 139 tests, tier consistency, <code>git diff --check</code>, and credential-pattern scanning pass. Fast-forward publication and visible production-page checks remain.</p></div>
+  <div class="card"><p id="publication-status"><strong>Published and live-verified:</strong> the reviewed dry-run contained exactly 1 benchmark, 4 model configurations, and 30 inserts with no replacements. The apply created all five entities, inserted and mirrored all 30 scores, and the idempotence dry-run reports all 30 unchanged. Convex and D1 both contain 593 scores with drift 0. All 139 tests, tier consistency, <code>git diff --check</code>, and credential-pattern scanning pass. Commit <code>10e8a3a</code> reached Cloudflare Pages. The dated public report, all 14 affected model pages, and all seven affected benchmark pages were opened visibly and showed the expected exact entity names.</p></div>
+  <section class="shots">
+    <figure class="shot"><img src="screenshots/live-report.png" alt="Published 2026-09-01 curation report"><figcaption><a href="https://suprabench.com/reports/curation/2026-09-01/">Published dated report</a> after the Pages deployment.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/live-model-glm-5-3-flash-max.png" alt="Published GLM-5.3-Flash max model page"><figcaption><a href="https://suprabench.com/#model/glm-5-3-flash-max">Representative affected model page</a> with the new scores.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/live-benchmark-agents-last-exam-v1-codex.png" alt="Published Agents' Last Exam v1 Codex benchmark page"><figcaption><a href="https://suprabench.com/#bench/agents-last-exam-v1-codex">New benchmark page</a> with the curated quality profile.</figcaption></figure>
+  </section>
 
   <h2>Run learnings</h2>
   <ul><li>Separate harnesses before comparing agent scores.</li><li>Preserve exact max, high, and xhigh identities; generic rows are not interchangeable.</li><li>Use visible DeepSWE Best rows, not hidden JSON precision.</li><li>Keep curation batches bounded and defer otherwise valid rows once the cap is reached.</li></ul>
