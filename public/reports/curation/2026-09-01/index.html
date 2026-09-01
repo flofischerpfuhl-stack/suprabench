@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SupraBench curation update — 2026-09-01</title>
+  <style>
+    :root{color-scheme:dark;--bg:#070a12;--card:#111827;--ink:#e5e7eb;--muted:#9ca3af;--line:#283246;--cyan:#67e8f9;--green:#86efac;--amber:#fcd34d;--rose:#fda4af}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top left,#172554 0,#070a12 43%);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,sans-serif}main{max-width:1180px;margin:auto;padding:56px 24px 90px}h1{font-size:clamp(2.3rem,5vw,4.6rem);line-height:1.02;margin:.2em 0}.eyebrow{color:var(--cyan);text-transform:uppercase;letter-spacing:.18em;font-weight:700}.lede{max-width:940px;color:#cbd5e1;font-size:1.15rem}.metrics,.shots,.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:30px 0}.card,.shot{background:rgba(17,24,39,.9);border:1px solid var(--line);border-radius:16px;padding:18px}.metric strong{display:block;font-size:2rem;color:white}h2{margin-top:48px}h3{margin-top:0}table{width:100%;border-collapse:collapse;background:rgba(17,24,39,.72);margin:18px 0}th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--cyan)}.ok{color:var(--green)}.warn{color:var(--amber)}.defer{color:var(--rose)}.muted{color:var(--muted)}.shot{margin:0}.shot img{width:100%;border-radius:9px;background:white}.shot a,a{color:var(--cyan)}code{color:#a7f3d0}ul{padding-left:1.25rem}
+  </style>
+</head>
+<body><main>
+  <p class="eyebrow">Production curation · 1 September 2026</p>
+  <h1>A new agent exam, with harness identity intact</h1>
+  <p class="lede">The complete 20-benchmark sweep accepted Agents' Last Exam v1 as a public, difficult, reproducible long-horizon benchmark. A deliberately separate Codex-harness benchmark prevents mixed-agent comparisons. The same run adds two newly released model families, exact Luna effort rows, and selected missing frontier configurations without overwriting any current source identity.</p>
+
+  <section class="metrics">
+    <div class="card metric"><strong>20 / 20</strong>tracked benchmark sources inspected</div>
+    <div class="card metric"><strong>1</strong>new benchmark protocol</div>
+    <div class="card metric"><strong>4</strong>new model configurations</div>
+    <div class="card metric"><strong>30</strong>insert-only score rows</div>
+  </section>
+
+  <h2>Accepted scope</h2>
+  <section class="cards">
+    <article class="card"><h3>Agents' Last Exam v1 (Codex)</h3><p>ALE-V1 publishes more than 1,500 tasks across over 55 industries, task artifacts, traces, scoring documentation, and open licences. SupraBench stores Overall Pass Rate for the Codex harness only.</p><p class="ok">Sol xhigh 30.6%; Luna xhigh 30.3%; Terra max 28.0%.</p></article>
+    <article class="card"><h3>GLM-5.3-Flash (max)</h3><p>The first-party release identifies a natively multimodal GLM-5 family model. Five visible, configuration-specific public scores are accepted.</p><p class="ok">DeepSWE 63%; HLE 39.9%; SciCode 46.1%; TB2.1 84.3%; AA-LCR 78.0%.</p></article>
+    <article class="card"><h3>GPT-5.6 Luna</h3><p>The source leaderboards now expose exact max and xhigh configurations. The prior generic production row remains untouched.</p><p class="ok">Max receives five rows; xhigh receives ALE-V1.</p></article>
+    <article class="card"><h3>Nemotron 3.5 Lightning</h3><p>NVIDIA's model card establishes the released 30B-A3B model identity. Four visible Artificial Analysis rows provide cross-domain evidence.</p><p class="ok">HLE 10.6%; SciCode 31.6%; TB2.1 24.3%; AA-LCR 55.3%.</p></article>
+  </section>
+
+  <h2>Exact score writes</h2>
+  <p>All displayed percentages on 0–1000 benchmarks are multiplied by ten. DeepSWE uses the whole percentage shown in its visible Best table. Every operation is an insert; no current score source is retired or averaged away.</p>
+  <table>
+    <thead><tr><th>Benchmark</th><th>Accepted rows</th><th>Stored raw values</th></tr></thead>
+    <tbody>
+      <tr><td>Agents' Last Exam v1 (Codex)</td><td>GPT-5.6 Sol xhigh; GPT-5.6 Luna xhigh; GPT-5.6 Terra max</td><td>306; 303; 280</td></tr>
+      <tr><td>DeepSWE</td><td>GLM-5.3-Flash max</td><td>630</td></tr>
+      <tr><td>APEX-Agents-AA</td><td>GPT-5.6 Luna max</td><td>358</td></tr>
+      <tr><td>Humanity's Last Exam</td><td>Opus 5 high; Sol max; Gemini 3.7 Flash high; Grok 4.6 high; Terra max; GLM-5.3 max; GLM-5.3-Flash max; Luna max; Nemotron Lightning</td><td>528; 495; 479; 429; 429; 423; 399; 395; 106</td></tr>
+      <tr><td>SciCode</td><td>Muse Spark 1.1 xhigh; Gemini 3.7 Flash high; GLM-5.3 max; Sol max; Opus 5 max; Luna max; GLM-5.3-Flash max; Nemotron Lightning</td><td>582; 568; 565; 561; 557; 525; 461; 316</td></tr>
+      <tr><td>Terminal-Bench v2.1 (AA Terminus 2)</td><td>GLM-5.3-Flash max; Luna max; Muse Spark 1.2 xhigh; Nemotron Lightning</td><td>843; 809; 801; 243</td></tr>
+      <tr><td>AA Long Context Reasoning</td><td>Gemini 3.7 Flash high; Luna max; GLM-5.3-Flash max; Nemotron Lightning</td><td>800; 783; 780; 553</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Visible evidence</h2>
+  <section class="shots">
+    <figure class="shot"><img src="screenshots/agents-last-exam-overview.png" alt="Agents' Last Exam overview"><figcaption><a href="https://agents-last-exam.org/">ALE-V1 overview</a>: public scale, industry coverage, tasks, traces, and documentation.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/agents-last-exam-leaderboard-top.png" alt="ALE-V1 leaderboard methodology"><figcaption><a href="https://agents-last-exam.org/leaderboard">ALE-V1 methodology</a>: Pass Rate and Score are distinct published measures.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/agents-last-exam-codex-rows.png" alt="ALE-V1 Codex harness rows"><figcaption><a href="https://agents-last-exam.org/leaderboard">ALE-V1 leaderboard</a>: exact Codex harness, effort, Pass Rate, and Score columns.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/deepswe-overview.png" alt="DeepSWE benchmark overview"><figcaption><a href="https://deepswe.datacurve.ai/">DeepSWE v1.1 overview</a>: 113 tasks and the visible 26-model leaderboard update.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/deepswe-glm-flash-row.png" alt="DeepSWE GLM Flash row"><figcaption><a href="https://deepswe.datacurve.ai/">DeepSWE v1.1</a>: visible Best row for GLM-5.3-Flash max at 63%.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/apex-luna-max.png" alt="APEX Luna max row"><figcaption><a href="https://artificialanalysis.ai/evaluations/apex-agents-aa">APEX-Agents-AA</a>: Luna max at 35.8%.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/hle-top-configs.png" alt="Humanity's Last Exam configurations"><figcaption><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">HLE</a> current configuration-specific frontier rows.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/hle-lower-new-models.png" alt="Humanity's Last Exam lower configurations"><figcaption><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">HLE lower rows</a> include the new efficient model configurations.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/scicode-top-configs.png" alt="SciCode configurations"><figcaption><a href="https://artificialanalysis.ai/evaluations/scicode">SciCode</a> current configuration-specific frontier rows.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/scicode-lower-new-models.png" alt="SciCode lower configurations"><figcaption><a href="https://artificialanalysis.ai/evaluations/scicode">SciCode lower rows</a> include Nemotron 3.5 Lightning.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/terminal-bench-v2-1-top-new.png" alt="Terminal-Bench v2.1 configurations"><figcaption><a href="https://artificialanalysis.ai/evaluations/terminalbench-v2-1">Terminal-Bench v2.1</a> under the fixed AA Terminus 2 harness.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/aa-lcr-new-configs.png" alt="AA-LCR configurations"><figcaption><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning">AA-LCR</a> exact high/max configurations.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/glm-5-3-flash-release.png" alt="GLM-5.3-Flash release"><figcaption><a href="https://autoclaw.z.ai/blog/model/glm-5.3-flash/">First-party GLM-5.3-Flash release</a> and multimodal model identity.</figcaption></figure>
+    <figure class="shot"><img src="screenshots/nemotron-3-5-lightning-modelcard.png" alt="Nemotron 3.5 Lightning model card"><figcaption><a href="https://build.nvidia.com/nvidia/nemotron-3.5-lightning-30b-a3b/modelcard">NVIDIA model card</a> for Nemotron 3.5 Lightning.</figcaption></figure>
+  </section>
+
+  <h2>Deferred deliberately</h2>
+  <table>
+    <thead><tr><th>Candidate</th><th>Reason for no write</th></tr></thead>
+    <tbody>
+      <tr><td>Terminal-Bench Hard refreshed rows</td><td>Visible effort-specific source rows conflict with generic production model identities; requires an explicit source-retirement/configuration migration.</td></tr>
+      <tr><td>TextQuests refreshed rows</td><td>No-Clues protocol is visible, but Fable configuration identity and replacement semantics for current rows remain ambiguous.</td></tr>
+      <tr><td>Tau2 refreshed cohort</td><td>The current leaderboard cohort changed while legacy source rows remain; deletion or source retirement is outside an insert-only batch.</td></tr>
+      <tr><td>Qwen3.8 variants</td><td>First-party identity is now stronger, but variant-to-leaderboard mapping and the 30-score cap require a separate audited batch.</td></tr>
+      <tr><td>AA AnalystAgent, AutomationBench-AA, AA-Briefcase</td><td>The scored held-out/private suites are not publicly reproducible enough for curation.</td></tr>
+      <tr><td>GDPval-AA v2</td><td>Pairwise Elo and harness semantics need a stable SupraBench scale treatment.</td></tr>
+      <tr><td>Terminal-Bench 3/4 and EnterpriseOps</td><td>Mixed harnesses, page/version mismatch, or insufficient adoption evidence remain unresolved.</td></tr>
+      <tr><td>Artificial Analysis Search Index</td><td>Measures provider search systems rather than a stable model capability.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Release and source sweep</h2>
+  <div class="card"><p><strong>Accepted releases:</strong> GLM-5.3-Flash and NVIDIA Nemotron 3.5 Lightning. <strong>No newer applicable general release:</strong> OpenAI, Anthropic, Google, xAI, DeepSeek, Moonshot, Meta, and MiniMax. The Qwen repository now establishes recent variants, but mapping was deferred as described above.</p><p>Every tracked benchmark source was opened in the in-app browser. ARC-AGI-3, SWE-Bench Pro, SpatialViz, EnigmaEval, ARC-AGI-2, IntPhys2, ERQA, MMMU-Pro, SWE-bench Verified, MindCube, Tau2, and SkateBench produced no safe insert for this run.</p></div>
+
+  <h2>Complete source list</h2>
+  <div class="card">
+    <p><strong>Tracked benchmarks:</strong> <a href="https://arcprize.org/competitions/2026/arc-agi-3">ARC-AGI-3</a>; <a href="https://artificialanalysis.ai/evaluations/apex-agents-aa">APEX</a>; <a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">HLE</a>; <a href="https://artificialanalysis.ai/evaluations/scicode">SciCode</a>; <a href="https://artificialanalysis.ai/evaluations/terminalbench-hard">Terminal-Bench Hard</a>; <a href="https://labs.scale.com/leaderboard/swe_bench_pro_public">SWE-Bench Pro</a>; <a href="https://deepswe.datacurve.ai/">DeepSWE</a>; <a href="https://arxiv.org/abs/2507.07610">SpatialViz</a>; <a href="https://labs.scale.com/leaderboard/enigma_eval">EnigmaEval</a>; <a href="https://arcprize.org/arc-agi/2">ARC-AGI-2</a>; <a href="https://www.textquests.ai/">TextQuests</a>; <a href="https://ai.meta.com/research/publications/intphys-2-benchmarking-intuitive-physics-understanding-in-complex-synthetic-environments/">IntPhys 2</a>; <a href="https://github.com/embodiedreasoning/ERQA">ERQA</a>; <a href="https://mmmu-benchmark.github.io/">MMMU-Pro</a>; <a href="https://www.swebench.com/verified.html">SWE-bench Verified</a>; <a href="https://arxiv.org/abs/2506.21458">MindCube</a>; <a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning">AA-LCR</a>; <a href="https://sierra.ai/resources/research/tau-squared-bench">Tau2</a>; <a href="https://skatebench.t3.gg/">SkateBench</a>; <a href="https://artificialanalysis.ai/evaluations/terminalbench-v2-1">Terminal-Bench v2.1</a>.</p>
+    <p><strong>Benchmark candidates:</strong> <a href="https://agents-last-exam.org/">ALE-V1 project</a>; <a href="https://agents-last-exam.org/leaderboard">ALE-V1 leaderboard</a>; <a href="https://artificialanalysis.ai/evaluations/aa-briefcase">AA-Briefcase</a>; <a href="https://artificialanalysis.ai/evaluations/gdpval-aa">GDPval-AA v2</a>; <a href="https://artificialanalysis.ai/evaluations/enterprise-ops-gym-aa">EnterpriseOps-Gym-AA</a>; <a href="https://artificialanalysis.ai/evaluations/analyst-agent">AnalystAgent</a>; <a href="https://www.tbench.ai/leaderboard/terminal-bench/3.0">Terminal-Bench 3.0</a>.</p>
+    <p><strong>Provider releases:</strong> <a href="https://openai.com/index/gpt-5-6/">OpenAI</a>; <a href="https://www.anthropic.com/news">Anthropic</a>; <a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/">Google</a>; <a href="https://x.ai/news/grok-4-6">xAI</a>; <a href="https://autoclaw.z.ai/blog/model/glm-5.3-flash/">AutoClaw / Z.ai</a>; <a href="https://build.nvidia.com/nvidia/nemotron-3.5-lightning-30b-a3b/modelcard">NVIDIA</a>; <a href="https://github.com/QwenLM/Qwen3.8">Qwen</a>; <a href="https://api-docs.deepseek.com/updates/">DeepSeek</a>; <a href="https://github.com/MoonshotAI/Kimi-K3">Moonshot</a>; <a href="https://developer.meta.com/ai/resources/blog/build-with-muse-code/">Meta</a>; <a href="https://www.minimax.io/news">MiniMax</a>.</p>
+  </div>
+
+  <h2>Validation and publication</h2>
+  <div class="card"><p id="publication-status"><strong>Applied; publication pending:</strong> the manifest validates at 4 models, 1 benchmark, 30 scores, 14 evidence screenshots, and 38 sources. The reviewed dry-run contained exactly those inserts and no replacements. The apply created all five entities, inserted and mirrored all 30 scores, and the idempotence dry-run reports all 30 unchanged. Convex and D1 both contain 593 scores with drift 0. All 139 tests, tier consistency, <code>git diff --check</code>, and credential-pattern scanning pass. Fast-forward publication and visible production-page checks remain.</p></div>
+
+  <h2>Run learnings</h2>
+  <ul><li>Separate harnesses before comparing agent scores.</li><li>Preserve exact max, high, and xhigh identities; generic rows are not interchangeable.</li><li>Use visible DeepSWE Best rows, not hidden JSON precision.</li><li>Keep curation batches bounded and defer otherwise valid rows once the cap is reached.</li></ul>
+</main></body>
+</html>
