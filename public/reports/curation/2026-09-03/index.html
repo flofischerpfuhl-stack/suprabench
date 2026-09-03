@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SupraBench curation update — 2026-09-03</title>
+  <style>
+    :root{color-scheme:dark;--bg:#071018;--card:#10202a;--ink:#ecfeff;--muted:#a8bdc7;--line:#2a4652;--cyan:#67e8f9;--green:#86efac;--amber:#fcd34d;--rose:#fda4af}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top left,#164e63 0,#071018 43%);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,sans-serif}main{max-width:1180px;margin:auto;padding:56px 24px 90px}h1{font-size:clamp(2.3rem,5vw,4.5rem);line-height:1.02;margin:.2em 0}.eyebrow{color:var(--cyan);text-transform:uppercase;letter-spacing:.18em;font-weight:700}.lede{max-width:960px;color:#cffafe;font-size:1.15rem}.metrics,.shots,.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:30px 0}.card,.shot{background:rgba(16,32,42,.92);border:1px solid var(--line);border-radius:16px;padding:18px}.metric strong{display:block;font-size:2rem;color:white}h2{margin-top:48px}h3{margin-top:0}table{width:100%;border-collapse:collapse;background:rgba(16,32,42,.76);margin:18px 0}th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--cyan)}.ok{color:var(--green)}.warn{color:var(--amber)}.defer{color:var(--rose)}.muted{color:var(--muted)}.shot{margin:0}.shot img{width:100%;border-radius:9px;background:white}.shot a,a{color:var(--cyan)}code{color:#a7f3d0}ul{padding-left:1.25rem}
+  </style>
+</head>
+<body><main>
+  <p class="eyebrow">Production curation · 3 September 2026</p>
+  <h1>New releases, exact configurations</h1>
+  <p class="lede">The complete 21-benchmark sweep adds newly published Claude Fable 5.1 and Gemini 3.8 Flash configurations, then resolves the previously deferred Qwen3.8-27B identity. All 25 score changes are inserts. No existing curated value, source identity, benchmark version, effort level, or harness is overwritten.</p>
+
+  <section class="metrics">
+    <div class="card metric"><strong>21 / 21</strong><span>tracked sources inspected</span></div>
+    <div class="card metric"><strong>8</strong><span>exact model configurations</span></div>
+    <div class="card metric"><strong>25</strong><span>insert-only scores</span></div>
+    <div class="card metric"><strong>0</strong><span>replacements or refreshes</span></div>
+  </section>
+
+  <h2>Accepted changes</h2>
+  <div class="cards">
+    <div class="card"><h3>Claude Fable 5.1</h3><p>Four fallback-preserving effort records: max, xhigh, high, and medium. Twelve scores span Humanity's Last Exam, SciCode, AA-LCR, and Terminal-Bench v2.1 under the existing compatible source protocols.</p></div>
+    <div class="card"><h3>Gemini 3.8 Flash</h3><p>High, medium, and low effort remain distinct. Eight scores cover HLE, SciCode, AA-LCR, Terminal-Bench v2.1, MMMU-Pro, and the visible DeepSWE v1.1 Best row.</p></div>
+    <div class="card"><h3>Qwen3.8-27B</h3><p>The first-party repository establishes the 27B release separately from 2.4T-A95B and Max. Five explicit xhigh rows are inserted across HLE, SciCode, AA-LCR, Terminal-Bench v2.1, and MMMU-Pro.</p></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Benchmark</th><th>Accepted rows (stored raw scale)</th><th>Protocol note</th></tr></thead>
+    <tbody>
+      <tr><td>Humanity's Last Exam</td><td>Fable 5.1 max 591, xhigh 587, high 559, medium 538; Gemini 3.8 high 478; Qwen3.8-27B xhigh 390</td><td>Artificial Analysis score, 0–1000 storage.</td></tr>
+      <tr><td>SciCode</td><td>Fable 5.1 max 620, xhigh 601, high 576; Gemini 3.8 high 536; Qwen3.8-27B xhigh 447</td><td>Artificial Analysis methodology, 0–1000 storage.</td></tr>
+      <tr><td>AA Long Context Reasoning</td><td>Gemini 3.8 medium 820, high 810; Fable 5.1 max 800; Qwen3.8-27B xhigh 773</td><td>AA-LCR score, 0–1000 storage.</td></tr>
+      <tr><td>Terminal-Bench v2.1 (AA Terminus 2)</td><td>Fable 5.1 max 914, xhigh 910, high 899, medium 880; Gemini 3.8 high 876; Qwen3.8-27B xhigh 798</td><td>Terminus 2, e2b, pass@1 over three repeats; kept separate from other versions and harnesses.</td></tr>
+      <tr><td>MMMU-Pro</td><td>Gemini 3.8 high 86, low 85; Qwen3.8-27B xhigh 76</td><td>Native 0–100 percentage scale.</td></tr>
+      <tr><td>DeepSWE v1.1</td><td>Gemini 3.8 high 740</td><td>Visible Best row: 74%, stored on 0–1000 scale; mini-swe-agent.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Deferred deliberately</h2>
+  <table>
+    <thead><tr><th>Candidate</th><th>Reason for no write</th></tr></thead>
+    <tbody>
+      <tr><td>Terminal-Bench 4.0</td><td>The official table is authoritative and difficult, but mixes Claude Code, Codex, Grok Build, and mini-SWE-agent. A single leaderboard would violate harness identity; splitting it into several scored benchmarks would overweight the same task suite.</td></tr>
+      <tr><td>Vals Finance Agent v2</td><td>Strong professional relevance, but official scoring relies on a private 450-question test set while only 27 public samples are available.</td></tr>
+      <tr><td>Harvey Legal Agent Benchmark</td><td>The benchmark is open and substantial, but published results use a held-out split and report material harness and judge divergences.</td></tr>
+      <tr><td>HLE-Rolling</td><td>The moving dataset needs a pinned version and compatible public result protocol before it can coexist with static HLE.</td></tr>
+      <tr><td>Qwen3.8 2.4T-A95B / Max rows</td><td>The first-party identity is clear, but leaderboard effort labels do not consistently map to the existing Qwen3.8-Max xhigh record.</td></tr>
+      <tr><td>Legacy score migrations</td><td>Terminal-Bench Hard, Tau2, TextQuests, and some Kimi rows still require explicit source retirement or configuration mapping; no silent replacement was attempted.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Visible source evidence</h2>
+  <section class="shots">
+    <figure class="shot"><a href="https://www.anthropic.com/claude-fable-and-mythos-5-1"><img src="screenshots/anthropic-fable-5-1-release.png" alt="Anthropic Fable 5.1 release"></a><figcaption>Anthropic release identity, September 2026.</figcaption></figure>
+    <figure class="shot"><a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/3-8-flash-and-3-8-flash-cyber/"><img src="screenshots/google-gemini-3-8-release.png" alt="Google Gemini 3.8 Flash release"></a><figcaption>Google release identity and date.</figcaption></figure>
+    <figure class="shot"><a href="https://github.com/QwenLM/Qwen3.8"><img src="screenshots/qwen-3-8-27b-release.png" alt="Qwen3.8 27B release row"></a><figcaption>First-party 27B and 2.4T-A95B identities.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam"><img src="screenshots/hle-fable-5-1-gemini-3-8.png" alt="HLE new score rows"></a><figcaption>HLE exact model/effort labels and values.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/scicode"><img src="screenshots/scicode-fable-5-1-gemini-3-8.png" alt="SciCode new score rows"></a><figcaption>SciCode exact rows and percentages.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning"><img src="screenshots/aa-lcr-fable-5-1-gemini-3-8.png" alt="AA-LCR new score rows"></a><figcaption>AA-LCR configurations and scores.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/terminalbench-v2-1"><img src="screenshots/terminal-bench-v2-1-fable-5-1-gemini-3-8.png" alt="Terminal-Bench v2.1 new score rows"></a><figcaption>Terminal-Bench v2.1 under the AA Terminus 2 protocol.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/mmmu-pro"><img src="screenshots/mmmu-pro-gemini-3-8.png" alt="MMMU-Pro Gemini and Qwen rows"></a><figcaption>MMMU-Pro native percentage values.</figcaption></figure>
+    <figure class="shot"><a href="https://deepswe.datacurve.ai/"><img src="screenshots/deepswe-gemini-3-8.png" alt="DeepSWE Gemini 3.8 row"></a><figcaption>DeepSWE v1.1 Best row, updated 2 September.</figcaption></figure>
+    <figure class="shot"><a href="https://www.tbench.ai/?version=4.0"><img src="screenshots/terminal-bench-4-top.png" alt="Terminal-Bench 4.0 upper leaderboard"></a><figcaption>Deferred Terminal-Bench 4.0 upper rows and mixed harnesses.</figcaption></figure>
+    <figure class="shot"><a href="https://www.tbench.ai/?version=4.0"><img src="screenshots/terminal-bench-4-lower-top.png" alt="Terminal-Bench 4.0 lower leaderboard"></a><figcaption>Deferred Terminal-Bench 4.0 remaining rows.</figcaption></figure>
+  </section>
+
+  <h2>Complete sweep and release research</h2>
+  <div class="card"><p><strong>Tracked benchmarks:</strong> all 21 production sources were opened in the visible browser. APEX, ARC-AGI-2, ARC-AGI-3, EnigmaEval, ERQA, IntPhys 2, MindCube, SkateBench, SpatialViz, SWE-Bench Pro, SWE-bench Verified, ALE-V1, Tau2, Terminal-Bench Hard, and TextQuests produced no additional safe insert in this batch.</p><p><strong>Provider sweep:</strong> OpenAI, Anthropic, Google, SpaceXAI, Z.ai, NVIDIA, Qwen, DeepSeek, Moonshot, Meta, MiniMax, Mistral, Cohere, and Thinking Machines were checked. Fable 5.1 and Gemini 3.8 Flash are the newly released applicable families; Qwen3.8-27B is the resolved carry-forward identity.</p><p><strong>Research candidates:</strong> Terminal-Bench 4.0, Finance Agent v2, Harvey LAB, and HLE-Rolling were evaluated and deferred for the protocol reasons above.</p></div>
+
+  <h2>Validation and publication</h2>
+  <div class="card"><ul>
+    <li class="ok">Manifest validation passed; 139/139 tests passed; tier consistency and credential scans passed.</li>
+    <li class="ok">The pre-apply dry-run predicted exactly 8 model creates and 25 score inserts, with 0 refreshes and 0 replacements.</li>
+    <li class="ok">The post-apply dry-run is idempotent: all 25 scores are unchanged and no write remains.</li>
+    <li>Pre-write mirror: Convex 593, D1 593, drift 0.</li>
+    <li>Post-write mirror: Convex 618, D1 618, drift 0.</li>
+    <li>No benchmark was created, no score was replaced, and no secret-bearing file was added.</li>
+    <li class="warn">Live Pages checks are added after the report commit reaches production.</li>
+  </ul></div>
+
+  <h2>Run learnings</h2>
+  <ul><li>Release-day leaderboards require exact effort and fallback naming.</li><li>Qwen3.8-27B must not be collapsed into 2.4T-A95B or Max.</li><li>Terminal-Bench 4.0 needs a harness-aware schema before curation.</li><li>Moving or private test sets need versioned, reproducible public protocols.</li></ul>
+</main></body>
+</html>
