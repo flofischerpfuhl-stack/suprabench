@@ -43,7 +43,10 @@
     { "title": "Cohere — Command A+", "url": "https://cohere.com/blog/command-a-plus", "accessedAt": "2026-09-03T11:13:49.1319990+02:00" },
     { "title": "Thinking Machines — Inkling", "url": "https://thinkingmachines.ai/model-card/inkling/", "accessedAt": "2026-09-03T11:13:49.1319990+02:00" },
     { "title": "Harvey — Legal Agent Benchmark methodology", "url": "https://www.harvey.ai/blog/post-training-update-harvey-tenet", "accessedAt": "2026-09-03T11:13:49.1319990+02:00" },
-    { "title": "Vals — Finance Agent v2", "url": "https://www.vals.ai/benchmarks/fabv2", "accessedAt": "2026-09-03T11:13:49.1319990+02:00" }
+    { "title": "Vals — Finance Agent v2", "url": "https://www.vals.ai/benchmarks/fabv2", "accessedAt": "2026-09-03T11:13:49.1319990+02:00" },
+    { "title": "SupraBench — published curation report", "url": "https://suprabench.com/reports/curation/2026-09-03/", "accessedAt": "2026-09-03T11:26:19.9714830+02:00" },
+    { "title": "SupraBench — Gemini 3.8 Flash high model page", "url": "https://suprabench.com/#model/gemini-3-8-flash-high", "accessedAt": "2026-09-03T11:26:19.9714830+02:00" },
+    { "title": "SupraBench — Humanity's Last Exam benchmark page", "url": "https://suprabench.com/#bench/humanity-s-last-exam", "accessedAt": "2026-09-03T11:26:19.9714830+02:00" }
   ],
   "evidence": [
     { "sourceUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam", "screenshotUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam", "screenshotPath": "public/reports/curation/2026-09-03/screenshots/hle-fable-5-1-gemini-3-8.png" },
@@ -56,7 +59,10 @@
     { "sourceUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/3-8-flash-and-3-8-flash-cyber/", "screenshotUrl": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/3-8-flash-and-3-8-flash-cyber/", "screenshotPath": "public/reports/curation/2026-09-03/screenshots/google-gemini-3-8-release.png" },
     { "sourceUrl": "https://github.com/QwenLM/Qwen3.8", "screenshotUrl": "https://github.com/QwenLM/Qwen3.8", "screenshotPath": "public/reports/curation/2026-09-03/screenshots/qwen-3-8-27b-release.png" },
     { "sourceUrl": "https://www.tbench.ai/?version=4.0", "screenshotUrl": "https://www.tbench.ai/?version=4.0", "screenshotPath": "public/reports/curation/2026-09-03/screenshots/terminal-bench-4-top.png" },
-    { "sourceUrl": "https://www.tbench.ai/?version=4.0", "screenshotUrl": "https://www.tbench.ai/?version=4.0", "screenshotPath": "public/reports/curation/2026-09-03/screenshots/terminal-bench-4-lower-top.png" }
+    { "sourceUrl": "https://www.tbench.ai/?version=4.0", "screenshotUrl": "https://www.tbench.ai/?version=4.0", "screenshotPath": "public/reports/curation/2026-09-03/screenshots/terminal-bench-4-lower-top.png" },
+    { "sourceUrl": "https://suprabench.com/reports/curation/2026-09-03/", "screenshotUrl": "https://suprabench.com/reports/curation/2026-09-03/?v=13f9c43", "screenshotPath": "public/reports/curation/2026-09-03/screenshots/live-report.png" },
+    { "sourceUrl": "https://suprabench.com/#model/gemini-3-8-flash-high", "screenshotUrl": "https://suprabench.com/?v=13f9c43#model/gemini-3-8-flash-high", "screenshotPath": "public/reports/curation/2026-09-03/screenshots/live-model-gemini-3-8-flash-high.png" },
+    { "sourceUrl": "https://suprabench.com/#bench/humanity-s-last-exam", "screenshotUrl": "https://suprabench.com/?v=13f9c43#bench/humanity-s-last-exam", "screenshotPath": "public/reports/curation/2026-09-03/screenshots/live-benchmark-hle.png" }
   ],
   "models": [
     { "name": "Claude Fable 5.1 (max with fallback)", "provider": "Anthropic", "familyTag": "Claude Fable 5.1", "tags": ["agents", "coding", "reasoning"] },

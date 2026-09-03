@@ -20,6 +20,13 @@
     <div class="card metric"><strong>0</strong><span>replacements or refreshes</span></div>
   </section>
 
+  <h2>Live publication evidence</h2>
+  <section class="shots">
+    <figure class="shot"><a href="https://suprabench.com/reports/curation/2026-09-03/"><img src="screenshots/live-report.png" alt="Published curation report"></a><figcaption>The published report after the first fast-forward deployment.</figcaption></figure>
+    <figure class="shot"><a href="https://suprabench.com/#model/gemini-3-8-flash-high"><img src="screenshots/live-model-gemini-3-8-flash-high.png" alt="Published Gemini 3.8 Flash high model page"></a><figcaption>Representative affected model page with all six inserted scores.</figcaption></figure>
+    <figure class="shot"><a href="https://suprabench.com/#bench/humanity-s-last-exam"><img src="screenshots/live-benchmark-hle.png" alt="Published Humanity's Last Exam benchmark page"></a><figcaption>Representative affected benchmark page with Fable, Gemini, and Qwen rows.</figcaption></figure>
+  </section>
+
   <h2>Accepted changes</h2>
   <div class="cards">
     <div class="card"><h3>Claude Fable 5.1</h3><p>Four fallback-preserving effort records: max, xhigh, high, and medium. Twelve scores span Humanity's Last Exam, SciCode, AA-LCR, and Terminal-Bench v2.1 under the existing compatible source protocols.</p></div>
@@ -78,7 +85,7 @@
     <li>Pre-write mirror: Convex 593, D1 593, drift 0.</li>
     <li>Post-write mirror: Convex 618, D1 618, drift 0.</li>
     <li>No benchmark was created, no score was replaced, and no secret-bearing file was added.</li>
-    <li class="warn">Live Pages checks are added after the report commit reaches production.</li>
+    <li class="ok">Cloudflare Pages returned the new report, and all 8 affected model pages plus all 6 affected benchmark pages passed visible-browser checks.</li>
   </ul></div>
 
   <h2>Run learnings</h2>
