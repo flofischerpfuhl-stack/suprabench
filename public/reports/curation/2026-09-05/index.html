@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SupraBench curation update — 2026-09-05</title>
+  <style>
+    :root{color-scheme:dark;--bg:#071018;--card:#10202a;--ink:#ecfeff;--muted:#a8bdc7;--line:#2a4652;--cyan:#67e8f9;--green:#86efac;--amber:#fcd34d;--rose:#fda4af}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top left,#164e63 0,#071018 43%);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,sans-serif}main{max-width:1180px;margin:auto;padding:56px 24px 90px}h1{font-size:clamp(2.3rem,5vw,4.5rem);line-height:1.02;margin:.2em 0}.eyebrow{color:var(--cyan);text-transform:uppercase;letter-spacing:.18em;font-weight:700}.lede{max-width:960px;color:#cffafe;font-size:1.15rem}.metrics,.shots,.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:30px 0}.card,.shot{background:rgba(16,32,42,.92);border:1px solid var(--line);border-radius:16px;padding:18px}.metric strong{display:block;font-size:2rem;color:white}h2{margin-top:48px}h3{margin-top:0}table{width:100%;border-collapse:collapse;background:rgba(16,32,42,.76);margin:18px 0}th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--cyan)}.ok{color:var(--green)}.warn{color:var(--amber)}.defer{color:var(--rose)}.muted{color:var(--muted)}.shot{margin:0}.shot img{width:100%;border-radius:9px;background:white}.shot a,a{color:var(--cyan)}code{color:#a7f3d0}ul{padding-left:1.25rem}
+  </style>
+</head>
+<body><main>
+  <p class="eyebrow">Production curation · 5 September 2026</p>
+  <h1>New frontier releases, protocol-safe rows</h1>
+  <p class="lede">The complete 21-benchmark sweep adds GPT-6 Astra and Muse Spark 1.3, resolves the independent Qwen3.8-2.4T-A95B configuration, and admits MiniMax-M3 where current first-party identity and visible source rows agree. All 28 score changes are inserts; no curated value, benchmark version, effort level, or harness is overwritten.</p>
+
+  <section class="metrics">
+    <div class="card metric"><strong>21 / 21</strong><span>tracked sources inspected</span></div>
+    <div class="card metric"><strong>8</strong><span>exact model configurations</span></div>
+    <div class="card metric"><strong>28</strong><span>insert-only scores</span></div>
+    <div class="card metric"><strong>0</strong><span>replacements or benchmark creates</span></div>
+  </section>
+
+  <h2>Accepted changes</h2>
+  <div class="cards">
+    <div class="card"><h3>GPT-6 Astra</h3><p>Four effort-specific records: max, xhigh, high, and medium. Twelve visible scores span HLE, SciCode, AA-LCR, Terminal-Bench v2.1, MMMU-Pro, and DeepSWE v1.1.</p></div>
+    <div class="card"><h3>Muse Spark 1.3</h3><p>Max and xhigh stay distinct. Five scores cover HLE, SciCode, AA-LCR, and Terminal-Bench v2.1.</p></div>
+    <div class="card"><h3>Qwen3.8 2.4T A95B</h3><p>The first-party open-weight release is distinct from Qwen3.8-27B and Qwen3.8-Max. Four explicit max rows are inserted.</p></div>
+    <div class="card"><h3>MiniMax-M3</h3><p>The first-party model identity and seven current rows are explicit across HLE, SciCode, AA-LCR, Terminal-Bench v2.1, MMMU-Pro, Terminal-Bench Hard, and Tau2 Telecom.</p></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Benchmark</th><th>Accepted rows (stored raw scale)</th><th>Protocol note</th></tr></thead>
+    <tbody>
+      <tr><td>Humanity's Last Exam</td><td>Astra max 547, xhigh 546; Muse 1.3 max 491; Qwen 2.4T max 424; MiniMax-M3 390</td><td>Artificial Analysis score, 0–1000 storage.</td></tr>
+      <tr><td>SciCode</td><td>Muse 1.3 xhigh 597, max 583; Astra max 565; Qwen 2.4T max 541; MiniMax-M3 471</td><td>Artificial Analysis methodology, 0–1000 storage.</td></tr>
+      <tr><td>AA Long Context Reasoning</td><td>Muse 1.3 max 843; MiniMax-M3 830; Astra max 807; Qwen 2.4T max 803</td><td>AA-LCR v1.1 score, 0–1000 storage.</td></tr>
+      <tr><td>Terminal-Bench v2.1 (AA Terminus 2)</td><td>Astra high 899, medium 895, max 884; Muse 1.3 max 858; Qwen 2.4T max 820; MiniMax-M3 652</td><td>Terminus 2, e2b, pass@1; kept separate from other versions and harnesses.</td></tr>
+      <tr><td>MMMU-Pro</td><td>Astra max 87, high 86, xhigh 86, medium 85; MiniMax-M3 79</td><td>Native 0–100 percentage scale.</td></tr>
+      <tr><td>DeepSWE v1.1</td><td>Astra xhigh 740</td><td>Visible Best row: 74%, stored on 0–1000 scale; mini-swe-agent.</td></tr>
+      <tr><td>Terminal-Bench Hard</td><td>MiniMax-M3 424</td><td>Artificial Analysis score, existing 0–1000 protocol.</td></tr>
+      <tr><td>Tau2-Bench Telecom</td><td>MiniMax-M3 889</td><td>Artificial Analysis Telecom score, existing 0–1000 protocol.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Deferred deliberately</h2>
+  <table>
+    <thead><tr><th>Candidate</th><th>Reason for no write</th></tr></thead>
+    <tbody>
+      <tr><td>Terminal-Bench 4.0</td><td>The official table is strong but mixes Claude Code, Codex, Grok Build, and mini-SWE-agent. The current schema cannot preserve that harness identity without overweighting one task suite.</td></tr>
+      <tr><td>AutomationBench-AA</td><td>The official page uses a private dataset and a stricter violation-aware metric than the separately hosted public task set.</td></tr>
+      <tr><td>AnalystAgent / ITBench-AA</td><td>Evaluation questions or material subsets remain private, so current public reproducibility is insufficient.</td></tr>
+      <tr><td>Kotlin Benchmark</td><td>Public and reproducible, but too narrow and single-language for the present general-purpose benchmark set.</td></tr>
+      <tr><td>DeepSeek V4 Pro 0813</td><td>The leaderboard identity collides with an existing broader V4 Pro record and requires a separate source/identity migration.</td></tr>
+      <tr><td>Additional older effort rows</td><td>Gemini 3.7 Flash, Muse Glimmer, Inkling, and K2 Horizon remain for a later bounded batch with first-party identity review.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Visible model identity evidence</h2>
+  <section class="shots">
+    <figure class="shot"><a href="https://openai.com/index/gpt-6-astra/"><img src="screenshots/gpt-6-astra-official.jpg" alt="OpenAI GPT-6 Astra release"></a><figcaption>OpenAI's official GPT-6 Astra launch page.</figcaption></figure>
+    <figure class="shot"><a href="https://ai.meta.com/llama"><img src="screenshots/muse-spark-1-3-official.jpg" alt="Meta Muse Spark 1.3 release"></a><figcaption>Meta's official Muse Spark 1.3 model page.</figcaption></figure>
+    <figure class="shot"><a href="https://github.com/QwenLM/Qwen3.8"><img src="screenshots/qwen3-8-2-4t-a95b-official.jpg" alt="Qwen3.8 2.4T A95B release row"></a><figcaption>First-party Qwen3.8-2.4T-A95B release identity and date.</figcaption></figure>
+    <figure class="shot"><a href="https://www.minimax.io/blog/minimax-m3"><img src="screenshots/minimax-m3-official.jpg" alt="MiniMax M3 release"></a><figcaption>MiniMax's official M3 release identity and capabilities.</figcaption></figure>
+  </section>
+
+  <h2>Visible score evidence</h2>
+  <section class="shots">
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam"><img src="screenshots/hle-gpt6-muse13.jpg" alt="HLE candidate rows"></a><figcaption>HLE exact model, effort, and score labels.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/scicode"><img src="screenshots/scicode-gpt6-muse13-qwen24t-minimaxm3.jpg" alt="SciCode candidate rows"></a><figcaption>SciCode exact rows and percentages.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning"><img src="screenshots/aa-lcr-gpt6-muse13-qwen24t-minimaxm3.jpg" alt="AA-LCR candidate rows"></a><figcaption>AA-LCR v1.1 configurations and scores.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/terminalbench-v2-1"><img src="screenshots/terminal-bench-v2-1-gpt6-muse13-qwen24t-minimaxm3.jpg" alt="Terminal-Bench v2.1 candidate rows"></a><figcaption>Terminal-Bench v2.1 under the AA Terminus 2 protocol.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/mmmu-pro"><img src="screenshots/mmmu-pro-gpt6-minimaxm3.jpg" alt="MMMU-Pro candidate rows"></a><figcaption>MMMU-Pro native percentage values.</figcaption></figure>
+    <figure class="shot"><a href="https://deepswe.datacurve.ai/"><img src="screenshots/deepswe-gpt6-astra-xhigh.jpg" alt="DeepSWE GPT-6 Astra row"></a><figcaption>DeepSWE v1.1 Best row with Astra xhigh.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/terminalbench-hard"><img src="screenshots/terminal-bench-hard-minimaxm3.jpg" alt="Terminal-Bench Hard MiniMax M3 row"></a><figcaption>Terminal-Bench Hard current MiniMax-M3 score.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/tau2-bench"><img src="screenshots/tau2-minimaxm3.jpg" alt="Tau2-Bench MiniMax M3 row"></a><figcaption>Tau2 Telecom current MiniMax-M3 score.</figcaption></figure>
+  </section>
+
+  <h2>Complete sweep and release research</h2>
+  <div class="card"><p><strong>Tracked benchmarks:</strong> all 21 production sources were opened in the visible browser. ARC-AGI-2/3, ALE-V1, APEX, EnigmaEval, ERQA, IntPhys 2, MindCube, SkateBench, SpatialViz, SWE-Bench Pro, SWE-bench Verified, and TextQuests produced no additional protocol-safe insert in this batch.</p><p><strong>Provider sweep:</strong> OpenAI, Anthropic, Google, SpaceXAI, Z.ai, NVIDIA, Qwen, DeepSeek, Moonshot, Meta, MiniMax, Mistral, Cohere, and AI21 were checked. GPT-6 Astra and Muse Spark 1.3 are the applicable releases since the prior run.</p><p><strong>Research candidates:</strong> Terminal-Bench 4.0, AutomationBench-AA, AnalystAgent, ITBench-AA, and Kotlin Benchmark were evaluated and deferred for the protocol reasons above.</p></div>
+
+  <h2>Validation and publication</h2>
+  <div class="card"><ul>
+    <li class="ok">The pre-write example.com screenshot gate passed and every accepted source has a valid visible-browser JPEG.</li>
+    <li class="ok">Manifest validation passed; 139/139 tests passed; tier consistency and credential scans passed.</li>
+    <li class="ok">The pre-apply dry-run predicted exactly 8 model creates and 28 score inserts, with 0 refreshes and 0 replacements.</li>
+    <li class="ok">The single production apply created all 8 models and mirrored all 28 inserted scores.</li>
+    <li class="ok">The post-apply dry-run is idempotent: all 28 scores are unchanged and no write remains.</li>
+    <li>Pre-write mirror: Convex 618, D1 618, drift 0.</li>
+    <li>No benchmark is created, no score is replaced, and no secret-bearing file is included.</li>
+    <li>Post-write mirror: Convex 646, D1 646, drift 0.</li>
+    <li class="warn">Deployment and live-browser evidence are recorded after publication.</li>
+  </ul></div>
+
+  <h2>Run learnings</h2>
+  <ul><li>Release-day leaderboards still require exact effort/configuration records.</li><li>Open-weight Qwen3.8-2.4T-A95B must not be collapsed into Qwen3.8-27B or Max.</li><li>Current private/partly-private agent benchmarks remain below the reproducibility bar.</li><li>Terminal-Bench 4.0 still needs a harness-aware schema.</li></ul>
+</main></body>
+</html>
