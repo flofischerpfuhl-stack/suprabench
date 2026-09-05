@@ -45,7 +45,10 @@
     { "title": "Artificial Analysis — AutomationBench-AA", "url": "https://artificialanalysis.ai/evaluations/automationbench-aa", "accessedAt": "2026-09-05T11:16:32.7716004+02:00" },
     { "title": "Artificial Analysis — AnalystAgent", "url": "https://artificialanalysis.ai/evaluations/analyst-agent", "accessedAt": "2026-09-05T11:16:32.7716004+02:00" },
     { "title": "Artificial Analysis — ITBench-AA", "url": "https://artificialanalysis.ai/evaluations/itbench-aa", "accessedAt": "2026-09-05T11:16:32.7716004+02:00" },
-    { "title": "JetBrains — Kotlin benchmark", "url": "https://blog.jetbrains.com/research/2026/04/kotlin-code-generation-benchmark/", "accessedAt": "2026-09-05T11:16:32.7716004+02:00" }
+    { "title": "JetBrains — Kotlin benchmark", "url": "https://blog.jetbrains.com/research/2026/04/kotlin-code-generation-benchmark/", "accessedAt": "2026-09-05T11:16:32.7716004+02:00" },
+    { "title": "SupraBench — published curation report", "url": "https://suprabench.com/reports/curation/2026-09-05/", "accessedAt": "2026-09-05T11:25:24.2947708+02:00" },
+    { "title": "SupraBench — GPT-6 Astra max model page", "url": "https://suprabench.com/#model/gpt-6-astra-max", "accessedAt": "2026-09-05T11:25:24.2947708+02:00" },
+    { "title": "SupraBench — Humanity's Last Exam benchmark page", "url": "https://suprabench.com/#bench/humanity-s-last-exam", "accessedAt": "2026-09-05T11:25:24.2947708+02:00" }
   ],
   "evidence": [
     { "sourceUrl": "https://openai.com/index/gpt-6-astra/", "screenshotUrl": "https://openai.com/index/gpt-6-astra/", "screenshotPath": "public/reports/curation/2026-09-05/screenshots/gpt-6-astra-official.jpg" },
@@ -59,7 +62,10 @@
     { "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro", "screenshotUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro", "screenshotPath": "public/reports/curation/2026-09-05/screenshots/mmmu-pro-gpt6-minimaxm3.jpg" },
     { "sourceUrl": "https://deepswe.datacurve.ai/", "screenshotUrl": "https://deepswe.datacurve.ai/", "screenshotPath": "public/reports/curation/2026-09-05/screenshots/deepswe-gpt6-astra-xhigh.jpg" },
     { "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard", "screenshotUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard", "screenshotPath": "public/reports/curation/2026-09-05/screenshots/terminal-bench-hard-minimaxm3.jpg" },
-    { "sourceUrl": "https://artificialanalysis.ai/evaluations/tau2-bench", "screenshotUrl": "https://artificialanalysis.ai/evaluations/tau2-bench", "screenshotPath": "public/reports/curation/2026-09-05/screenshots/tau2-minimaxm3.jpg" }
+    { "sourceUrl": "https://artificialanalysis.ai/evaluations/tau2-bench", "screenshotUrl": "https://artificialanalysis.ai/evaluations/tau2-bench", "screenshotPath": "public/reports/curation/2026-09-05/screenshots/tau2-minimaxm3.jpg" },
+    { "sourceUrl": "https://suprabench.com/reports/curation/2026-09-05/", "screenshotUrl": "https://suprabench.com/reports/curation/2026-09-05/?v=5458f1a-2", "screenshotPath": "public/reports/curation/2026-09-05/screenshots/live-report.jpg" },
+    { "sourceUrl": "https://suprabench.com/#model/gpt-6-astra-max", "screenshotUrl": "https://suprabench.com/?v=5458f1a-2#model/gpt-6-astra-max", "screenshotPath": "public/reports/curation/2026-09-05/screenshots/live-model-gpt-6-astra-max.jpg" },
+    { "sourceUrl": "https://suprabench.com/#bench/humanity-s-last-exam", "screenshotUrl": "https://suprabench.com/?v=5458f1a-2#bench/humanity-s-last-exam", "screenshotPath": "public/reports/curation/2026-09-05/screenshots/live-benchmark-hle.jpg" }
   ],
   "models": [
     { "name": "GPT-6 Astra (max)", "provider": "OpenAI", "familyTag": "GPT-6 Astra", "tags": ["agents", "coding", "multimodal", "reasoning"] },

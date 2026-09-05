@@ -20,6 +20,13 @@
     <div class="card metric"><strong>0</strong><span>replacements or benchmark creates</span></div>
   </section>
 
+  <h2>Live publication evidence</h2>
+  <section class="shots">
+    <figure class="shot"><a href="https://suprabench.com/reports/curation/2026-09-05/"><img src="screenshots/live-report.jpg" alt="Published curation report"></a><figcaption>The deployed report after the first fast-forward publication.</figcaption></figure>
+    <figure class="shot"><a href="https://suprabench.com/#model/gpt-6-astra-max"><img src="screenshots/live-model-gpt-6-astra-max.jpg" alt="Published GPT-6 Astra max model page"></a><figcaption>Representative affected model page with five inserted scores and source links.</figcaption></figure>
+    <figure class="shot"><a href="https://suprabench.com/#bench/humanity-s-last-exam"><img src="screenshots/live-benchmark-hle.jpg" alt="Published Humanity's Last Exam benchmark page"></a><figcaption>Representative affected benchmark page; the visible DOM includes the new Astra and Muse rows.</figcaption></figure>
+  </section>
+
   <h2>Accepted changes</h2>
   <div class="cards">
     <div class="card"><h3>GPT-6 Astra</h3><p>Four effort-specific records: max, xhigh, high, and medium. Twelve visible scores span HLE, SciCode, AA-LCR, Terminal-Bench v2.1, MMMU-Pro, and DeepSWE v1.1.</p></div>
@@ -88,7 +95,7 @@
     <li>Pre-write mirror: Convex 618, D1 618, drift 0.</li>
     <li>No benchmark is created, no score is replaced, and no secret-bearing file is included.</li>
     <li>Post-write mirror: Convex 646, D1 646, drift 0.</li>
-    <li class="warn">Deployment and live-browser evidence are recorded after publication.</li>
+    <li class="ok">Cloudflare served the new report; all 8 new model pages and all 8 affected benchmark pages passed visible-browser checks.</li>
   </ul></div>
 
   <h2>Run learnings</h2>
