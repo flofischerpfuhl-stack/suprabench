@@ -38,14 +38,24 @@
     { "title": "Mistral news", "url": "https://mistral.ai/news", "accessedAt": "2026-09-07T11:37:00.190+02:00" },
     { "title": "Cohere research", "url": "https://cohere.com/research", "accessedAt": "2026-09-07T11:37:00.190+02:00" },
     { "title": "AI21 models", "url": "https://www.ai21.com/jamba/", "accessedAt": "2026-09-07T11:37:00.190+02:00" },
-    { "title": "Scale Labs benchmark overview", "url": "https://labs.scale.com/leaderboard", "accessedAt": "2026-09-07T11:37:00.190+02:00" }
+    { "title": "Scale Labs benchmark overview", "url": "https://labs.scale.com/leaderboard", "accessedAt": "2026-09-07T11:37:00.190+02:00" },
+    { "title": "SupraBench — published curation report", "url": "https://suprabench.com/reports/curation/2026-09-07/", "accessedAt": "2026-09-07T11:52:00.000+02:00" },
+    { "title": "SupraBench — GPT-6 Astra max model page", "url": "https://suprabench.com/#model/gpt-6-astra-max", "accessedAt": "2026-09-07T11:52:00.000+02:00" },
+    { "title": "SupraBench — ARC-AGI-2 benchmark page", "url": "https://suprabench.com/#bench/arc-agi-2", "accessedAt": "2026-09-07T11:52:00.000+02:00" },
+    { "title": "SupraBench — SciCode benchmark page", "url": "https://suprabench.com/#bench/scicode", "accessedAt": "2026-09-07T11:52:00.000+02:00" },
+    { "title": "SupraBench — AA-LCR benchmark page", "url": "https://suprabench.com/#bench/aa-long-context-reasoning", "accessedAt": "2026-09-07T11:52:00.000+02:00" }
   ],
   "evidence": [
     { "sourceUrl": "https://arcprize.org/leaderboard", "screenshotUrl": "https://arcprize.org/leaderboard", "screenshotPath": "public/reports/curation/2026-09-07/screenshots/arc-agi-leaderboard.jpg" },
     { "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode", "screenshotUrl": "https://artificialanalysis.ai/evaluations/scicode#results", "screenshotPath": "public/reports/curation/2026-09-07/screenshots/scicode-values.jpg" },
     { "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode", "screenshotUrl": "https://artificialanalysis.ai/evaluations/scicode#results", "screenshotPath": "public/reports/curation/2026-09-07/screenshots/scicode-models.jpg" },
     { "sourceUrl": "https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning", "screenshotUrl": "https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning#results", "screenshotPath": "public/reports/curation/2026-09-07/screenshots/aa-lcr-values.jpg" },
-    { "sourceUrl": "https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning", "screenshotUrl": "https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning#results", "screenshotPath": "public/reports/curation/2026-09-07/screenshots/aa-lcr-models.jpg" }
+    { "sourceUrl": "https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning", "screenshotUrl": "https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning#results", "screenshotPath": "public/reports/curation/2026-09-07/screenshots/aa-lcr-models.jpg" },
+    { "sourceUrl": "https://suprabench.com/reports/curation/2026-09-07/", "screenshotUrl": "https://suprabench.com/reports/curation/2026-09-07/?v=579fe4d-live", "screenshotPath": "public/reports/curation/2026-09-07/screenshots/live-report.jpg" },
+    { "sourceUrl": "https://suprabench.com/#model/gpt-6-astra-max", "screenshotUrl": "https://suprabench.com/?v=579fe4d-live-model#model/gpt-6-astra-max", "screenshotPath": "public/reports/curation/2026-09-07/screenshots/live-model-gpt-6-astra-max.jpg" },
+    { "sourceUrl": "https://suprabench.com/#bench/arc-agi-2", "screenshotUrl": "https://suprabench.com/?v=579fe4d-final-arc#bench/arc-agi-2", "screenshotPath": "public/reports/curation/2026-09-07/screenshots/live-benchmark-arc-agi-2.jpg" },
+    { "sourceUrl": "https://suprabench.com/#bench/scicode", "screenshotUrl": "https://suprabench.com/?v=579fe4d-scirows#bench/scicode", "screenshotPath": "public/reports/curation/2026-09-07/screenshots/live-benchmark-scicode.jpg" },
+    { "sourceUrl": "https://suprabench.com/#bench/aa-long-context-reasoning", "screenshotUrl": "https://suprabench.com/?v=579fe4d-final-aa#bench/aa-long-context-reasoning", "screenshotPath": "public/reports/curation/2026-09-07/screenshots/live-benchmark-aa-lcr.jpg" }
   ],
   "models": [],
   "benches": [],
