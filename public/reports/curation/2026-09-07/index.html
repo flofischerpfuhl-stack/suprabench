@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SupraBench curation update — 2026-09-07</title>
+  <style>
+    :root{color-scheme:dark;--bg:#071018;--card:#10202a;--ink:#ecfeff;--muted:#a8bdc7;--line:#2a4652;--cyan:#67e8f9;--green:#86efac;--amber:#fcd34d;--rose:#fda4af}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top left,#164e63 0,#071018 43%);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,sans-serif}main{max-width:1180px;margin:auto;padding:56px 24px 90px}h1{font-size:clamp(2.3rem,5vw,4.5rem);line-height:1.02;margin:.2em 0}.eyebrow{color:var(--cyan);text-transform:uppercase;letter-spacing:.18em;font-weight:700}.lede{max-width:960px;color:#cffafe;font-size:1.15rem}.metrics,.shots,.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:30px 0}.card,.shot{background:rgba(16,32,42,.92);border:1px solid var(--line);border-radius:16px;padding:18px}.metric strong{display:block;font-size:2rem;color:white}h2{margin-top:48px}h3{margin-top:0}table{width:100%;border-collapse:collapse;background:rgba(16,32,42,.76);margin:18px 0}th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--cyan)}.ok{color:var(--green)}.warn{color:var(--amber)}.defer{color:var(--rose)}.muted{color:var(--muted)}.shot{margin:0}.shot img{width:100%;border-radius:9px;background:white}.shot a,a{color:var(--cyan)}code{color:#a7f3d0}ul{padding-left:1.25rem}.source-list{columns:2;column-gap:36px}.source-list li{break-inside:avoid;margin:.35rem 0}@media(max-width:760px){.source-list{columns:1}}
+  </style>
+</head>
+<body><main>
+  <p class="eyebrow">Production curation · 7 September 2026</p>
+  <h1>Current rows, exact protocols</h1>
+  <p class="lede">The mandatory 21-benchmark sweep found no new provider release after the 5 September run, but three official leaderboards now justify a bounded refresh: four new ARC-AGI-2 rows, two new SciCode rows, four new AA-LCR rows, and twenty explicit same-source replacements. No model, benchmark, version, effort level, or harness is collapsed.</p>
+
+  <section class="metrics">
+    <div class="card metric"><strong>21 / 21</strong><span>tracked benchmark sources inspected</span></div>
+    <div class="card metric"><strong>30</strong><span>accepted score operations</span></div>
+    <div class="card metric"><strong>10 / 20</strong><span>inserts / explicit replacements</span></div>
+    <div class="card metric"><strong>0 / 0</strong><span>model / benchmark creates</span></div>
+  </section>
+
+  <h2>Accepted changes</h2>
+  <table>
+    <thead><tr><th>Benchmark</th><th>Inserts</th><th>Replacements (old → new)</th><th>Protocol and stored scale</th></tr></thead>
+    <tbody>
+      <tr><td>ARC-AGI-2</td><td>GPT-6 Astra max 950; xhigh 933; high 921; medium 921</td><td>None</td><td>Verified ARC Prize leaderboard; native percentages ×10 into 0–1000. ARC-AGI-3 values are not reused.</td></tr>
+      <tr><td>SciCode</td><td>Grok 4.6 high 565; GPT-5.6 Terra max 550</td><td>Fable 5.1 max 620→631; Fable 5 adaptive max/fallback 602→610; Fable 5.1 xhigh 601→609; GLM-5.3 max 565→590; Muse Spark 1.1 xhigh 582→588; Fable 5.1 high 576→587; Sol max 561→571; Gemini 3.8 Flash high 536→566; Opus 5 Max 557→564; Luna max 525→536; GLM-5.3-Flash max 461→516; Qwen3.8 27B xhigh 447→466</td><td>Artificial Analysis SciCode current chart; native percentages ×10 into 0–1000.</td></tr>
+      <tr><td>AA-LCR v1.1</td><td>Fable 5.1 medium/fallback 847; Sol max 840; Fable 5.1 high/fallback 837; Terra max 830</td><td>Fable 5.1 max 800→853; GPT-5.5 xhigh 743→843; GPT-5.5 high 733→843; Gemini 3.8 Flash medium 820→840; Luna max 783→837; Qwen3.8 27B xhigh 773→820; Gemini 3.8 Flash high 810→813; GLM-5.3-Flash max 780→800</td><td>Artificial Analysis AA-LCR v1.1 current chart; native percentages ×10 into 0–1000.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Visible source evidence</h2>
+  <section class="shots">
+    <figure class="shot"><a href="https://arcprize.org/leaderboard"><img src="screenshots/arc-agi-leaderboard.jpg" alt="ARC Prize verified leaderboard rows"></a><figcaption>ARC-AGI-2 exact Astra effort rows and scores; the same viewport also exposes why ARC-AGI-3 Standard and Provider Adapter must remain distinct.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/scicode"><img src="screenshots/scicode-values.jpg" alt="SciCode values"></a><figcaption>SciCode values and leaderboard order.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/scicode"><img src="screenshots/scicode-models.jpg" alt="SciCode model labels"></a><figcaption>SciCode model/configuration labels paired with the preceding values view.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning"><img src="screenshots/aa-lcr-values.jpg" alt="AA-LCR values"></a><figcaption>AA-LCR v1.1 current percentages in leaderboard order.</figcaption></figure>
+    <figure class="shot"><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning"><img src="screenshots/aa-lcr-models.jpg" alt="AA-LCR model labels"></a><figcaption>AA-LCR model/configuration labels paired with the values view.</figcaption></figure>
+  </section>
+
+  <h2>Deferred deliberately</h2>
+  <table>
+    <thead><tr><th>Candidate or source delta</th><th>Reason for no write</th></tr></thead>
+    <tbody>
+      <tr><td>ARC-AGI-3 current Astra rows</td><td>The official table publishes both Standard and Provider Adapter harnesses for the same configurations. The existing benchmark identity cannot preserve that split.</td></tr>
+      <tr><td>Remaining AA-LCR revisions</td><td>Kimi K3 and several newer/lower rows need a separate source-identity migration or first-party model review; the current run uses the 30-score safety cap.</td></tr>
+      <tr><td>Remaining SciCode revisions</td><td>Kimi K3 uses a conflicting historical source; Gemini 3.7 medium, Inkling, Muse Glimmer, K2 Horizon, and Gemini 3.5 Flash-Lite need exact model records first.</td></tr>
+      <tr><td>APEX and HLE tail rows</td><td>Several configurations are new or materially revised, but exact model/source migrations should be handled in a dedicated bounded batch.</td></tr>
+      <tr><td>SWE-Bench Pro current top rows</td><td>GPT-5.4 xhigh and Muse Spark rows are valid leads, deferred only to keep this run within the reviewed score cap.</td></tr>
+      <tr><td>TextQuests source migration</td><td>The visible official table differs from older score provenance and does not expose every stored reasoning configuration explicitly enough for silent replacement.</td></tr>
+      <tr><td>DrugDiscoveryBench</td><td>Scientifically relevant and expert-curated, but the headline leaderboard mixes mini-SWE-agent and Gemini CLI harnesses; adoption and protocol identity need review.</td></tr>
+      <tr><td>SWE Atlas suite</td><td>Promising real-repository coverage, but its refactoring, test-generation, and codebase-Q&amp;A tracks are correlated and need an explicit suite-weighting decision.</td></tr>
+      <tr><td>HiL-Bench and MCP Atlas</td><td>Both are useful agent-evaluation leads; public task/evaluator reproducibility and retry/judge protocol must be pinned before admission.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Complete tracked-benchmark sweep</h2>
+  <div class="card"><p>Every production benchmark source was opened and its current top rows compared against the complete 170-model production inventory: AA-LCR, Agents' Last Exam, APEX, ARC-AGI-2, ARC-AGI-3, DeepSWE, EnigmaEval, ERQA, Humanity's Last Exam, IntPhys 2, MindCube, MMMU-Pro, SciCode, SkateBench, SpatialViz, SWE-Bench Pro, SWE-bench Verified, Tau2-Bench Telecom, Terminal-Bench Hard, Terminal-Bench v2.1, and TextQuests.</p><p>The independent provider sweep covered OpenAI, Anthropic, Google, xAI, Z.ai, Qwen, DeepSeek, Moonshot, Meta, MiniMax, Mistral, Cohere, and AI21. No applicable model release newer than the 5 September curation was found.</p></div>
+
+  <h2>Validation and publication</h2>
+  <div class="card"><ul>
+    <li class="ok">The pre-write <code>example.com</code> viewport screenshot gate passed.</li>
+    <li class="ok">Manifest validation passed with 35 sources, 5 visible-browser evidence images, and exactly 30 score operations.</li>
+    <li class="ok">All 139 tests passed; <code>git diff --check</code> and the report credential-pattern scan passed.</li>
+    <li class="ok">The reviewed pre-apply dry-run predicted exactly 10 inserts and 20 explicit replacements, with no model or benchmark create.</li>
+    <li class="ok">The single production apply mirrored all 30 operations; the post-apply dry-run reports all 30 unchanged and no pending write.</li>
+    <li class="ok">Mirror state advanced from Convex/D1 646/646 to 656/656 with drift 0.</li>
+    <li id="live-status" class="warn">Git publication and cache-busted live browser checks are appended after Cloudflare deployment.</li>
+  </ul></div>
+
+  <h2>All sources</h2>
+  <ol class="source-list">
+    <li><a href="https://arcprize.org/leaderboard">ARC Prize verified leaderboards</a></li><li><a href="https://arcprize.org/competitions/2026/arc-agi-3">ARC-AGI-3 competition</a></li><li><a href="https://agents-last-exam.org/leaderboard">Agents' Last Exam</a></li><li><a href="https://artificialanalysis.ai/evaluations/apex-agents-aa">APEX-Agents-AA</a></li><li><a href="https://deepswe.datacurve.ai/">DeepSWE v1.1</a></li><li><a href="https://labs.scale.com/leaderboard/enigma_eval">EnigmaEval</a></li><li><a href="https://github.com/embodiedreasoning/ERQA">ERQA</a></li><li><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">Humanity's Last Exam</a></li><li><a href="https://ai.meta.com/research/publications/intphys-2-benchmarking-intuitive-physics-understanding-in-complex-synthetic-environments/">IntPhys 2</a></li><li><a href="https://arxiv.org/abs/2506.21458">MindCube</a></li><li><a href="https://artificialanalysis.ai/evaluations/mmmu-pro">MMMU-Pro</a></li><li><a href="https://artificialanalysis.ai/evaluations/scicode">SciCode</a></li><li><a href="https://skatebench.t3.gg/">SkateBench v2</a></li><li><a href="https://arxiv.org/abs/2507.07610">SpatialViz</a></li><li><a href="https://labs.scale.com/leaderboard/swe_bench_pro_public">SWE-Bench Pro</a></li><li><a href="https://www.swebench.com/index.html">SWE-bench Verified</a></li><li><a href="https://artificialanalysis.ai/evaluations/tau2-bench">Tau2-Bench</a></li><li><a href="https://artificialanalysis.ai/evaluations/terminalbench-hard">Terminal-Bench Hard</a></li><li><a href="https://artificialanalysis.ai/evaluations/terminalbench-v2-1">Terminal-Bench v2.1</a></li><li><a href="https://www.textquests.ai/">TextQuests</a></li><li><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning">AA-LCR</a></li><li><a href="https://openai.com/news/">OpenAI news</a></li><li><a href="https://www.anthropic.com/news">Anthropic news</a></li><li><a href="https://blog.google/innovation-and-ai/models-and-research/">Google AI</a></li><li><a href="https://x.ai/news">xAI news</a></li><li><a href="https://z.ai/blog">Z.ai</a></li><li><a href="https://github.com/QwenLM">Qwen</a></li><li><a href="https://api-docs.deepseek.com/updates">DeepSeek updates</a></li><li><a href="https://www.kimi.com/">Moonshot AI</a></li><li><a href="https://ai.meta.com/llama">Meta AI</a></li><li><a href="https://www.minimax.io/news">MiniMax</a></li><li><a href="https://mistral.ai/news">Mistral</a></li><li><a href="https://cohere.com/research">Cohere</a></li><li><a href="https://www.ai21.com/jamba/">AI21</a></li><li><a href="https://labs.scale.com/leaderboard">Scale Labs benchmark overview</a></li>
+  </ol>
+
+  <h2>Run learnings</h2>
+  <ul><li>ARC-AGI-3 needs a harness-aware identity before importing current Standard or Provider Adapter rows.</li><li>Established Artificial Analysis rows can shift materially between scheduled runs; same-source replacement review is required even without a provider launch.</li><li>DrugDiscoveryBench and SWE Atlas should be revisited only with an explicit harness and suite-weighting decision.</li><li>The next run should prioritize the deferred APEX/HLE/SWE-Pro rows and source migrations rather than rechecking this completed batch.</li></ul>
+</main></body>
+</html>
