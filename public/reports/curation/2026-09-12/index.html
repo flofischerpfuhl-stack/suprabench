@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SupraBench curation report — 2026-09-12</title>
+  <style>
+    :root{color-scheme:dark;--bg:#080b12;--panel:#111725;--ink:#eef3ff;--muted:#aab5ca;--line:#273149;--accent:#7dd3fc;--good:#86efac;--warn:#fde68a}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#17203a 0,transparent 32%),var(--bg);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,sans-serif}
+    main{width:min(1160px,calc(100% - 32px));margin:0 auto;padding:56px 0 80px}h1{font-size:clamp(34px,7vw,72px);line-height:.95;letter-spacing:-.055em;margin:10px 0 22px}h2{font-size:24px;margin:44px 0 14px}h3{margin:0 0 8px}.eyebrow{color:var(--accent);font-weight:750;letter-spacing:.14em;text-transform:uppercase}.lede{max-width:800px;color:var(--muted);font-size:18px}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:30px 0}.card,.panel{background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:18px}.metric{font-size:34px;font-weight:800;letter-spacing:-.04em}.label{color:var(--muted)}.good{color:var(--good)}.warn{color:var(--warn)}table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}th,td{padding:11px 13px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}tr:last-child td{border-bottom:0}code{color:#bae6fd}.shots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.shots figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}.shots img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}.shots figcaption{padding:11px 14px;color:var(--muted)}a{color:var(--accent)}ul{padding-left:21px}.foot{margin-top:44px;color:var(--muted)}@media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}.shots{grid-template-columns:1fr}table{font-size:13px}.wide{overflow-x:auto}}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">SupraBench · production curation</div>
+  <h1>Evidence first.<br>Exact identities only.</h1>
+  <p class="lede">The 2026-09-12 sweep reopened every tracked benchmark and the major provider release channels. Twenty-one score operations on eight screenshot-backed primary sources were accepted; mixed harnesses and unresolved model variants were deliberately deferred.</p>
+
+  <section class="cards">
+    <div class="card"><div class="metric">21/21</div><div class="label">tracked benchmarks reviewed</div></div>
+    <div class="card"><div class="metric">21</div><div class="label">score operations</div></div>
+    <div class="card"><div class="metric">8</div><div class="label">accepted primary sources</div></div>
+    <div class="card"><div class="metric good">0</div><div class="label">preflight mirror drift</div></div>
+  </section>
+
+  <section class="panel">
+    <h3>Run outcome</h3>
+    <p><strong>0 models · 0 benchmarks · 21 scores</strong> planned: 17 inserts and 4 replacements. Production started at <code>656 Convex / 656 D1 / drift 0</code>. Final mirror and deployment verification are recorded below after the single apply.</p>
+    <p id="post-apply"><strong>Post-apply:</strong> the guarded production batch completed once with 17 inserts and 4 replacements. Convex and D1 both contain <code>673</code> scores with <code>drift 0</code>; the repeated dry-run classified all 21 rows as unchanged.</p>
+  </section>
+
+  <h2>Accepted changes</h2>
+  <div class="wide"><table>
+    <thead><tr><th>Benchmark</th><th>Operations</th><th>What changed</th></tr></thead>
+    <tbody>
+      <tr><td>Humanity's Last Exam</td><td>3 insert · 1 replace</td><td>Added two Claude Opus 5 effort rows and the source-migrated Kimi K3 row; refreshed Muse Spark 1.3.</td></tr>
+      <tr><td>APEX-Agents-AA</td><td>3 insert</td><td>Added Terra max, GLM-5.2 max, and gpt-oss-120B high.</td></tr>
+      <tr><td>AA-LCR v1.1</td><td>2 insert · 1 replace</td><td>Added the source-migrated Kimi K3 row at 88.7% and Grok 4.6 high; refreshed Muse Spark 1.3.</td></tr>
+      <tr><td>SciCode</td><td>1 insert · 1 replace</td><td>Added the source-migrated Kimi K3 row at 59.5%; refreshed Muse Spark 1.3 max to 58.8%.</td></tr>
+      <tr><td>DeepSWE v1.1</td><td>1 insert</td><td>Added the source-migrated Kimi K3 row from the benchmark leaderboard at 69.0%.</td></tr>
+      <tr><td>τ²-Bench Telecom</td><td>3 insert</td><td>Added current Terra max, Sol max, and gpt-oss-120B high rows.</td></tr>
+      <tr><td>Terminal-Bench Hard</td><td>4 insert</td><td>Added exact Sol max/xhigh, Terra max, and gpt-oss-120B high configurations.</td></tr>
+      <tr><td>Terminal-Bench v2.1</td><td>1 replace</td><td>Refreshed Muse Spark 1.3 max from 85.8% to 84.3%.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Full benchmark sweep</h2>
+  <div class="wide"><table>
+    <thead><tr><th>Benchmark</th><th>Decision</th><th>Current-source note</th></tr></thead>
+    <tbody>
+      <tr><td>AA Long Context Reasoning</td><td class="good">accepted</td><td>Three exact-identity score updates.</td></tr>
+      <tr><td>Agents' Last Exam v1</td><td>no change</td><td>Current top rows already represented.</td></tr>
+      <tr><td>APEX-Agents-AA</td><td class="good">accepted</td><td>Three missing exact model rows.</td></tr>
+      <tr><td>ARC-AGI-2</td><td>no change</td><td>Current verified frontier rows already represented.</td></tr>
+      <tr><td>ARC-AGI-3</td><td class="warn">deferred</td><td>Standard and Provider Adapter harnesses remain mixed.</td></tr>
+      <tr><td>DeepSWE v1.1</td><td class="good">accepted</td><td>One explicit Kimi K3 source migration.</td></tr>
+      <tr><td>EnigmaEval</td><td>no change</td><td>Published top rows match production.</td></tr>
+      <tr><td>ERQA</td><td>no change</td><td>No new official leaderboard release.</td></tr>
+      <tr><td>Humanity's Last Exam</td><td class="good">accepted</td><td>Four exact-identity score updates.</td></tr>
+      <tr><td>IntPhys 2</td><td>no change</td><td>Official benchmark publication unchanged.</td></tr>
+      <tr><td>MindCube</td><td>no change</td><td>Current paper/repository results unchanged.</td></tr>
+      <tr><td>MMMU-Pro</td><td>no change</td><td>Current frontier rows already represented.</td></tr>
+      <tr><td>SciCode</td><td class="good">accepted</td><td>Two same-model revisions.</td></tr>
+      <tr><td>SkateBench v2</td><td>no change</td><td>Current 28-model leaderboard matches stored rows.</td></tr>
+      <tr><td>SpatialViz-Bench</td><td>no change</td><td>No new official benchmark release.</td></tr>
+      <tr><td>SWE-Bench Pro</td><td class="warn">deferred</td><td>New rows mix harness/limit regimes; preserve the existing protocol boundary.</td></tr>
+      <tr><td>SWE-bench Verified</td><td>no change</td><td>No exact protocol-compatible additions accepted.</td></tr>
+      <tr><td>τ²-Bench Telecom</td><td class="good">accepted</td><td>Three missing exact model rows.</td></tr>
+      <tr><td>Terminal-Bench Hard</td><td class="good">accepted</td><td>Four missing exact effort rows.</td></tr>
+      <tr><td>Terminal-Bench v2.1</td><td class="good">accepted</td><td>One same-model revision.</td></tr>
+      <tr><td>TextQuests</td><td>no change</td><td>No new official result accepted.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Discovery and release sweep</h2>
+  <section class="panel">
+    <p>The major provider channels were reviewed. No post-2026-09-07 general-purpose release required a new SupraBench model entity. Specialized releases without compatible tracked evidence were not added.</p>
+    <ul>
+      <li><strong>Terminal-Bench v4.0:</strong> credible, but admission needs a redundancy and weighting decision because SupraBench already tracks two Terminal-Bench variants.</li>
+      <li><strong>CritPt:</strong> promising research-physics signal; defer until reproducibility, contamination, and stable-source review is complete.</li>
+      <li><strong>MLCR-AA:</strong> promising medical long-context signal; defer until overlap with AA-LCR and domain weighting are resolved.</li>
+      <li><strong>ARC-AGI-3:</strong> keep blocked until harness identity can be stored explicitly.</li>
+    </ul>
+  </section>
+
+  <h2>Screenshot evidence</h2>
+  <div class="shots">
+    <figure><img src="screenshots/humanitys-last-exam-source.png" alt="Humanity's Last Exam source leaderboard"><figcaption><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">Humanity's Last Exam</a> · current source rows</figcaption></figure>
+    <figure><img src="screenshots/apex-agents-aa-source.png" alt="APEX-Agents-AA source leaderboard"><figcaption><a href="https://artificialanalysis.ai/evaluations/apex-agents-aa">APEX-Agents-AA</a> · current source rows</figcaption></figure>
+    <figure><img src="screenshots/aa-lcr-source.png" alt="AA-LCR source leaderboard"><figcaption><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning">AA-LCR v1.1</a> · current source rows</figcaption></figure>
+    <figure><img src="screenshots/scicode-source.png" alt="SciCode source leaderboard"><figcaption><a href="https://artificialanalysis.ai/evaluations/scicode">SciCode</a> · current source rows</figcaption></figure>
+    <figure><img src="screenshots/deepswe-source.png" alt="DeepSWE source leaderboard"><figcaption><a href="https://deepswe.datacurve.ai/">DeepSWE v1.1</a> · current source rows</figcaption></figure>
+    <figure><img src="screenshots/tau2-telecom-source.png" alt="Tau2 Telecom source leaderboard"><figcaption><a href="https://artificialanalysis.ai/evaluations/tau2-bench">τ²-Bench Telecom</a> · current source rows</figcaption></figure>
+    <figure><img src="screenshots/terminal-bench-hard-source.png" alt="Terminal-Bench Hard source leaderboard"><figcaption><a href="https://artificialanalysis.ai/evaluations/terminalbench-hard">Terminal-Bench Hard</a> · current source rows</figcaption></figure>
+    <figure><img src="screenshots/terminal-bench-v2-1-source.png" alt="Terminal-Bench v2.1 source leaderboard"><figcaption><a href="https://artificialanalysis.ai/evaluations/terminalbench-v2-1">Terminal-Bench v2.1</a> · current source rows</figcaption></figure>
+  </div>
+
+  <p class="foot">Generated 2026-09-12 11:26 CEST · target deployment <code>upbeat-clam-790</code> · manifest schema 1</p>
+</main></body></html>
