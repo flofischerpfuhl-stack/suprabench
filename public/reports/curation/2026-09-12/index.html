@@ -32,11 +32,11 @@
   <div class="wide"><table>
     <thead><tr><th>Benchmark</th><th>Operations</th><th>What changed</th></tr></thead>
     <tbody>
-      <tr><td>Humanity's Last Exam</td><td>3 insert · 1 replace</td><td>Added two Claude Opus 5 effort rows and the source-migrated Kimi K3 row; refreshed Muse Spark 1.3.</td></tr>
+      <tr><td>Humanity's Last Exam</td><td>3 insert · 1 replace</td><td>Added two Claude Opus 5 effort rows and a new Artificial Analysis-backed Kimi K3 submission; refreshed Muse Spark 1.3.</td></tr>
       <tr><td>APEX-Agents-AA</td><td>3 insert</td><td>Added Terra max, GLM-5.2 max, and gpt-oss-120B high.</td></tr>
-      <tr><td>AA-LCR v1.1</td><td>2 insert · 1 replace</td><td>Added the source-migrated Kimi K3 row at 88.7% and Grok 4.6 high; refreshed Muse Spark 1.3.</td></tr>
-      <tr><td>SciCode</td><td>1 insert · 1 replace</td><td>Added the source-migrated Kimi K3 row at 59.5%; refreshed Muse Spark 1.3 max to 58.8%.</td></tr>
-      <tr><td>DeepSWE v1.1</td><td>1 insert</td><td>Added the source-migrated Kimi K3 row from the benchmark leaderboard at 69.0%.</td></tr>
+      <tr><td>AA-LCR v1.1</td><td>2 insert · 1 replace</td><td>Added a new Artificial Analysis-backed Kimi K3 submission at 88.7% and Grok 4.6 high; refreshed Muse Spark 1.3.</td></tr>
+      <tr><td>SciCode</td><td>1 insert · 1 replace</td><td>Added a new Artificial Analysis-backed Kimi K3 submission at 59.5%; refreshed Muse Spark 1.3 max to 58.8%.</td></tr>
+      <tr><td>DeepSWE v1.1</td><td>1 insert</td><td>Added a new leaderboard-backed Kimi K3 submission at 69.0%; the effective score preserves and aggregates both source submissions.</td></tr>
       <tr><td>τ²-Bench Telecom</td><td>3 insert</td><td>Added current Terra max, Sol max, and gpt-oss-120B high rows.</td></tr>
       <tr><td>Terminal-Bench Hard</td><td>4 insert</td><td>Added exact Sol max/xhigh, Terra max, and gpt-oss-120B high configurations.</td></tr>
       <tr><td>Terminal-Bench v2.1</td><td>1 replace</td><td>Refreshed Muse Spark 1.3 max from 85.8% to 84.3%.</td></tr>
@@ -52,7 +52,7 @@
       <tr><td>APEX-Agents-AA</td><td class="good">accepted</td><td>Three missing exact model rows.</td></tr>
       <tr><td>ARC-AGI-2</td><td>no change</td><td>Current verified frontier rows already represented.</td></tr>
       <tr><td>ARC-AGI-3</td><td class="warn">deferred</td><td>Standard and Provider Adapter harnesses remain mixed.</td></tr>
-      <tr><td>DeepSWE v1.1</td><td class="good">accepted</td><td>One explicit Kimi K3 source migration.</td></tr>
+      <tr><td>DeepSWE v1.1</td><td class="good">accepted</td><td>One additional source-bound Kimi K3 submission.</td></tr>
       <tr><td>EnigmaEval</td><td>no change</td><td>Published top rows match production.</td></tr>
       <tr><td>ERQA</td><td>no change</td><td>No new official leaderboard release.</td></tr>
       <tr><td>Humanity's Last Exam</td><td class="good">accepted</td><td>Four exact-identity score updates.</td></tr>
@@ -80,6 +80,11 @@
       <li><strong>MLCR-AA:</strong> promising medical long-context signal; defer until overlap with AA-LCR and domain weighting are resolved.</li>
       <li><strong>ARC-AGI-3:</strong> keep blocked until harness identity can be stored explicitly.</li>
     </ul>
+  </section>
+
+  <h2>Live verification</h2>
+  <section class="panel">
+    <p>The deployed report, all eight affected benchmark pages, and all ten affected model pages were opened and visually checked after the fast-forward publication. The pages loaded the expected identities and production-backed values; no stale report response or missing detail page remained.</p>
   </section>
 
   <h2>Screenshot evidence</h2>

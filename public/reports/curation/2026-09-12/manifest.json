@@ -80,7 +80,7 @@
   "learnings": [
     "The mandatory visible example.com screenshot gate passed before research, report generation, production writes, or Git mutation on 2026-09-12.",
     "All 21 tracked benchmark sources and their current top rows were re-opened; the accepted batch is limited to exact existing model identities on eight screenshot-backed sources.",
-    "Kimi K3 had explicit source migrations on DeepSWE, SciCode, Humanity's Last Exam, and AA-LCR; no model identity was silently reused across reasoning-effort variants.",
+    "Kimi K3 received explicit source-bound insert rows on DeepSWE, SciCode, Humanity's Last Exam, and AA-LCR, preserving prior-source submissions for the normal aggregate; no model identity was silently reused across reasoning-effort variants.",
     "Artificial Analysis leaderboards continue to revise established rows, including both gains and regressions, so current-source replacements remain necessary.",
     "ARC-AGI-3 remains deferred because Standard and Provider Adapter harnesses are mixed on the official leaderboard and the current schema cannot preserve that distinction.",
     "Terminal-Bench v4.0, CritPt, and MLCR-AA are credible discovery candidates but require redundancy, weighting, and reproducibility review before admission."
