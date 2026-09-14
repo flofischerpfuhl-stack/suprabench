@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SupraBench curation — 2026-09-14</title>
+  <style>
+    :root{color-scheme:dark;--bg:#07111f;--card:#101d30;--ink:#eef6ff;--muted:#9db0c8;--accent:#61e1c6;--line:#263a53;--warn:#ffc56e}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#153555 0,transparent 34%),var(--bg);color:var(--ink);font:16px/1.55 Inter,ui-sans-serif,system-ui,sans-serif}main{max-width:1120px;margin:auto;padding:56px 24px 90px}h1{font-size:clamp(2.3rem,7vw,5rem);line-height:.97;letter-spacing:-.055em;margin:.35rem 0 1rem}h2{margin-top:3rem;font-size:1.6rem}h3{margin:.2rem 0}.eyebrow,.pill{color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:.75rem}.lede{max-width:760px;color:#c5d7eb;font-size:1.15rem}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.card,figure,table{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px}.card{padding:20px}.metric{font-size:2.2rem;font-weight:850;color:var(--accent)}.muted,small{color:var(--muted)}table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden}th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em}tr:last-child td{border-bottom:0}code{color:#b9f7ea}.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}.evidence figure{margin:0;overflow:hidden}.evidence img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}.evidence figcaption{padding:12px;color:var(--muted)}a{color:#80ead4}.note{border-left:4px solid var(--warn);padding:14px 18px;background:#291f14;border-radius:8px}.sources{columns:2;column-gap:40px}.sources li{break-inside:avoid;margin:.4rem 0}@media(max-width:700px){.sources{columns:1}th:nth-child(3),td:nth-child(3){display:none}}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Evidence-backed production curation</div>
+  <h1>Frontier variants,<br>cleanly separated.</h1>
+  <p class="lede">A full production inventory, 21-benchmark source sweep, provider-release pass, and open-benchmark discovery review. The accepted batch adds only exact, screenshot-backed identities; ambiguous source migrations stay out.</p>
+  <section class="grid">
+    <div class="card"><div class="metric">6</div><div>new model variants</div></div>
+    <div class="card"><div class="metric">16</div><div>new source-bound scores</div></div>
+    <div class="card"><div class="metric">0</div><div>replacements or deletions</div></div>
+    <div class="card"><div class="metric">21</div><div>tracked benchmarks reopened</div></div>
+  </section>
+
+  <h2>Accepted batch</h2>
+  <table><thead><tr><th>Model</th><th>Benchmark additions</th><th>Why now</th></tr></thead><tbody>
+    <tr><td>DeepSeek V4.1 Flash (max)</td><td>AA-LCR 84.0%; MMMU-Pro 77%</td><td>Official 2026-09-10 release identity and exact current rows.</td></tr>
+    <tr><td>Muse Glimmer (high)</td><td>AA-LCR 83.3%; MMMU-Pro 74%</td><td>Official Meta identity; effort label preserved.</td></tr>
+    <tr><td>Mistral Medium 3.5</td><td>MMMU-Pro 65%; Tau2 94.2%; TB Hard 33.3%</td><td>Official model identity and three independent rows.</td></tr>
+    <tr><td>NVIDIA Nemotron 3 Ultra</td><td>Tau2 83.3%; TB Hard 36.4%</td><td>Official NVIDIA identity; AA short label explicitly aliased.</td></tr>
+    <tr><td>GPT-5.6 Sol (high)</td><td>TB Hard 62.1%</td><td>Reasoning effort kept separate from existing max/xhigh rows.</td></tr>
+    <tr><td>GPT-5.6 Terra (xhigh)</td><td>TB Hard 62.9%</td><td>Reasoning effort kept separate from existing max row.</td></tr>
+  </tbody></table>
+  <p class="muted">Existing identities also receive MMMU-Pro rows for Claude Opus 5 (Max), GPT-5.6 Sol (max), GPT-5.6 Terra (max), and Kimi K3 (max), plus Tau2 for Claude Fable 5 (adaptive max/fallback).</p>
+
+  <h2>Tracked benchmark sweep</h2>
+  <table><thead><tr><th>Benchmark</th><th>Decision</th><th>Observation</th></tr></thead><tbody>
+    <tr><td>AA Long Context Reasoning</td><td>2 inserts</td><td>DeepSeek V4.1 Flash and Muse Glimmer entered the visible top set.</td></tr>
+    <tr><td>MMMU-Pro</td><td>7 inserts</td><td>Three new identities plus four missing exact existing variants.</td></tr>
+    <tr><td>Tau2 Telecom</td><td>3 inserts</td><td>Mistral, Nemotron, and the exact Fable fallback variant.</td></tr>
+    <tr><td>Terminal-Bench Hard</td><td>4 inserts</td><td>Mistral, Nemotron, Sol high, and Terra xhigh.</td></tr>
+    <tr><td>DeepSWE</td><td>defer</td><td>Current effort labels disagree with older source-bound identities; migration needed.</td></tr>
+    <tr><td>Humanity's Last Exam</td><td>defer one row</td><td>DeepSeek V4 Pro 0813 cannot be safely folded into the older V4 Pro identity.</td></tr>
+    <tr><td>ALE v1 Codex, APEX-AA, ARC2, ARC3, EnigmaEval, ERQA, IntPhys2, MindCube, SciCode, SkateBench, SpatialViz, SWE-Pro, SWE Verified, TB v2.1, TextQuests</td><td>no write</td><td>No exact, policy-safe new production row found.</td></tr>
+  </tbody></table>
+
+  <h2>Source evidence</h2>
+  <div class="evidence">
+    <figure><img src="screenshots/aa-lcr-source.jpg" alt="AA Long Context Reasoning leaderboard"><figcaption>AA-LCR — visible values and model labels.</figcaption></figure>
+    <figure><img src="screenshots/mmmu-pro-source.jpg" alt="MMMU-Pro leaderboard"><figcaption>MMMU-Pro — current 19-model chart.</figcaption></figure>
+    <figure><img src="screenshots/tau2-source.jpg" alt="Tau2 Telecom leaderboard"><figcaption>Tau2 Telecom — current 12-model chart.</figcaption></figure>
+    <figure><img src="screenshots/terminal-bench-hard-source.jpg" alt="Terminal-Bench Hard leaderboard"><figcaption>Terminal-Bench Hard — effort variants and current values.</figcaption></figure>
+  </div>
+
+  <h2>Provider and discovery review</h2>
+  <p>DeepSeek's release log confirms V4.1 Flash; Meta exposes Muse Glimmer; Mistral lists Medium 3.5; NVIDIA documents Nemotron 3 Ultra. Qwen3.8-Flash-Next was observed but has no accepted compatible source row yet. No other provider page produced a new, exact, score-backed identity for this run.</p>
+  <div class="note"><strong>Deferred benchmark candidates:</strong> Terminal-Bench v4.0 (portfolio redundancy and weights), CritPt (grading/reproducibility), MLCR-AA (private held-out and judge dependence), GDP.pdf (custom parsing/judge protocol), and E-CommerceBench (unbounded scale and variance policy).</div>
+
+  <h2>Validation and production</h2>
+  <div class="grid">
+    <div class="card"><h3>Preflight</h3><p class="muted">Visible example.com gate passed; clean origin/main worktree; production mirror 673/673 with zero drift.</p></div>
+    <div class="card"><h3>Apply</h3><p class="muted">Guarded apply created exactly 6 models and inserted 16 scores. No benchmark, replacement, refresh, or deletion was performed.</p></div>
+    <div class="card"><h3>Postflight</h3><p class="muted">Mirror 689/689, drift 0; repeat dry-run: all 16 unchanged; 14 test files and 139 tests passed; tier and credential checks clean.</p></div>
+  </div>
+
+  <h2>Sources</h2>
+  <ul class="sources">
+    <li><a href="https://arcprize.org/leaderboard">ARC Prize leaderboard</a></li><li><a href="https://arcprize.org/competitions/2026/arc-agi-3">ARC-AGI-3</a></li><li><a href="https://agents-last-exam.org/leaderboard">Agents' Last Exam</a></li><li><a href="https://artificialanalysis.ai/evaluations/apex-agents-aa">APEX-AA</a></li><li><a href="https://deepswe.datacurve.ai/">DeepSWE</a></li><li><a href="https://labs.scale.com/leaderboard/enigma_eval">EnigmaEval</a></li><li><a href="https://github.com/embodiedreasoning/ERQA">ERQA</a></li><li><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">Humanity's Last Exam</a></li><li><a href="https://ai.meta.com/research/publications/intphys-2-benchmarking-intuitive-physics-understanding-in-complex-synthetic-environments/">IntPhys2</a></li><li><a href="https://arxiv.org/abs/2506.21458">MindCube</a></li><li><a href="https://artificialanalysis.ai/evaluations/mmmu-pro">MMMU-Pro</a></li><li><a href="https://artificialanalysis.ai/evaluations/scicode">SciCode</a></li><li><a href="https://skatebench.t3.gg/">SkateBench</a></li><li><a href="https://arxiv.org/abs/2507.07610">SpatialViz</a></li><li><a href="https://labs.scale.com/leaderboard/swe_bench_pro_public">SWE-Pro</a></li><li><a href="https://www.swebench.com/index.html">SWE Verified</a></li><li><a href="https://artificialanalysis.ai/evaluations/tau2-bench">Tau2</a></li><li><a href="https://artificialanalysis.ai/evaluations/terminalbench-hard">TB Hard</a></li><li><a href="https://artificialanalysis.ai/evaluations/terminalbench-v2-1">TB v2.1</a></li><li><a href="https://www.textquests.ai/">TextQuests</a></li><li><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning">AA-LCR</a></li><li><a href="https://api-docs.deepseek.com/updates">DeepSeek updates</a></li><li><a href="https://ai.meta.com/llama">Meta AI</a></li><li><a href="https://mistral.ai/models">Mistral models</a></li><li><a href="https://research.nvidia.com/labs/adlr/Nemotron-3/">NVIDIA Nemotron 3</a></li><li><a href="https://artificialanalysis.ai/evaluations/terminalbench-v4-0">TB v4.0 candidate</a></li><li><a href="https://artificialanalysis.ai/evaluations/critpt">CritPt candidate</a></li><li><a href="https://artificialanalysis.ai/evaluations/mlcr-aa">MLCR-AA candidate</a></li><li><a href="https://artificialanalysis.ai/evaluations/gdp-pdf">GDP.pdf candidate</a></li><li><a href="https://github.com/xlang-ai/E-commerce-Bench">E-CommerceBench</a></li>
+  </ul>
+  <p><small>Generated 2026-09-14 11:17 CEST. Scores preserve SupraBench's benchmark-specific raw scaling.</small></p>
+</main></body></html>
