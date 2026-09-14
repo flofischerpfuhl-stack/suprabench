@@ -43,13 +43,19 @@
     { "title": "Artificial Analysis — CritPt candidate", "url": "https://artificialanalysis.ai/evaluations/critpt", "accessedAt": "2026-09-14T11:17:16.794+02:00" },
     { "title": "Artificial Analysis — MLCR-AA candidate", "url": "https://artificialanalysis.ai/evaluations/mlcr-aa", "accessedAt": "2026-09-14T11:17:16.794+02:00" },
     { "title": "Artificial Analysis — GDP.pdf candidate", "url": "https://artificialanalysis.ai/evaluations/gdp-pdf", "accessedAt": "2026-09-14T11:17:16.794+02:00" },
-    { "title": "E-CommerceBench repository", "url": "https://github.com/xlang-ai/E-commerce-Bench", "accessedAt": "2026-09-14T11:17:16.794+02:00" }
+    { "title": "E-CommerceBench repository", "url": "https://github.com/xlang-ai/E-commerce-Bench", "accessedAt": "2026-09-14T11:17:16.794+02:00" },
+    { "title": "SupraBench — published curation report", "url": "https://suprabench.com/reports/curation/2026-09-14/", "accessedAt": "2026-09-14T11:25:30.000+02:00" },
+    { "title": "SupraBench — DeepSeek V4.1 Flash max model", "url": "https://suprabench.com/#model/deepseek-v4-1-flash-max", "accessedAt": "2026-09-14T11:25:30.000+02:00" },
+    { "title": "SupraBench — Terminal-Bench Hard benchmark", "url": "https://suprabench.com/#bench/terminal-bench-hard", "accessedAt": "2026-09-14T11:25:30.000+02:00" }
   ],
   "evidence": [
     { "sourceUrl": "https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning", "screenshotUrl": "https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning#results", "screenshotPath": "public/reports/curation/2026-09-14/screenshots/aa-lcr-source.jpg" },
     { "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro", "screenshotUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro#results", "screenshotPath": "public/reports/curation/2026-09-14/screenshots/mmmu-pro-source.jpg" },
     { "sourceUrl": "https://artificialanalysis.ai/evaluations/tau2-bench", "screenshotUrl": "https://artificialanalysis.ai/evaluations/tau2-bench#results", "screenshotPath": "public/reports/curation/2026-09-14/screenshots/tau2-source.jpg" },
-    { "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard", "screenshotUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard#results", "screenshotPath": "public/reports/curation/2026-09-14/screenshots/terminal-bench-hard-source.jpg" }
+    { "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard", "screenshotUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard#results", "screenshotPath": "public/reports/curation/2026-09-14/screenshots/terminal-bench-hard-source.jpg" },
+    { "sourceUrl": "https://suprabench.com/reports/curation/2026-09-14/", "screenshotUrl": "https://suprabench.com/reports/curation/2026-09-14/#published-39996f3", "screenshotPath": "public/reports/curation/2026-09-14/screenshots/live-report.jpg" },
+    { "sourceUrl": "https://suprabench.com/#model/deepseek-v4-1-flash-max", "screenshotUrl": "https://suprabench.com/?v=39996f3-live-model#model/deepseek-v4-1-flash-max", "screenshotPath": "public/reports/curation/2026-09-14/screenshots/live-model-deepseek-v4-1-flash-max.jpg" },
+    { "sourceUrl": "https://suprabench.com/#bench/terminal-bench-hard", "screenshotUrl": "https://suprabench.com/?v=39996f3-live-bench#bench/terminal-bench-hard", "screenshotPath": "public/reports/curation/2026-09-14/screenshots/live-benchmark-terminal-bench-hard.jpg" }
   ],
   "models": [
     { "name": "DeepSeek V4.1 Flash (max)", "provider": "DeepSeek", "familyTag": "DeepSeek V4.1 Flash", "tags": ["coding", "reasoning", "agents"] },
