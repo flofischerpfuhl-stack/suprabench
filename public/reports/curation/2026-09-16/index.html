@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SupraBench curation — 2026-09-16</title>
+  <style>
+    :root{color-scheme:dark;--bg:#090c12;--panel:#121722;--line:#2b3445;--text:#f3f6fb;--muted:#aab5c7;--accent:#8ad5ff;--good:#8ce6b2;--warn:#ffd27d}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#172036 0,#090c12 44%);color:var(--text);font:16px/1.55 Inter,system-ui,sans-serif}main{width:min(1180px,92vw);margin:auto;padding:54px 0 80px}h1{font-size:clamp(2.4rem,7vw,5rem);line-height:.95;margin:.2em 0}h2{margin-top:3rem}h3{margin:.2rem 0 .5rem}.eyebrow,.muted,small{color:var(--muted)}.lede{font-size:1.2rem;max-width:820px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin:28px 0}.card,figure{background:rgba(18,23,34,.94);border:1px solid var(--line);border-radius:16px;padding:18px}.metric{font-size:2rem;font-weight:750;color:var(--accent)}table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:14px;overflow:hidden}th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--accent)}code{background:#20283a;padding:.15rem .35rem;border-radius:5px}a{color:var(--accent)}img{display:block;width:100%;border-radius:10px;border:1px solid var(--line)}figcaption{color:var(--muted);margin-top:10px}.pill{display:inline-block;padding:.28rem .65rem;border-radius:999px;background:#183427;color:var(--good);font-weight:700}.warn{color:var(--warn)}ul.sources{columns:2;column-gap:36px}li{break-inside:avoid;margin:.4rem 0}@media(max-width:700px){ul.sources{columns:1}table{font-size:.86rem}th,td{padding:8px}}
+  </style>
+</head>
+<body><main>
+  <p class="eyebrow">SUPRABENCH · CURATION RUN · 16 SEPTEMBER 2026</p>
+  <h1>One new benchmark.<br>Fifteen exact scores.</h1>
+  <p class="lede">A full sweep of all 21 tracked leaderboards found two new Codex-harness candidates in Agents' Last Exam, held back because a downloadable source image could not be persisted. A broader primary-source search admitted AutomationBench-AA as a distinct, high-quality agentic benchmark.</p>
+
+  <div class="grid">
+    <div class="card"><div class="metric">21 / 21</div><p>tracked benchmark sources inspected</p></div>
+    <div class="card"><div class="metric">1 + 1 + 15</div><p>benchmark, model, and insert-only scores</p></div>
+    <div class="card"><div class="metric">0</div><p>production mirror drift before the write</p></div>
+    <div class="card"><span class="pill">Gate passed</span><p>Visible <code>example.com</code> screenshot completed before any repository or production mutation.</p></div>
+  </div>
+
+  <h2>Accepted changes</h2>
+  <table>
+    <thead><tr><th>Target</th><th>Change</th><th>Evidence and scale</th></tr></thead>
+    <tbody>
+      <tr><td>AutomationBench-AA</td><td>New benchmark plus 15 visible top rows; new identity <strong>Grok 4.6 (medium)</strong>.</td><td>AA headline score: objective share completed with no guardrail violation. Published percentages are multiplied by 10 into SupraBench's <code>0…1000</code> scale.</td></tr>
+      <tr><td>Agents' Last Exam v1 (Codex)</td><td class="warn">Deferred: GPT-6 Astra (max) 34.2% and Muse Spark 1.3 (xhigh) 32.2%.</td><td>The exact visible rows were reviewed, but the source site did not provide a downloadable evidence image. No score was written without the required persisted evidence.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Why AutomationBench-AA qualifies</h2>
+  <div class="grid">
+    <div class="card"><h3>Relevant and distinct</h3><p>657 tasks across Finance, HR, Marketing, Operations, Sales, and Support coordinate simulated Gmail, Sheets, Slack, Salesforce, Zendesk, Jira, HubSpot, and related SaaS tools.</p></div>
+    <div class="card"><h3>Hard to game</h3><p>The evaluated set is private and held out. Public examples and the Zapier repository expose the task structure without disclosing the production cases.</p></div>
+    <div class="card"><h3>Objective grading</h3><p>Programmatic end-state checks measure whether the requested data reached the correct systems. Any guardrail violation forces the task score to zero.</p></div>
+    <div class="card"><h3>Useful separation</h3><p>The current selected frontier spans 68.9% to 58.3% across the imported top fifteen, with 165 evaluated models available and substantial spread below that group.</p></div>
+  </div>
+
+  <h2>Source evidence</h2>
+  <figure>
+    <img src="screenshots/automationbench-aa-source.png" alt="Official AutomationBench-AA score chart downloaded from Artificial Analysis">
+    <figcaption>Official chart download from Artificial Analysis, 2026-09-16. It preserves model labels, ordering, and exact displayed values for the imported rows. The ALE source was also inspected in a visible browser: Codex · GPT-6 Astra · Max · 34.2% and Codex · Muse Spark 1.3 · XHigh · 32.2%.</figcaption>
+  </figure>
+
+  <h2>Tracked leaderboard diff</h2>
+  <table>
+    <thead><tr><th>Disposition</th><th>Benchmarks</th><th>Finding</th></tr></thead>
+    <tbody>
+      <tr><td>Defer evidence</td><td>ALE v1 Codex</td><td>Two new visible best-effort rows; existing Sol xhigh, Luna xhigh, and Terra max rows remain current. The new rows wait for a persistable source screenshot.</td></tr>
+      <tr><td>Defer identity migration</td><td>ARC-AGI-2, ARC-AGI-3</td><td>Current official rows mix harness and limit regimes; they must not be silently folded into existing identities.</td></tr>
+      <tr><td>Defer identity verification</td><td>MMMU-Pro, SciCode</td><td>Each exposes a new Google variant whose exact provider configuration needs confirmation before insertion.</td></tr>
+      <tr><td>No write</td><td>AA-LCR, APEX-AA, DeepSWE, EnigmaEval, ERQA, HLE, IntPhys2, MindCube, SkateBench, SpatialViz, SWE-Pro, SWE Verified, Tau2 Telecom, TB Hard, TB v2.1, TextQuests</td><td>Visible frontier rows are already represented or no exact, policy-safe new production row was found.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Candidate benchmark decisions</h2>
+  <table>
+    <thead><tr><th>Candidate</th><th>Decision</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td>AutomationBench-AA</td><td><span class="pill">Accept</span></td><td>Distinct cross-SaaS workflows, private held-out set, public examples/tooling, programmatic end-state grading, and guardrail enforcement.</td></tr>
+      <tr><td>AA-AnalystAgent</td><td class="warn">Defer</td><td>Useful professional-work focus, but private-data reproducibility and overlap with adjacent professional benchmarks need review.</td></tr>
+      <tr><td>Harvey LAB-AA</td><td class="warn">Defer</td><td>Private legal tasks and a single LLM rubric judge need a grading-policy decision.</td></tr>
+      <tr><td>Tau3-Banking, EnterpriseOps-Gym-AA, ITBench-AA</td><td class="warn">Defer</td><td>Promising but narrower; identity coverage, redundancy, and weighting need explicit decisions.</td></tr>
+      <tr><td>Terminal-Bench v4, CritPt, MLCR-AA, GDP.pdf</td><td class="warn">Defer</td><td>Remain credible; redundancy, judge dependence, protocol semantics, and scale policy are unresolved.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Release verification</h2>
+  <div class="grid">
+    <div class="card"><h3>Preflight</h3><p>Fresh worktree from <code>origin/main</code>; production snapshot 176 models / 21 benchmarks / 689 scores; D1 mirror 689 / 689, drift 0.</p></div>
+    <div class="card"><h3>Mutation</h3><p id="mutation-status">Validated 1 model, 1 benchmark, 15 scores, 1 evidence image, and 47 sources. The single authorized apply created exactly that insert-only plan: no refreshes and no replacements.</p></div>
+    <div class="card"><h3>Postflight</h3><p id="postflight-status">Convex 704 / D1 704, drift 0; repeat dry-run: all 15 unchanged; 14 test files and 139 tests passed; tier, diff, and credential checks clean. Git and live-page checks continue below.</p></div>
+  </div>
+
+  <h2>Sources</h2>
+  <ul class="sources">
+    <li><a href="https://agents-last-exam.org/leaderboard">Agents' Last Exam</a></li>
+    <li><a href="https://artificialanalysis.ai/evaluations/automationbench-aa">AutomationBench-AA</a></li>
+    <li><a href="https://arxiv.org/abs/2604.18934">AutomationBench paper</a></li>
+    <li><a href="https://github.com/zapier/AutomationBench">AutomationBench repository</a></li>
+    <li><a href="https://arcprize.org/leaderboard">ARC Prize leaderboard</a></li>
+    <li><a href="https://arcprize.org/competitions/2026/arc-agi-3">ARC-AGI-3</a></li>
+    <li><a href="https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning">AA Long Context Reasoning</a></li>
+    <li><a href="https://artificialanalysis.ai/evaluations/apex-agents-aa">APEX-AA</a></li>
+    <li><a href="https://deepswe.datacurve.ai/">DeepSWE</a></li>
+    <li><a href="https://labs.scale.com/leaderboard/enigma_eval">EnigmaEval</a></li>
+    <li><a href="https://github.com/embodiedreasoning/ERQA">ERQA</a></li>
+    <li><a href="https://artificialanalysis.ai/evaluations/humanitys-last-exam">Humanity's Last Exam</a></li>
+    <li><a href="https://ai.meta.com/research/publications/intphys-2-benchmarking-intuitive-physics-understanding-in-complex-synthetic-environments/">IntPhys2</a></li>
+    <li><a href="https://arxiv.org/abs/2506.21458">MindCube</a></li>
+    <li><a href="https://artificialanalysis.ai/evaluations/mmmu-pro">MMMU-Pro</a></li>
+    <li><a href="https://artificialanalysis.ai/evaluations/scicode">SciCode</a></li>
+    <li><a href="https://skatebench.t3.gg/">SkateBench</a></li>
+    <li><a href="https://arxiv.org/abs/2507.07610">SpatialViz</a></li>
+    <li><a href="https://labs.scale.com/leaderboard/swe_bench_pro_public">SWE-Bench Pro</a></li>
+    <li><a href="https://www.swebench.com/index.html">SWE-bench Verified</a></li>
+    <li><a href="https://artificialanalysis.ai/evaluations/tau2-bench">Tau2 Telecom</a></li>
+    <li><a href="https://artificialanalysis.ai/evaluations/terminalbench-hard">Terminal-Bench Hard</a></li>
+    <li><a href="https://artificialanalysis.ai/evaluations/terminalbench-v2-1">Terminal-Bench v2.1</a></li>
+    <li><a href="https://www.textquests.ai/">TextQuests</a></li>
+    <li><a href="https://openai.com/news/">OpenAI news</a></li>
+    <li><a href="https://www.anthropic.com/news">Anthropic news</a></li>
+    <li><a href="https://blog.google/innovation-and-ai/models-and-research/">Google AI models</a></li>
+    <li><a href="https://x.ai/news">xAI news</a></li>
+    <li><a href="https://z.ai/blog">Z.ai news</a></li>
+    <li><a href="https://github.com/QwenLM">Qwen releases</a></li>
+    <li><a href="https://api-docs.deepseek.com/updates">DeepSeek updates</a></li>
+    <li><a href="https://www.kimi.com/">Moonshot AI</a></li>
+    <li><a href="https://ai.meta.com/llama">Meta AI</a></li>
+    <li><a href="https://www.minimax.io/news">MiniMax news</a></li>
+    <li><a href="https://mistral.ai/models">Mistral models</a></li>
+    <li><a href="https://cohere.com/research">Cohere research</a></li>
+    <li><a href="https://www.ai21.com/jamba/">AI21 models</a></li>
+    <li><a href="https://research.nvidia.com/labs/adlr/">NVIDIA research</a></li>
+  </ul>
+  <p><small>Generated 2026-09-16 11:19 CEST. All percentages retain source precision and are converted only to each benchmark's declared SupraBench raw scale.</small></p>
+</main></body></html>
