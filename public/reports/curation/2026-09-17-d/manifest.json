@@ -1,0 +1,1271 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-09-17-d",
+  "generatedAt": "2026-09-17T16:48:50.564Z",
+  "reportPath": "public/reports/curation/2026-09-17-d/index.html",
+  "sources": [
+    {
+      "title": "Artificial Analysis — AA-Omniscience",
+      "url": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": "2026-09-17T16:48:27.575Z"
+    },
+    {
+      "title": "Artificial Analysis — CritPt",
+      "url": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": "2026-09-17T16:48:27.575Z"
+    },
+    {
+      "title": "Artificial Analysis — Terminal-Bench Hard",
+      "url": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": "2026-09-17T16:48:27.575Z"
+    },
+    {
+      "title": "Artificial Analysis — MMMU-Pro",
+      "url": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": "2026-09-17T16:48:27.575Z"
+    },
+    {
+      "title": "Artificial Analysis — AutomationBench-AA",
+      "url": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": "2026-09-17T16:48:27.575Z"
+    }
+  ],
+  "evidence": [
+    {
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "screenshotUrl": "https://artificialanalysis.ai/evaluations/omniscience#score",
+      "screenshotPath": "public/reports/curation/2026-09-17-d/screenshots/omniscience.png"
+    },
+    {
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "screenshotUrl": "https://artificialanalysis.ai/evaluations/critpt#score",
+      "screenshotPath": "public/reports/curation/2026-09-17-d/screenshots/critpt.png"
+    },
+    {
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "screenshotUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard#score",
+      "screenshotPath": "public/reports/curation/2026-09-17-d/screenshots/terminalbench-hard.png"
+    },
+    {
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "screenshotUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro#score",
+      "screenshotPath": "public/reports/curation/2026-09-17-d/screenshots/mmmu-pro.png"
+    },
+    {
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "screenshotUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa#score",
+      "screenshotPath": "public/reports/curation/2026-09-17-d/screenshots/automationbench-aa.png"
+    }
+  ],
+  "models": [],
+  "benches": [],
+  "scores": [
+    {
+      "modelName": "GPT-5.2 Codex (xhigh)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -2.2,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.20 0309",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 13,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.2 (xhigh)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 27.2,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K2.6",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 5.3,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5 (xhigh)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 20.5,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Flash",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -29.8,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.1 Fast",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -29.9,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Pro",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -16.3,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.7 (Non-reasoning, high)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 14.8,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 0.3,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K2",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -28.3,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5 (high)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -8.7,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.2 (xhigh)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -0.9,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.1 (high)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 5.4,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.5 Flash (medium)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 20.8,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.6 (max)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 13.7,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4 Fast",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -29.9,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.1 Flash-Lite",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -16.4,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.1",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 0.9,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "o1",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -11,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 2.1,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5 (medium)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 18.1,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3 Flash",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 10.1,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 nano",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -18,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude 4.5 Sonnet",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -0.1,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.8 (max)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 28.8,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K2.5",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -7.3,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 (xhigh)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 5.8,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5 (high)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 18.8,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.7 Flash (high)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 26.5,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Solar Pro 3",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -53.4,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 mini (xhigh)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -18.9,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Pro (Max)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -10.7,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5 (minimal)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -33.8,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.20 0309 v2",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 14.8,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5 (low)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 15.1,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5 (adaptive max/fallback)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 43.3,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3 Pro Preview (high)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 15.3,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 nano (xhigh)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -29.5,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.1 (xhigh)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 28.1,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V3.2",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -22.5,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Flash (Max)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -23.9,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Sonnet 4.6 (max)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 12.2,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.7 (max)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 27.3,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 7.2,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Flash-Lite",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -45.6,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.2 (max)",
+      "benchSlug": "aa-omniscience",
+      "rawScore": 4.4,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "KAT-Coder-Pro V1",
+      "benchSlug": "aa-omniscience",
+      "rawScore": -37.7,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.2 Codex (xhigh)",
+      "benchSlug": "critpt",
+      "rawScore": 87,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.20 0309",
+      "benchSlug": "critpt",
+      "rawScore": 60,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.2 (xhigh)",
+      "benchSlug": "critpt",
+      "rawScore": 177,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K2.6",
+      "benchSlug": "critpt",
+      "rawScore": 80,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5 (xhigh)",
+      "benchSlug": "critpt",
+      "rawScore": 271,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Flash",
+      "benchSlug": "critpt",
+      "rawScore": 11,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.1 Fast",
+      "benchSlug": "critpt",
+      "rawScore": 29,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Pro",
+      "benchSlug": "critpt",
+      "rawScore": 26,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.7 (Non-reasoning, high)",
+      "benchSlug": "critpt",
+      "rawScore": 51,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5",
+      "benchSlug": "critpt",
+      "rawScore": 20,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K2",
+      "benchSlug": "critpt",
+      "rawScore": 0,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5 (high)",
+      "benchSlug": "critpt",
+      "rawScore": 57,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.2 (xhigh)",
+      "benchSlug": "critpt",
+      "rawScore": 116,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.1 (high)",
+      "benchSlug": "critpt",
+      "rawScore": 49,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.5 Flash (medium)",
+      "benchSlug": "critpt",
+      "rawScore": 109,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.6 (max)",
+      "benchSlug": "critpt",
+      "rawScore": 126,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4 Fast",
+      "benchSlug": "critpt",
+      "rawScore": 29,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.1 Flash-Lite",
+      "benchSlug": "critpt",
+      "rawScore": 11,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.1",
+      "benchSlug": "critpt",
+      "rawScore": 46,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "o1",
+      "benchSlug": "critpt",
+      "rawScore": 3,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4",
+      "benchSlug": "critpt",
+      "rawScore": 20,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5 (medium)",
+      "benchSlug": "critpt",
+      "rawScore": 186,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3 Flash",
+      "benchSlug": "critpt",
+      "rawScore": 86,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 nano",
+      "benchSlug": "critpt",
+      "rawScore": 51,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude 4.5 Sonnet",
+      "benchSlug": "critpt",
+      "rawScore": 11,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.8 (max)",
+      "benchSlug": "critpt",
+      "rawScore": 209,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K2.5",
+      "benchSlug": "critpt",
+      "rawScore": 31,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 (xhigh)",
+      "benchSlug": "critpt",
+      "rawScore": 234,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5 (high)",
+      "benchSlug": "critpt",
+      "rawScore": 254,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.7 Flash (high)",
+      "benchSlug": "critpt",
+      "rawScore": 143,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Solar Pro 3",
+      "benchSlug": "critpt",
+      "rawScore": 0,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 mini (xhigh)",
+      "benchSlug": "critpt",
+      "rawScore": 100,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Pro (Max)",
+      "benchSlug": "critpt",
+      "rawScore": 129,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5 (minimal)",
+      "benchSlug": "critpt",
+      "rawScore": 0,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.20 0309 v2",
+      "benchSlug": "critpt",
+      "rawScore": 66,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5 (low)",
+      "benchSlug": "critpt",
+      "rawScore": 80,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5 (adaptive max/fallback)",
+      "benchSlug": "critpt",
+      "rawScore": 286,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3 Pro Preview (high)",
+      "benchSlug": "critpt",
+      "rawScore": 91,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 nano (xhigh)",
+      "benchSlug": "critpt",
+      "rawScore": 93,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.1 (xhigh)",
+      "benchSlug": "critpt",
+      "rawScore": 151,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V3.2",
+      "benchSlug": "critpt",
+      "rawScore": 29,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Flash (Max)",
+      "benchSlug": "critpt",
+      "rawScore": 71,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Sonnet 4.6 (max)",
+      "benchSlug": "critpt",
+      "rawScore": 31,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.7 (max)",
+      "benchSlug": "critpt",
+      "rawScore": 120,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark",
+      "benchSlug": "critpt",
+      "rawScore": 113,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Flash-Lite",
+      "benchSlug": "critpt",
+      "rawScore": 0,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.2 (max)",
+      "benchSlug": "critpt",
+      "rawScore": 209,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "KAT-Coder-Pro V1",
+      "benchSlug": "critpt",
+      "rawScore": 0,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.2 Codex (xhigh)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 371,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.20 0309",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 409,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K2.6",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 439,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Flash",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 136,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.1 Fast",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 242,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Pro",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 265,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "o3-mini",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 68,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 432,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K2",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 159,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5 (high)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 326,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.2 (xhigh)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 470,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.1 (high)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 455,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.5 Flash (medium)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 394,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.6 (max)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 462,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4 Fast",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 189,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.1 Flash-Lite",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 242,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.1",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 432,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "o1",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 129,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 379,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3 Flash",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 386,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 nano",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 333,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude 4.5 Sonnet",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 356,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.8 (max)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 583,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K2.5",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 348,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Solar Pro 3",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 76,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Pro (Max)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 462,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5 (minimal)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 182,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.20 0309 v2",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 379,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3 Pro Preview (high)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 417,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 nano (xhigh)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 424,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V3.2",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 356,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Flash (Max)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 356,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 455,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Flash-Lite",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 45,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.2 (max)",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 508,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "KAT-Coder-Pro V1",
+      "benchSlug": "terminal-bench-hard",
+      "rawScore": 91,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.2 Codex (xhigh)",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 76.3,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Flash",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 69.1,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.1 Fast",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 63.3,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Pro",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 74.9,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5 (high)",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 74.2,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.1 (high)",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 75.5,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4 Fast",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 61.8,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.1 Flash-Lite",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 75.5,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 68.8,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 nano",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 59.5,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude 4.5 Sonnet",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 68.7,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K2.5",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 75.4,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.7 Flash (high)",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 85.5,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5 (minimal)",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 62.1,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.4 nano (xhigh)",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 65.4,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.7 (max)",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 78.8,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 2.5 Flash-Lite",
+      "benchSlug": "mmmu-pro",
+      "rawScore": 58.2,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5 (adaptive max/fallback)",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 541,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663707575,
+      "operation": "insert"
+    }
+  ],
+  "learnings": [
+    "Artificial Analysis embeds its complete result matrix in the page payload (self.__next_f → models / initialModels, one field per evaluation); read the full table from there instead of the visible top rows, and keep the screenshot as proof of page, benchmark version and chart.",
+    "Import every published cell of a configuration at once under ONE production model name. AA short names map as: 'Claude Fable 5 (with fallback)' = 'Claude Fable 5 (adaptive max/fallback)', 'GLM-5.3-Flash' = 'GLM-5.3-Flash (max)', 'Qwen3.8 2.4T A95B' = 'Qwen3.8 2.4T A95B (max)', 'Nemotron 3 Ultra' = 'NVIDIA Nemotron 3 Ultra'.",
+    "Elo benchmarks (AA-Briefcase, GDPval-AA v2) are stored as raw Elo on scale 500–2500, the publisher's own index normalisation; rows below 500 are clamped to zero by the publisher and are not imported. AA-Omniscience is stored as the index on scale −100…100.",
+    "Terminal-Bench Hard, APEX-Agents-AA and Tau2-Bench Telecom receive no new frontier rows at the publisher any more; do not spend budget on them. Terminal-Bench 4.0 is the successor of Terminal-Bench v2.1.",
+    "A run may use several batches (YYYY-MM-DD, -b, -c …) of up to 150 rows each; never drop verified rows because a batch is full."
+  ]
+}

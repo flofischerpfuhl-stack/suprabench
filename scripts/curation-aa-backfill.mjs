@@ -17,7 +17,9 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const [runDate] = process.argv.slice(2);
+// optional second argument: first batch letter to use (e.g. "d" when -a…-c of this date are already applied)
+const [runDate, firstLetter] = process.argv.slice(2);
+const batchOffset = firstLetter ? firstLetter.charCodeAt(0) - 97 : 0;
 if (!/^\d{4}-\d{2}-\d{2}$/.test(runDate ?? "")) throw new Error("usage: curation-aa-backfill.mjs YYYY-MM-DD");
 const DEPLOYMENT = "upbeat-clam-790";
 const AA = "https://artificialanalysis.ai";
@@ -103,8 +105,10 @@ const full = extractArray(await payload(`${AA}/leaderboards/models`), '"models":
 const detail = extractArray(await payload(`${AA}/evaluations/terminalbench-4-0`), '"initialModels":[');
 const aaBySlug = new Map(full.map((m) => [m.slug, { ...m }]));
 for (const d of detail) aaBySlug.set(d.slug, { ...(aaBySlug.get(d.slug) ?? {}), ...d });
-const aaModels = [...aaBySlug.values()].filter((m) => !m.deprecated);
-console.log(`AA: ${full.length} listed, ${detail.length} with full evaluation fields, ${aaModels.length} not deprecated`);
+// "deprecated" at AA means the endpoint was retired, not that the published results are invalid:
+// keep such rows for models production already tracks, but do not create new models from them.
+const aaModels = [...aaBySlug.values()];
+console.log(`AA: ${full.length} listed, ${detail.length} with full evaluation fields`);
 
 // ── 2. read production ──────────────────────────────────────
 const prod = convexRun("rankings:_loadInputsForRebuild");
@@ -118,14 +122,17 @@ const rows = []; const skipped = [];
 const newModelsUsed = new Map();
 for (const a of aaModels) {
   const key = (a.shortName ?? a.name).toLowerCase();
-  const existing = modelByLower.get(key) ?? (ALIASES.has(key) ? modelByLower.get(ALIASES.get(key).toLowerCase()) : undefined);
-  const fresh = existing ? undefined : NEW_MODELS.get(key);
+  const existing = modelByLower.get(key)
+    ?? (ALIASES.has(key) ? modelByLower.get(ALIASES.get(key).toLowerCase()) : undefined)
+    ?? (NEW_MODELS.has(key) ? modelByLower.get(NEW_MODELS.get(key).name.toLowerCase()) : undefined);
+  const fresh = existing || a.deprecated ? undefined : NEW_MODELS.get(key);
   if (!existing && !fresh) continue;
   for (const src of SOURCES) {
     const v = a[src.field]; if (typeof v !== "number") continue;
-    const bench = src.bench ? { slug: slugify(src.bench.name), ...src.bench } : benchBySlug.get(src.slug);
+    const tracked = benchBySlug.get(src.slug ?? slugify(src.bench.name));
+    const bench = tracked ?? (src.bench ? { slug: slugify(src.bench.name), ...src.bench } : undefined);
     if (!bench) throw new Error(`tracked bench missing in production: ${src.slug}`);
-    if (existing && !src.bench && haveCell.has(`${existing._id}|${bench._id}`)) continue; // cell already present (any source)
+    if (existing && tracked && haveCell.has(`${existing._id}|${tracked._id}`)) continue; // cell already present (any source)
     let raw;
     if (src.kind === "elo") raw = Math.round(v);
     else if (src.kind === "index") raw = Math.round(v * 10) / 10;
@@ -133,7 +140,7 @@ for (const a of aaModels) {
     if (raw < bench.scaleMin || raw > bench.scaleMax) { skipped.push(`${a.shortName} | ${bench.slug} | ${raw} outside ${bench.scaleMin}–${bench.scaleMax} (publisher clamps it)`); continue; }
     const modelName = existing ? existing.name : fresh.name;
     if (fresh) newModelsUsed.set(fresh.name, fresh);
-    rows.push({ modelName, aaName: a.shortName ?? a.name, benchSlug: bench.slug, benchName: bench.name, rawScore: raw, sourceUrl: `${AA}/evaluations/${src.page}`, page: src.page, field: src.field, aaValue: v, newBench: Boolean(src.bench), frontier: detail.some((d) => d.slug === a.slug) });
+    rows.push({ modelName, aaName: a.shortName ?? a.name, benchSlug: bench.slug, benchName: bench.name, rawScore: raw, sourceUrl: `${AA}/evaluations/${src.page}`, page: src.page, field: src.field, aaValue: v, newBench: Boolean(src.bench) && !tracked, frontier: detail.some((d) => d.slug === a.slug) });
   }
 }
 console.log(`cells to insert: ${rows.length} (${rows.filter((r) => r.newBench).length} on new benches); new models: ${[...newModelsUsed.keys()].join(", ") || "none"}; skipped: ${skipped.length}`);
@@ -153,7 +160,8 @@ for (const [page, list] of ordered) {
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const createdModels = new Set();
 batches.forEach((batch, index) => {
-  const runId = index === 0 ? runDate : `${runDate}-${String.fromCharCode(97 + index)}`;
+  const letter = index + batchOffset;
+  const runId = letter === 0 ? runDate : `${runDate}-${String.fromCharCode(97 + letter)}`;
   const dir = join(repoRoot, "public", "reports", "curation", runId); const shots = join(dir, "screenshots"); mkdirSync(shots, { recursive: true });
   const evidence = [], sources = [];
   for (const page of batch.pages) {
@@ -166,7 +174,7 @@ batches.forEach((batch, index) => {
     sources.push({ title: `Artificial Analysis — ${groups.get(page)[0].benchName}`, url, accessedAt: new Date(accessedAt).toISOString() });
     evidence.push({ sourceUrl: url, screenshotUrl: `${url}#score`, screenshotPath: `public/reports/curation/${runId}/screenshots/${page}.png` });
   }
-  const benches = SOURCES.filter((s) => s.bench && batch.pages.includes(s.page)).map((s) => ({ name: s.bench.name, slug: slugify(s.bench.name), description: s.bench.description, url: `${AA}/evaluations/${s.page}`, scaleMin: s.bench.scaleMin, scaleMax: s.bench.scaleMax, tags: s.bench.tags, rating: s.bench.rating }));
+  const benches = SOURCES.filter((s) => s.bench && batch.pages.includes(s.page) && !benchBySlug.has(slugify(s.bench.name))).map((s) => ({ name: s.bench.name, slug: slugify(s.bench.name), description: s.bench.description, url: `${AA}/evaluations/${s.page}`, scaleMin: s.bench.scaleMin, scaleMax: s.bench.scaleMax, tags: s.bench.tags, rating: s.bench.rating }));
   const modelNames = new Set(batch.rows.map((r) => r.modelName));
   const models = [...newModelsUsed.values()].filter((m) => modelNames.has(m.name) && !createdModels.has(m.name));
   // a model created in an earlier batch of this run must still be declared identically (idempotent) — declare it again
