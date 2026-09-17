@@ -1,0 +1,28 @@
+// ════════════════════════════════════════════════════════════
+//  Wrangler config for the static site (suprabench.com).
+//
+//  The site is served by a Cloudflare Worker with static assets
+//  (not classic Pages: .html → extensionless redirects are 307,
+//  Pages would send 308). Without a config file the asset server
+//  runs with not_found_handling = "none", which answers unknown
+//  paths with an EMPTY 404 body and ignores public/404.html.
+//  "404-page" makes it serve the nearest 404.html with status 404.
+//
+//  `name` must be the name of the Worker that serves suprabench.com
+//  (Cloudflare dashboard → Workers & Pages). Workers Builds
+//  overrides a mismatching name automatically (Wrangler v3+); for a
+//  manual `npx wrangler deploy` from the repo root it must match,
+//  otherwise a second Worker would be created.
+//
+//  The API proxy and the scores worker have their own configs in
+//  infra/*/wrangler.toml and are not affected by this file.
+// ════════════════════════════════════════════════════════════
+{
+  "name": "suprabench",
+  "compatibility_date": "2026-09-17",
+  "assets": {
+    "directory": "./public",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}
