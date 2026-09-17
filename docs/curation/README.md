@@ -6,7 +6,10 @@ publishes an evidence-backed HTML report with the corresponding database batch.
 
 ## Run artifact
 
-Each run is committed below `public/reports/curation/YYYY-MM-DD/`:
+Each run is committed below `public/reports/curation/YYYY-MM-DD/`. A run that
+needs more than one batch (150 score rows, 5 new benchmarks, 30 new models per
+batch) adds `YYYY-MM-DD-b/`, `-c/`, … — every batch is a complete artifact with
+its own report, manifest, screenshots, dry run and apply:
 
 - `index.html` is the human-readable transparency report.
 - `manifest.json` is the machine-readable batch and source record.

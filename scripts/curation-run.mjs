@@ -7,7 +7,10 @@ import { fileURLToPath } from "node:url";
 
 const MAX_MODELS = 30;
 const MAX_BENCHES = 5;
-const MAX_SCORES = 30;
+// One run may be split into several batches (YYYY-MM-DD, YYYY-MM-DD-b, …);
+// each batch is validated, dry-run and applied on its own.
+const MAX_SCORES = 150;
+const RUN_ID_PATTERN = /^\d{4}-\d{2}-\d{2}(-[a-z])?$/;
 const MAX_EVIDENCE = 60;
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 
@@ -90,7 +93,7 @@ function loadRun(inputPath) {
 
   if (manifest.schemaVersion !== 1) fail("schemaVersion must be 1");
   const runId = nonEmptyString(manifest.runId, "runId");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(runId)) fail("runId must use YYYY-MM-DD");
+  if (!RUN_ID_PATTERN.test(runId)) fail("runId must use YYYY-MM-DD or YYYY-MM-DD-<letter> for an additional batch");
   if (basename(runDir) !== runId) fail(`Run directory must be named ${runId}`);
   const expectedReportPath = `public/reports/curation/${runId}/index.html`;
   if (manifest.reportPath !== expectedReportPath) fail(`reportPath must be ${expectedReportPath}`);

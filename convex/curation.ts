@@ -11,7 +11,11 @@ import { canonicalFamilyTag } from "./modelFamilies";
 
 const MAX_MODELS = 30;
 const MAX_BENCHES = 5;
-const MAX_SCORES = 30;
+// A run may consist of several batches (YYYY-MM-DD, YYYY-MM-DD-b, …). 150 rows
+// keeps one batch far below Convex's per-mutation read/write limits while
+// letting a dense frontier import finish in a few batches.
+const MAX_SCORES = 150;
+const RUN_ID_PATTERN = /^\d{4}-\d{2}-\d{2}(-[a-z])?$/;
 const MAX_EVIDENCE = 60;
 
 const MAX_NAME_LEN = 120;
@@ -249,8 +253,8 @@ export const applyBatch = internalMutation({
     evidence: v.array(EVIDENCE),
   },
   handler: async (ctx, args) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(args.runId)) {
-      throw new Error("runId must use YYYY-MM-DD");
+    if (!RUN_ID_PATTERN.test(args.runId)) {
+      throw new Error("runId must use YYYY-MM-DD or YYYY-MM-DD-<letter>");
     }
     if (args.reportPath !== expectedReportPath(args.runId)) {
       throw new Error(`reportPath must be ${expectedReportPath(args.runId)}`);

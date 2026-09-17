@@ -101,6 +101,33 @@ function newBatch(overrides: Record<string, unknown> = {}) {
 }
 
 describe("curation.applyBatch", () => {
+  it("accepts an additional same-day batch id and rejects malformed ids", async () => {
+    const t = setupTestDb();
+    await seedAdmin(t);
+    const suffixed = "2026-08-02-b";
+    const batch = newBatch({
+      runId: suffixed,
+      reportPath: `public/reports/curation/${suffixed}/index.html`,
+      dryRun: true,
+      evidence: [{
+        sourceUrl: SOURCE_URL,
+        screenshotUrl: SOURCE_URL,
+        screenshotPath: `public/reports/curation/${suffixed}/screenshots/leaderboard.png`,
+      }],
+    });
+    const plan = await t.mutation(internal.curation.applyBatch, batch as any);
+    expect(plan.runId).toBe(suffixed);
+    for (const bad of ["2026-08-02-B", "2026-08-02-bb", "2026-08-02b", "latest"]) {
+      await expect(
+        t.mutation(internal.curation.applyBatch, {
+          ...(batch as any),
+          runId: bad,
+          reportPath: `public/reports/curation/${bad}/index.html`,
+        })
+      ).rejects.toThrow(/runId/);
+    }
+  });
+
   it("requires screenshot-backed evidence for every score", async () => {
     const t = setupTestDb();
     await seedAdmin(t);

@@ -1,0 +1,1352 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-09-17-b",
+  "generatedAt": "2026-09-17T16:43:31.359Z",
+  "reportPath": "public/reports/curation/2026-09-17-b/index.html",
+  "sources": [
+    {
+      "title": "Artificial Analysis — Terminal-Bench 4.0",
+      "url": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": "2026-09-17T16:42:42.422Z"
+    },
+    {
+      "title": "Artificial Analysis — SciCode",
+      "url": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": "2026-09-17T16:42:42.422Z"
+    },
+    {
+      "title": "Artificial Analysis — GDPval-AA v2",
+      "url": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": "2026-09-17T16:42:42.422Z"
+    },
+    {
+      "title": "Artificial Analysis — GDP.pdf",
+      "url": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": "2026-09-17T16:42:42.422Z"
+    },
+    {
+      "title": "Artificial Analysis — AutomationBench-AA",
+      "url": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": "2026-09-17T16:42:42.422Z"
+    }
+  ],
+  "evidence": [
+    {
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "screenshotUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0#score",
+      "screenshotPath": "public/reports/curation/2026-09-17-b/screenshots/terminalbench-4-0.png"
+    },
+    {
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "screenshotUrl": "https://artificialanalysis.ai/evaluations/scicode#score",
+      "screenshotPath": "public/reports/curation/2026-09-17-b/screenshots/scicode.png"
+    },
+    {
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "screenshotUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa#score",
+      "screenshotPath": "public/reports/curation/2026-09-17-b/screenshots/gdpval-aa.png"
+    },
+    {
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "screenshotUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf#score",
+      "screenshotPath": "public/reports/curation/2026-09-17-b/screenshots/gdp-pdf.png"
+    },
+    {
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "screenshotUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa#score",
+      "screenshotPath": "public/reports/curation/2026-09-17-b/screenshots/automationbench-aa.png"
+    }
+  ],
+  "models": [
+    {
+      "name": "Gemini 3.5 Flash-Lite",
+      "provider": "Google",
+      "familyTag": "Gemini 3.5 Flash-Lite",
+      "tags": [
+        "multimodal"
+      ]
+    },
+    {
+      "name": "Inkling (xhigh)",
+      "provider": "Thinking Machines",
+      "familyTag": "Inkling",
+      "tags": [
+        "reasoning"
+      ]
+    },
+    {
+      "name": "DeepSeek V4 Pro 0813 (max)",
+      "provider": "DeepSeek",
+      "familyTag": "DeepSeek V4 Pro 0813",
+      "tags": [
+        "reasoning",
+        "open-weights"
+      ]
+    },
+    {
+      "name": "K2 Horizon 375B A23B",
+      "provider": "MBZUAI IFM",
+      "familyTag": "K2 Horizon",
+      "tags": [
+        "reasoning",
+        "open-weights"
+      ]
+    }
+  ],
+  "benches": [
+    {
+      "name": "GDPval-AA v2",
+      "slug": "gdpval-aa-v2",
+      "description": "Artificial Analysis' agentic run of OpenAI's GDPval: economically valuable real-world tasks across 44 occupations and nine industries, completed with shell and browser access; outputs are compared blind and pairwise by a rotating panel of frontier-model judges, Elo anchored to human experts at 1000. Stored as Elo on the publisher's index scale (500–2500).",
+      "url": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "scaleMin": 500,
+      "scaleMax": 2500,
+      "tags": [
+        "agentic",
+        "professional",
+        "tool-use"
+      ],
+      "rating": {
+        "relevance": 5,
+        "contamination": 3,
+        "discriminability": 4,
+        "reproducibility": 2,
+        "difficulty": 4
+      }
+    },
+    {
+      "name": "Terminal-Bench 4.0",
+      "slug": "terminal-bench-4-0",
+      "description": "Terminal-Bench 4.0 (Laude Institute, Stanford and contributors) as run by Artificial Analysis: 66 hard terminal tasks across software, machine learning, science, operations, security, hardware and media in a real terminal with verification suites; pass@1 averaged over three repeats. Successor to Terminal-Bench 2.1 with recalibrated limits and eight saturated or flawed tasks removed.",
+      "url": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "scaleMin": 0,
+      "scaleMax": 1000,
+      "tags": [
+        "agentic",
+        "coding",
+        "terminal",
+        "tool-use"
+      ],
+      "rating": {
+        "relevance": 5,
+        "contamination": 3,
+        "discriminability": 5,
+        "reproducibility": 4,
+        "difficulty": 5
+      }
+    },
+    {
+      "name": "GDP.pdf",
+      "slug": "gdp-pdf",
+      "description": "GDP.pdf (Surge AI) as run by Artificial Analysis: long-context reasoning over 100 real professional PDF documents (4,592 pages, ten domains) graded against 1,275 expert-written atomic criteria. The headline score is the share of tasks on which every criterion passes.",
+      "url": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "scaleMin": 0,
+      "scaleMax": 1000,
+      "tags": [
+        "long context",
+        "professional",
+        "reasoning"
+      ],
+      "rating": {
+        "relevance": 5,
+        "contamination": 4,
+        "discriminability": 5,
+        "reproducibility": 3,
+        "difficulty": 5
+      }
+    }
+  ],
+  "scores": [
+    {
+      "modelName": "Gemini 3.5 Flash-Lite",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 10,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Inkling (xhigh)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 10,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (xhigh)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 465,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.3-Flash (max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 328,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (xhigh)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 596,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Sonnet 5 (Max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 141,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.6 (medium)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 131,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "MiniMax-M3",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 20,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 591,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "gpt-oss-20B (high)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 0,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (medium with fallback)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 449,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (max with fallback)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 520,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Mistral Small 4",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 0,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Luna (max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 116,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Glimmer (high)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 5,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "NVIDIA Nemotron 3 Ultra",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 5,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (medium)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 146,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (High)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 460,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.8 Flash (medium)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 197,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Pro 0813 (max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 141,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Luna (xhigh)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 35,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.8 Flash (high)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 197,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (high)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 207,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Qwen3.8 2.4T A95B (max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 111,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.3 (max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 333,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (xhigh with fallback)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 551,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (high with fallback)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 520,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Terra (xhigh)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 101,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude 4.5 Haiku",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 0,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Qwen3.8 27B (xhigh)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 56,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (Max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 490,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "K2 Horizon 375B A23B",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 15,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.1 Pro Preview",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 40,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Terra (max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 354,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.6 (high)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 212,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemma 4 31B",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 0,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.3 (max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 419,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.3 (xhigh)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 167,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.6 (xhigh)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 172,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 399,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (xhigh)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 247,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4.1 Flash (max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 268,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Mistral Medium 3.5",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 0,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (high)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 540,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (medium)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 495,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "gpt-oss-120B (high)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 0,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.8 Flash (low)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 101,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K3 (max)",
+      "benchSlug": "terminal-bench-4-0",
+      "rawScore": 126,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.5 Flash-Lite",
+      "benchSlug": "scicode",
+      "rawScore": 413,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Inkling (xhigh)",
+      "benchSlug": "scicode",
+      "rawScore": 470,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (xhigh)",
+      "benchSlug": "scicode",
+      "rawScore": 557,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (xhigh)",
+      "benchSlug": "scicode",
+      "rawScore": 557,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Sonnet 5 (Max)",
+      "benchSlug": "scicode",
+      "rawScore": 543,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.6 (medium)",
+      "benchSlug": "scicode",
+      "rawScore": 559,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "gpt-oss-20B (high)",
+      "benchSlug": "scicode",
+      "rawScore": 389,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (medium with fallback)",
+      "benchSlug": "scicode",
+      "rawScore": 564,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Mistral Small 4",
+      "benchSlug": "scicode",
+      "rawScore": 388,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Glimmer (high)",
+      "benchSlug": "scicode",
+      "rawScore": 449,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "NVIDIA Nemotron 3 Ultra",
+      "benchSlug": "scicode",
+      "rawScore": 403,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (medium)",
+      "benchSlug": "scicode",
+      "rawScore": 574,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (High)",
+      "benchSlug": "scicode",
+      "rawScore": 554,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.8 Flash (medium)",
+      "benchSlug": "scicode",
+      "rawScore": 551,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Pro 0813 (max)",
+      "benchSlug": "scicode",
+      "rawScore": 510,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Luna (xhigh)",
+      "benchSlug": "scicode",
+      "rawScore": 505,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (high)",
+      "benchSlug": "scicode",
+      "rawScore": 578,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Terra (xhigh)",
+      "benchSlug": "scicode",
+      "rawScore": 523,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude 4.5 Haiku",
+      "benchSlug": "scicode",
+      "rawScore": 422,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "K2 Horizon 375B A23B",
+      "benchSlug": "scicode",
+      "rawScore": 429,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemma 4 31B",
+      "benchSlug": "scicode",
+      "rawScore": 455,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.6 (xhigh)",
+      "benchSlug": "scicode",
+      "rawScore": 530,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (xhigh)",
+      "benchSlug": "scicode",
+      "rawScore": 571,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4.1 Flash (max)",
+      "benchSlug": "scicode",
+      "rawScore": 519,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Mistral Medium 3.5",
+      "benchSlug": "scicode",
+      "rawScore": 402,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (high)",
+      "benchSlug": "scicode",
+      "rawScore": 554,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (medium)",
+      "benchSlug": "scicode",
+      "rawScore": 542,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "gpt-oss-120B (high)",
+      "benchSlug": "scicode",
+      "rawScore": 340,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.8 Flash (low)",
+      "benchSlug": "scicode",
+      "rawScore": 550,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.5 Flash-Lite",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1063,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Inkling (xhigh)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1165,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.3-Flash (max)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1655,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (xhigh)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1555,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "MiniMax-M3",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1304,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (max)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1580,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (max with fallback)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1764,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Luna (max)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1460,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Glimmer (high)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 893,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "NVIDIA Nemotron 3 Ultra",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1091,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Pro 0813 (max)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1493,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.8 Flash (high)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1464,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.3 (max)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1703,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (xhigh with fallback)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1745,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (high with fallback)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1650,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Qwen3.8 27B (xhigh)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1463,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (Max)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1735,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "K2 Horizon 375B A23B",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1400,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Terra (max)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1477,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.6 (high)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1643,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.3 (max)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1641,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (max)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1624,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4.1 Flash (max)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1632,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Mistral Medium 3.5",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 875,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (high)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1530,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (medium)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1501,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "gpt-oss-120B (high)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 745,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K3 (max)",
+      "benchSlug": "gdpval-aa-v2",
+      "rawScore": 1548,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.5 Flash-Lite",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 136,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Inkling (xhigh)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 128,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.3-Flash (max)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 154,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (xhigh)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 322,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "MiniMax-M3",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 98,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (max)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 310,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (max with fallback)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 262,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Luna (max)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 240,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Glimmer (high)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 100,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "NVIDIA Nemotron 3 Ultra",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 50,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Pro 0813 (max)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 114,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.8 Flash (high)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 210,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.3 (max)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 266,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (xhigh with fallback)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 262,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (high with fallback)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 268,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Qwen3.8 27B (xhigh)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 164,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (Max)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 216,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "K2 Horizon 375B A23B",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 74,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Terra (max)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 240,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.6 (high)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 170,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.3 (max)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 112,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (max)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 272,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4.1 Flash (max)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 128,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Mistral Medium 3.5",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 28,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (high)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 310,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (medium)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 304,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "gpt-oss-120B (high)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 40,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K3 (max)",
+      "benchSlug": "gdp-pdf",
+      "rawScore": 220,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.5 Flash-Lite",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 250,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Inkling (xhigh)",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 50,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "MiniMax-M3",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 213,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Luna (max)",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 502,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Glimmer (high)",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 68,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "NVIDIA Nemotron 3 Ultra",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 30,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Pro 0813 (max)",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 567,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.3 (max)",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 579,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (xhigh with fallback)",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 578,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5.1 (high with fallback)",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 553,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Qwen3.8 27B (xhigh)",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 482,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (Max)",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 566,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "K2 Horizon 375B A23B",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 372,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Mistral Medium 3.5",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 63,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    },
+    {
+      "modelName": "gpt-oss-120B (high)",
+      "benchSlug": "automationbench-aa",
+      "rawScore": 2,
+      "sourceUrl": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": 1789663362422,
+      "operation": "insert"
+    }
+  ],
+  "learnings": [
+    "Artificial Analysis embeds its complete result matrix in the page payload (self.__next_f → models / initialModels, one field per evaluation); read the full table from there instead of the visible top rows, and keep the screenshot as proof of page, benchmark version and chart.",
+    "Import every published cell of a configuration at once under ONE production model name. AA short names map as: 'Claude Fable 5 (with fallback)' = 'Claude Fable 5 (adaptive max/fallback)', 'GLM-5.3-Flash' = 'GLM-5.3-Flash (max)', 'Qwen3.8 2.4T A95B' = 'Qwen3.8 2.4T A95B (max)', 'Nemotron 3 Ultra' = 'NVIDIA Nemotron 3 Ultra'.",
+    "Elo benchmarks (AA-Briefcase, GDPval-AA v2) are stored as raw Elo on scale 500–2500, the publisher's own index normalisation; rows below 500 are clamped to zero by the publisher and are not imported. AA-Omniscience is stored as the index on scale −100…100.",
+    "Terminal-Bench Hard, APEX-Agents-AA and Tau2-Bench Telecom receive no new frontier rows at the publisher any more; do not spend budget on them. Terminal-Bench 4.0 is the successor of Terminal-Bench v2.1.",
+    "A run may use several batches (YYYY-MM-DD, -b, -c …) of up to 150 rows each; never drop verified rows because a batch is full."
+  ]
+}
