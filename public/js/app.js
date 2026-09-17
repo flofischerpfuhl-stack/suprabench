@@ -2118,7 +2118,11 @@ function supraBench() {
       if (famFilter) {
         list = list.filter((m) => m.familyTag === famFilter);
       }
-      if (!q) return list;
+      // Models without a single valid score (0 benches → SupraScore 0.0)
+      // are not ranked; keep them out of the default list. They stay
+      // findable via the search box and in a family drill-down (so the
+      // family row's member count still matches the rows shown).
+      if (!q) return famFilter ? list : list.filter((m) => m.benchCount !== 0);
       return list.filter((m) =>
         m.name.toLowerCase().includes(q) ||
         (m.provider || "").toLowerCase().includes(q) ||
