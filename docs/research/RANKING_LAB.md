@@ -65,16 +65,29 @@ tiers such as Muse Spark 1.1 and 1.2 are also separate families.
 The inferred-family audit is deliberately a review aid, not an automatic data
 migration. Ambiguous names must be confirmed before changing stored family tags.
 
-## Production family ranking
+## Production ranking
 
-Production uses the opponent-adjusted family ceiling documented in
-[`OPPONENT_ADJUSTED_FAMILY_RANKING.md`](OPPONENT_ADJUSTED_FAMILY_RANKING.md).
-Concrete configuration rows stay unchanged. The family view takes the best
-valid concrete result per family and benchmark, then joins weighted pairwise
-outcomes globally with Bradley-Terry. Fewer than three family benchmarks remains
-provisional.
+Since 2026-09-17 production runs one pairwise fit for both views
+(`public/js/supra-rank-core.js`, imported by `convex/rankings.ts`): weighted
+duels on every benchmark, a regularized Bradley-Terry fit over concrete
+configurations, the expected win rate against the top-10 field as the displayed
+score, and the best configuration (≥ 50 % of the family's bench weight) as the
+family row. The earlier family-ceiling design is documented in
+[`OPPONENT_ADJUSTED_FAMILY_RANKING.md`](OPPONENT_ADJUSTED_FAMILY_RANKING.md);
+the reasons for the change and the attack tests are in
+[`RANKING_REALITY_AUDIT_2026-09-16.md`](RANKING_REALITY_AUDIT_2026-09-16.md).
 
 Bayesian rating-prior results are recorded in
 `docs/research/BAYESIAN_RATING_PRIOR_EXPERIMENT.md`. The category-mass design is
 kept separate in `docs/research/CATEGORY_WEIGHTING_CONCEPT.md` because it remains
 a user-control and governance concept, not production math.
+
+## Reality audit (2026-09-16)
+
+[`RANKING_REALITY_AUDIT_2026-09-16.md`](RANKING_REALITY_AUDIT_2026-09-16.md)
+reproduces both production tables from a fresh snapshot, builds the frontier
+head-to-head matrix, and compares ten aggregation methods with held-out
+validation. Its scripts live in `scripts/ranking-deepdive/`. Headline: the
+pairwise record supports Fable 5.1 > Astra > Opus 5 ≈ Sol, but frontier
+coverage is too sparse (1-8 cells per family) and ARC-AGI-3 alone decides the
+family leader; data admission, not a new formula, is the main lever.

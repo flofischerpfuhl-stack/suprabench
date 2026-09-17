@@ -348,8 +348,13 @@ function supraBench() {
     // ── Data (reactive from Convex) ──
     rankedModels: [],
     rankedFamilies: [],
+    // Unfiltered live lists + the cached snapshot used for in-browser
+    // tag-filtered ranking (see _loadFilteredModels).
     modelNotFound: false,
     benchNotFound: false,
+    _liveRankedModels: null,
+    _liveRankedFamilies: null,
+    _rankingSnapshot: null,
     rankedBenches: [],
 
     // Per-collection "first-update-arrived" flags. Until a collection
@@ -715,16 +720,24 @@ function supraBench() {
 
       if (wantModels) {
         this._viewSub("models.listRanked", api.models.listRanked, {}, (data) => {
-          this.rankedModels = data || [];
+          this._liveRankedModels = data || [];
           this.loaded.models = true;
+          // Live data changed → the locally cached ranking snapshot is
+          // stale. With a tag filter active, recompute the filtered view;
+          // otherwise show the live list as-is.
+          this._rankingSnapshot = null;
+          if (this.activeTags.length > 0) this._loadFilteredModels();
+          else this.rankedModels = this._liveRankedModels;
         });
         // Subscribe to families too whenever the models view is open,
         // even if the user is currently in "models" scope — keeps the
         // toggle instant. Families table is small (one row per family,
         // not per model) so the bandwidth is negligible.
         this._viewSub("models.listRankedFamilies", api.models.listRankedFamilies, {}, (data) => {
-          this.rankedFamilies = data || [];
+          this._liveRankedFamilies = data || [];
           this.loaded.families = true;
+          if (this.activeTags.length > 0) this._loadFilteredModels();
+          else this.rankedFamilies = this._liveRankedFamilies;
         });
       } else {
         this._closeViewSub("models.listRanked");
@@ -2000,50 +2013,72 @@ function supraBench() {
       this.leaderboardScope = "models";
     },
 
+    // Tag-filtered leaderboard, computed in the browser.
+    //
+    // The filtered score is the same pairwise fit the server runs for
+    // the global leaderboard (js/supra-rank-core.js — literally the same
+    // file), restricted to benches that carry any active tag. It needs
+    // one `rankingSnapshot` read per session instead of a full score-
+    // table read on the server for every tag combination; Convex caches
+    // that snapshot for all visitors until the data changes.
     async _loadFilteredModels() {
       const { client, api } = window.sbConvex;
-      // Stale-write guard: capture the current sequence number on
-      // entry. Every result write below is gated on the seq still
-      // being current — if the user toggled tags again before we
-      // resolved, a newer call has bumped the counter and we skip
+      // Stale-write guard: if the user toggles tags again before we
+      // resolve, a newer call has bumped the counter and we skip
       // writing so the latest tag selection stays authoritative.
       const seq = ++this._filterSeq;
       const isCurrent = () => seq === this._filterSeq;
+      const liveModels = this._liveRankedModels || this.rankedModels || [];
+      const liveFamilies = this._liveRankedFamilies || this.rankedFamilies || [];
 
-      // No active tags: snap both rankedModels and rankedFamilies back
-      // to their unfiltered, supraScore-sorted lists. Without this
-      // re-fetch the previous filteredScore-sorted ordering would
-      // persist (the reactive listRanked / listRankedFamilies subs
-      // only re-fire when the underlying data changes, not when we
-      // mutate locally).
       if (this.activeTags.length === 0) {
-        try {
-          const r = await client.query(api.models.listRanked, {});
-          if (isCurrent()) this.rankedModels = r;
-        } catch (e) { console.error("Failed to reload ranked models:", e); }
-        try {
-          const r = await client.query(api.models.listRankedFamilies, {});
-          if (isCurrent()) this.rankedFamilies = r;
-        } catch (e) { console.error("Failed to reload ranked families:", e); }
+        this.rankedModels = liveModels;
+        this.rankedFamilies = liveFamilies;
         return;
       }
-      let filterError = null;
       try {
-        const r = await client.query(api.models.listRankedWithFilter, { activeTags: this.activeTags });
-        if (isCurrent()) this.rankedModels = r;
+        if (!this._rankingSnapshot) {
+          this._rankingSnapshot = await client.query(api.models.rankingSnapshot, {});
+        }
+        if (!isCurrent()) return;
+        const active = this.activeTags;
+        const result = window.SupraRankCore.rank({
+          models: this._rankingSnapshot.models,
+          benches: this._rankingSnapshot.benches,
+          scores: this._rankingSnapshot.scores,
+          benchFilter: (b) => (b.tags || []).some((t) => active.includes(t)),
+        });
+        const byFiltered = (a, b) => {
+          if (a.filteredScore !== null && b.filteredScore === null) return -1;
+          if (a.filteredScore === null && b.filteredScore !== null) return 1;
+          if (a.filteredScore !== null && b.filteredScore !== null) return b.filteredScore - a.filteredScore;
+          return b.supraScore - a.supraScore;
+        };
+        const cfg = new Map(result.configs.map((c) => [c.modelId, c]));
+        this.rankedModels = liveModels
+          .map((m) => {
+            const c = cfg.get(String(m._id));
+            return { ...m, filteredScore: c && c.ability !== null ? c.supraScore : null };
+          })
+          .sort(byFiltered);
+        const fam = new Map(result.families.map((f) => [f.familyTag + "|" + f.provider, f]));
+        this.rankedFamilies = liveFamilies
+          .map((f) => {
+            const r = fam.get(f.familyTag + "|" + f.provider);
+            return {
+              ...f,
+              benchCount: r ? r.benchCount : 0,
+              provisional: r ? r.provisional : true,
+              representativeName: r && r.representativeName ? r.representativeName : f.representativeName,
+              filteredScore: r && r.ability !== null ? r.supraScore : null,
+            };
+          })
+          .sort(byFiltered);
       } catch (e) {
-        console.error("Failed to load filtered models:", e);
-        filterError = e;
-      }
-      try {
-        const r = await client.query(api.models.listRankedFamiliesWithFilter, { activeTags: this.activeTags });
-        if (isCurrent()) this.rankedFamilies = r;
-      } catch (e) {
-        console.error("Failed to load filtered families:", e);
-        filterError = e;
-      }
-      if (filterError && isCurrent()) {
-        this.showToast(filterError?.message || "Couldn't apply tag filter — please try again.", "error");
+        console.error("Failed to compute filtered leaderboard:", e);
+        if (isCurrent()) {
+          this.showToast(e?.message || "Couldn't apply tag filter — please try again.", "error");
+        }
       }
     },
 

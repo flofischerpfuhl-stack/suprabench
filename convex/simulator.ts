@@ -133,6 +133,8 @@ export const fetchSnapshot = query({
       cachedQualityScore: b.cachedQualityScore ?? null,
       cachedDifficultyMultiplier: b.cachedDifficultyMultiplier ?? null,
       cachedHeadroom: b.cachedHeadroom ?? null,
+      cachedDimensions: b.cachedDimensions ?? null,
+      cachedRaterCount: b.cachedRaterCount ?? 0,
       cachedFrontierMean: b.cachedFrontierMean ?? null,
       cachedModelCount: b.cachedModelCount ?? null,
       cachedNetUpvotes: typeof b.cachedNetUpvotes === "number" ? b.cachedNetUpvotes : 1,

@@ -1,14 +1,16 @@
 // Provider-neutral family identity with a deliberately small set of
 // unambiguous name-derived overrides. Product tier/version belongs to the
 // family; execution settings such as reasoning effort stay configurations.
+//
+// The rule itself lives in the shared ranking core so the browser (tag
+// filter, simulator) groups families exactly like the server does.
+import "../public/js/supra-rank-core.js";
 
-const GPT_56_TIER = /^GPT-5\.6\s+(Sol|Terra|Luna)(?:\s+\([^)]*\))?$/i;
-const MUSE_SPARK_VERSION = /^Muse Spark\s+(1\.\d+)(?:\s+\([^)]*\))?$/i;
-
-const GPT_56_TIER_NAMES: Record<string, string> = {
-  sol: "Sol",
-  terra: "Terra",
-  luna: "Luna",
+const core = (globalThis as any).SupraRankCore as {
+  canonicalFamilyTag: (
+    modelName: string,
+    requestedFamilyTag?: string | null
+  ) => string | undefined;
 };
 
 /**
@@ -20,14 +22,5 @@ export function canonicalFamilyTag(
   modelName: string,
   requestedFamilyTag?: string | null,
 ): string | undefined {
-  const name = modelName.trim();
-
-  const gpt56 = name.match(GPT_56_TIER);
-  if (gpt56) return `GPT-5.6 ${GPT_56_TIER_NAMES[gpt56[1].toLowerCase()]}`;
-
-  const muse = name.match(MUSE_SPARK_VERSION);
-  if (muse) return `Muse Spark ${muse[1]}`;
-
-  const requested = requestedFamilyTag?.trim();
-  return requested || undefined;
+  return core.canonicalFamilyTag(modelName, requestedFamilyTag);
 }

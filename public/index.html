@@ -62,9 +62,9 @@
     <!-- JSON-LD structured data is injected from an external file so CSP can block inline scripts.
          Emits a 3-entity @graph: WebSite, Organization, Dataset. The Dataset
          entity is what makes us eligible for Google Dataset Search. -->
-    <script defer src="js/structured-data.js?v=20260425-dataset"></script>
+    <script defer src="js/structured-data.js?v=20260917-unified"></script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260917-a11y">
+    <link rel="stylesheet" href="css/style.css?v=20260917-unified">
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
     <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
     <link rel="preconnect" href="https://upbeat-clam-790.convex.cloud">
@@ -75,8 +75,9 @@
          and Alpine MUST stay after app.js (it boots as soon as it executes and needs supraBench()). -->
     <script defer src="vendor/convex/browser.bundle.js?v=1.35.1"></script>
     <script defer src="js/convex.js?v=20260418m"></script>
-    <script defer src="js/simulator-math.js?v=20260424-noadminmint"></script>
-    <script defer src="js/app.js?v=20260917-perf"></script>
+    <script defer src="js/supra-rank-core.js?v=20260917-unified"></script>
+    <script defer src="js/simulator-math.js?v=20260917-unified"></script>
+    <script defer src="js/app.js?v=20260917-unified"></script>
     <script defer src="vendor/alpinejs/cdn.min.js?v=3.13.3"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
@@ -230,9 +231,9 @@
                           @click="setLeaderboardScope('families')">Model-Family</span>
                 </th>
                 <th>Provider</th>
-                <th title="Bench-weighted mean of the model's per-bench medians, adjusted by evidence confidence around the neutral 50-point midpoint. See About for the full formula.">SupraScore</th>
+                <th title="Expected win rate against the current top-10 configurations, from pairwise duels on every benchmark (weighted by community bench quality, difficulty, saturation and upvotes). See About for the full method.">SupraScore</th>
                 <th x-show="activeTags.length > 0">Filtered Score</th>
-                <th title="Number of distinct benches this model has a net-positive score on. More coverage raises evidence confidence, but missing weak benches no longer pushes the score toward 0.">Coverage</th>
+                <th title="Number of distinct benches this configuration has a valid score on. A bench it never ran produces no duel and does not count against it.">Coverage</th>
             </tr>
         </thead>
         <tbody>
@@ -264,11 +265,10 @@
     </template>
 
     <!-- ── Families Table (leaderboardScope === 'families') ──
-         Same five-column shape as the models table but rows are concrete
-         representatives cached per (familyTag, provider). Click on
-         a row drills down: switches back to models mode with that
-         family filter applied, so the user immediately sees which
-         concrete member models belong to the opponent-adjusted family row. -->
+         One row per (familyTag, provider). The score is the family's best
+         configuration from the same fit as the models table; the subtitle
+         names it. Click on a row drills down: switches back to models mode
+         with that family filter applied. -->
     <template x-if="leaderboardScope === 'families'">
     <div class="table-scroll" x-show="leaderboardScope === 'families' && filteredRankedFamilies.length > 0">
     <table class="models-list">
@@ -283,8 +283,8 @@
                           @click="setLeaderboardScope('families')">Model-Family</span>
                 </th>
                 <th>Provider</th>
-                <th title="Opponent-adjusted family ceiling. Each benchmark uses the family's best valid concrete configuration; Bradley-Terry joins wins and losses across participant fields.">SupraScore</th>
-                <th x-show="activeTags.length > 0" title="The same opponent-adjusted family calculation, restricted to benchmarks with the selected tags.">Filtered Score</th>
+                <th title="Score of the family's best configuration, from the same pairwise fit as the Model view. A configuration can only represent its family if it covers at least half of the family's benchmark weight.">SupraScore</th>
+                <th x-show="activeTags.length > 0" title="The same calculation, restricted to benchmarks with the selected tags.">Filtered Score</th>
                 <th title="Number of visible concrete configurations in the family.">Members</th>
                 <th title="Number of distinct benchmarks with at least one valid family configuration.">Coverage</th>
             </tr>
@@ -296,7 +296,7 @@
                     <td class="m-name">
                         <a href="#" @click.prevent x-text="f.familyTag" style="font-weight:500"></a>
                         <div style="font-size:.76rem;color:var(--text3);margin-top:.2rem">
-                            opponent-adjusted family ceiling
+                            <span x-show="f.representativeName" x-text="'best: ' + (f.representativeName || '')"></span>
                             <span x-show="f.provisional" class="tag-sm" style="margin-left:.3rem" title="This family currently has fewer than three distinct benchmark results.">provisional</span>
                         </div>
                     </td>
@@ -635,7 +635,7 @@
                 <th style="width:50px">#</th>
                 <th class="sort-btn" tabindex="0" :aria-sort="benchSortField === 'name' ? (benchSortAsc ? 'ascending' : 'descending') : 'none'" @click="toggleBenchSort('name')">Benchmark</th>
                 <th>Type</th>
-                <th class="sort-btn" tabindex="0" :aria-sort="benchSortField === 'score' ? (benchSortAsc ? 'ascending' : 'descending') : 'none'" @click="toggleBenchSort('score')" title="Bench Weight = quality × difficulty × headroom × (net-upvotes / max net-upvotes). This is the bench's direct ability contribution to SupraScore, not a pure quality-only score. Distinct model count is used separately as evidence confidence. Range 0–100.">Bench Weight</th>
+                <th class="sort-btn" tabindex="0" :aria-sort="benchSortField === 'score' ? (benchSortAsc ? 'ascending' : 'descending') : 'none'" @click="toggleBenchSort('score')" title="Bench Weight = quality × difficulty × headroom × (net-upvotes / max net-upvotes). This is how much a duel on this bench weighs in the SupraScore, not a pure quality-only score. Range 0–100.">Bench Weight</th>
                 <th>Dimensions</th>
                 <th>Tags</th>
                 <th>Models</th>
@@ -902,7 +902,7 @@
                             @click="benchBreakdownExpanded = !benchBreakdownExpanded">
                         <span class="expand-icon" :class="{'open': benchBreakdownExpanded}">▼</span>
                         Bench Score breakdown
-                        <span class="dim-help" tabindex="0" @click.stop data-tip="Bench Score = quality × difficulty × headroom × (net-upvotes / max net-upvotes). This is the bench's ability weight in SupraScore. Distinct model count is used separately as evidence confidence, not as a direct penalty on the bench's ability weight.">?</span>
+                        <span class="dim-help" tabindex="0" @click.stop data-tip="Bench Score = quality × difficulty × headroom × (net-upvotes / max net-upvotes). This is how much a duel on this bench weighs in the SupraScore. How many models ran the bench does not change it.">?</span>
                     </button>
                     <div x-show="benchBreakdownExpanded" x-transition>
                         <div class="weight-breakdown__row">
@@ -1896,8 +1896,9 @@
                 <li><strong>Upvote share $u_b / U^\star$.</strong> Without this, anyone could mint a brand-new bench, self-rate it $Q = D = H = 1$ and immediately appear at #1 on the bench leaderboard. With it, a 1-upvote vanity bench at $u_b = 1$ against an established $U^\star = 100$ is worth $1\,\%$ of an equally well-rated leader. The most-upvoted bench always has share = 1, so there's no self-penalty at the top.</li>
             </ul>
 
-            <p class="helper-text">The upvote share is linear on purpose: user trust should be able to dominate model coverage. Distinct-model coverage is still used later as evidence confidence, but it does not directly reduce the bench's ability weight.</p>
-            <p><strong>Can the community overturn the current default?</strong> Yes. If a new benchmark reaches 10 net upvotes while an older one remains at 1, the new benchmark receives its full quality × difficulty × headroom weight and the older benchmark receives a <code>1/10</code> trust factor. Many consistent quality ratings also overpower the three-neutral-rating prior used by the family ranking. Missing model coverage is not a negative score; it only keeps the evidence provisional until more comparisons exist.</p>
+            <p class="helper-text">The upvote share is linear on purpose: user trust should be able to dominate everything else. How many models ran a bench does not change its weight — a trusted specialist bench is not buried just because few labs have run it yet.</p>
+            <p><strong>Can the community overturn the current default?</strong> Yes. If a new benchmark reaches 10 net upvotes while an older one remains at 1, the new benchmark receives its full quality × difficulty × headroom weight and the older benchmark receives a <code>1/10</code> trust factor.</p>
+            <p><strong>One refinement inside the ranking:</strong> while a bench has only a handful of raters, the ranking pulls each 1–5 rating toward the neutral 3 with a three-rater prior, so one enthusiastic rater is not treated as settled consensus. Many consistent ratings overpower the prior. The Bench Score shown on the bench pages is the unshrunk product above.</p>
         </div>
     </div>
 
@@ -1908,68 +1909,42 @@
             <span>How is a model's SupraScore computed?</span>
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q2b')" x-transition>
-            <p>A model's <strong>SupraScore</strong> is the headline number on every model page and the primary leaderboard sort key. It builds <em>on top of</em> the Bench Score from the previous section — so if you haven't read that one yet, start there. Conceptually, it answers: <em>"how well does this model perform on the benchmarks the community trusts, adjusted by how much evidence we have?"</em></p>
+            <p>A model's <strong>SupraScore</strong> is the headline number on every model page and the leaderboard sort key. It answers one question: <em>"on a benchmark the community trusts, how often does this model beat the current frontier?"</em> It builds on the Bench Score from the previous section.</p>
 
-            <p>Three preparatory steps to turn raw submissions into a usable per-(model, bench) score, then two scoring steps to combine those into a final SupraScore.</p>
+            <p>Three preparatory steps turn raw submissions into one number per (model, bench) cell. Three scoring steps turn those cells into the SupraScore.</p>
 
             <h4 class="qa-subheader">Foundations — submission to per-pair score</h4>
 
-            <p><strong>Step 1 — Normalise each submission.</strong> Every bench has its own scale (e.g. 0–100, 0–10, 0–1). To compare scores across benches we map every raw submission to a common $[0, 100]$ scale using the bench's declared min and max.</p>
-            <ul class="about-list about-list--inline">
-                <li>$s_{\text{raw}}$ — a single raw submission, on the bench's native scale.</li>
-                <li>$s_{\min}, s_{\max}$ — the bench's declared lower and upper bounds.</li>
-                <li>$s_{\text{norm}} \in [0, 100]$ — the same submission, rescaled.</li>
-            </ul>
+            <p><strong>Step 1 — Normalise each submission.</strong> Every bench has its own scale (e.g. 0–100, 0–10, 0–1). We map every raw submission to a common $[0, 100]$ scale using the bench's declared min and max.</p>
             <p class="math-block">$$s_{\text{norm}} \;=\; \frac{s_{\text{raw}} - s_{\min}}{s_{\max} - s_{\min}} \cdot 100$$</p>
-            <p><em>In plain words:</em> "where does this raw number sit between the bench's min and max, expressed as a percentage."</p>
 
-            <p><strong>Step 2 — Validate via community votes.</strong> A submission only counts toward any score if its net vote is positive. The submitter gets an implicit $+1$, so a fresh submission starts at $1/0$. Wrong, duplicate, or fraudulent submissions get downvoted out of the calculation and stop contributing.</p>
+            <p><strong>Step 2 — Validate via community votes.</strong> A submission only counts if its net vote is positive. The submitter gets an implicit $+1$, so a fresh submission starts at $1/0$. Wrong, duplicate, or fraudulent submissions get downvoted out of the calculation.</p>
 
-            <p><strong>Step 3 — Take the median per (model, bench) pair.</strong> The same model is often submitted multiple times on the same bench (different runs, different prompts, different setups). We collapse all valid normalised submissions for a given $(m, b)$ pair into one number using the median.</p>
-            <ul class="about-list about-list--inline">
-                <li>$\mathcal{S}_{m,b}$ — the set of all community-validated normalised submissions ($s_{\text{norm}}$ values) for model $m$ on bench $b$.</li>
-                <li>$\mu_{m,b} \in [0, 100]$ — the median of that set. <em>In plain words: the score of model $m$ on bench $b$.</em> One number per (model, bench) cell.</li>
-            </ul>
+            <p><strong>Step 3 — Take the median per (model, bench) pair.</strong> The same model is often submitted several times on one bench. All valid submissions for a pair collapse into one number:</p>
             <p class="math-block">$$\mu_{m,b} \;=\; \operatorname{median}\bigl(\mathcal{S}_{m,b}\bigr)$$</p>
-            <p>Median, not mean — one outlier submission (a fluke run, a misconfigured prompt, an outright fake that hasn't been downvoted yet) cannot shift the result.</p>
+            <p>Median, not mean — one outlier submission (a fluke run, a misconfigured prompt, a fake that hasn't been downvoted yet) cannot shift the result.</p>
 
-            <h4 class="qa-subheader">Variables — model side</h4>
+            <h4 class="qa-subheader">Step 4 — Duels instead of averages</h4>
+            <p>On every bench, every pair of models that both have a score is a <strong>duel</strong>: the higher $\mu$ wins, equal values tie. We do <em>not</em> average raw percentages across benches, because a point does not mean the same thing everywhere — 5 % leads ARC-AGI-3 while 98 % is ordinary on a saturated bench, and being first of 90 models is not the same as being first of 8.</p>
+            <p>Each duel on bench $b$ carries the weight</p>
+            <p class="math-block">$$w_{\text{duel}}(b) \;=\; \frac{\operatorname{BenchWeight}(b)}{\overline{\operatorname{BenchWeight}}} \cdot \frac{1}{n_b - 1}$$</p>
             <ul class="about-list about-list--inline">
-                <li>$m$ — a single model.</li>
-                <li>$\mathcal{B}_m$ — the set of benches on which $m$ has at least one community-validated score (i.e. at least one $\mu_{m,b}$ exists).</li>
-                <li>$\mu_{m,b} \in [0, 100]$ — the score of model $m$ on bench $b$, defined above.</li>
-                <li>$\operatorname{BenchScore}(b) \in [0, 100]$ — the user-trust-adjusted weight from the previous section. Used here as the <em>ability weight</em> for bench $b$ in the average.</li>
-                <li>$\bar{\mu}_m \in [0, 100]$ — the model's <strong>weighted mean</strong> across all its evaluated benches (computed in step 4 below).</li>
-                <li>$N_b$ — how many distinct models have at least one community-validated score on bench $b$.</li>
-                <li>$N^\star = \max_{b'} N_{b'}$ — the largest distinct-model count among non-hidden benches.</li>
-                <li>$E_m \;=\; \displaystyle\sum_{b \in \mathcal{B}_m} \operatorname{BenchScore}(b) \cdot \sqrt{N_b/N^\star}$ — the model's <strong>evidence weight</strong>. <em>In plain words: how much trusted measurement, adjusted for comparative breadth, has been thrown at this model.</em></li>
-                <li>$E^\star \;=\; \max_{m'} E_{m'}$ — the maximum $E_m$ across every <em>non-hidden</em> model. Defines the highest-evidence reference point.</li>
+                <li>$\operatorname{BenchWeight}(b)$ — quality × difficulty × headroom × upvote share, as in the previous section (with the small-rater prior). A saturated or untrusted bench produces weak duels; a bench with difficulty 1/5 produces none.</li>
+                <li>$n_b$ — how many models have a score on $b$. Dividing by $n_b - 1$ gives every model the <em>same total weight</em> from a bench no matter how many others ran it, so a bench with 90 entrants does not drown out one with 15.</li>
             </ul>
+            <p>A bench that only one model has run produces no duel. <strong>Not being tested is never negative evidence</strong> — and a self-reported score on a bench nobody else touched is worth nothing.</p>
 
-            <h4 class="qa-subheader">Step 4 — The weighted mean</h4>
-            <p><em>In plain words:</em> for every bench the model has been tested on, multiply the model's score on that bench by how much that bench is worth (its Bench Score), sum it all up, then divide by the total Bench-Score weight the model has accumulated.</p>
-            <p class="math-block">$$\bar{\mu}_m \;=\; \frac{\displaystyle \sum_{b \in \mathcal{B}_m} \mu_{m,b} \cdot \operatorname{BenchScore}(b)}{\displaystyle \sum_{b \in \mathcal{B}_m} \operatorname{BenchScore}(b)}$$</p>
+            <h4 class="qa-subheader">Step 5 — One fit across all benches</h4>
+            <p>All duels from all benches go into one <a href="https://en.wikipedia.org/wiki/Bradley%E2%80%93Terry_model" target="_blank" rel="noopener noreferrer">Bradley-Terry</a> model — the same family of models behind chess Elo and arena-style leaderboards. Every model $m$ gets a strength $a_m$ such that</p>
+            <p class="math-block">$$P(m \text{ beats } k) \;=\; \frac{1}{1 + e^{-(a_m - a_k)}}$$</p>
+            <p>matches the observed weighted duel results as well as possible. Because models share opponents, the benches are tied together: <strong>beating a strong field counts for more than beating a weak one</strong>, even when two models never met on the same bench. A small regularisation ($\lambda = 0.15$, chosen by held-out prediction, not by a desired order) pulls thinly tested models toward the middle, so a single spectacular result cannot outrank models that won across the board.</p>
 
-            <p><strong>Why weighted and not a simple mean?</strong> A simple mean (sum the scores, divide by the number of benches) treats every bench equally. So a saturated trivia bench at $\operatorname{BenchScore} = 1$ would count just as much as a fresh hard frontier bench at $\operatorname{BenchScore} = 50$. That gives a model-runner a free path to the top: pad the model with high scores on dozens of cheap benches and watch the average climb. The weighted mean kills that — a bench worth $1$ point of weight contributes $50$× less to both numerator and denominator than a bench worth $50$ points, so its influence on the average is exactly its share of the total weight.</p>
+            <h4 class="qa-subheader">Step 6 — The number you see</h4>
+            <p class="math-block">$$\operatorname{SupraScore}(m) \;=\; 100 \cdot \frac{1}{10} \sum_{k \,\in\, \text{top-10}} P(m \text{ beats } k)$$</p>
+            <p><em>In plain words:</em> the expected win rate against the ten strongest configurations right now (a model inside that group counts a tie against itself). 50 means "as good as the average frontier model"; 60 means it wins six of ten such duels. The number is relative to the current frontier by design — when a stronger model arrives, everybody else's win rate against the field drops.</p>
 
-            <p><strong>Current scale limitation:</strong> production currently averages each benchmark's published 0-100 result directly. That is transparent, but it assumes that one point means the same capability change on every benchmark. A hard benchmark can therefore have a low absolute frontier even when a model places near the top. We are testing a two-axis shadow view: within-benchmark empirical-percentile capability plus separately displayed family evidence. It preserves placement across unlike scales without silently turning broader historical coverage into model ability. It is not active in the canonical ranking yet.</p>
-            <p class="helper-text">The immutable-snapshot experiment, scale-invariance tests, and leave-one-benchmark-out results are published in <code>docs/research/BENCHMARK_SCALE_CALIBRATION_EXPERIMENT.md</code>.</p>
-
-            <p><strong>And why does the denominator divide by the sum of weights, not by the bench count?</strong> Because that's what makes the result land back on the same $[0, 100]$ scale as the individual $\mu_{m,b}$ values. A weighted average of numbers in $[0, 100]$ is itself in $[0, 100]$ <em>only</em> if you divide by the sum of the weights. Dividing by the count would give you a number that scales with how much weight you've accumulated — but that's a separate question (covered in step 5), not the question this step is answering.</p>
-
-            <p class="helper-text">Think of step 4 as "how good is the model on the benches it actually was tested on" — pure performance intensity, normalised to $[0, 100]$. Step 5 below adds the second axis: "how confident are we in that estimate?" Two orthogonal pieces of information, separated by design.</p>
-            <p class="helper-text">Benches with $\operatorname{BenchScore}(b) = 0$ (zero difficulty, zero quality, etc.) are excluded from both numerator and denominator. They contribute nothing in either direction — neither help nor hurt.</p>
-
-            <h4 class="qa-subheader">Step 5 — Evidence confidence</h4>
-            <p><em>In plain words:</em> move the weighted mean from step 4 toward or away from the neutral 50-point midpoint based on the model's evidence share. A model with the highest evidence keeps its full weighted mean; a sparse model is treated as uncertain, not bad.</p>
-            <p class="math-block">$$\operatorname{SupraScore}(m) \;=\; 50 \;+\; \sqrt{\dfrac{E_m}{E^\star}} \cdot \left(\bar{\mu}_m - 50\right)$$</p>
-            <p>If $E_m = E^\star$ the confidence factor is exactly $1$ (the highest-evidence model has no self-penalty). If $E_m = \tfrac{1}{4} E^\star$ the factor is $\sqrt{0.25} = 0.5$ — the estimate moves halfway from neutral 50 toward the model's weighted mean.</p>
-
-            <p><strong>Why does this exist on top of step 4?</strong> Without it, a model with one extremely good score on one favourable bench could beat a well-covered rival too easily. But pushing sparse models toward $0$ is too harsh: if a model is #1 on the most trusted benches, missing scores on weak benches should not be treated as negative evidence. Shrinking toward $50$ means low evidence stays cautious without erasing the signal.</p>
-
-            <p class="helper-text">The $\sqrt{\cdot}$ shape mirrors the statistical $1/\sqrt{N}$ standard-error falloff: halving your evidence doesn't halve the distance from neutral, it shrinks it by $\sqrt{2} \approx 1.41$. Hidden models are excluded from the $E^\star$ maximum so a mothballed flagship can't permanently squash fresh entrants.</p>
-
-            <p class="helper-text">A consequence to be aware of: a model's SupraScore can move when <em>other</em> models gain evidence. A well-tested new flagship that raises $E^\star$ shifts everyone else's confidence share proportionally. This is deliberate — evidence is relative to what else has been tested. See the worked example below for concrete numbers.</p>
+            <p class="helper-text">The whole calculation is one dependency-free file, <code>public/js/supra-rank-core.js</code>. The server runs it for the leaderboard, and your browser runs the very same file for tag-filtered views and the simulator — there is no second implementation that could drift.</p>
+            <p class="helper-text">Why this replaced the weighted mean of raw percentages (September 2026): the audit, the rejected alternatives and the attack tests are published in <code>docs/research/RANKING_REALITY_AUDIT_2026-09-16.md</code>.</p>
         </div>
     </div>
 
@@ -2039,26 +2014,30 @@
             <span>Worked example — how do the numbers add up for a single model?</span>
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q5')" x-transition>
-            <p>Take a hypothetical model "Claude X" with valid medians on three benches:</p>
+            <p>Three models, two benches. Both benches have identical community ratings; the only difference is saturation.</p>
             <table class="qa-table">
-                <thead><tr><th>Bench</th><th>$\mu_{m,b}$</th><th>$Q$</th><th>$D$ (avg)</th><th>$N$</th><th>$f(b)$</th><th>$H$</th><th>$w$</th><th>$w \cdot \mu$</th></tr></thead>
+                <thead><tr><th>Bench</th><th>$f(b)$</th><th>$H$</th><th>Bench weight</th><th>Claude X</th><th>Model Y</th><th>Model Z</th></tr></thead>
                 <tbody>
-                    <tr><td>MMLU (saturated)</td><td>88</td><td>80</td><td>0.50 (3/5)</td><td>50</td><td>96</td><td>0.10</td><td>4.0</td><td>352</td></tr>
-                    <tr><td>ARC-AGI 4 (fresh)</td><td>72</td><td>75</td><td>1.00 (5/5)</td><td>8</td><td>65</td><td>0.70</td><td>52.5</td><td>3 780</td></tr>
-                    <tr><td>TrivialBench</td><td>99</td><td>60</td><td>0.00 (1/5)</td><td>20</td><td>99</td><td>0.10</td><td>0</td><td>0</td></tr>
-                    <tr><td><strong>Σ</strong></td><td></td><td></td><td></td><td></td><td></td><td></td><td><strong>56.5</strong></td><td><strong>4 132</strong></td></tr>
+                    <tr><td>FrontierBench (fresh)</td><td>65</td><td>0.70</td><td>47.9</td><td><strong>72</strong></td><td>65</td><td>40</td></tr>
+                    <tr><td>SaturatedBench</td><td>98</td><td>0.10</td><td>6.8</td><td>98</td><td><strong>99</strong></td><td>97</td></tr>
                 </tbody>
             </table>
-            <p class="math-block">$$\bar{\mu}_{\text{Claude X}} \;=\; \frac{4\,132}{56.5} \;\approx\; 73.1$$</p>
-            <p>That's the weighted mean. Now apply the evidence-confidence step. Suppose the most evidenced model in the table has $E^\star = 100$. Claude X's evidence weight is $E_m = 4.0 \cdot \sqrt{50/50} + 52.5 \cdot \sqrt{8/50} = 25.0$, so its confidence factor is $\sqrt{0.25} = 0.5$:</p>
-            <p class="math-block">$$\operatorname{SupraScore}(\text{Claude X}) \;=\; 50 + 0.5 \cdot (73.1 - 50) \;\approx\; 61.6$$</p>
-            <p>If Claude X <em>were</em> the most-evidenced model ($E^\star = E_m = 25.0$), the factor would be $1$ and the SupraScore would equal the weighted mean $73.1$ exactly.</p>
-            <p>Four takeaways from this:</p>
+            <p><strong>Duels.</strong> On FrontierBench: X beats Y, X beats Z, Y beats Z. On SaturatedBench: Y beats X, Y beats Z, X beats Z. Each bench has three models, so each duel carries half of that bench's normalised weight — a FrontierBench duel weighs about seven times as much as a SaturatedBench duel.</p>
+            <p><strong>Fit.</strong> X and Y each won one bench, but X won the one that still measures something:</p>
+            <table class="qa-table">
+                <thead><tr><th>Model</th><th>Strength $a_m$</th><th>SupraScore</th></tr></thead>
+                <tbody>
+                    <tr><td>Claude X</td><td>+1.27</td><td><strong>72.8</strong></td></tr>
+                    <tr><td>Model Y</td><td>+0.20</td><td><strong>53.2</strong></td></tr>
+                    <tr><td>Model Z</td><td>−1.47</td><td><strong>24.0</strong></td></tr>
+                </tbody>
+            </table>
+            <p>Four takeaways:</p>
             <ul class="about-list">
-                <li>The <strong>frontier bench</strong> dominates ($w = 52.5$) because it's hard, trustworthy, and not yet saturated.</li>
-                <li>The <strong>saturated bench</strong> still counts a little ($w = 4$) but contributes less than 10 % of the total weight.</li>
-                <li>The <strong>trivial bench</strong> is silently filtered out by $D = 0$ — scoring 99 % on it earns the model exactly nothing.</li>
-                <li>The <strong>evidence-confidence step</strong> means a model that's been tested on only a small fraction of the bench pool is treated as uncertain, but missing weak benches no longer pushes it toward 0.</li>
+                <li>A raw-percentage average would have ranked Model Y first (82 vs 85) — purely because it is one point ahead on a bench where everyone scores 97–99.</li>
+                <li>The <strong>saturated bench still counts a little</strong>: Y's win there keeps it clearly above the middle.</li>
+                <li>A bench with difficulty 1/5 has weight 0 and produces no duels at all — scoring 99 % on it earns exactly nothing.</li>
+                <li>Absolute percentages never enter the result, only who beat whom and how much the community trusts the bench it happened on.</li>
             </ul>
         </div>
     </div>
@@ -2099,11 +2078,12 @@
             <p>Adversarial robustness is built into the formula at every layer:</p>
             <ul class="about-list">
                 <li><strong>One submission can't anchor a score</strong> — the per-(model, bench) median becomes robust to outliers as soon as $n \ge 2$ submissions exist: a single attacker number is replaced by the community median the moment a second honest submission lands.</li>
-                <li><strong>One bench can only carry a model if users trust it</strong> — the SupraScore is averaged across all benches a model has scores on, weighted by quality × difficulty × headroom × community upvote share. Sparse evidence is then pulled toward the neutral 50-point midpoint instead of being treated as a full-strength claim.</li>
+                <li><strong>One bench can't carry a model</strong> — every duel is weighted by quality × difficulty × headroom × community upvote share, and the fit is regularised: a model with one spectacular result is pulled toward the middle and cannot outrank models that won across many trusted benches.</li>
                 <li><strong>One user can't carry a bench</strong> — every bench's contribution to its own headline score and to any model's SupraScore is multiplied by $u_b/U^\star$ where $u_b$ is its net upvote count and $U^\star$ is the leader's. A self-rated 100/100 vanity bench from a single account is worth $1/U^\star$ of an established bench at the same Q·D·H — you'd need $U^\star$ separate accounts upvoting it to even tie. Same defence works on the bench leaderboard <em>and</em> in the SupraScore aggregate, so you can't spawn a bench just to pump one model.</li>
-                <li><strong>Single-model benches stay provisional</strong> — distinct model count is not allowed to override user trust in the Bench Score, but it still enters the evidence-confidence term. A high-upvote specialist bench can matter immediately; a one-account, one-model vanity bench stays low-evidence until other models and users engage with it.</li>
+                <li><strong>A bench only you ran is worth nothing</strong> — scores become duels, and a duel needs an opponent. A one-account, one-model vanity bench produces no duel at all, so a self-reported 100 on it cannot move any ranking until other models are measured there.</li>
                 <li><strong>Difficulty uses median, not mean</strong> — a single 5-star rater on a trivial bench can't fake difficulty.</li>
-                <li><strong>Saturation auto-detected</strong> — pumping a saturated bench gives diminishing returns by construction.</li>
+                <li><strong>Saturation auto-detected</strong> — pumping a saturated bench gives diminishing returns by construction, and because only the order counts, a 99.4 on a solved bench is no longer worth 99 points of anything.</li>
+                <li><strong>A flattering configuration can't speak for its family</strong> — a configuration that reports only the benches it wins may look good as a row, but it can represent its family only if it covers at least half of the family's benchmark weight.</li>
                 <li><strong>Engagement-aware hide threshold</strong> — small voting cliques can't take down established entries.</li>
                 <li><strong>Anti-resurrection</strong> — re-submitting your own removed entries under the same name is blocked.</li>
                 <li><strong>Rate limiting</strong> — submissions are capped at 30 individual scores per 24 h per user.</li>
@@ -2169,10 +2149,10 @@
             </table>
             <p>Common suffixes you'll see: <code>(low)</code> / <code>(med)</code> / <code>(high)</code> / <code>(xhigh)</code>, <code>(thinking)</code>, <code>(max)</code>, <code>(128k)</code> / <code>(200k)</code> / <code>(1M)</code> for context-length SKUs, <code>(instruct)</code> / <code>(chat)</code> / <code>(base)</code> for open-weight post-training variants.</p>
 
-            <h4 class="qa-subheader">Opponent-adjusted family ceiling</h4>
-            <p>Every concrete configuration and source score remains separate. For the family view only, each benchmark contributes the family's best valid configuration result. That result becomes pairwise wins, losses or ties against the families that actually ran the same benchmark. A regularized Bradley-Terry model then joins all connected comparison fields, so beating strong opponents is worth more than topping a weak field.</p>
-            <p>Community quality ratings and benchmark upvotes control comparison weight. With few ratings, dimensions are pulled toward neutral by a three-rater Bayesian prior. A family with fewer than <strong>three distinct benchmarks</strong> remains visible but is marked <strong>provisional</strong>. Tag filters rerun the same calculation on matching benchmarks instead of selecting a different hidden formula.</p>
-            <p>This method was chosen by held-out prediction: complete benchmarks were removed, fitted from the rest, and predicted afterward. Against the strongest concrete-configuration opponent baseline, it improved quality-weighted pairwise accuracy from 76.45% to 79.01%; a deterministic paired 20-benchmark bootstrap with 20,000 resamples put the gain at +2.56 points with a 95% interval of +0.40 to +4.78. Desired model order was not used as the optimization target.</p>
+            <h4 class="qa-subheader">How a family gets its score</h4>
+            <p>There is one calculation, not two. Every concrete configuration is ranked by the pairwise fit described above, and a family simply shows <strong>the score of its best configuration</strong> — the row names it ("best: …"). The Model and Model-Family views therefore always agree: the family number is a number you can find in the model table.</p>
+            <p>One guard: a configuration may represent its family only if it covers at least <strong>half of the family's total benchmark weight</strong>. A configuration that lists only the benches it wins can look strong as a row, but it cannot speak for the family. If no configuration reaches half, the most broadly tested one is used.</p>
+            <p>A family with fewer than <strong>three distinct benchmarks</strong> remains visible but is marked <strong>provisional</strong>. Tag filters rerun the same calculation on matching benchmarks instead of selecting a different hidden formula.</p>
 
             <h4 class="qa-subheader">What if the community disagrees with a grouping?</h4>
             <p>New submissions still propose their family tag, and ambiguous provider taxonomies are not guessed automatically. A small reviewed normalizer only enforces unambiguous distinctions already present in the official model name, such as GPT-5.6 Sol versus Terra or Muse Spark 1.1 versus 1.2. Corrections can be proposed with evidence through the public repository; the mapping and its tests are auditable.</p>

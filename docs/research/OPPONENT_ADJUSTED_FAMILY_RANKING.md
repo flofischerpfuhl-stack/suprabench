@@ -1,6 +1,10 @@
 # Opponent-adjusted family ranking
 
-Status: implemented for the production family leaderboard.
+Status: superseded on 2026-09-17. The Bradley-Terry fit, the three-rater prior
+and the 0.15 regularization selected here are still production math, but the fit
+now runs on concrete configurations and a family shows its best configuration
+instead of a per-benchmark ceiling. See
+[`RANKING_REALITY_AUDIT_2026-09-16.md`](RANKING_REALITY_AUDIT_2026-09-16.md).
 
 Snapshot: `2026-08-25T15:56:04.732Z`, SHA-256
 `821103117329dc002039ee9c2db0b016bd0a89502a6678e4acb6b121b33ceb7c`.

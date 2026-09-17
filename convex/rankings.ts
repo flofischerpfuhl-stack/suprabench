@@ -7,61 +7,50 @@ import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { fetchAllScoresFromD1, D1ScoreRow } from "./scoresWorker";
-import { canonicalFamilyTag } from "./modelFamilies";
+import { recomputeBenchAggregatesInline } from "./cache";
+// Side-effect import: the shared core attaches itself to globalThis so the
+// exact same file can be served to browsers from public/js/.
+import "../public/js/supra-rank-core.js";
 
-// ── SupraScore: user-trust first, coverage as evidence ──
+const supraRankCore = (globalThis as any).SupraRankCore as {
+  rank: (input: unknown) => unknown;
+  benchWeight: (bench: unknown, upvoteMax: number) => number;
+  canonicalFamilyTag: (name: string, tag?: string | null) => string | undefined;
+  constants: Record<string, number | string>;
+};
+
+// ── SupraScore: one pairwise fit for configurations and families ──
 //
-//   per-bench ability:
-//      A_b = Q·D·H · (u_b/U*)
+// The ranking math itself lives in public/js/supra-rank-core.js — plain
+// JavaScript that this module, the browser's tag-filtered leaderboard and
+// the what-if simulator all load, so the three can never drift apart.
+// This file owns everything around it: per-bench weight inputs (quality,
+// difficulty, headroom, upvote share), loading, persisting, and the two
+// rebuild drivers.
 //
-//   per-bench evidence:
-//      E_b = A_b · √(N_b/N*)
+//   cell(m,b)   = median of valid submissions
+//   w(b)        = Q·D·H · (u_b/U*)        ratings shrunk toward neutral with
+//                                         a 3-rater prior while raters are few
+//   duels       = every pair of configurations on every bench, each duel
+//                 weighted w(b)/mean(w)/(n_b − 1)
+//   ability     = regularized Bradley-Terry fit over all duels (λ = 0.15)
+//   SupraScore  = 100 · mean P(beat k) over the current top-10 configurations
+//   family      = its best configuration from the same fit, provided that
+//                 configuration covers ≥ 50 % of the family's bench weight
 //
-//   per-model ability:
-//      μ_m = weightedMean(score_m,b, A_b)
+// Why pairwise instead of a weighted mean of raw percentages: a point does
+// not mean the same thing on every bench (5 % leads ARC-AGI-3, 98 % is
+// ordinary on Tau2), and "first of 90" is not "first of 8". Duels are
+// scale-free, and the global fit prices in how strong each field was.
 //
-//   per-model SupraScore:
-//      SupraScore(m) = 50 + √(E_m/E*) · (μ_m − 50)
+// What is unchanged: community quality ratings, median difficulty, the
+// automatic saturation headroom, the linear net-upvote share, the median
+// per (model, bench) cell, and hidden-entity exclusion. A saturated bench
+// still fades out through H; a bench the community endorses still
+// outweighs one it does not through u_b/U*.
 //
-// The point of the split is semantic, not product-facing: users still
-// see one SupraScore. Internally, community endorsement decides how much
-// a benchmark counts for ability; model-count coverage only changes how
-// confident we are in a sparse estimate.
-//
-// • U* = max `cachedNetUpvotes` across non-hidden benches. The
-//   upvote-share is the user-driven trust signal. A benchmark that the
-//   community strongly endorses must be able to beat a broader but less
-//   trusted benchmark.
-//
-// • N* = max `cachedModelCount` across non-hidden benches. The
-//   model-count-share encodes evidence breadth only. It no longer
-//   reduces the central ability estimate, so a high-trust specialist
-//   benchmark is not buried just because fewer models have paid to run
-//   it yet.
-//
-// • E* = max E_m across non-hidden models, where E_m is the model's
-//   accumulated evidence weight. Sparse models are not multiplied
-//   toward zero anymore; they are shrunk toward the neutral midpoint
-//   of the normalized score scale (50). That means "not tested on weak
-//   benches" is uncertainty, not negative evidence.
-//
-// Properties of the joint formula:
-//   • score stays in [0, 100]
-//   • zero tuning hyperparameters — U*, N*, E* all come straight from the DB
-//     and 50 is the midpoint of the normalized [0, 100] score scale
-//   • evidence √-shape mirrors the 1/√N standard-error falloff
-//   • monotonic in the model's own scores and evidence
-//   • top-evidence model always has E_m/E* = 1 (no self-penalty)
-//   • top-upvoted bench always has u_b/U* = 1 (no self-penalty)
-//   • IIA is intentionally violated on every axis: the table is a
-//     relative comparison, so "evidence" only exists in comparison
-//     to what else exists.
-//
-// The catalog of attacks the formula is *meant* to defend against
-// is enumerated in tests/convex/adversarial-robustness.test.ts and
-// is verified end-to-end on every CI run.
-//
-// Everything below is the per-bench weight math — unchanged from before.
+// The attack catalog this is meant to withstand is executable:
+// tests/convex/adversarial-robustness.test.ts.
 //
 // ── Bench weight = quality × difficulty × headroom ──
 //
@@ -87,10 +76,8 @@ export const HEADROOM_TOP_K = 10;
 export const HEADROOM_MIN_N = 3;
 export const HEADROOM_FLOOR = 0.1;
 export const HEADROOM_PIVOT = 50;
-export const NORMALIZED_SCORE_MIDPOINT = 50;
-// A family prefers a concrete configuration measured on at least three
-// distinct benchmarks. Three is the smallest coverage that triangulates
-// performance instead of selecting a one- or two-benchmark spike.
+// Families with fewer distinct benchmarks than this stay visible but are
+// flagged provisional. Mirrors PROVISIONAL_MIN_BENCHES in the shared core.
 export const FAMILY_REPRESENTATIVE_MIN_BENCHES = 3;
 
 export async function getBenchWeights(
@@ -276,45 +263,6 @@ export function effectiveBenchWeight(
   return rawWeight * uShare;
 }
 
-// Evidence weight keeps the same user-trust multiplier, then applies
-// the model-count share only to confidence/evidence. So a specialist
-// benchmark can carry ability when users endorse it, while very sparse
-// benchmarks still produce lower confidence until they have broader
-// comparative coverage.
-export function evidenceBenchWeight(
-  rawWeight: number,
-  upvotes: number,
-  upvoteMax: number,
-  modelCount: number,
-  modelCountMax: number
-): number {
-  const nShare =
-    modelCountMax > 0
-      ? Math.min(1, Math.max(0, modelCount) / modelCountMax)
-      : 1;
-  return effectiveBenchWeight(
-    rawWeight,
-    upvotes,
-    upvoteMax,
-    modelCount,
-    modelCountMax
-  ) * Math.sqrt(nShare);
-}
-
-export function confidenceAdjustedSupraScore(
-  weightedMean: number,
-  evidenceWeight: number,
-  maxEvidenceWeight: number
-): number {
-  if (evidenceWeight <= 0 || maxEvidenceWeight <= 0) return 0;
-  const share = Math.min(1, evidenceWeight / maxEvidenceWeight);
-  const confidence = Math.sqrt(share);
-  return (
-    NORMALIZED_SCORE_MIDPOINT +
-    confidence * (weightedMean - NORMALIZED_SCORE_MIDPOINT)
-  );
-}
-
 // ════════════════════════════════════════════════════════════
 // UNIFIED REBUILD
 //
@@ -337,31 +285,12 @@ export function confidenceAdjustedSupraScore(
 // and idempotency are identical regardless of which path runs.
 // ════════════════════════════════════════════════════════════
 
-function normalizeFamilyKey(
-  familyTag: string | undefined | null
-): string | null {
-  if (!familyTag) return null;
-  const t = familyTag.trim();
-  return t.length === 0 ? null : t;
-}
-
-function medianOf(vals: number[]): number {
-  const s = [...vals].sort((a, b) => a - b);
-  if (s.length === 0) return 0;
-  return s.length % 2 === 0
-    ? (s[s.length / 2 - 1] + s[s.length / 2]) / 2
-    : s[Math.floor(s.length / 2)];
-}
-
 // ── Score-shape adapter ─────────────────────────────────────
-// We read scores from two places now:
-//   • Convex modelScores (legacy / tests / seed / migrations)
+// Scores come from two places:
+//   • Convex modelScores (tests / seed / migrations)
 //   • Cloudflare D1 via the scores worker (production rebuild)
-// Both produce the same logical row but with different keys
-// (Convex uses _id + Id<"models"> branded strings; D1 uses
-// convex_id + plain strings). The pure compute below treats
-// scores as a structural type so either source works.
-type ScoreLike = {
+// The compute below treats them structurally so either source works.
+export type ScoreLike = {
   modelId: string;
   benchId: string;
   normalizedScore: number;
@@ -369,11 +298,6 @@ type ScoreLike = {
   downvotes: number;
 };
 
-// ── Pure compute: all the SupraScore math, no DB access ─────
-// Inputs are already-loaded snapshots; output is the rows we
-// want to write. Persisting + stale-row cleanup happen in the
-// driver functions below so this stays trivially testable and
-// reusable across the Convex-db and D1-action code paths.
 type ModelRankingData = {
   modelId: Id<"models">;
   name: string;
@@ -386,6 +310,10 @@ type ModelRankingData = {
   hidden: boolean;
 };
 
+export type FamilyAggregationMethod =
+  | "family-ceiling-pairwise" // rows written before the unified fit
+  | "best-configuration-pairwise";
+
 type FamilyRankingData = {
   familyTag: string;
   provider: string;
@@ -395,454 +323,98 @@ type FamilyRankingData = {
   representativeModelId?: Id<"models">;
   representativeName?: string;
   representativeSlug?: string;
-  aggregationMethod: "family-ceiling-pairwise";
+  aggregationMethod: "best-configuration-pairwise";
   provisional: boolean;
   tags: string[];
   hidden: boolean;
 };
 
-export const FAMILY_PAIRWISE_PRIOR_RATERS = 3;
-export const FAMILY_PAIRWISE_REGULARIZATION = 0.15;
-export const FAMILY_PAIRWISE_ITERATIONS = 40;
-
-function shrinkRatingDimension(
-  value: number | undefined,
-  raterCount: number,
-  priorRaters: number
-): number {
-  const observed = raterCount > 0 && typeof value === "number" ? value : 3;
-  return (observed * raterCount + 3 * priorRaters) / (raterCount + priorRaters);
-}
-
-function familyPairwiseBenchWeight(bench: any, upvoteMax: number): number {
-  const dimensions = bench.cachedDimensions ?? {};
-  const raterCount = Math.max(0, bench.cachedRaterCount ?? 0);
-  const trustDimensions = [
-    dimensions.relevance,
-    dimensions.contamination,
-    dimensions.discriminability,
-    dimensions.reproducibility,
-  ].map((value) =>
-    shrinkRatingDimension(value, raterCount, FAMILY_PAIRWISE_PRIOR_RATERS)
-  );
-  const quality =
-    (trustDimensions.reduce((sum, value) => sum + value, 0) /
-      trustDimensions.length) * 20;
-  const difficulty = shrinkRatingDimension(
-    dimensions.difficulty,
-    raterCount,
-    FAMILY_PAIRWISE_PRIOR_RATERS
-  );
-  const difficultyMultiplier = Math.min(1, Math.max(0, (difficulty - 1) / 4));
-  const headroom =
-    typeof bench.cachedHeadroom === "number" ? bench.cachedHeadroom : 1;
-  const upvotes =
-    typeof bench.cachedNetUpvotes === "number" ? bench.cachedNetUpvotes : 1;
-  const trust =
-    upvoteMax > 0 ? Math.min(1, Math.max(0, upvotes) / upvoteMax) : 1;
-  return quality * difficultyMultiplier * headroom * trust;
-}
-
-type FamilyCeilingScore = {
-  familyKey: string;
-  familyTag: string;
-  provider: string;
-  benchId: string;
-  score: number;
-};
-
-export function buildPairwiseFamilyRankings(args: {
-  models: any[];
-  benches: any[];
-  scores: ScoreLike[];
-}): {
-  rows: Array<{
+export type CoreRanking = {
+  configs: Array<{
+    modelId: string;
+    ability: number | null;
+    supraScore: number;
+    benchCount: number;
+  }>;
+  families: Array<{
     familyKey: string;
     familyTag: string;
     provider: string;
     supraScore: number;
+    ability: number | null;
     benchCount: number;
+    modelCount: number;
+    representativeModelId?: string;
+    representativeName?: string;
+    representativeSlug?: string;
+    provisional: boolean;
+    tags: string[];
+    hidden: boolean;
   }>;
-  ceilingScores: FamilyCeilingScore[];
-} {
-  const visibleModels = args.models.filter((model) => !model.hidden);
-  const modelById = new Map(
-    visibleModels.map((model) => [model._id as string, model])
-  );
-  const perModelBench = new Map<string, number[]>();
-  for (const score of args.scores) {
-    if (score.upvotes <= score.downvotes || !modelById.has(score.modelId)) continue;
-    const key = `${score.modelId}\u0000${score.benchId}`;
-    const values = perModelBench.get(key) ?? [];
-    values.push(score.normalizedScore);
-    perModelBench.set(key, values);
-  }
+  upvoteMax: number;
+};
 
-  const familyMeta = new Map<
-    string,
-    { familyTag: string; provider: string; benchScores: Map<string, number> }
-  >();
-  for (const model of visibleModels) {
-    const familyTag = normalizeFamilyKey(
-      canonicalFamilyTag(model.name, model.familyTag)
-    );
-    if (!familyTag) continue;
-    const familyKey = `${familyTag}\u0000${model.provider}`;
-    if (!familyMeta.has(familyKey)) {
-      familyMeta.set(familyKey, {
-        familyTag,
-        provider: model.provider,
-        benchScores: new Map(),
-      });
-    }
-  }
-  for (const [key, values] of perModelBench) {
-    const [modelId, benchId] = key.split("\u0000");
-    const model = modelById.get(modelId);
-    if (!model) continue;
-    const familyTag = normalizeFamilyKey(
-      canonicalFamilyTag(model.name, model.familyTag)
-    );
-    if (!familyTag) continue;
-    const familyKey = `${familyTag}\u0000${model.provider}`;
-    const meta = familyMeta.get(familyKey);
-    if (!meta) continue;
-    const concreteScore = medianOf(values);
-    const previous = meta.benchScores.get(benchId);
-    if (previous === undefined || concreteScore > previous) {
-      meta.benchScores.set(benchId, concreteScore);
-    }
-  }
-
-  const visibleBenches = args.benches.filter((bench) => !bench.hidden);
-  const upvoteMax = Math.max(
-    0,
-    ...visibleBenches.map((bench) => bench.cachedNetUpvotes ?? 1)
-  );
-  const rawWeight = new Map<string, number>();
-  for (const bench of visibleBenches) {
-    rawWeight.set(
-      bench._id as string,
-      familyPairwiseBenchWeight(bench, upvoteMax)
-    );
-  }
-  const positiveWeights = [...rawWeight.values()].filter((weight) => weight > 0);
-  const meanWeight =
-    positiveWeights.length > 0
-      ? positiveWeights.reduce((sum, weight) => sum + weight, 0) /
-        positiveWeights.length
-      : 1;
-
-  const familyKeys = [...familyMeta.keys()];
-  const familyIndex = new Map(familyKeys.map((key, index) => [key, index]));
-  const comparisons: Array<{
-    left: number;
-    right: number;
-    outcome: number;
-    weight: number;
-  }> = [];
-  const ceilingScores: FamilyCeilingScore[] = [];
-  for (const bench of visibleBenches) {
-    const benchId = bench._id as string;
-    const rows: Array<{ familyKey: string; score: number }> = [];
-    for (const [familyKey, meta] of familyMeta) {
-      const score = meta.benchScores.get(benchId);
-      if (score === undefined) continue;
-      rows.push({ familyKey, score });
-      ceilingScores.push({
-        familyKey,
-        familyTag: meta.familyTag,
-        provider: meta.provider,
-        benchId,
-        score,
-      });
-    }
-    if (rows.length < 2) continue;
-    const benchmarkWeight = (rawWeight.get(benchId) ?? 0) / meanWeight;
-    if (benchmarkWeight <= 0) continue;
-    const pairWeight = benchmarkWeight / (rows.length - 1);
-    for (let left = 0; left < rows.length; left++) {
-      for (let right = left + 1; right < rows.length; right++) {
-        comparisons.push({
-          left: familyIndex.get(rows[left].familyKey)!,
-          right: familyIndex.get(rows[right].familyKey)!,
-          outcome:
-            rows[left].score === rows[right].score
-              ? 0.5
-              : rows[left].score > rows[right].score
-                ? 1
-                : 0,
-          weight: pairWeight,
-        });
-      }
-    }
-  }
-
-  const ability = new Float64Array(familyKeys.length);
-  const gradient = new Float64Array(familyKeys.length);
-  const information = new Float64Array(familyKeys.length);
-  for (let iteration = 0; iteration < FAMILY_PAIRWISE_ITERATIONS; iteration++) {
-    gradient.fill(0);
-    information.fill(FAMILY_PAIRWISE_REGULARIZATION);
-    for (const comparison of comparisons) {
-      const difference = Math.max(
-        -30,
-        Math.min(30, ability[comparison.left] - ability[comparison.right])
-      );
-      const probability = 1 / (1 + Math.exp(-difference));
-      const residual = comparison.weight * (comparison.outcome - probability);
-      const curvature = comparison.weight * probability * (1 - probability);
-      gradient[comparison.left] += residual;
-      gradient[comparison.right] -= residual;
-      information[comparison.left] += curvature;
-      information[comparison.right] += curvature;
-    }
-    let center = 0;
-    for (let index = 0; index < ability.length; index++) {
-      gradient[index] -= FAMILY_PAIRWISE_REGULARIZATION * ability[index];
-      const step = Math.max(-1, Math.min(1, gradient[index] / information[index]));
-      ability[index] += 0.8 * step;
-      center += ability[index];
-    }
-    center /= ability.length || 1;
-    for (let index = 0; index < ability.length; index++) ability[index] -= center;
-  }
-
-  const rows = familyKeys.map((familyKey, index) => {
-    const meta = familyMeta.get(familyKey)!;
-    return {
-      familyKey,
-      familyTag: meta.familyTag,
-      provider: meta.provider,
-      supraScore: 100 / (1 + Math.exp(-ability[index])),
-      benchCount: meta.benchScores.size,
-    };
-  });
-  return { rows, ceilingScores };
+// Typed entry point into the shared core. `benchFilter` restricts the fit
+// to a subset of benches (tag-filtered views).
+export function rankWithCore(args: {
+  models: any[];
+  benches: any[];
+  scores: ScoreLike[] | Array<{ modelId: string; benchId: string; normalizedScore: number }>;
+  benchFilter?: (bench: any) => boolean;
+}): CoreRanking {
+  return supraRankCore.rank(args) as CoreRanking;
 }
 
+// ── Pure compute: inputs already loaded, output = rows to write ─────
 function buildRankingsFromInputs(args: {
   models: any[];
   benches: any[];
   scores: ScoreLike[];
-  // Optional fallback: if a bench has no cachedEffectiveWeight,
-  // we need ITS Q·D·H from somewhere. Convex-db driver passes
-  // a cache pre-populated via getBenchWeights. D1 driver passes
-  // an empty map and any missing weight degrades to 0 (the bench
-  // is silently excluded). In steady-state production, every
-  // bench has a cache so this never triggers.
-  weightFallback?: Map<string, number>;
 }): {
   modelRows: ModelRankingData[];
   familyRows: FamilyRankingData[];
   validFamilyKeys: Set<string>;
 } {
-  const { models: allModels, benches: allBenches, scores, weightFallback } = args;
+  const ranking = rankWithCore(args);
+  const configByModel = new Map(ranking.configs.map((row) => [row.modelId, row]));
 
-  // Group scores by model up-front (single pass).
-  const scoresByModel = new Map<string, ScoreLike[]>();
-  for (const s of scores) {
-    let arr = scoresByModel.get(s.modelId);
-    if (!arr) {
-      arr = [];
-      scoresByModel.set(s.modelId, arr);
-    }
-    arr.push(s);
-  }
-
-  // ─── 1. Coverage index (U*, N*) ───
-  const upvoteMap = new Map<string, number>();
-  const modelCountMap = new Map<string, number>();
-  let upvoteMax = 0;
-  let modelCountMax = 0;
-  for (const b of allBenches) {
-    const u =
-      typeof (b as any).cachedNetUpvotes === "number"
-        ? (b as any).cachedNetUpvotes
-        : 1;
-    let n: number;
-    if (typeof (b as any).cachedModelCount === "number") {
-      n = (b as any).cachedModelCount;
-    } else {
-      // Live fallback: count distinct models with net-positive
-      // submissions on this bench. Uses already-loaded scores.
-      const valid = new Set<string>();
-      for (const s of scores) {
-        if (s.benchId === (b._id as string) && s.upvotes > s.downvotes) {
-          valid.add(s.modelId);
-        }
-      }
-      n = valid.size;
-    }
-    upvoteMap.set(b._id as string, u);
-    modelCountMap.set(b._id as string, n);
-    if (!(b as any).hidden) {
-      if (u > upvoteMax) upvoteMax = u;
-      if (n > modelCountMax) modelCountMax = n;
-    }
-  }
-
-  // ─── 2. Bench raw weight (Q×D×H) cache ───
-  const benchWeightCache = new Map<string, number>();
-  for (const b of allBenches) {
-    if (typeof (b as any).cachedEffectiveWeight === "number") {
-      benchWeightCache.set(b._id as string, (b as any).cachedEffectiveWeight);
-    } else if (weightFallback?.has(b._id as string)) {
-      benchWeightCache.set(b._id as string, weightFallback.get(b._id as string)!);
-    } else {
-      // Bench is missing its denormalised weight AND no fallback
-      // was supplied — caller didn't pre-warm the cache. We log
-      // and assign 0, which excludes the bench from rankings
-      // until the next recomputeBenchAggregates fires.
-      console.warn(
-        `[rankings] bench ${b._id} missing cachedEffectiveWeight; excluded from rebuild`
-      );
-      benchWeightCache.set(b._id as string, 0);
-    }
-  }
-
-  // ─── 3. Per-model aggregate ───
-  type ModelAgg = {
-    modelId: Id<"models">;
-    model: any;
-    weightedMean: number;
-    abilityWeight: number;
-    totalWeight: number;
-    benchCount: number;
-  };
-  const modelAggregates: ModelAgg[] = [];
-  for (const m of allModels) {
-    const scores = scoresByModel.get(m._id as string) ?? [];
-    const benchScores: Record<string, number[]> = {};
-    for (const s of scores) {
-      if (s.upvotes > s.downvotes) {
-        (benchScores[s.benchId] ??= []).push(s.normalizedScore);
-      }
-    }
-
-    let weightedSum = 0;
-    let abilityWeightTotal = 0;
-    let evidenceWeightTotal = 0;
-    let benchCount = 0;
-    for (const [benchId, vals] of Object.entries(benchScores)) {
-      const med = medianOf(vals);
-
-      const rawW = benchWeightCache.get(benchId) ?? 0;
-      const u = upvoteMap.get(benchId) ?? 1;
-      const n = modelCountMap.get(benchId) ?? 0;
-      const abilityWeight = effectiveBenchWeight(
-        rawW,
-        u,
-        upvoteMax,
-        n,
-        modelCountMax
-      );
-      const evidenceWeight = evidenceBenchWeight(
-        rawW,
-        u,
-        upvoteMax,
-        n,
-        modelCountMax
-      );
-      if (abilityWeight <= 0) continue;
-      weightedSum += abilityWeight * med;
-      abilityWeightTotal += abilityWeight;
-      evidenceWeightTotal += evidenceWeight;
-      benchCount++;
-    }
-    modelAggregates.push({
-      modelId: m._id as Id<"models">,
-      model: m,
-      weightedMean:
-        abilityWeightTotal > 0 ? weightedSum / abilityWeightTotal : 0,
-      abilityWeight: abilityWeightTotal,
-      totalWeight: evidenceWeightTotal,
-      benchCount,
-    });
-  }
-
-  // ─── 4. Apply evidence confidence to concrete models ───
-  // Family rows deliberately reuse these scores so a family is represented
-  // by one real, reproducible configuration rather than a synthetic mixture.
-  let maxModelEvidenceWeight = 0;
-  for (const a of modelAggregates) {
-    if (a.model.hidden) continue;
-    if (a.totalWeight > maxModelEvidenceWeight) {
-      maxModelEvidenceWeight = a.totalWeight;
-    }
-  }
-
-  const modelRows: ModelRankingData[] = modelAggregates.map((a) => {
-    const supraScore = confidenceAdjustedSupraScore(
-      a.weightedMean,
-      a.totalWeight,
-      maxModelEvidenceWeight
-    );
+  // Hidden models keep a ranking row (so un-hiding is instant) but take no
+  // part in the fit and carry no score.
+  const modelRows: ModelRankingData[] = args.models.map((m: any) => {
+    const config = configByModel.get(m._id as string);
     return {
-      modelId: a.modelId,
-      name: a.model.name,
-      provider: a.model.provider,
-      slug: a.model.slug,
-      familyTag: a.model.familyTag,
-      tags: a.model.tags,
-      supraScore: Math.round(supraScore * 10) / 10,
-      benchCount: a.benchCount,
-      hidden: a.model.hidden ?? false,
+      modelId: m._id as Id<"models">,
+      name: m.name,
+      provider: m.provider,
+      slug: m.slug,
+      familyTag: m.familyTag,
+      tags: m.tags,
+      supraScore: config?.supraScore ?? 0,
+      benchCount: config?.benchCount ?? 0,
+      hidden: m.hidden ?? false,
     };
   });
 
-  // ─── 5. Opponent-adjusted family ceiling ───
-
-  const pairs = new Map<
-    string,
-    { familyTag: string; provider: string; members: any[] }
-  >();
-  for (const m of allModels) {
-    const k = normalizeFamilyKey(canonicalFamilyTag(m.name, m.familyTag));
-    if (!k) continue;
-    const key = `${k}\u0000${m.provider}`;
-    let pair = pairs.get(key);
-    if (!pair) {
-      pair = { familyTag: k, provider: m.provider, members: [] };
-      pairs.set(key, pair);
-    }
-    pair.members.push(m);
-  }
-
-  const pairwise = buildPairwiseFamilyRankings({
-    models: allModels,
-    benches: allBenches,
-    scores,
-  });
-  const pairwiseByKey = new Map(
-    pairwise.rows.map((row) => [row.familyKey, row])
-  );
   const validFamilyKeys = new Set<string>();
-  const familyRows: FamilyRankingData[] = [];
-  for (const { familyTag, provider, members } of pairs.values()) {
-    const visible = members.filter((m: any) => !m.hidden);
-    const isAllHidden = visible.length === 0 && members.length > 0;
-
-    const tagSet = new Set<string>();
-    for (const m of visible) for (const t of (m.tags ?? [])) tagSet.add(t);
-
-    const familyKey = `${familyTag}\u0000${provider}`;
-    const ranking = pairwiseByKey.get(familyKey);
-    const familyBenchCount = ranking?.benchCount ?? 0;
-
-    validFamilyKeys.add(familyKey);
-    familyRows.push({
-      familyTag,
-      provider,
-      supraScore: Math.round((ranking?.supraScore ?? 0) * 10) / 10,
-      benchCount: familyBenchCount,
-      modelCount: visible.length,
-      aggregationMethod: "family-ceiling-pairwise",
-      provisional: familyBenchCount < FAMILY_REPRESENTATIVE_MIN_BENCHES,
-      tags: Array.from(tagSet),
-      hidden: isAllHidden,
-    });
-  }
+  const familyRows: FamilyRankingData[] = ranking.families.map((family) => {
+    validFamilyKeys.add(family.familyKey);
+    return {
+      familyTag: family.familyTag,
+      provider: family.provider,
+      supraScore: family.supraScore,
+      benchCount: family.benchCount,
+      modelCount: family.modelCount,
+      representativeModelId: family.representativeModelId as
+        | Id<"models">
+        | undefined,
+      representativeName: family.representativeName,
+      representativeSlug: family.representativeSlug,
+      aggregationMethod: "best-configuration-pairwise",
+      provisional: family.provisional,
+      tags: family.tags,
+      hidden: family.hidden,
+    };
+  });
 
   return { modelRows, familyRows, validFamilyKeys };
 }
@@ -939,22 +511,26 @@ export async function recomputeAllUnifiedImpl(ctx: any): Promise<{
     }
   }
 
-  // Pre-warm the weight-fallback map for any bench missing
-  // cachedEffectiveWeight. This was inline in the old impl but
-  // pulling it out lets the pure compute stay db-free.
-  const weightFallback = new Map<string, number>();
+  // The core reads each bench's denormalised rating/headroom cache. A bench
+  // that has never been aggregated (fresh seed, tests) is aggregated now so
+  // it enters the fit with real inputs instead of neutral defaults.
+  let benches = allBenches;
+  let warmed = false;
   for (const b of allBenches) {
-    if (typeof (b as any).cachedEffectiveWeight !== "number") {
-      const w = await getBenchWeights(ctx, b._id as Id<"benches">);
-      weightFallback.set(b._id as string, w.weight);
+    if (
+      (b as any).cachedDimensions === undefined ||
+      typeof (b as any).cachedHeadroom !== "number"
+    ) {
+      await recomputeBenchAggregatesInline(ctx, b._id as Id<"benches">);
+      warmed = true;
     }
   }
+  if (warmed) benches = await ctx.db.query("benches").collect();
 
   const out = buildRankingsFromInputs({
     models: allModels,
-    benches: allBenches,
+    benches,
     scores: flatScores,
-    weightFallback,
   });
   return persistRankings(ctx, out);
 }
@@ -1045,7 +621,7 @@ export const _persistRankings = internalMutation({
         representativeModelId: v.optional(v.id("models")),
         representativeName: v.optional(v.string()),
         representativeSlug: v.optional(v.string()),
-        aggregationMethod: v.literal("family-ceiling-pairwise"),
+        aggregationMethod: v.literal("best-configuration-pairwise"),
         provisional: v.boolean(),
         tags: v.array(v.string()),
         hidden: v.boolean(),

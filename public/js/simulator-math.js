@@ -1,25 +1,15 @@
 /* ════════════════════════════════════════════════════════════
- * SIMULATED SUPRASCORE — client-side math.
+ * SIMULATED SUPRASCORE — client-side what-if.
  *
- * Pure-functional port of convex/rankings.ts (effectiveBenchWeight,
- * evidenceBenchWeight, weighted-mean aggregate, evidence-confidence
- * SupraScore). Lives
- * in the browser so the simulator can render a hypothetical
- * leaderboard without any DB writes — see the Architecture comment
- * in convex/simulator.ts.
+ * The ranking math is NOT duplicated here. This file only bolts a
+ * hypothetical model onto the snapshot, re-derives the saturation
+ * headroom of the benches it touches (a new frontier result can
+ * change H), and hands both the live and the simulated dataset to
+ * the shared core in js/supra-rank-core.js — the very same file the
+ * production rebuild in convex/rankings.ts runs.
  *
- * Every function here is intentionally `const` and side-effect-free.
- * Inputs are plain JS objects matching the shape of the snapshot
- * returned by `simulator.fetchSnapshot`. Outputs are plain arrays
- * and objects — Alpine.js binds them directly.
- *
- * IMPORTANT: when convex/rankings.ts changes (new shrinkage factor,
- * different median definition, etc.), this file MUST be updated to
- * match. The two are kept in sync by convention; if we ever notice
- * drift we'll add a generated golden-vector test on both sides.
- *
- * Constants mirror the consts in convex/rankings.ts; please keep
- * them in lock-step with that file.
+ * Inputs are plain JS objects matching `simulator.fetchSnapshot`.
+ * Outputs are plain arrays/objects — Alpine.js binds them directly.
  * ════════════════════════════════════════════════════════════ */
 
 (function () {
@@ -29,427 +19,137 @@
   const HEADROOM_MIN_N = 3;
   const HEADROOM_FLOOR = 0.1;
   const HEADROOM_PIVOT = 50;
-  const NORMALIZED_SCORE_MIDPOINT = 50;
 
-  // Median of an unsorted numeric array. Mutates the array (sorts
-  // in place) — caller passes throw-away copies.
-  function median(arr) {
-    if (arr.length === 0) return 0;
-    arr.sort((a, b) => a - b);
-    const mid = Math.floor(arr.length / 2);
-    return arr.length % 2 === 0 ? (arr[mid - 1] + arr[mid]) / 2 : arr[mid];
+  function core() {
+    const c = window.SupraRankCore;
+    if (!c) throw new Error("ranking core not loaded");
+    return c;
   }
 
-  // Per-bench {modelId → [scores]} pivot, then per-model median per
-  // bench. Excludes hidden models (hiddenModelIds is a Set).
-  function buildPerBenchModelMedians(scores, hiddenModelIds) {
-    /** @type {Map<string, Map<string, number[]>>} */
-    const out = new Map();
+  // benchId → Map(modelId → median of that model's scores on the bench)
+  function buildPerBenchModelMedians(scores) {
+    const grouped = new Map();
     for (const s of scores) {
-      const mid = String(s.modelId);
-      if (hiddenModelIds.has(mid)) continue;
       const bid = String(s.benchId);
-      let benchMap = out.get(bid);
-      if (!benchMap) {
-        benchMap = new Map();
-        out.set(bid, benchMap);
-      }
-      let arr = benchMap.get(mid);
-      if (!arr) {
-        arr = [];
-        benchMap.set(mid, arr);
-      }
+      const mid = String(s.modelId);
+      let perModel = grouped.get(bid);
+      if (!perModel) { perModel = new Map(); grouped.set(bid, perModel); }
+      let arr = perModel.get(mid);
+      if (!arr) { arr = []; perModel.set(mid, arr); }
       arr.push(s.normalizedScore);
     }
-    /** @type {Map<string, Map<string, number>>} */
     const medians = new Map();
-    for (const [bid, perModel] of out) {
+    for (const [bid, perModel] of grouped) {
       const reduced = new Map();
-      for (const [mid, vals] of perModel) {
-        reduced.set(mid, median(vals.slice()));
-      }
+      for (const [mid, vals] of perModel) reduced.set(mid, core().median(vals));
       medians.set(bid, reduced);
     }
     return medians;
   }
 
-  // Recompute a bench's headroom + effective weight, given the
-  // current per-model medians on that bench. Quality and difficulty
-  // come straight from the cached numbers (the simulator never
-  // touches bench ratings — partners can't rate their own
-  // hypothetical bench, and adding a model doesn't change Q or D).
-  function recomputeBenchWeight(bench, perModelMedians) {
-    const quality =
-      typeof bench.cachedQualityScore === "number" ? bench.cachedQualityScore : 50;
-    const difficulty =
-      typeof bench.cachedDifficultyMultiplier === "number"
-        ? bench.cachedDifficultyMultiplier
-        : 0.5; // matches the (3-1)/4 default in rankings.ts
-
-    // Top-K frontier-mean of per-model medians.
-    const sortedMedians = Array.from(perModelMedians.values()).sort(
-      (a, b) => b - a
-    );
-    const N = sortedMedians.length;
+  // Same top-K frontier-mean headroom rule as convex/rankings.ts.
+  function headroomFor(perModelMedians) {
+    const sorted = Array.from(perModelMedians.values()).sort((a, b) => b - a);
+    const N = sorted.length;
     const K = Math.min(HEADROOM_TOP_K, N);
-    const frontierMean =
-      K === 0 ? 0 : sortedMedians.slice(0, K).reduce((s, v) => s + v, 0) / K;
-
-    let headroom;
-    if (N < HEADROOM_MIN_N) {
-      headroom = 1.0;
-    } else {
-      const pivoted = Math.max(frontierMean, HEADROOM_PIVOT);
-      headroom = Math.max(
-        HEADROOM_FLOOR,
-        (100 - pivoted) / (100 - HEADROOM_PIVOT)
-      );
-    }
-    return {
-      quality,
-      difficulty,
-      headroom,
-      modelCount: N,
-      frontierMean,
-      weight: quality * difficulty * headroom,
-    };
+    const frontierMean = K === 0 ? 0 : sorted.slice(0, K).reduce((s, v) => s + v, 0) / K;
+    const headroom =
+      N < HEADROOM_MIN_N
+        ? 1.0
+        : Math.max(HEADROOM_FLOOR, (100 - Math.max(frontierMean, HEADROOM_PIVOT)) / (100 - HEADROOM_PIVOT));
+    return { headroom, frontierMean, modelCount: N };
   }
 
-  // Per-bench u_b/U* trust multiplier applied to raw
-  // Q·D·H weight. Exact mirror of effectiveBenchWeight in
-  // convex/rankings.ts (down to the bootstrap behaviour).
-  function effectiveBenchWeight(rawWeight, upvotes, upvoteMax, modelCount, modelCountMax) {
-    const uShare =
-      upvoteMax > 0 ? Math.min(1, Math.max(0, upvotes) / upvoteMax) : 1;
-    void modelCount;
-    void modelCountMax;
-    return rawWeight * uShare;
-  }
-
-  // Confidence/evidence keeps user trust and then folds in benchmark
-  // model-count breadth. This is NOT used as the central ability
-  // weight; it only controls how far the final score moves away from
-  // the neutral midpoint.
-  function evidenceBenchWeight(rawWeight, upvotes, upvoteMax, modelCount, modelCountMax) {
-    const nShare =
-      modelCountMax > 0
-        ? Math.min(1, Math.max(0, modelCount) / modelCountMax)
-        : 1;
-    return (
-      effectiveBenchWeight(rawWeight, upvotes, upvoteMax, modelCount, modelCountMax) *
-      Math.sqrt(nShare)
-    );
-  }
-
-  function confidenceAdjustedSupraScore(weightedMean, evidenceWeight, maxEvidenceWeight) {
-    if (evidenceWeight <= 0 || maxEvidenceWeight <= 0) return 0;
-    const share = Math.min(1, evidenceWeight / maxEvidenceWeight);
-    const confidence = Math.sqrt(share);
-    return NORMALIZED_SCORE_MIDPOINT + confidence * (weightedMean - NORMALIZED_SCORE_MIDPOINT);
-  }
-
-  // Aggregate {weightedMean, totalWeight/evidenceWeight, benchCount} for ONE
-  // model. `perBenchMedianForModel` is a Map<benchId, score>.
-  // `benchInfo` is a Map<benchId, {effective: number, evidence: number}>.
-  function computeModelAggregate(perBenchMedianForModel, benchInfo) {
-    let weightedSum = 0;
-    let abilityWeightTotal = 0;
-    let evidenceWeightTotal = 0;
-    let benchCount = 0;
-    for (const [bid, m] of perBenchMedianForModel) {
-      const info = benchInfo.get(bid);
-      if (!info || info.effective <= 0) continue;
-      weightedSum += info.effective * m;
-      abilityWeightTotal += info.effective;
-      evidenceWeightTotal += info.evidence;
-      benchCount += 1;
-    }
-    return {
-      weightedMean:
-        abilityWeightTotal > 0 ? weightedSum / abilityWeightTotal : 0,
-      abilityWeight: abilityWeightTotal,
-      totalWeight: evidenceWeightTotal,
-      benchCount,
-    };
-  }
-
-  /**
-   * Re-rank the ENTIRE leaderboard with one hypothetical extra
-   * model bolted in. Returns {liveRanking, simulatedRanking,
-   * affectedBenches, simulatedRow}.
-   *
-   * @param {object} snapshot     - Output of simulator.fetchSnapshot.
-   * @param {object} simInput     - { name, provider, scores: [{benchId, score}] }
-   *
-   * Returns:
-   *   {
-   *     liveRanking:      [{ modelId, name, provider, supraScore, rank }, ...]
-   *     simulatedRanking: [{ modelId|null, name, provider, supraScore, rank,
-   *                          isSimulated, deltaScore?, deltaRank? }, ...]
-   *     simulatedRow:     ditto, but always the row representing the
-   *                       simulated model, surfaced for convenience
-   *     benchDeltas:      [{ benchId, slug, name,
-   *                          weightLive, weightSimulated,
-   *                          modelCountLive, modelCountSimulated,
-   *                          frontierMeanLive, frontierMeanSimulated }, ...]
-   *                       — only benches the simulator actually changed
-   *   }
-   */
-  function simulateRanking(snapshot, simInput) {
-    const benches = snapshot.benches;
-    const models = snapshot.models;
-    const scores = snapshot.scores;
-    const benchById = new Map(benches.map((b) => [String(b._id), b]));
-
-    const visibleBenchIds = new Set(
-      benches.filter((b) => !b.hidden).map((b) => String(b._id))
-    );
-    const hiddenModelIds = new Set(); // snapshot already excludes hidden models
-
-    // === LIVE BASELINE PASS =================================
-    // Build per-bench per-model median, then bench weights, then
-    // per-model aggregates, then evidence-adjusted SupraScore. Mirrors
-    // recomputeAllUnifiedImpl in convex/rankings.ts.
-    const perBenchMediansLive = buildPerBenchModelMedians(scores, hiddenModelIds);
-
-    /** @type {Map<string, {effective: number, evidence: number, weight: number, modelCount: number, frontierMean: number, headroom: number}>} */
-    const benchInfoLive = new Map();
-    let upvoteMaxLive = 0;
-    let modelCountMaxLive = 0;
-    for (const b of benches) {
-      const bid = String(b._id);
-      const perModel = perBenchMediansLive.get(bid) ?? new Map();
-      const w = recomputeBenchWeight(b, perModel);
-      benchInfoLive.set(bid, w);
-      if (visibleBenchIds.has(bid)) {
-        const u = typeof b.cachedNetUpvotes === "number" ? b.cachedNetUpvotes : 1;
-        if (u > upvoteMaxLive) upvoteMaxLive = u;
-        if (w.modelCount > modelCountMaxLive) modelCountMaxLive = w.modelCount;
-      }
-    }
-    for (const [bid, info] of benchInfoLive) {
-      const b = benchById.get(bid);
-      const u = typeof b.cachedNetUpvotes === "number" ? b.cachedNetUpvotes : 1;
-      info.effective = effectiveBenchWeight(
-        info.weight,
-        u,
-        upvoteMaxLive,
-        info.modelCount,
-        modelCountMaxLive
-      );
-      info.evidence = evidenceBenchWeight(
-        info.weight,
-        u,
-        upvoteMaxLive,
-        info.modelCount,
-        modelCountMaxLive
-      );
-    }
-
-    // Per-model aggregate using live bench weights.
-    /** @type {Map<string, {weightedMean: number, abilityWeight: number, totalWeight: number, benchCount: number}>} */
-    const aggsLive = new Map();
-    let maxEvidenceWeightLive = 0;
-    for (const m of models) {
-      const mid = String(m._id);
-      // collect this model's per-bench medians from the pivot
-      const perBenchForModel = new Map();
-      for (const [bid, perModel] of perBenchMediansLive) {
-        const med = perModel.get(mid);
-        if (med !== undefined) perBenchForModel.set(bid, med);
-      }
-      const agg = computeModelAggregate(perBenchForModel, benchInfoLive);
-      aggsLive.set(mid, agg);
-      if (agg.totalWeight > maxEvidenceWeightLive) {
-        maxEvidenceWeightLive = agg.totalWeight;
-      }
-    }
-
-    const liveRanking = models
-      .map((m) => {
-        const mid = String(m._id);
-        const a = aggsLive.get(mid);
-        const supraScore = confidenceAdjustedSupraScore(
-          a.weightedMean,
-          a.totalWeight,
-          maxEvidenceWeightLive
-        );
-        return {
-          modelId: mid,
-          name: m.name,
-          provider: m.provider,
-          familyTag: m.familyTag,
-          supraScore: Math.round(supraScore * 10) / 10,
-          benchCount: a.benchCount,
-          isSimulated: false,
-        };
-      })
-      .sort((a, b) => b.supraScore - a.supraScore)
-      .map((row, i) => ({ ...row, rank: i + 1 }));
-
-    // === SIMULATED PASS =====================================
-    // Inject the hypothetical model into the per-bench pivot, then
-    // re-derive bench weights for benches it touched, then fully
-    // re-aggregate every model (because U*, N*, E* all potentially
-    // shift). Same algorithm as live, just with one extra row.
-    const simulatedModelKey = "__sim__";
-    const affectedBenchIds = new Set(simInput.scores.map((s) => String(s.benchId)));
-
-    const perBenchMediansSim = new Map();
-    for (const [bid, perModel] of perBenchMediansLive) {
-      perBenchMediansSim.set(bid, new Map(perModel));
-    }
-    for (const s of simInput.scores) {
-      const bid = String(s.benchId);
-      let pm = perBenchMediansSim.get(bid);
-      if (!pm) {
-        pm = new Map();
-        perBenchMediansSim.set(bid, pm);
-      }
-      pm.set(simulatedModelKey, s.score);
-    }
-
-    /** @type {Map<string, {effective: number, evidence: number, weight: number, modelCount: number, frontierMean: number, headroom: number}>} */
-    const benchInfoSim = new Map();
-    let upvoteMaxSim = 0;
-    let modelCountMaxSim = 0;
-    for (const b of benches) {
-      const bid = String(b._id);
-      const perModel = perBenchMediansSim.get(bid) ?? new Map();
-      const w = recomputeBenchWeight(b, perModel);
-      benchInfoSim.set(bid, w);
-      if (visibleBenchIds.has(bid)) {
-        const u = typeof b.cachedNetUpvotes === "number" ? b.cachedNetUpvotes : 1;
-        if (u > upvoteMaxSim) upvoteMaxSim = u;
-        if (w.modelCount > modelCountMaxSim) modelCountMaxSim = w.modelCount;
-      }
-    }
-    for (const [bid, info] of benchInfoSim) {
-      const b = benchById.get(bid);
-      const u = typeof b.cachedNetUpvotes === "number" ? b.cachedNetUpvotes : 1;
-      info.effective = effectiveBenchWeight(
-        info.weight,
-        u,
-        upvoteMaxSim,
-        info.modelCount,
-        modelCountMaxSim
-      );
-      info.evidence = evidenceBenchWeight(
-        info.weight,
-        u,
-        upvoteMaxSim,
-        info.modelCount,
-        modelCountMaxSim
-      );
-    }
-
-    // Aggregate every existing model + the simulated one.
-    const aggsSim = new Map();
-    let maxEvidenceWeightSim = 0;
-    for (const m of models) {
-      const mid = String(m._id);
-      const perBenchForModel = new Map();
-      for (const [bid, perModel] of perBenchMediansSim) {
-        const med = perModel.get(mid);
-        if (med !== undefined) perBenchForModel.set(bid, med);
-      }
-      const agg = computeModelAggregate(perBenchForModel, benchInfoSim);
-      aggsSim.set(mid, agg);
-      if (agg.totalWeight > maxEvidenceWeightSim) {
-        maxEvidenceWeightSim = agg.totalWeight;
-      }
-    }
-    {
-      const perBenchForSim = new Map();
-      for (const s of simInput.scores) {
-        perBenchForSim.set(String(s.benchId), s.score);
-      }
-      const agg = computeModelAggregate(perBenchForSim, benchInfoSim);
-      aggsSim.set(simulatedModelKey, agg);
-      if (agg.totalWeight > maxEvidenceWeightSim) {
-        maxEvidenceWeightSim = agg.totalWeight;
-      }
-    }
-
-    const liveByModelId = new Map(liveRanking.map((r) => [r.modelId, r]));
-    const simulatedRanking = [];
-    for (const m of models) {
-      const mid = String(m._id);
-      const a = aggsSim.get(mid);
-      const supraScore =
-        Math.round(
-          confidenceAdjustedSupraScore(
-            a.weightedMean,
-            a.totalWeight,
-            maxEvidenceWeightSim
-          ) * 10
-        ) / 10;
-      simulatedRanking.push({
-        modelId: mid,
+  function toRanking(models, result, extraRow) {
+    const byModel = new Map(result.configs.map((c) => [c.modelId, c]));
+    const rows = models.map((m) => {
+      const c = byModel.get(String(m._id));
+      return {
+        modelId: String(m._id),
         name: m.name,
         provider: m.provider,
         familyTag: m.familyTag,
-        supraScore,
-        benchCount: a.benchCount,
+        supraScore: c ? c.supraScore : 0,
+        ability: c && c.ability !== null ? c.ability : -Infinity,
+        benchCount: c ? c.benchCount : 0,
         isSimulated: false,
-      });
-    }
-    {
-      const a = aggsSim.get(simulatedModelKey);
-      const supraScore =
-        Math.round(
-          confidenceAdjustedSupraScore(
-            a.weightedMean,
-            a.totalWeight,
-            maxEvidenceWeightSim
-          ) * 10
-        ) / 10;
-      simulatedRanking.push({
-        modelId: null,
-        name: simInput.name,
-        provider: simInput.provider,
-        familyTag: null,
-        supraScore,
-        benchCount: a.benchCount,
-        isSimulated: true,
-      });
-    }
-    simulatedRanking.sort((a, b) => b.supraScore - a.supraScore);
-    simulatedRanking.forEach((r, i) => {
-      r.rank = i + 1;
-      if (!r.isSimulated) {
-        const live = liveByModelId.get(r.modelId);
-        if (live) {
-          r.deltaScore = Math.round((r.supraScore - live.supraScore) * 10) / 10;
-          r.deltaRank = live.rank - r.rank; // positive = moved up
-        }
-      }
+      };
     });
-    const simulatedRow = simulatedRanking.find((r) => r.isSimulated);
+    if (extraRow) rows.push(extraRow);
+    rows.sort((a, b) => b.ability - a.ability || b.supraScore - a.supraScore);
+    rows.forEach((r, i) => { r.rank = i + 1; });
+    return rows;
+  }
 
-    // === BENCH-LEVEL DELTAS =================================
-    // Anything the simulated model touched might have shifted (the
-    // ranker recomputes top-K frontier mean every time) — surface
-    // the per-bench impact for the "frontier-buster" warning UX.
+  /**
+   * Re-rank the entire leaderboard with one hypothetical extra model.
+   *
+   * @param {object} snapshot  output of simulator.fetchSnapshot
+   * @param {object} simInput  { name, provider, scores: [{benchId, score}] }
+   * @returns {liveRanking, simulatedRanking, simulatedRow, benchDeltas, stats}
+   */
+  function simulateRanking(snapshot, simInput) {
+    const benches = snapshot.benches.filter((b) => !b.hidden);
+    const models = snapshot.models;
+    const scores = snapshot.scores;
+    const SIM_ID = "__sim__";
+
+    // ── live pass ──
+    const live = core().rank({ models, benches, scores });
+    const liveRanking = toRanking(models, live, null);
+
+    // ── simulated pass ──
+    const simScores = scores.concat(
+      simInput.scores.map((s) => ({ modelId: SIM_ID, benchId: String(s.benchId), normalizedScore: s.score }))
+    );
+    const affected = new Set(simInput.scores.map((s) => String(s.benchId)));
+    const mediansLive = buildPerBenchModelMedians(scores);
+    const mediansSim = buildPerBenchModelMedians(simScores);
     const benchDeltas = [];
-    for (const bid of affectedBenchIds) {
-      const live = benchInfoLive.get(bid);
-      const sim = benchInfoSim.get(bid);
-      const b = benchById.get(bid);
-      if (!live || !sim || !b) continue;
+    const simBenches = benches.map((b) => {
+      const bid = String(b._id);
+      if (!affected.has(bid)) return b;
+      const before = headroomFor(mediansLive.get(bid) || new Map());
+      const after = headroomFor(mediansSim.get(bid) || new Map());
+      const weightLive = core().benchWeight(Object.assign({}, b, { cachedHeadroom: before.headroom }), live.upvoteMax);
+      const weightSimulated = core().benchWeight(Object.assign({}, b, { cachedHeadroom: after.headroom }), live.upvoteMax);
       benchDeltas.push({
         benchId: bid,
         slug: b.slug,
         name: b.name,
-        weightLive: Math.round(live.effective * 100) / 100,
-        weightSimulated: Math.round(sim.effective * 100) / 100,
-        modelCountLive: live.modelCount,
-        modelCountSimulated: sim.modelCount,
-        frontierMeanLive: Math.round(live.frontierMean * 10) / 10,
-        frontierMeanSimulated: Math.round(sim.frontierMean * 10) / 10,
-        weightDelta:
-          Math.round((sim.effective - live.effective) * 100) / 100,
+        weightLive: Math.round(weightLive * 100) / 100,
+        weightSimulated: Math.round(weightSimulated * 100) / 100,
+        modelCountLive: before.modelCount,
+        modelCountSimulated: after.modelCount,
+        frontierMeanLive: Math.round(before.frontierMean * 10) / 10,
+        frontierMeanSimulated: Math.round(after.frontierMean * 10) / 10,
+        weightDelta: Math.round((weightSimulated - weightLive) * 100) / 100,
       });
+      return Object.assign({}, b, { cachedHeadroom: after.headroom });
+    });
+    const simModels = models.concat([
+      { _id: SIM_ID, name: simInput.name, provider: simInput.provider, slug: SIM_ID, familyTag: null, tags: [] },
+    ]);
+    const sim = core().rank({ models: simModels, benches: simBenches, scores: simScores });
+    const simConfig = sim.configs.find((c) => c.modelId === SIM_ID);
+    const simulatedRow = {
+      modelId: null,
+      name: simInput.name,
+      provider: simInput.provider,
+      familyTag: null,
+      supraScore: simConfig ? simConfig.supraScore : 0,
+      ability: simConfig && simConfig.ability !== null ? simConfig.ability : -Infinity,
+      benchCount: simConfig ? simConfig.benchCount : 0,
+      isSimulated: true,
+    };
+    const simulatedRanking = toRanking(models, sim, simulatedRow);
+    const liveByModel = new Map(liveRanking.map((r) => [r.modelId, r]));
+    for (const r of simulatedRanking) {
+      if (r.isSimulated) continue;
+      const before = liveByModel.get(r.modelId);
+      if (!before) continue;
+      r.deltaScore = Math.round((r.supraScore - before.supraScore) * 10) / 10;
+      r.deltaRank = before.rank - r.rank; // positive = moved up
     }
 
     return {
@@ -457,32 +157,17 @@
       simulatedRanking,
       simulatedRow,
       benchDeltas,
-      // Stats useful for the result-card header.
       stats: {
         modelsConsidered: models.length + 1,
         benchesSimulated: simInput.scores.length,
-        upvoteMaxShifted: upvoteMaxSim !== upvoteMaxLive,
-        modelCountMaxShifted: modelCountMaxSim !== modelCountMaxLive,
+        upvoteMaxShifted: false,
+        modelCountMaxShifted: false,
       },
     };
   }
 
   window.SupraSimulator = {
     simulateRanking,
-    // Exposed for unit testing.
-    _internal: {
-      median,
-      recomputeBenchWeight,
-      effectiveBenchWeight,
-      evidenceBenchWeight,
-      confidenceAdjustedSupraScore,
-      computeModelAggregate,
-      buildPerBenchModelMedians,
-      HEADROOM_TOP_K,
-      HEADROOM_MIN_N,
-      HEADROOM_FLOOR,
-      HEADROOM_PIVOT,
-      NORMALIZED_SCORE_MIDPOINT,
-    },
+    _internal: { buildPerBenchModelMedians, headroomFor },
   };
 })();

@@ -1,7 +1,8 @@
 # Bayesian benchmark-rating prior experiment
 
-Status: original raw-score test superseded. A three-rater prior is now enabled
-only inside the opponent-adjusted family calculation after held-out validation.
+Status: original raw-score test superseded. Since 2026-09-17 the three-rater
+prior applies to the single pairwise fit that ranks both configurations and
+families.
 
 Snapshot: `2026-08-25T15:56:04.732Z`, SHA-256
 `821103117329dc002039ee9c2db0b016bd0a89502a6678e4acb6b121b33ceb7c`.

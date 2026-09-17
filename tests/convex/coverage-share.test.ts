@@ -1,37 +1,24 @@
 // ════════════════════════════════════════════════════════════
-// Evidence-confidence formula tests (model side AND bench side).
+// SupraScore end-to-end tests (model side AND bench side).
 //
-// Verifies that
-//   per-bench:  effectiveWeight(b) = Q·D·H · (u_b / U*)
-//   per-model:  supraScore(m)      = 50 + √(E_m / E*) · (weightedMean(m) - 50)
-// holds end-to-end against a live (mock) Convex runtime. Each test
-// seeds a tiny dataset, calls the real internal.rankings.recomputeAll,
-// then reads the resulting modelRankings rows OR the benches.listRanked
-// public query.
+// Each test seeds a tiny dataset, calls the real
+// internal.rankings.recomputeAll, then reads the resulting
+// modelRankings rows OR the benches.listRanked public query.
+//
+//   per-bench:  effectiveWeight(b) = Q·D·H · (u_b / U*)      (Bench Score)
+//   per-model:  pairwise duels on every bench → one regularized
+//               Bradley-Terry fit → expected win rate vs the top-10 field
+//               (public/js/supra-rank-core.js)
 //
 // Scenarios covered:
-//   1. Equal-coverage: all models tested on same benches → coverage
-//      factor is 1 for everyone → ranking === order by weightedMean.
-//
-//   2. Sonnet-style sparse vs broad: a 1-bench model with top raw score
-//      on that bench gets dropped below a 3-bench model with a lower
-//      per-bench peak but broader coverage.
-//
-//   3. Top-evidence model gets confidence factor = 1 (no self-penalty).
-//
-//   4. Adding a bench to the leading model bumps maxEvidenceWeight and
-//      therefore reduces every other model's supraScore (IIA is
-//      intentionally violated).
-//
-//   5. Vanity-bench leaderboard attack: a brand-new self-rated bench
-//      with one creator upvote MUST NOT show up at #1 on the bench
-//      leaderboard against an established bench with many community
-//      upvotes — even if its raw Q·D·H is 100.
-//
-//   6. Vanity-bench SupraScore attack: same vanity bench can't be
-//      used to vault an attacker model past a well-covered legit
-//      model, because its bench-side u_b/U* multiplier caps its
-//      ability weight and evidence confidence.
+//   1. Same benches for everyone → order follows the duel record.
+//   2. Sparse vs broad: a one-bench entry that loses its only duel cannot
+//      outrank the broad model; and at realistic field size a one-bench
+//      winner cannot take #1 from broadly tested models.
+//   3. Untested is not negative evidence: a bench only one model ran
+//      produces no duel and moves nobody.
+//   4. Vanity-bench leaderboard attack (bench side, u_b/U*).
+//   5. Vanity-bench SupraScore attack (model side).
 // ════════════════════════════════════════════════════════════
 
 import { describe, it, expect } from "vitest";
@@ -204,8 +191,8 @@ async function refreshBenchAggregates(
   await t.mutation(internal.cache.recomputeBenchAggregates, { benchId });
 }
 
-describe("SupraScore evidence-confidence formula", () => {
-  it("C5 all-equal-coverage: ranking follows weightedMean", async () => {
+describe("SupraScore pairwise formula", () => {
+  it("same benches for everyone: order follows the duel record", async () => {
     const t = setupTestDb();
     const u = await seedServiceUser(t);
     const b = await seedBench(t, u, "Equal Bench");
@@ -221,23 +208,44 @@ describe("SupraScore evidence-confidence formula", () => {
       (a, b) => b.supraScore - a.supraScore
     );
     expect(rows.map((r) => r.name)).toEqual(["HighModel", "MidModel", "LowModel"]);
-    // All three have the same evidence weight (1 bench each) so share=1
-    // and supraScore === weightedMean === raw score.
-    expect(rows[0].supraScore).toBeCloseTo(90, 0);
-    expect(rows[1].supraScore).toBeCloseTo(70, 0);
-    expect(rows[2].supraScore).toBeCloseTo(50, 0);
+    // Scores are expected win rates against the field, so they are strictly
+    // ordered, stay inside (0, 100) and are symmetric around the middle model.
+    expect(rows[0].supraScore).toBeGreaterThan(rows[1].supraScore);
+    expect(rows[1].supraScore).toBeGreaterThan(rows[2].supraScore);
+    expect(rows[1].supraScore).toBeCloseTo(50, 0);
+    expect(rows[0].supraScore + rows[2].supraScore).toBeCloseTo(100, 0);
   });
 
-  it("Sonnet regression: 1-bench peak is confidence-shrunk", async () => {
+  it("scale does not matter: 5 % can lead a bench just like 95 %", async () => {
+    const t = setupTestDb();
+    const u = await seedServiceUser(t);
+    const hard = await seedBench(t, u, "Hard Bench");
+    const easy = await seedBench(t, u, "Easy Bench");
+    const a = await seedModel(t, u, "WinsHard");
+    const b = await seedModel(t, u, "WinsEasy");
+    // A leads the hard bench with tiny numbers; B leads the easy bench with
+    // huge numbers. A raw-percentage mean would crown B (95/2 vs 9/2).
+    await seedScore(t, u, a, hard, 5);
+    await seedScore(t, u, b, hard, 2);
+    await seedScore(t, u, a, easy, 90);
+    await seedScore(t, u, b, easy, 95);
+
+    await recompute(t);
+    const rows = await readRankings(t);
+    const rowA = rows.find((r) => r.name === "WinsHard")!;
+    const rowB = rows.find((r) => r.name === "WinsEasy")!;
+    // One win each on equally weighted benches → a tie, not a rout.
+    expect(rowA.supraScore).toBeCloseTo(rowB.supraScore, 0);
+  });
+
+  it("sparse entry that loses its only duel cannot outrank the broad model", async () => {
     const t = setupTestDb();
     const u = await seedServiceUser(t);
     const bA = await seedBench(t, u, "Bench A");
     const bB = await seedBench(t, u, "Bench B");
     const bC = await seedBench(t, u, "Bench C");
-    // Sparse: one bench, very high score
     const sonnet = await seedModel(t, u, "Sparse Sonnet");
     await seedScore(t, u, sonnet, bA, 97.7);
-    // Broad: three benches, moderate scores — always tested, never top
     const broad = await seedModel(t, u, "Broad GPT");
     await seedScore(t, u, broad, bA, 97.9);
     await seedScore(t, u, broad, bB, 88);
@@ -248,38 +256,55 @@ describe("SupraScore evidence-confidence formula", () => {
       (a, b) => b.supraScore - a.supraScore
     );
     expect(rows[0].name).toBe("Broad GPT");
-    // Sparse keeps the signal from a very strong bench, but is still
-    // pulled well below its raw 97.7 by evidence confidence.
-    const sparseRow = rows.find((r) => r.name === "Sparse Sonnet")!;
-    expect(sparseRow.supraScore).toBeGreaterThan(75);
-    expect(sparseRow.supraScore).toBeLessThan(85);
-    // And the broad model keeps high confidence because it is the
-    // top-evidence row.
-    const broadRow = rows.find((r) => r.name === "Broad GPT")!;
-    expect(broadRow.supraScore).toBeGreaterThanOrEqual(85);
   });
 
-  it("Top-evidence model has confidence factor of 1 (no self-penalty)", async () => {
+  it("one-bench winner cannot take #1 from a broadly tested field", async () => {
+    // Twelve models on six benches, strictly ordered. A newcomer posts a
+    // perfect score on exactly one bench. It beats everyone there, but the
+    // regularized fit keeps a single result from outranking models that
+    // won across the board.
+    const t = setupTestDb();
+    const u = await seedServiceUser(t);
+    const benches = [];
+    for (let i = 0; i < 6; i++) benches.push(await seedBench(t, u, `Field Bench ${i}`));
+    for (let m = 0; m < 12; m++) {
+      const id = await seedModel(t, u, `Field Model ${String(m).padStart(2, "0")}`);
+      for (const b of benches) await seedScore(t, u, id, b, 90 - m * 5);
+    }
+    const peak = await seedModel(t, u, "One Bench Peak");
+    await seedScore(t, u, peak, benches[0], 100);
+
+    await recompute(t);
+    const rows = (await readRankings(t)).sort(
+      (a, b) => b.supraScore - a.supraScore
+    );
+    expect(rows[0].name).toBe("Field Model 00");
+    expect(rows.findIndex((r) => r.name === "One Bench Peak")).toBeGreaterThan(0);
+  });
+
+  it("untested is not negative evidence: a solo bench moves nobody", async () => {
     const t = setupTestDb();
     const u = await seedServiceUser(t);
     const b1 = await seedBench(t, u, "b1");
     const b2 = await seedBench(t, u, "b2");
     const leader = await seedModel(t, u, "LeadModel");
     const follower = await seedModel(t, u, "FollowerModel");
-    // Leader tested twice, follower once
     await seedScore(t, u, leader, b1, 80);
-    await seedScore(t, u, leader, b2, 80);
     await seedScore(t, u, follower, b1, 80);
 
     await recompute(t);
-    const rows = await readRankings(t);
-    const leaderRow = rows.find((r) => r.name === "LeadModel")!;
-    // Leader's supraScore equals its weightedMean (80) within rounding
-    expect(leaderRow.supraScore).toBeCloseTo(80, 0);
-    // Follower is shrunk toward neutral 50, not toward 0.
-    const followerRow = rows.find((r) => r.name === "FollowerModel")!;
-    expect(followerRow.supraScore).toBeGreaterThan(70);
-    expect(followerRow.supraScore).toBeLessThan(80);
+    const before = await readRankings(t);
+    // Leader now also runs a bench nobody else has touched: no duel exists
+    // there, so neither model's score may change.
+    await seedScore(t, u, leader, b2, 80);
+    await recompute(t);
+    const after = await readRankings(t);
+    for (const name of ["LeadModel", "FollowerModel"]) {
+      expect(after.find((r) => r.name === name)!.supraScore).toBe(
+        before.find((r) => r.name === name)!.supraScore
+      );
+    }
+    expect(after.find((r) => r.name === "LeadModel")!.benchCount).toBe(2);
   });
 
   it("Vanity-bench leaderboard attack: 1-upvote bench cannot outrank a 6-upvote bench at equal Q·D·H", async () => {
@@ -361,6 +386,8 @@ describe("SupraScore evidence-confidence formula", () => {
     // Legit gets 80 on the established bench. Attacker self-reports
     // a perfect 100 on its own vanity bench.
     await seedScore(t, creatorLegit, legitModel, legitBench, 80);
+    const otherLegit = await seedModel(t, creatorLegit, "OtherLegitModel");
+    await seedScore(t, creatorLegit, otherLegit, legitBench, 60);
     await seedScore(t, creatorAttacker, attackerModel, vanityBench, 100);
 
     await recompute(t);
@@ -369,36 +396,10 @@ describe("SupraScore evidence-confidence formula", () => {
     );
     expect(rows[0].name).toBe("LegitModel");
     const attackerRow = rows.find((r) => r.name === "AttackerModel")!;
-    // Vanity bench's raw 100 contributes only 100·(1/6)≈16.7 of
-    // ability weight, and evidence confidence shrinks the attacker
-    // toward the neutral 50 midpoint.
-    expect(attackerRow.supraScore).toBeLessThan(80);
-  });
-
-  it("IIA: adding a bench to the leader reduces every other model's score", async () => {
-    const t = setupTestDb();
-    const u = await seedServiceUser(t);
-    const b1 = await seedBench(t, u, "shared");
-    const b2 = await seedBench(t, u, "b2-leader-only");
-    const b3 = await seedBench(t, u, "b3-leader-only");
-    const leader = await seedModel(t, u, "Leader");
-    const peer = await seedModel(t, u, "Peer");
-    await seedScore(t, u, leader, b1, 80);
-    await seedScore(t, u, leader, b2, 80);
-    await seedScore(t, u, peer, b1, 90);
-
-    await recompute(t);
-    const peerBefore = (await readRankings(t)).find((r) => r.name === "Peer")!
-      .supraScore;
-
-    // Add a third bench only to the leader → maxEvidenceWeight grows
-    await seedScore(t, u, leader, b3, 80);
-    await recompute(t);
-    const peerAfter = (await readRankings(t)).find((r) => r.name === "Peer")!
-      .supraScore;
-
-    // Peer was tested on 1/2 then 1/3 of the evidence weight after the
-    // leader's expansion → peerAfter must be strictly lower.
-    expect(peerAfter).toBeLessThan(peerBefore);
+    // The attacker is alone on its vanity bench, so that bench produces no
+    // duel at all: a self-reported 100 there is worth nothing.
+    expect(attackerRow.supraScore).toBeLessThanOrEqual(
+      rows.find((r) => r.name === "LegitModel")!.supraScore
+    );
   });
 });

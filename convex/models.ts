@@ -10,11 +10,7 @@ import {
 import {
   getBenchWeights,
   getBenchCoverageIndex,
-  effectiveBenchWeight,
-  evidenceBenchWeight,
-  confidenceAdjustedSupraScore,
-  FAMILY_REPRESENTATIVE_MIN_BENCHES,
-  buildPairwiseFamilyRankings,
+  rankWithCore,
 } from "./rankings";
 import { enforceDailyActionLimit } from "./abuse";
 import { canonicalFamilyTag } from "./modelFamilies";
@@ -242,50 +238,39 @@ function median(vals: number[]): number {
     : vals[Math.floor(vals.length / 2)];
 }
 
-async function scopedBenchWeights(ctx: any, benches: any[]) {
-  const cov = await getBenchCoverageIndex(ctx);
-  const weights: Record<string, { ability: number; evidence: number }> = {};
-  for (const b of benches) {
-    const raw =
-      typeof b.cachedEffectiveWeight === "number"
-        ? b.cachedEffectiveWeight
-        : (await getBenchWeights(ctx, b._id as any)).weight;
-    const u = cov.upvoteMap.get(b._id as string) ?? 1;
-    const n = cov.modelCountMap.get(b._id as string) ?? 0;
-    weights[b._id as string] = {
-      ability: effectiveBenchWeight(raw, u, cov.upvoteMax, n, cov.modelCountMax),
-      evidence: evidenceBenchWeight(raw, u, cov.upvoteMax, n, cov.modelCountMax),
-    };
-  }
-  return weights;
+// ── Tag-filtered leaderboards ───────────────────────────────
+// The live site computes tag-filtered scores in the browser from
+// `rankingSnapshot` (one cached read for every visitor instead of a full
+// score-table read per tag combination). These two queries are kept for API
+// compatibility and for clients still running a cached older frontend. Both
+// run the same shared fit restricted to benches that carry any active tag.
+async function filteredCoreRanking(ctx: any, activeTags: string[]) {
+  const benches = await ctx.db.query("benches").collect();
+  const models = await ctx.db.query("models").collect();
+  const scores = await ctx.db.query("modelScores").collect();
+  return rankWithCore({
+    models,
+    benches,
+    scores: scores.map((score: any) => ({
+      modelId: score.modelId as string,
+      benchId: score.benchId as string,
+      normalizedScore: score.normalizedScore,
+      upvotes: score.upvotes,
+      downvotes: score.downvotes,
+    })),
+    benchFilter: (b: any) => (b.tags ?? []).some((t: string) => activeTags.includes(t)),
+  });
 }
 
-function supraFromAggregate(
-  weightedSum: number,
-  abilityWeight: number,
-  evidenceWeight: number,
-  maxEvidenceWeight: number
-) {
-  if (abilityWeight <= 0 || evidenceWeight <= 0 || maxEvidenceWeight <= 0) {
-    return null;
+function byFilteredScore(a: any, b: any) {
+  if (a.filteredScore !== null && b.filteredScore === null) return -1;
+  if (a.filteredScore === null && b.filteredScore !== null) return 1;
+  if (a.filteredScore !== null && b.filteredScore !== null) {
+    return b.filteredScore - a.filteredScore;
   }
-  const weightedMean = weightedSum / abilityWeight;
-  return (
-    Math.round(
-      confidenceAdjustedSupraScore(
-        weightedMean,
-        evidenceWeight,
-        maxEvidenceWeight
-      ) * 10
-    ) / 10
-  );
+  return b.supraScore - a.supraScore;
 }
 
-// Ranked FAMILIES with a tag-filtered score. The same opponent-adjusted family
-// ceiling is recomputed from matching benchmarks: best valid concrete result
-// per family/benchmark, then global Bradley-Terry across the comparison graph.
-// Concrete model rows remain untouched. activeTags is OR-matched against bench
-// tags.
 export const listRankedFamiliesWithFilter = query({
   args: { activeTags: v.array(v.string()) },
   handler: async (ctx, { activeTags }) => {
@@ -295,74 +280,34 @@ export const listRankedFamiliesWithFilter = query({
       .order("desc")
       .collect();
     const visible = rankings.filter((r) => !(r.hidden ?? false));
-
-    if (activeTags.length === 0) {
-      return visible.map((r) => ({
-        familyTag: r.familyTag,
-        provider: r.provider,
-        supraScore: r.supraScore,
-        benchCount: r.benchCount,
-        modelCount: r.modelCount,
-        representativeModelId: r.representativeModelId,
-        representativeName: r.representativeName,
-        representativeSlug: r.representativeSlug,
-        aggregationMethod: r.aggregationMethod,
-        provisional: r.provisional ?? true,
-        tags: r.tags,
-        filteredScore: null as number | null,
-      }));
-    }
-
-    const allBenches = await ctx.db.query("benches").collect();
-    const matchingBenches = allBenches.filter(
-      (b) => !b.hidden && b.tags.some((t) => activeTags.includes(t))
-    );
-    const allModels = await ctx.db.query("models").collect();
-    const allScores = await ctx.db.query("modelScores").collect();
-    const filtered = buildPairwiseFamilyRankings({
-      models: allModels,
-      benches: matchingBenches,
-      scores: allScores.map((score: any) => ({
-        modelId: score.modelId as string,
-        benchId: score.benchId as string,
-        normalizedScore: score.normalizedScore,
-        upvotes: score.upvotes,
-        downvotes: score.downvotes,
-      })),
-    });
-    const filteredByFamily = new Map(
-      filtered.rows.map((row) => [row.familyKey, row])
+    const filtered =
+      activeTags.length === 0 ? null : await filteredCoreRanking(ctx, activeTags);
+    const byFamily = new Map(
+      (filtered?.families ?? []).map((row) => [row.familyKey, row])
     );
     const out = visible.map((family) => {
-      const row = filteredByFamily.get(`${family.familyTag}\u0000${family.provider}`);
+      const row = byFamily.get(`${family.familyTag}\u0000${family.provider}`);
       return {
         familyTag: family.familyTag,
         provider: family.provider,
         supraScore: family.supraScore,
-        benchCount: row?.benchCount ?? 0,
+        benchCount: filtered ? row?.benchCount ?? 0 : family.benchCount,
         modelCount: family.modelCount,
-        aggregationMethod: "family-ceiling-pairwise" as const,
-        provisional: (row?.benchCount ?? 0) < FAMILY_REPRESENTATIVE_MIN_BENCHES,
+        representativeModelId: family.representativeModelId,
+        representativeName: family.representativeName,
+        representativeSlug: family.representativeSlug,
+        aggregationMethod: family.aggregationMethod,
+        provisional: filtered ? row?.provisional ?? true : family.provisional ?? true,
         tags: family.tags,
         filteredScore:
-          row === undefined ? null : Math.round(row.supraScore * 10) / 10,
+          row && row.ability !== null ? row.supraScore : (null as number | null),
       };
     });
-
-    out.sort((a, b) => {
-      if (a.filteredScore !== null && b.filteredScore === null) return -1;
-      if (a.filteredScore === null && b.filteredScore !== null) return 1;
-      if (a.filteredScore !== null && b.filteredScore !== null) {
-        return b.filteredScore - a.filteredScore;
-      }
-      return b.supraScore - a.supraScore;
-    });
-
+    if (filtered) out.sort(byFilteredScore);
     return out;
   },
 });
 
-// Distinct family-tags list — same idea, prevents typo splits.
 export const listFamilyTags = query({
   args: {},
   handler: async (ctx) => {
@@ -387,9 +332,14 @@ export const listRankedWithFilter = query({
       .order("desc")
       .collect();
     const rankings = await filterHiddenRankings(ctx, allRankings);
-
-    if (activeTags.length === 0) {
-      return rankings.map((r) => ({
+    const filtered =
+      activeTags.length === 0 ? null : await filteredCoreRanking(ctx, activeTags);
+    const byModel = new Map(
+      (filtered?.configs ?? []).map((row) => [row.modelId, row])
+    );
+    const out = rankings.map((r) => {
+      const row = byModel.get(r.modelId as string);
+      return {
         _id: r.modelId,
         name: r.name,
         provider: r.provider,
@@ -398,99 +348,64 @@ export const listRankedWithFilter = query({
         tags: r.tags,
         supraScore: r.supraScore,
         benchCount: r.benchCount,
-        filteredScore: null,
-      }));
-    }
-
-    // Find benches matching ANY of the active tags
-    const allBenches = await ctx.db.query("benches").collect();
-    const matchingBenches = allBenches.filter(
-      (b) => !b.hidden && b.tags.some((t) => activeTags.includes(t))
-    );
-    const matchingBenchIds = new Set<string>(
-      matchingBenches.map((b) => b._id as string)
-    );
-
-    // Pre-compute full bench weight (quality × difficulty × headroom).
-    //
-    // Fast path: read from the denormalized cachedEffectiveWeight on the
-    // bench (kept fresh by cache.recomputeBenchAggregates).
-    // Slow fallback: compute live via getBenchWeights for benches that
-    // haven't been backfilled yet. Once `migrations:backfillAll` has run,
-    // the slow path is never taken.
-    const benchWeight = await scopedBenchWeights(ctx, matchingBenches);
-
-    const out = [];
-    let maxEvidenceWeight = 0;
-    for (const r of rankings) {
-      const scores = await ctx.db
-        .query("modelScores")
-        .withIndex("by_model", (q) => q.eq("modelId", r.modelId))
-        .collect();
-
-      // Group valid scores by bench, scoped to matching benches
-      const byBench: Record<string, number[]> = {};
-      for (const s of scores) {
-        const bId = s.benchId as string;
-        if (!matchingBenchIds.has(bId)) continue;
-        if (s.upvotes <= s.downvotes) continue;
-        if (!byBench[bId]) byBench[bId] = [];
-        byBench[bId].push(s.normalizedScore);
-      }
-
-      let weighted = 0;
-      let abilityWeight = 0;
-      let evidenceWeight = 0;
-      for (const [bId, vals] of Object.entries(byBench)) {
-        const med = median(vals);
-        const w = benchWeight[bId] ?? 0;
-        if (!w || w.ability <= 0) continue;
-        weighted += w.ability * med;
-        abilityWeight += w.ability;
-        evidenceWeight += w.evidence;
-      }
-      if (evidenceWeight > maxEvidenceWeight) maxEvidenceWeight = evidenceWeight;
-
-      out.push({
-        _id: r.modelId,
-        name: r.name,
-        provider: r.provider,
-        slug: r.slug,
-        familyTag: r.familyTag,
-        tags: r.tags,
-        supraScore: r.supraScore,
-        benchCount: r.benchCount,
-        filteredScore: null as number | null,
-        _filteredWeighted: weighted,
-        _filteredAbilityWeight: abilityWeight,
-        _filteredEvidenceWeight: evidenceWeight,
-      });
-    }
-
-    for (const row of out) {
-      row.filteredScore = supraFromAggregate(
-        row._filteredWeighted,
-        row._filteredAbilityWeight,
-        row._filteredEvidenceWeight,
-        maxEvidenceWeight
-      );
-      delete (row as any)._filteredWeighted;
-      delete (row as any)._filteredAbilityWeight;
-      delete (row as any)._filteredEvidenceWeight;
-    }
-
-    // Sort: models with a filteredScore first, by filteredScore desc,
-    // then the rest by supraScore desc
-    out.sort((a, b) => {
-      if (a.filteredScore !== null && b.filteredScore === null) return -1;
-      if (a.filteredScore === null && b.filteredScore !== null) return 1;
-      if (a.filteredScore !== null && b.filteredScore !== null) {
-        return b.filteredScore - a.filteredScore;
-      }
-      return b.supraScore - a.supraScore;
+        filteredScore:
+          row && row.ability !== null ? row.supraScore : (null as number | null),
+      };
     });
-
+    if (filtered) out.sort(byFilteredScore);
     return out;
+  },
+});
+
+// Everything the shared ranking core needs, in one public, cacheable read.
+// The browser uses it to compute tag-filtered leaderboards locally: Convex
+// caches this result for every visitor until a score, vote or rating
+// changes, so filtering costs no database reads per click.
+export const rankingSnapshot = query({
+  args: {},
+  handler: async (ctx) => {
+    const benches = await ctx.db.query("benches").collect();
+    const models = await ctx.db.query("models").collect();
+    const scores = await ctx.db.query("modelScores").collect();
+    const visibleModels = models.filter((m: any) => !m.hidden);
+    const visibleBenches = benches.filter((b: any) => !b.hidden);
+    const modelIds = new Set(visibleModels.map((m) => m._id as string));
+    const benchIds = new Set(visibleBenches.map((b) => b._id as string));
+
+    // Collapse submissions to one median cell per (model, bench) so the
+    // payload carries no submitter data and stays small.
+    const cells = new Map<string, number[]>();
+    for (const s of scores) {
+      if (s.upvotes <= s.downvotes) continue;
+      if (!modelIds.has(s.modelId as string) || !benchIds.has(s.benchId as string)) continue;
+      const key = `${s.modelId}|${s.benchId}`;
+      const list = cells.get(key);
+      if (list) list.push(s.normalizedScore);
+      else cells.set(key, [s.normalizedScore]);
+    }
+    return {
+      models: visibleModels.map((m: any) => ({
+        _id: m._id,
+        name: m.name,
+        provider: m.provider,
+        slug: m.slug,
+        familyTag: m.familyTag ?? null,
+        tags: m.tags ?? [],
+      })),
+      benches: visibleBenches.map((b: any) => ({
+        _id: b._id,
+        tags: b.tags ?? [],
+        cachedDimensions: b.cachedDimensions ?? null,
+        cachedRaterCount: b.cachedRaterCount ?? 0,
+        cachedHeadroom: b.cachedHeadroom ?? null,
+        cachedNetUpvotes:
+          typeof b.cachedNetUpvotes === "number" ? b.cachedNetUpvotes : 1,
+      })),
+      scores: Array.from(cells, ([key, values]) => {
+        const [modelId, benchId] = key.split("|");
+        return { modelId, benchId, normalizedScore: median(values) };
+      }),
+    };
   },
 });
 

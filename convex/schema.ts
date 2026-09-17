@@ -167,11 +167,11 @@ export default defineSchema({
   // counted anywhere (we don't invent a pseudo-family from the
   // model's own name — that creates noise in the ranking table).
   //
-  // supraScore here is the opponent-adjusted FAMILY ceiling:
-  //   • each family keeps its best concrete configuration on each benchmark
-  //   • within-benchmark wins/losses are joined globally with Bradley-Terry
-  //   • individual model/configuration rows remain unchanged and reproducible
-  // See rankings.buildRankingsFromInputs for the implementation.
+  // supraScore here is the score of the family's best configuration from the
+  // same pairwise fit that ranks individual configurations (the
+  // representative* fields name it). A configuration may only represent its
+  // family if it covers at least half of the family's bench weight.
+  // See public/js/supra-rank-core.js for the implementation.
   familyRankings: defineTable({
     familyTag: v.string(),
     provider: v.string(),
@@ -181,7 +181,12 @@ export default defineSchema({
     representativeModelId: v.optional(v.id("models")),
     representativeName: v.optional(v.string()),
     representativeSlug: v.optional(v.string()),
-    aggregationMethod: v.optional(v.literal("family-ceiling-pairwise")),
+    aggregationMethod: v.optional(
+      v.union(
+        v.literal("family-ceiling-pairwise"), // rows written before 2026-09-17
+        v.literal("best-configuration-pairwise")
+      )
+    ),
     provisional: v.optional(v.boolean()), // true when family has < minimum benches
     tags: v.array(v.string()),  // union of member models' tags (for tag-filter)
     updatedAt: v.number(),

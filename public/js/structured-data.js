@@ -73,7 +73,7 @@
     name: "SupraBench AI Model Rankings",
     alternateName: "SupraScore Leaderboard",
     description:
-      "Community-curated, trustworthiness-weighted rankings of large language models across crowd-rated benchmarks. Each model receives a SupraScore: the bench-weighted mean of its per-bench medians, adjusted by evidence confidence around the neutral midpoint so sparse models are treated as uncertain rather than bad. Benchmarks themselves are rated by the community on relevance, contamination resistance, discriminability, reproducibility and difficulty. The dataset is updated continuously as new submissions, votes and quality ratings land — the snapshot a crawler sees reflects the state at request time; consult the HTTP Last-Modified header on the page response, or fetch /v1/export.json, for the most recent values.",
+      "Community-curated, trustworthiness-weighted rankings of large language models across crowd-rated benchmarks. Each model receives a SupraScore: its expected win rate against the current top-10 models, fitted from pairwise comparisons on every benchmark and weighted by how much the community trusts each benchmark. Benchmarks themselves are rated by the community on relevance, contamination resistance, discriminability, reproducibility and difficulty. The dataset is updated continuously as new submissions, votes and quality ratings land — the snapshot a crawler sees reflects the state at request time; consult the HTTP Last-Modified header on the page response, or fetch /v1/export.json, for the most recent values.",
     url: SITE_URL,
     identifier: SITE_URL,
     keywords: [
@@ -99,7 +99,7 @@
         "@type": "PropertyValue",
         name: "SupraScore",
         description:
-          "Trust-weighted aggregate score of an AI model across all benchmarks it has been evaluated on (range 0–100).",
+          "Expected win rate (0–100) against the current top-10 models, from trust-weighted pairwise benchmark comparisons.",
       },
       {
         "@type": "PropertyValue",

@@ -46,7 +46,7 @@ Help categorize benchmarks by adding tags on benchmark detail pages.
 - Scores must be within the benchmark's defined scale range
 
 See the [README](README.md#anti-gaming-rules) for the full anti-gaming
-catalog (evidence-confidence shrinkage, upvote-share trust weighting,
+catalog (regularised pairwise fit, upvote-share trust weighting,
 sockpuppet limits, anti-resurrection,
 etc.) and the adversarial-robustness test suite that locks each defence
 in place.
