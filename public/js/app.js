@@ -385,12 +385,11 @@ function supraBench() {
     tagPicker: { open: false, search: "" },
 
     // Models leaderboard scope: "models" (one row per model) or
-    // "families" (one row per (familyTag, provider) aggregate from
-    // familyRankings). Toggled by clicking the "Model / Model-Family"
-    // header. Default "families" — landing on a per-family roll-up
-    // gives a much cleaner first impression than 80 quasi-duplicate
-    // model variants of the same lab; users who want individual
-    // models can drill in with one click.
+    // UI wording: scope "families" is labelled "Model" (one row per release,
+    // i.e. per (familyTag, provider) from familyRankings) and scope "models"
+    // is labelled "Configuration" (one row per concrete effort/context
+    // setting). The internal names predate that wording and are kept so the
+    // API and the tables stay unchanged. Default is the per-model roll-up.
     leaderboardScope: "families",
     allProviders: [],
     allFamilyTags: [],

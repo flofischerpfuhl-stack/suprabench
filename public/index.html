@@ -77,7 +77,7 @@
     <script defer src="js/convex.js?v=20260418m"></script>
     <script defer src="js/supra-rank-core.js?v=20260917-unified"></script>
     <script defer src="js/simulator-math.js?v=20260917-unified"></script>
-    <script defer src="js/app.js?v=20260917-unified"></script>
+    <script defer src="js/app.js?v=20260917-taxonomy"></script>
     <script defer src="vendor/alpinejs/cdn.min.js?v=3.13.3"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
@@ -187,19 +187,19 @@
                aria-label="Search models">
     </div>
 
-    <!-- Mobile scope switch (Model / Model-Family). On phones (≤700px)
+    <!-- Mobile scope switch (Model / Configuration). On phones (≤700px)
          the tables collapse into card stacks and their <thead> — which
          carries the desktop scope switch — is hidden, so without this
          bar there is no way to change scope on mobile. Hidden on wider
          viewports via CSS; the desktop switch stays in the <thead>. -->
     <div class="lb-scope-bar" role="tablist" aria-label="Leaderboard scope">
-        <span class="lb-scope" role="tab" tabindex="0" :aria-selected="leaderboardScope === 'models'"
-              :class="{'active': leaderboardScope === 'models'}"
-              @click="setLeaderboardScope('models')">Model</span><!--
-        --><span class="lb-scope-sep"> / </span><!--
-        --><span class="lb-scope" role="tab" tabindex="0" :aria-selected="leaderboardScope === 'families'"
+        <span class="lb-scope" role="tab" tabindex="0" :aria-selected="leaderboardScope === 'families'"
               :class="{'active': leaderboardScope === 'families'}"
-              @click="setLeaderboardScope('families')">Model-Family</span>
+              @click="setLeaderboardScope('families')">Model</span><!--
+        --><span class="lb-scope-sep"> / </span><!--
+        --><span class="lb-scope" role="tab" tabindex="0" :aria-selected="leaderboardScope === 'models'"
+              :class="{'active': leaderboardScope === 'models'}"
+              @click="setLeaderboardScope('models')">Configuration</span>
     </div>
 
     <!-- Active family-tag filter pill. Appears when a user has clicked
@@ -208,7 +208,7 @@
          conceptually meaningless. -->
     <div class="list-search" x-show="activeFamilyFilter && leaderboardScope === 'models'" style="padding-top:0">
         <span class="tag active" role="button" tabindex="0" @click="clearFamilyFilter()" style="cursor:pointer">
-            Family: <span x-text="activeFamilyFilter"></span> ×
+            Model: <span x-text="activeFamilyFilter"></span> ×
         </span>
     </div>
 
@@ -224,11 +224,11 @@
             <tr>
                 <th style="width:50px">#</th>
                 <th>
-                    <span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'models'" :class="{'active': leaderboardScope === 'models'}"
-                          @click="setLeaderboardScope('models')">Model</span><!--
+                    <span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'families'" :class="{'active': leaderboardScope === 'families'}"
+                          @click="setLeaderboardScope('families')">Model</span><!--
                     --><span class="lb-scope-sep"> / </span><!--
-                    --><span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'families'" :class="{'active': leaderboardScope === 'families'}"
-                          @click="setLeaderboardScope('families')">Model-Family</span>
+                    --><span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'models'" :class="{'active': leaderboardScope === 'models'}"
+                          @click="setLeaderboardScope('models')">Configuration</span>
                 </th>
                 <th>Provider</th>
                 <th title="Expected win rate against the current top-10 configurations, from pairwise duels on every benchmark (weighted by community bench quality, difficulty, saturation and upvotes). See About for the full method.">SupraScore</th>
@@ -246,7 +246,7 @@
                             <span class="tag-sm family-tag-click" role="button" tabindex="0"
                                   :class="{'active': activeFamilyFilter === m.familyTag}"
                                   @click.stop="toggleFamilyFilter(m.familyTag)"
-                                  :title="'Filter by family: ' + m.familyTag"
+                                  :title="'Show all configurations of ' + m.familyTag"
                                   x-text="m.familyTag"
                                   style="margin-left:0.5rem;cursor:pointer"></span>
                         </template>
@@ -276,17 +276,17 @@
             <tr>
                 <th style="width:50px">#</th>
                 <th>
-                    <span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'models'" :class="{'active': leaderboardScope === 'models'}"
-                          @click="setLeaderboardScope('models')">Model</span><!--
+                    <span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'families'" :class="{'active': leaderboardScope === 'families'}"
+                          @click="setLeaderboardScope('families')">Model</span><!--
                     --><span class="lb-scope-sep"> / </span><!--
-                    --><span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'families'" :class="{'active': leaderboardScope === 'families'}"
-                          @click="setLeaderboardScope('families')">Model-Family</span>
+                    --><span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'models'" :class="{'active': leaderboardScope === 'models'}"
+                          @click="setLeaderboardScope('models')">Configuration</span>
                 </th>
                 <th>Provider</th>
-                <th title="Score of the family's best configuration, from the same pairwise fit as the Model view. A configuration can only represent its family if it covers at least half of the family's benchmark weight.">SupraScore</th>
+                <th title="Score of the model's best configuration, from the same pairwise fit as the Configuration view. A configuration can only represent its model if it covers at least half of the model's benchmark weight.">SupraScore</th>
                 <th x-show="activeTags.length > 0" title="The same calculation, restricted to benchmarks with the selected tags.">Filtered Score</th>
-                <th title="Number of visible concrete configurations in the family.">Members</th>
-                <th title="Number of distinct benchmarks with at least one valid family configuration.">Coverage</th>
+                <th title="Number of configurations of this model (reasoning effort, context window and similar settings).">Configs</th>
+                <th title="Number of distinct benchmarks on which at least one configuration of this model has a valid score.">Coverage</th>
             </tr>
         </thead>
         <tbody>
@@ -297,7 +297,7 @@
                         <a href="#" @click.prevent x-text="f.familyTag" style="font-weight:500"></a>
                         <div style="font-size:.76rem;color:var(--text3);margin-top:.2rem">
                             <span x-show="f.representativeName" x-text="'best: ' + (f.representativeName || '')"></span>
-                            <span x-show="f.provisional" class="tag-sm" style="margin-left:.3rem" title="This family currently has fewer than three distinct benchmark results.">provisional</span>
+                            <span x-show="f.provisional" class="tag-sm" style="margin-left:.3rem" title="This model currently has fewer than three distinct benchmark results.">provisional</span>
                         </div>
                     </td>
                     <td class="m-provider" style="color:var(--text2)" x-text="f.provider"></td>
@@ -305,7 +305,7 @@
                     <td class="m-filtered" x-show="activeTags.length > 0">
                         <span class="score-cell score-accent" x-text="f.filteredScore !== null && f.filteredScore !== undefined ? f.filteredScore.toFixed(1) : '—'"></span>
                     </td>
-                    <td class="m-coverage" style="color:var(--text3);font-size:.85rem" x-text="f.modelCount + (f.modelCount === 1 ? ' model' : ' models')"></td>
+                    <td class="m-coverage" style="color:var(--text3);font-size:.85rem" x-text="f.modelCount + (f.modelCount === 1 ? ' config' : ' configs')"></td>
                     <td class="m-coverage" style="color:var(--text3);font-size:.85rem" x-text="f.benchCount + ' benches'"></td>
                 </tr>
             </template>
@@ -347,20 +347,20 @@
     <template x-if="leaderboardScope === 'models'">
         <div>
             <div class="empty-state" x-show="loaded.models && rankedModels.length === 0">
-                No models yet — be the first to contribute.
+                No configurations yet — be the first to contribute.
             </div>
             <div class="empty-state" x-show="loaded.models && rankedModels.length > 0 && filteredRankedModels.length === 0">
-                No models match this search.
+                No configurations match this search.
             </div>
         </div>
     </template>
     <template x-if="leaderboardScope === 'families'">
         <div>
             <div class="empty-state" x-show="loaded.families && rankedFamilies.length === 0">
-                No model families yet — assign a family tag when submitting a model.
+                No models yet — name the model when submitting a configuration.
             </div>
             <div class="empty-state" x-show="loaded.families && rankedFamilies.length > 0 && filteredRankedFamilies.length === 0">
-                No families match this search.
+                No models match this search.
             </div>
         </div>
     </template>
@@ -381,7 +381,9 @@
             <h1 class="detail-title" x-text="currentModel.name"></h1>
 
             <template x-if="currentModel.familyTag">
-                <span class="tag-sm" x-text="currentModel.familyTag" style="margin-bottom:1rem;display:inline-block"></span>
+                <span class="tag-sm" role="link" tabindex="0" title="Show all configurations of this model"
+                      @click="activeFamilyFilter = currentModel.familyTag; leaderboardScope = 'models'; navigate('models')"
+                      x-text="'Model: ' + currentModel.familyTag" style="margin-bottom:1rem;display:inline-block;cursor:pointer"></span>
             </template>
 
             <!-- Entity-existence voting + community-removed banner -->
@@ -1271,7 +1273,7 @@
         </button>
         <button class="submit-tab" :class="{'active': submitMode==='model'}" @click="setSubmitMode('model')" role="tab">
             <span class="submit-tab__title">Model</span>
-            <span class="submit-tab__hint">New model + many bench scores</span>
+            <span class="submit-tab__hint">New model configuration + many bench scores</span>
         </button>
     </div>
 
@@ -1539,7 +1541,7 @@
                         <div x-show="entry.isNewModel" x-transition style="margin-bottom:1rem">
                             <div class="form-group">
                                 <label>Name *</label>
-                                <input type="text" x-model="entry.newModel.name" placeholder="e.g. GPT-4o-2024-11-20">
+                                <input type="text" x-model="entry.newModel.name" placeholder="e.g. GPT-6 Astra (xhigh)">
                             </div>
                             <div class="form-group search-container">
                                 <label>Provider *</label>
@@ -1560,13 +1562,13 @@
                                 </div>
                             </div>
                             <div class="form-group search-container">
-                                <label>Family Tag (optional)</label>
+                                <label>Model (release this configuration belongs to)</label>
                                 <input type="text" x-model="entry.newModel.familyTag"
                                        @focus="entry.newModel.familyOpen = true"
                                        @input="entry.newModel.familyOpen = true"
                                        @blur="setTimeout(() => entry.newModel.familyOpen = false, 150)"
                                        list="all-family-tags-dl"
-                                       placeholder="e.g. gpt-4o"
+                                       placeholder="e.g. GPT-6 Astra"
                                        autocomplete="off">
                                 <div class="search-dropdown"
                                      x-show="entry.newModel.familyOpen && filteredFamilyTags(entry.newModel.familyTag).length > 0">
@@ -1678,7 +1680,7 @@
             <div x-show="submitFormC.isNewModel" x-transition>
                 <div class="form-group">
                     <label>Name *</label>
-                    <input type="text" x-model="submitFormC.newModel.name" placeholder="e.g. Claude Opus 4.7">
+                    <input type="text" x-model="submitFormC.newModel.name" placeholder="e.g. Claude Opus 5 (max)">
                 </div>
                 <div class="form-group search-container">
                     <label>Provider *</label>
@@ -1699,13 +1701,13 @@
                     </div>
                 </div>
                 <div class="form-group search-container">
-                    <label>Family Tag (optional)</label>
+                    <label>Model (release this configuration belongs to)</label>
                     <input type="text" x-model="submitFormC.newModel.familyTag"
                            @focus="submitFormC.newModel.familyOpen = true"
                            @input="submitFormC.newModel.familyOpen = true"
                            @blur="setTimeout(() => submitFormC.newModel.familyOpen = false, 150)"
                            list="all-family-tags-dl"
-                           placeholder="e.g. claude-opus"
+                           placeholder="e.g. Claude Opus 5"
                            autocomplete="off">
                     <div class="search-dropdown"
                          x-show="submitFormC.newModel.familyOpen && filteredFamilyTags(submitFormC.newModel.familyTag).length > 0">
@@ -1715,7 +1717,7 @@
                                  x-text="f"></div>
                         </template>
                     </div>
-                    <span class="helper-text">Groups model versions together</span>
+                    <span class="helper-text">One entry = one configuration, named <code>Model (setting)</code> — e.g. <code>Claude Opus 5 (max)</code>. All configurations of a release share the same Model and appear as one row in the Model ranking.</span>
                 </div>
                 <div class="form-group">
                     <label>Tags <span class="helper-text" style="font-weight:400">— press <code>,</code> <code>;</code> or Enter to add</span></label>
@@ -1912,6 +1914,7 @@
             <p>A model's <strong>SupraScore</strong> is the headline number on every model page and the leaderboard sort key. It answers one question: <em>"on a benchmark the community trusts, how often does this model beat the current frontier?"</em> It builds on the Bench Score from the previous section.</p>
 
             <p>Three preparatory steps turn raw submissions into one number per (model, bench) cell. Three scoring steps turn those cells into the SupraScore.</p>
+            <p class="helper-text">Throughout this section, "model" means one concrete <strong>configuration</strong> — e.g. <code>GPT-6 Astra (xhigh)</code> — because that is the unit benchmarks are run on. The default <strong>Model</strong> ranking then shows each model once, with the score of its best configuration (see "What is a model, and what is a configuration?" below).</p>
 
             <h4 class="qa-subheader">Foundations — submission to per-pair score</h4>
 
@@ -2083,7 +2086,7 @@
                 <li><strong>A bench only you ran is worth nothing</strong> — scores become duels, and a duel needs an opponent. A one-account, one-model vanity bench produces no duel at all, so a self-reported 100 on it cannot move any ranking until other models are measured there.</li>
                 <li><strong>Difficulty uses median, not mean</strong> — a single 5-star rater on a trivial bench can't fake difficulty.</li>
                 <li><strong>Saturation auto-detected</strong> — pumping a saturated bench gives diminishing returns by construction, and because only the order counts, a 99.4 on a solved bench is no longer worth 99 points of anything.</li>
-                <li><strong>A flattering configuration can't speak for its family</strong> — a configuration that reports only the benches it wins may look good as a row, but it can represent its family only if it covers at least half of the family's benchmark weight.</li>
+                <li><strong>A flattering configuration can't speak for its model</strong> — a configuration that reports only the benches it wins may look good as a row, but it can represent its model only if it covers at least half of the model's benchmark weight.</li>
                 <li><strong>Engagement-aware hide threshold</strong> — small voting cliques can't take down established entries.</li>
                 <li><strong>Anti-resurrection</strong> — re-submitting your own removed entries under the same name is blocked.</li>
                 <li><strong>Rate limiting</strong> — submissions are capped at 30 individual scores per 24 h per user.</li>
@@ -2123,40 +2126,42 @@
         </div>
     </div>
 
-    <!-- Q9b — Model-family taxonomy convention. Lives here because the
-         "Model / Model-Family" header in the rankings table makes users
-         wonder what counts as a family and why Claude 4.6 is separate
-         from Claude 4.7. Short answer: one release = one family. -->
+    <!-- Q9b — Model vs configuration. Lives here because the
+         "Model / Configuration" switch in the rankings table makes users
+         wonder what the difference is and why Claude Opus 4.6 is separate
+         from Claude Opus 4.7. Short answer: one release = one model; every
+         effort/context setting of it = one configuration. (Internally and
+         in the API the model is still the `familyTag` field.) -->
     <div class="qa-item">
         <button class="qa-question" :aria-expanded="aboutOpen.has('q9b')" @click="aboutToggle('q9b')">
             <span class="expand-icon" :class="{'open': aboutOpen.has('q9b')}">▼</span>
-            <span>What counts as a "model family"?</span>
+            <span>What is a model, and what is a configuration?</span>
         </button>
         <div class="qa-answer" x-show="aboutOpen.has('q9b')" x-transition>
-            <p>A <strong>family</strong> is one specific lab release and product tier — <em>not</em> a vendor, a broad generation or an architecture line. "Claude Opus 5" and "Claude Fable 5" are separate families; so are "GPT-5.6 Sol", "GPT-5.6 Terra" and "GPT-5.6 Luna". "Claude" or "GPT-5.6" alone is too broad for a family row.</p>
-            <p>The cross-provider rule is: provider + generation + product tier + release identify the family. Reasoning effort, harness and execution settings identify a concrete configuration inside it. Versioned releases such as Muse Spark 1.1 and 1.2 remain separate.</p>
+            <p>A <strong>model</strong> is one specific lab release and product tier — what people mean when they say "GPT-6 Astra" or "Claude Opus 5". It is <em>not</em> a vendor, a broad generation or an architecture line: "Claude Opus 5" and "Claude Fable 5" are separate models; so are "GPT-5.6 Sol", "GPT-5.6 Terra" and "GPT-5.6 Luna". Versioned releases such as Muse Spark 1.1 and 1.2 remain separate too.</p>
+            <p>A <strong>configuration</strong> is one way of running that model: reasoning effort, context window, fallback mode, harness. Benchmarks are always run on a configuration, so every score on SupraBench belongs to one. The rule across providers: provider + generation + product tier + release identify the model; everything else identifies the configuration.</p>
 
-            <h4 class="qa-subheader">Variants go in the model name, not the family</h4>
-            <p>When a lab ships the same release at different effort levels — sampling temperature, reasoning mode, context window, fine-tune — we keep them in the same family and disambiguate with a parenthetical suffix on the model's display name:</p>
+            <h4 class="qa-subheader">How configurations are named</h4>
+            <p>A configuration is named after its model with the setting in parentheses:</p>
             <table class="qa-table">
-                <thead><tr><th>Family</th><th>Variants (model name)</th><th>What the suffix means</th></tr></thead>
+                <thead><tr><th>Model</th><th>Configurations</th><th>What the suffix means</th></tr></thead>
                 <tbody>
-                    <tr><td><code>Claude Opus 4.7</code></td><td><code>Claude Opus 4.7</code>, <code>Claude Opus 4.7 (max)</code></td><td>Lab-branded "best-effort" sampling</td></tr>
-                    <tr><td><code>GPT-5.3 Codex</code></td><td><code>… (low)</code>, <code>(med)</code>, <code>(high)</code>, <code>(xhigh)</code></td><td>Reasoning-effort level</td></tr>
-                    <tr><td><code>GPT-5.6 Sol</code></td><td><code>GPT-5.6 Sol</code>, <code>… (medium)</code>, <code>… (xhigh)</code>, <code>… (max)</code></td><td>Same product tier at different reasoning effort</td></tr>
+                    <tr><td><code>Claude Opus 5</code></td><td><code>Claude Opus 5 (high)</code>, <code>… (xhigh)</code>, <code>… (max)</code></td><td>Reasoning-effort level</td></tr>
+                    <tr><td><code>GPT-6 Astra</code></td><td><code>GPT-6 Astra (medium)</code>, <code>… (high)</code>, <code>… (xhigh)</code>, <code>… (max)</code></td><td>Reasoning-effort level</td></tr>
+                    <tr><td><code>GPT-5.6 Sol</code></td><td><code>GPT-5.6 Sol (medium)</code>, <code>… (xhigh)</code>, <code>… (max)</code></td><td>Same product tier at different reasoning effort</td></tr>
                     <tr><td><code>Gemini 3.1</code></td><td><code>Gemini 3.1</code>, <code>Gemini 3.1 (thinking)</code></td><td>Explicit reasoning mode on/off</td></tr>
                 </tbody>
             </table>
-            <p>Common suffixes you'll see: <code>(low)</code> / <code>(med)</code> / <code>(high)</code> / <code>(xhigh)</code>, <code>(thinking)</code>, <code>(max)</code>, <code>(128k)</code> / <code>(200k)</code> / <code>(1M)</code> for context-length SKUs, <code>(instruct)</code> / <code>(chat)</code> / <code>(base)</code> for open-weight post-training variants.</p>
+            <p>Common suffixes you'll see: <code>(low)</code> / <code>(medium)</code> / <code>(high)</code> / <code>(xhigh)</code> / <code>(max)</code>, <code>(thinking)</code>, <code>(128k)</code> / <code>(200k)</code> / <code>(1M)</code> for context-length SKUs, <code>(instruct)</code> / <code>(chat)</code> / <code>(base)</code> for open-weight post-training variants.</p>
 
-            <h4 class="qa-subheader">How a family gets its score</h4>
-            <p>There is one calculation, not two. Every concrete configuration is ranked by the pairwise fit described above, and a family simply shows <strong>the score of its best configuration</strong> — the row names it ("best: …"). The Model and Model-Family views therefore always agree: the family number is a number you can find in the model table.</p>
-            <p>One guard: a configuration may represent its family only if it covers at least <strong>half of the family's total benchmark weight</strong>. A configuration that lists only the benches it wins can look strong as a row, but it cannot speak for the family. If no configuration reaches half, the most broadly tested one is used.</p>
-            <p>A family with fewer than <strong>three distinct benchmarks</strong> remains visible but is marked <strong>provisional</strong>. Tag filters rerun the same calculation on matching benchmarks instead of selecting a different hidden formula.</p>
+            <h4 class="qa-subheader">How a model gets its score</h4>
+            <p>There is one calculation, not two. Every configuration is ranked by the pairwise fit described above, and a model simply shows <strong>the score of its best configuration</strong> — the row names it ("best: …"). The Model and Configuration views therefore always agree: the model's number is a number you can find in the configuration table.</p>
+            <p>One guard: a configuration may represent its model only if it covers at least <strong>half of the model's total benchmark weight</strong>. A configuration that lists only the benches it wins can look strong as a row, but it cannot speak for the model. If no configuration reaches half, the most broadly tested one is used.</p>
+            <p>A model with fewer than <strong>three distinct benchmarks</strong> remains visible but is marked <strong>provisional</strong>. Tag filters rerun the same calculation on matching benchmarks instead of selecting a different hidden formula.</p>
 
             <h4 class="qa-subheader">What if the community disagrees with a grouping?</h4>
-            <p>New submissions still propose their family tag, and ambiguous provider taxonomies are not guessed automatically. A small reviewed normalizer only enforces unambiguous distinctions already present in the official model name, such as GPT-5.6 Sol versus Terra or Muse Spark 1.1 versus 1.2. Corrections can be proposed with evidence through the public repository; the mapping and its tests are auditable.</p>
-            <p class="helper-text">A one-off release with no variants is fine to have <code>familyTag == name</code>. It appears as a one-member family and stays provisional until the family has three benchmark results.</p>
+            <p>New submissions still name the model their configuration belongs to, and ambiguous provider taxonomies are not guessed automatically. A small reviewed normalizer only enforces unambiguous distinctions already present in the official model name, such as GPT-5.6 Sol versus Terra or Muse Spark 1.1 versus 1.2. Corrections can be proposed with evidence through the public repository; the mapping and its tests are auditable.</p>
+            <p class="helper-text">A release with a single configuration simply uses the same name for both. In the API and the data export the model is the <code>familyTag</code> field — the name predates this wording and is kept for compatibility.</p>
         </div>
     </div>
 

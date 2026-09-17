@@ -145,7 +145,7 @@ async function resolveOrCreateModel(
   if (!nm.provider?.trim()) throw new Error("Provider is required");
   if (nm.name.trim().length > MAX_NAME_LEN) throw new Error("Model name too long");
   if (nm.provider.trim().length > MAX_PROVIDER_LEN) throw new Error("Provider too long");
-  if ((nm.familyTag ?? "").trim().length > MAX_FAMILY_TAG_LEN) throw new Error("Family tag too long");
+  if ((nm.familyTag ?? "").trim().length > MAX_FAMILY_TAG_LEN) throw new Error("Model name too long");
   await assertNotResurrectingOwnHidden(ctx, "model", nm.name, userId);
   const familyTag = canonicalFamilyTag(nm.name, nm.familyTag);
 

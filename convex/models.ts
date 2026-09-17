@@ -423,7 +423,7 @@ export const create = mutation({
     if (!args.provider?.trim()) throw new Error("Provider is required");
     if (args.name.trim().length > MAX_NAME_LEN) throw new Error("Name too long");
     if (args.provider.trim().length > MAX_PROVIDER_LEN) throw new Error("Provider too long");
-    if ((args.familyTag ?? "").trim().length > MAX_FAMILY_TAG_LEN) throw new Error("Family tag too long");
+    if ((args.familyTag ?? "").trim().length > MAX_FAMILY_TAG_LEN) throw new Error("Model name too long");
     await enforceDailyActionLimit(ctx, userId, "create-model", CREATE_LIMIT_PER_DAY);
     await assertNotResurrectingOwnHidden(ctx, "model", args.name, userId);
 

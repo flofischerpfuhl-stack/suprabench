@@ -49,10 +49,10 @@ BenchScore(b)  = Q(b) · D(b) · H(b) · (u(b)/U*)          ← how much a bench
 cell(m,b)      = median of valid normalised submissions   ← one number per (model, bench)
 duel           = every pair of models on every bench: higher cell wins, equal ties
 w_duel(b)      = BenchWeight(b) / mean(BenchWeight) / (n_b − 1)
-ability a_m    = regularised Bradley-Terry fit over all duels (λ = 0.15)
+ability a_m    = regularised Bradley-Terry fit over all duels (λ = 0.15); m = one configuration
                  P(m beats k) = 1 / (1 + e^−(a_m − a_k))
 SupraScore(m)  = 100 · mean over the current top-10 of P(m beats k)     ∈ [0, 100]
-family         = score of its best configuration from the same fit
+model          = score of its best configuration from the same fit
 ```
 
 **Why duels and not an average of percentages.** A point does not mean the
@@ -90,10 +90,10 @@ together — beating a strong field counts for more than beating a weak one.
   configurations right now (a member counts a tie against itself). 50 = as
   good as the average frontier model. It is relative by design: when a
   stronger model arrives, everyone else's score drops.
-- **Families** — a family shows the score of its best configuration from the
-  same fit, so the Model and Model-Family views always agree. A configuration
-  may represent its family only if it covers ≥ 50 % of the family's bench
-  weight; one that lists only the benches it wins cannot speak for the family.
+- **Models** — a model shows the score of its best configuration from the
+  same fit, so the Model and Configuration views always agree. A configuration
+  may represent its model only if it covers ≥ 50 % of the model's bench
+  weight; one that lists only the benches it wins cannot speak for the model.
 
 The whole calculation is one dependency-free file,
 [`public/js/supra-rank-core.js`](public/js/supra-rank-core.js). The Convex
@@ -118,39 +118,46 @@ Worked example and full walkthrough: [About page](https://suprabench.com/#about)
 5. **Anti-resurrection** — re-submitting your own community-removed entries
    under the same name is blocked.
 
-### Model families
+### Models and configurations
 
-A **family** is one specific lab release — not a vendor, not a
-generation. `Claude Opus 4.6` and `Claude Opus 4.7` are separate
-families, `Claude` on its own is not a family.
+A **model** is one specific lab release and product tier — what people mean
+when they say "GPT-6 Astra" or "Claude Opus 5". It is not a vendor and not a
+generation: `Claude Opus 4.6` and `Claude Opus 4.7` are separate models, `Claude`
+on its own is not a model.
 
-Variants of the same release and product tier (different sampling / reasoning
-effort, context-window SKUs, fine-tune modes) stay in the same family and
-disambiguate via a parenthetical suffix on the model's display name:
+A **configuration** is one way of running a model (reasoning effort,
+context-window SKU, fallback mode, harness). Benchmarks are run on
+configurations, so every score belongs to one. A configuration is named after
+its model with the setting in parentheses:
 
-| Family              | Members                                                                |
+| Model               | Configurations                                                         |
 | ------------------- | ---------------------------------------------------------------------- |
-| `Claude Opus 4.7`   | `Claude Opus 4.7`, `Claude Opus 4.7 (max)`                             |
-| `GPT-5.3 Codex`     | `GPT-5.3 Codex (low)`, `… (med)`, `… (high)`, `… (xhigh)`              |
-| `GPT-5.6 Sol`       | `GPT-5.6 Sol`, `GPT-5.6 Sol (medium)`, `… (xhigh)`, `… (max)`           |
+| `Claude Opus 5`     | `Claude Opus 5 (high)`, `… (xhigh)`, `… (max)`                          |
+| `GPT-6 Astra`       | `GPT-6 Astra (medium)`, `… (high)`, `… (xhigh)`, `… (max)`              |
+| `GPT-5.6 Sol`       | `GPT-5.6 Sol (medium)`, `… (xhigh)`, `… (max)`                          |
 | `Gemini 3.1`        | `Gemini 3.1`, `Gemini 3.1 (thinking)`                                  |
 
-Common suffixes: `(low)` / `(med)` / `(high)` / `(xhigh)`,
-`(thinking)`, `(max)`, `(128k)` / `(200k)` / `(1M)`, `(instruct)` /
-`(chat)` / `(base)`. A one-off release with no variants has
-`familyTag == name` and a family ranking with `modelCount: 1`.
+Common suffixes: `(low)` / `(medium)` / `(high)` / `(xhigh)` / `(max)`,
+`(thinking)`, `(128k)` / `(200k)` / `(1M)`, `(instruct)` / `(chat)` / `(base)`.
+A release with a single configuration uses the same name for both.
 
 Product tiers and versioned releases remain distinct: `GPT-5.6 Sol`, `Terra`,
-and `Luna` are separate families, as are `Muse Spark 1.1` and `1.2`. The shared
-[`modelFamilies.ts`](convex/modelFamilies.ts) helper enforces only these reviewed,
-unambiguous mappings; unknown provider taxonomies keep the submitted family tag
-instead of being guessed automatically.
+and `Luna` are separate models, as are `Muse Spark 1.1` and `1.2`.
 
-The family leaderboard is not a second formula. Every concrete configuration
-is ranked by the pairwise fit above, and a family shows **the score of its best
-configuration** (the row names it). A configuration may represent its family
-only if it covers at least half of the family's total bench weight; if none
-does, the most broadly tested one is used. Families with fewer than **three
+> **Naming in code and API.** The site used to call these two levels
+> "model family" and "model". The identifiers were kept for compatibility: the
+> model is the `familyTag` field, the `familyRankings` table and
+> `listRankedFamilies`; a configuration is a row in the `models` table and what
+> `GET /v1/models` returns. The shared
+> [`modelFamilies.ts`](convex/modelFamilies.ts) helper enforces only reviewed,
+> unambiguous name → model mappings; unknown provider taxonomies keep the
+> submitted value instead of being guessed automatically.
+
+The Model leaderboard is not a second formula. Every configuration is ranked by
+the pairwise fit above, and a model shows **the score of its best
+configuration** (the row names it). A configuration may represent its model
+only if it covers at least half of the model's total bench weight; if none
+does, the most broadly tested one is used. Models with fewer than **three
 distinct benchmarks** remain visible but are marked **provisional**.
 
 Ranking research tools and decisions are documented in
@@ -225,8 +232,8 @@ suprabench/
 │   ├── benchQualityRatings.ts    # 5-dimension quality ratings
 │   ├── tags.ts                   # Tag aggregation (cached)
 │   ├── rankings.ts               # Bench weights, headroom, rebuild drivers (math: public/js/supra-rank-core.js)
-│   ├── familyRankings.ts         # Family ranking cache entry points (same fit as models)
-│   ├── modelFamilies.ts          # Conservative cross-provider family normalization
+│   ├── familyRankings.ts         # Model-level ranking cache entry points ("family" = model; same fit as configurations)
+│   ├── modelFamilies.ts          # Conservative configuration-name → model normalization
 │   ├── cache.ts                  # Denormalized aggregate recompute helpers
 │   ├── migrations.ts             # One-off backfill mutations
 │   ├── users.ts                  # Viewer + activity feed
@@ -293,7 +300,7 @@ suprabench/
 - **A bench only you ran is worth nothing** — a duel needs an opponent. A
   one-model vanity bench produces no duel, so a self-reported 100 on it moves
   no ranking until other models are measured there.
-- **A flattering configuration can't speak for its family** — see the 50 %
+- **A flattering configuration can't speak for its model** — see the 50 %
   coverage rule above.
 - **Verifiable robustness** — every defensive claim above is encoded
   as an executable test in

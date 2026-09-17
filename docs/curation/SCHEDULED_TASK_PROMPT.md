@@ -33,7 +33,7 @@ Cloudflare D1 mirror and the public website, then preserve concrete learnings.
    already has unexplained drift.
 3. **Build the coverage matrix first.** Inventory production models,
    benchmarks, scales and source URLs. Determine the **frontier set**: the 15
-   most recently released flagship families across providers (plus any release
+   most recently released flagship models across providers (plus any release
    from the last 90 days). For every tracked benchmark, read the **complete**
    result table of its official source — not only the top rows. Where the page
    embeds its data (Artificial Analysis pages carry the full matrix in the
@@ -53,13 +53,16 @@ Cloudflare D1 mirror and the public website, then preserve concrete learnings.
    batches in the same run (`YYYY-MM-DD-b`, `-c`, …; the pipeline accepts one
    lower-case letter as suffix), each with its own
    manifest, dry-run and apply. Never drop verified rows because of the cap.
-5. **Canonical model identity.**
+5. **Canonical model identity.** Terminology: the site calls a release a
+   **model** (stored as `familyTag`) and each effort/context setting of it a
+   **configuration** (a row in the `models` table; the manifest's `models`
+   array creates configurations).
    - One configuration name per source row. Format `<Release> (<effort>)`,
      effort in lower case (`(max)`, `(xhigh)`, `(high)`, `(medium)`, `(low)`).
      Provider-side wording such as "adaptive", "default fallback", "with
      fallback" is an alias of the same configuration, not a new model — keep
      the name already in production.
-   - Before creating a model, search its family for an existing configuration
+   - Before creating a configuration, search its model (`familyTag`) for an existing configuration
      holding the same value on the same benchmark or carrying an alias name. If
      found, reuse it. Never create an unlabelled model (`GPT-5.6 Sol`) when the
      source row has an effort label.
@@ -142,7 +145,7 @@ Cloudflare D1 mirror and the public website, then preserve concrete learnings.
     or dated artifacts created by this run. Push by fast-forward to `main`, wait
     for Cloudflare Pages, and verify the public report plus the affected model
     and benchmark pages in the visible browser. Also check the first
-    ten rows of the Model-Family leaderboard and state in the summary whether
+    ten rows of the Model leaderboard and state in the summary whether
     the order changed and why.
 14. Finish with a concise run summary: report URL, commit ID,
     created/replaced/deferred counts, **frontier coverage before → after
