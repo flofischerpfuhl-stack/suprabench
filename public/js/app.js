@@ -316,6 +316,25 @@ window.sbGiscus = {
   },
 };
 
+// ── Keyboard activation for non-native controls ──
+// Nav items, tag chips, scope switches, sortable headers etc. are
+// <li>/<span>/<div>/<th> with an Alpine @click. They carry a role +
+// tabindex="0" in the markup; this single delegated listener maps
+// Enter / Space to the very same click handler, so there is exactly
+// one code path per control (and no extra per-row Alpine listeners).
+// Only fires when the focused element itself is such a control —
+// native <a>/<button>/<input> nested inside keep their own behaviour.
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const el = e.target;
+  if (!el || !el.matches) return;
+  if (!el.matches('[role="button"][tabindex], [role="link"][tabindex], [role="tab"][tabindex], th.sort-btn[tabindex]')) return;
+  if (el.matches("a[href], button, input, select, textarea")) return;
+  e.preventDefault(); // Space must not scroll the page
+  el.click();
+});
+
 function supraBench() {
   return {
     // ── View State ──

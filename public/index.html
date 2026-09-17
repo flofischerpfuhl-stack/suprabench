@@ -88,7 +88,7 @@
      MOBILE TOP BAR (< 900px only)
      ═══════════════════════════════════════ -->
 <header class="mobile-bar">
-    <div class="logo" @click="navigate('models'); mobileMenuOpen = false">Supra<span>Bench</span>.</div>
+    <div class="logo" role="link" tabindex="0" aria-label="SupraBench home" @click="navigate('models'); mobileMenuOpen = false">Supra<span>Bench</span>.</div>
     <button class="burger" :class="{'open': mobileMenuOpen}" @click="mobileMenuOpen = !mobileMenuOpen" :aria-expanded="mobileMenuOpen" aria-label="Toggle menu">
         <span></span><span></span><span></span>
     </button>
@@ -101,19 +101,19 @@
      SIDEBAR (desktop: fixed left; mobile: slide-in drawer)
      ═══════════════════════════════════════ -->
 <nav class="sidebar" :class="{'open': mobileMenuOpen}">
-    <div class="logo sidebar-logo" @click="navigate('models'); mobileMenuOpen = false">Supra<span>Bench</span>.</div>
+    <div class="logo sidebar-logo" role="link" tabindex="0" aria-label="SupraBench home" @click="navigate('models'); mobileMenuOpen = false">Supra<span>Bench</span>.</div>
 
-    <ul class="nav">
-        <li class="nav-item" :class="{'active': view==='models'}" @click="navigate('models'); mobileMenuOpen = false">Models</li>
-        <li class="nav-item" :class="{'active': view==='benchmarks'}" @click="navigate('benches'); mobileMenuOpen = false">Benchmarks</li>
-        <li class="nav-item" :class="{'active': view==='submit'}" @click="navigate('submit'); mobileMenuOpen = false">Contribute</li>
-        <li class="nav-item" :class="{'active': view==='about'}" @click="navigate('about'); mobileMenuOpen = false">About</li>
+    <ul class="nav" role="presentation">
+        <li class="nav-item" role="link" tabindex="0" :aria-current="view==='models' ? 'page' : false" :class="{'active': view==='models'}" @click="navigate('models'); mobileMenuOpen = false">Models</li>
+        <li class="nav-item" role="link" tabindex="0" :aria-current="view==='benchmarks' ? 'page' : false" :class="{'active': view==='benchmarks'}" @click="navigate('benches'); mobileMenuOpen = false">Benchmarks</li>
+        <li class="nav-item" role="link" tabindex="0" :aria-current="view==='submit' ? 'page' : false" :class="{'active': view==='submit'}" @click="navigate('submit'); mobileMenuOpen = false">Contribute</li>
+        <li class="nav-item" role="link" tabindex="0" :aria-current="view==='about' ? 'page' : false" :class="{'active': view==='about'}" @click="navigate('about'); mobileMenuOpen = false">About</li>
     </ul>
 
     <!-- Auth block: logged in → avatar + name + logout; logged out → sign-in button -->
     <div class="sidebar-auth">
         <template x-if="user">
-            <div class="sidebar-user" :class="{'active': view==='profile'}"
+            <div class="sidebar-user" role="link" tabindex="0" :class="{'active': view==='profile'}"
                  @click="navigate('profile'); mobileMenuOpen = false" title="Open my profile">
                 <img class="sidebar-user__avatar" :src="user.image" :alt="user.name" x-show="user.image">
                 <span class="sidebar-user__name" x-text="user.name || user.email"></span>
@@ -171,10 +171,10 @@
     <div class="tag-bar-wrap" x-show="benchTagsInfo.length > 0">
         <div class="tag-bar">
             <template x-for="t in visibleTagChips" :key="'mtb-' + t">
-                <span class="tag" :class="{'active': activeTags.includes(t)}"
+                <span class="tag" role="button" tabindex="0" :aria-pressed="activeTags.includes(t)" :class="{'active': activeTags.includes(t)}"
                       @click="toggleTag(t)" x-text="t"></span>
             </template>
-            <span class="tag tag-more" x-show="hiddenTagCount > 0"
+            <span class="tag tag-more" role="button" tabindex="0" aria-haspopup="dialog" x-show="hiddenTagCount > 0"
                   @click="openTagPicker()"
                   x-text="'+ ' + hiddenTagCount + ' more'"
                   title="Browse all bench tags"></span>
@@ -193,11 +193,11 @@
          bar there is no way to change scope on mobile. Hidden on wider
          viewports via CSS; the desktop switch stays in the <thead>. -->
     <div class="lb-scope-bar" role="tablist" aria-label="Leaderboard scope">
-        <span class="lb-scope" role="tab" :aria-selected="leaderboardScope === 'models'"
+        <span class="lb-scope" role="tab" tabindex="0" :aria-selected="leaderboardScope === 'models'"
               :class="{'active': leaderboardScope === 'models'}"
               @click="setLeaderboardScope('models')">Model</span><!--
         --><span class="lb-scope-sep"> / </span><!--
-        --><span class="lb-scope" role="tab" :aria-selected="leaderboardScope === 'families'"
+        --><span class="lb-scope" role="tab" tabindex="0" :aria-selected="leaderboardScope === 'families'"
               :class="{'active': leaderboardScope === 'families'}"
               @click="setLeaderboardScope('families')">Model-Family</span>
     </div>
@@ -207,7 +207,7 @@
          Only visible in models mode — in families mode the filter is
          conceptually meaningless. -->
     <div class="list-search" x-show="activeFamilyFilter && leaderboardScope === 'models'" style="padding-top:0">
-        <span class="tag active" @click="clearFamilyFilter()" style="cursor:pointer">
+        <span class="tag active" role="button" tabindex="0" @click="clearFamilyFilter()" style="cursor:pointer">
             Family: <span x-text="activeFamilyFilter"></span> ×
         </span>
     </div>
@@ -222,10 +222,10 @@
             <tr>
                 <th style="width:50px">#</th>
                 <th>
-                    <span class="lb-scope" :class="{'active': leaderboardScope === 'models'}"
+                    <span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'models'" :class="{'active': leaderboardScope === 'models'}"
                           @click="setLeaderboardScope('models')">Model</span><!--
                     --><span class="lb-scope-sep"> / </span><!--
-                    --><span class="lb-scope" :class="{'active': leaderboardScope === 'families'}"
+                    --><span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'families'" :class="{'active': leaderboardScope === 'families'}"
                           @click="setLeaderboardScope('families')">Model-Family</span>
                 </th>
                 <th>Provider</th>
@@ -241,7 +241,7 @@
                     <td class="m-name">
                         <a href="#" @click.prevent x-text="m.name" style="font-weight:500"></a>
                         <template x-if="m.familyTag">
-                            <span class="tag-sm family-tag-click"
+                            <span class="tag-sm family-tag-click" role="button" tabindex="0"
                                   :class="{'active': activeFamilyFilter === m.familyTag}"
                                   @click.stop="toggleFamilyFilter(m.familyTag)"
                                   :title="'Filter by family: ' + m.familyTag"
@@ -273,10 +273,10 @@
             <tr>
                 <th style="width:50px">#</th>
                 <th>
-                    <span class="lb-scope" :class="{'active': leaderboardScope === 'models'}"
+                    <span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'models'" :class="{'active': leaderboardScope === 'models'}"
                           @click="setLeaderboardScope('models')">Model</span><!--
                     --><span class="lb-scope-sep"> / </span><!--
-                    --><span class="lb-scope" :class="{'active': leaderboardScope === 'families'}"
+                    --><span class="lb-scope" role="button" tabindex="0" :aria-pressed="leaderboardScope === 'families'" :class="{'active': leaderboardScope === 'families'}"
                           @click="setLeaderboardScope('families')">Model-Family</span>
                 </th>
                 <th>Provider</th>
@@ -371,7 +371,7 @@
 
     <template x-if="currentModel">
         <div>
-            <span class="back-link" @click="navigate('models')">← Models</span>
+            <span class="back-link" role="link" tabindex="0" @click="navigate('models')">← Models</span>
 
             <div class="detail-provider" x-text="currentModel.provider"></div>
             <h1 class="detail-title" x-text="currentModel.name"></h1>
@@ -507,7 +507,7 @@
                             <div style="margin-bottom:1.5rem">
                                 <h3 style="font-family:var(--hd);font-size:0.9rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2);margin-bottom:0.75rem" x-text="bp.benchName"></h3>
                                 <template x-for="sub in bp.submissions" :key="sub._id">
-                                    <div class="submission-card clickable" @click="navigate('submission', {id: sub._id})">
+                                    <div class="submission-card clickable" role="link" tabindex="0" @click="navigate('submission', {id: sub._id})">
                                         <div class="submission-card-scores">
                                             <span class="score-cell" x-text="sub.normalizedScore.toFixed(1) + ' / 100'"></span>
                                             <span style="font-size:.8rem;color:var(--text3)" x-text="'(raw: ' + sub.rawScore + ')'"></span>
@@ -600,10 +600,10 @@
     <div class="tag-bar-wrap" x-show="benchTagsInfo.length > 0">
         <div class="tag-bar">
             <template x-for="t in visibleTagChips" :key="'btb-' + t">
-                <span class="tag" :class="{'active': activeTags.includes(t)}"
+                <span class="tag" role="button" tabindex="0" :aria-pressed="activeTags.includes(t)" :class="{'active': activeTags.includes(t)}"
                       @click="toggleTag(t)" x-text="t"></span>
             </template>
-            <span class="tag tag-more" x-show="hiddenTagCount > 0"
+            <span class="tag tag-more" role="button" tabindex="0" aria-haspopup="dialog" x-show="hiddenTagCount > 0"
                   @click="openTagPicker()"
                   x-text="'+ ' + hiddenTagCount + ' more'"
                   title="Browse all bench tags"></span>
@@ -629,9 +629,9 @@
         <thead>
             <tr>
                 <th style="width:50px">#</th>
-                <th class="sort-btn" @click="toggleBenchSort('name')">Benchmark</th>
+                <th class="sort-btn" tabindex="0" :aria-sort="benchSortField === 'name' ? (benchSortAsc ? 'ascending' : 'descending') : 'none'" @click="toggleBenchSort('name')">Benchmark</th>
                 <th>Type</th>
-                <th class="sort-btn" @click="toggleBenchSort('score')" title="Bench Weight = quality × difficulty × headroom × (net-upvotes / max net-upvotes). This is the bench's direct ability contribution to SupraScore, not a pure quality-only score. Distinct model count is used separately as evidence confidence. Range 0–100.">Bench Weight</th>
+                <th class="sort-btn" tabindex="0" :aria-sort="benchSortField === 'score' ? (benchSortAsc ? 'ascending' : 'descending') : 'none'" @click="toggleBenchSort('score')" title="Bench Weight = quality × difficulty × headroom × (net-upvotes / max net-upvotes). This is the bench's direct ability contribution to SupraScore, not a pure quality-only score. Distinct model count is used separately as evidence confidence. Range 0–100.">Bench Weight</th>
                 <th>Dimensions</th>
                 <th>Tags</th>
                 <th>Models</th>
@@ -673,7 +673,7 @@
                     <td class="b-tags">
                         <div class="b-tags-scroll">
                             <template x-for="tg in b.tags" :key="tg">
-                                <span class="tag-sm tag-sm-clickable"
+                                <span class="tag-sm tag-sm-clickable" role="button" tabindex="0"
                                       :class="{'active': activeTags.includes(tg)}"
                                       @click.stop="toggleTag(tg)"
                                       :title="activeTags.includes(tg) ? 'Remove from filter' : 'Filter by ' + tg"
@@ -719,7 +719,7 @@
 
     <template x-if="currentBench">
         <div>
-            <span class="back-link" @click="navigate('benches')">← Benchmarks</span>
+            <span class="back-link" role="link" tabindex="0" @click="navigate('benches')">← Benchmarks</span>
 
             <span class="badge" :class="currentBench.isOfficial ? 'badge-official' : 'badge-community'"
                   x-text="currentBench.isOfficial ? 'Official' : 'Community'"
@@ -1066,7 +1066,7 @@
                             <div style="margin-bottom:1.5rem">
                                 <h3 style="font-family:var(--hd);font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2);margin-bottom:0.5rem" x-text="ms.modelName"></h3>
                                 <template x-for="sub in ms.submissions" :key="sub._id">
-                                    <div class="submission-card clickable" @click="navigate('submission', {id: sub._id})">
+                                    <div class="submission-card clickable" role="link" tabindex="0" @click="navigate('submission', {id: sub._id})">
                                         <div class="submission-card-scores">
                                             <span class="score-cell" x-text="sub.normalizedScore.toFixed(1) + ' / 100'"></span>
                                             <span style="font-size:.8rem;color:var(--text3)" x-text="'(raw: ' + sub.rawScore + ')'"></span>
@@ -1173,7 +1173,7 @@
 
     <template x-if="currentSubmission">
         <div>
-            <span class="back-link" @click="history.back()">← Back</span>
+            <span class="back-link" role="link" tabindex="0" @click="history.back()">← Back</span>
 
             <h1 class="detail-title" style="font-size:2.5rem">Submission Detail</h1>
 
@@ -1274,7 +1274,7 @@
             <div class="user-badge">
                 <img :src="user.image" :alt="user.name" x-show="user.image">
                 <span x-text="user.name || user.email"></span>
-                <span style="color:var(--text3);font-size:.75rem;margin-left:.5rem;cursor:pointer" @click="logout()">logout</span>
+                <span style="color:var(--text3);font-size:.75rem;margin-left:.5rem;cursor:pointer" role="button" tabindex="0" @click="logout()">logout</span>
             </div>
         </template>
         <template x-if="!user">
@@ -1458,7 +1458,7 @@
                         <template x-for="(t, i) in submitFormB.newBench.tags" :key="i + '-' + t">
                             <span class="input-tag" :class="{'just-added': submitFormB.newBench.lastFlashIdx === i}">
                                 <span x-text="t"></span>
-                                <span class="remove" @click="removeTag(submitFormB.newBench, i)">×</span>
+                                <span class="remove" role="button" tabindex="0" aria-label="Remove tag" @click="removeTag(submitFormB.newBench, i)">×</span>
                             </span>
                         </template>
                         <input type="text" x-model="submitFormB.newBench.tagInput"
@@ -1493,7 +1493,7 @@
 
             <template x-for="(entry, idx) in submitFormB.scoreEntries" :key="entry._id">
                 <div class="score-entry" :class="{'collapsed': entry.collapsed}">
-                    <div class="score-entry-header" @click="toggleBScoreEntry(entry)">
+                    <div class="score-entry-header" role="button" tabindex="0" :aria-expanded="!entry.collapsed" @click="toggleBScoreEntry(entry)">
                         <span class="score-entry-num" x-text="idx + 1"></span>
                         <span class="score-entry-label" x-text="bEntryLabel(entry, idx)"></span>
                         <span class="score-entry-summary" x-show="entry.collapsed && entry.rawScore"
@@ -1576,7 +1576,7 @@
                                     <template x-for="(t, i) in entry.newModel.tags" :key="i + '-' + t">
                                         <span class="input-tag" :class="{'just-added': entry.newModel.lastFlashIdx === i}">
                                             <span x-text="t"></span>
-                                            <span class="remove" @click="removeTag(entry.newModel, i)">×</span>
+                                            <span class="remove" role="button" tabindex="0" aria-label="Remove tag" @click="removeTag(entry.newModel, i)">×</span>
                                         </span>
                                     </template>
                                     <input type="text" x-model="entry.newModel.tagInput"
@@ -1716,7 +1716,7 @@
                         <template x-for="(t, i) in submitFormC.newModel.tags" :key="i + '-' + t">
                             <span class="input-tag" :class="{'just-added': submitFormC.newModel.lastFlashIdx === i}">
                                 <span x-text="t"></span>
-                                <span class="remove" @click="removeTag(submitFormC.newModel, i)">×</span>
+                                <span class="remove" role="button" tabindex="0" aria-label="Remove tag" @click="removeTag(submitFormC.newModel, i)">×</span>
                             </span>
                         </template>
                         <input type="text" x-model="submitFormC.newModel.tagInput"
@@ -1752,7 +1752,7 @@
 
             <template x-for="(entry, idx) in submitFormC.scoreEntries" :key="entry._id">
                 <div class="score-entry" :class="{'collapsed': entry.collapsed}">
-                    <div class="score-entry-header" @click="toggleCScoreEntry(entry)">
+                    <div class="score-entry-header" role="button" tabindex="0" :aria-expanded="!entry.collapsed" @click="toggleCScoreEntry(entry)">
                         <span class="score-entry-num" x-text="idx + 1"></span>
                         <span class="score-entry-label" x-text="cEntryLabel(entry, idx)"></span>
                         <span class="score-entry-summary" x-show="entry.collapsed && entry.rawScore"
@@ -2919,7 +2919,7 @@
 
                             <template x-for="(entry, idx) in simulator.scoreEntries" :key="entry._id">
                                 <div class="score-entry" :class="{'collapsed': entry.collapsed}">
-                                    <div class="score-entry-header" @click="simulatorToggleEntry(entry)">
+                                    <div class="score-entry-header" role="button" tabindex="0" :aria-expanded="!entry.collapsed" @click="simulatorToggleEntry(entry)">
                                         <span class="score-entry-num" x-text="idx + 1"></span>
                                         <span class="score-entry-label" x-text="simulatorEntryLabel(entry, idx)"></span>
                                         <span class="score-entry-summary" x-show="entry.collapsed && entry.rawScore"
@@ -3484,6 +3484,7 @@
             <template x-for="t in filteredPickerTags" :key="'pk-' + t.tag">
                 <button type="button"
                       class="tag tag-picker-item"
+                      :aria-pressed="activeTags.includes(t.tag)"
                       :class="{'active': activeTags.includes(t.tag)}"
                       @click="toggleTag(t.tag)">
                     <span x-text="t.tag"></span>
