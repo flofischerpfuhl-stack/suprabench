@@ -340,6 +340,57 @@ no single bench able to move the leader). Without the bar, a method vote is a
 fan vote and the score stops reflecting reality — the opposite of the goal.
 Governance and the profile switcher are the work; the math already exists.
 
+## 7.4 The decisive experiment: density, not formula (2026-09-17)
+
+Artificial Analysis embeds its full result matrix in its public pages
+(`self.__next_f` payload: `models` with 652 rows on `/leaderboards/models`,
+`initialModels` with every evaluation field for the 30 default frontier models
+on each `/evaluations/*` page). Two experiments with that data
+(`scripts/ranking-deepdive/aa-dense.mjs`, `aa-merge.mjs`):
+
+**A. Our unified method on AA's own dense matrix** (their ten v4.3 index
+components, equal bench weights, 30 frontier models):
+
+Fable 5.1 68.3 › GPT-6 Astra 56.6 › GPT-5.6 Sol 45.7 › Muse Spark 1.3 42.6 ›
+Fable 5 42.3 › Opus 5 36.9 › Kimi K3 32.5 › Grok 4.6 30.7 › GLM-5.3 27.0.
+
+That is the order the maintainer expects and AA publishes. **The method
+captures it as soon as the frontier is measured on the same hard benches.**
+
+**B. Production snapshot + dense AA backfill, nothing removed** (410 cells: 165
+missing cells on eight benches we already track, 245 cells on six benches we
+do not track — AA-Briefcase, GDPval-AA v2, Terminal-Bench 4.0, AA-Omniscience,
+GDP.pdf, CritPt; ARC-AGI-3 and every existing rating untouched):
+
+| # | Model table | score | benches | | Family table | score |
+|---:|---|---:|---:|---:|---|---:|
+| 1 | Claude Fable 5.1 (max) | 61.9 | 11 | 1 | Claude Fable 5.1 | 61.9 |
+| 2 | Claude Fable 5.1 (xhigh) | 58.4 | 11 | 2 | GPT-6 Astra | 56.9 |
+| 3 | GPT-6 Astra (max) | 56.9 | 13 | 3 | Claude Opus 5 | 43.4 |
+| 4 | GPT-6 Astra (xhigh) | 53.6 | 14 | 4 | GPT-5.6 Sol | 39.7 |
+| 5 | Claude Fable 5.1 (high) | 49.6 | 11 | 5 | Muse Spark 1.3 | 37.8 |
+| 6 | GPT-5.6 Sol | 48.8 | 8 | 6 | Claude Fable 5 | 36.4 |
+| 7 | Claude Fable 5 (adaptive max) | 44.0 | 5 | 7 | Gemini 3.5 Flash | 28.9 |
+| 8 | Claude Opus 5 (High) | 43.4 | 10 | 8 | Grok 4.6 | 25.7 |
+
+Leave-one-bench-out family ranks over all 28 benches: Fable 5.1 1–2, Astra
+1–2, Opus 5 3, Sol 4–6, Muse Spark 1.3 4–6. Rating the six new benches a
+neutral 3/3/3/3/3 or giving ARC-AGI-3 one upvote like every other bench does
+not change the top six. The three-bench "Opus 5 (High)" row that led the
+sparse table drops to #8 once its other ten results are present — sparse
+configurations were the artifact, not ARC-AGI-3.
+
+**Control:** the *old* production math on the same dense data gives a sane
+family table (Fable 5.1, Astra, Opus 5, Sol) but still a broken model table
+(Mythos 5 first on one bench, Grok 4.6 (xhigh) third on two). Dense data fixes
+the family view under either formula; only the unified fit fixes both.
+
+Conclusion: SupraBench needs (1) the unified fit and (2) a curation policy that
+keeps the frontier × hard-bench block dense. The reviewable cell list for (2)
+is `docs/curation/proposals/2026-09-17-aa-dense-backfill.json`; eight of its
+"new" models are naming variants of rows we already have and must be mapped,
+not created.
+
 ## 8. Reproduction
 
 ```bash
