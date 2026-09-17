@@ -10,8 +10,8 @@
      --surface  #121212 → --color-canvas-subtle / btn-bg
      --surface2 #1a1a1a → --color-canvas-overlay / btn-hover-bg
      --text     #ffffff → --color-fg-default
-     --text2    #888888 → --color-fg-muted
-     --text3    #555555 → --color-fg-subtle
+     --text2    #a8a8a8 → --color-fg-muted
+     --text3    #838383 → --color-fg-subtle
      --border   #333333 → --color-border-default
      --accent   #E5FE40 → --color-accent-fg / btn-primary-bg
      --danger   #ff4444 → --color-danger-fg
@@ -19,7 +19,7 @@
    ════════════════════════════════════════════════════════════ */
 
 main {
-  --color-prettylights-syntax-comment: #888888;
+  --color-prettylights-syntax-comment: #a8a8a8;
   --color-prettylights-syntax-constant: #79c0ff;
   --color-prettylights-syntax-entity: #d2a8ff;
   --color-prettylights-syntax-storage-modifier-import: #c9d1d9;
@@ -46,8 +46,8 @@ main {
   --color-prettylights-syntax-markup-ignored-text: #c9d1d9;
   --color-prettylights-syntax-markup-ignored-bg: #1158c7;
   --color-prettylights-syntax-meta-diff-range: #d2a8ff;
-  --color-prettylights-syntax-brackethighlighter-angle: #888888;
-  --color-prettylights-syntax-sublimelinter-gutter-mark: #555555;
+  --color-prettylights-syntax-brackethighlighter-angle: #a8a8a8;
+  --color-prettylights-syntax-sublimelinter-gutter-mark: #838383;
   --color-prettylights-syntax-constant-other-reference-link: #a5d6ff;
 
   /* Canvas / surfaces */
@@ -61,7 +61,7 @@ main {
   --color-border-muted: #222222;
   --color-neutral-muted: rgba(229, 254, 64, 0.10);
   --color-neutral-emphasis-plus: #ffffff;
-  --color-neutral-emphasis: #888888;
+  --color-neutral-emphasis: #a8a8a8;
   --color-neutral-subtle: rgba(255, 255, 255, 0.04);
 
   /* Accent (SupraBench lime) */
@@ -85,8 +85,8 @@ main {
 
   /* Foreground (text) */
   --color-fg-default: #ffffff;
-  --color-fg-muted: #888888;
-  --color-fg-subtle: #555555;
+  --color-fg-muted: #a8a8a8;
+  --color-fg-subtle: #838383;
   --color-fg-on-emphasis: #030303;     /* text on top of accent buttons */
 
   /* Buttons */
@@ -127,7 +127,7 @@ main {
   --color-fg-default: #ffffff;
   --color-input-bg: #121212;
   --color-input-text: #ffffff;
-  --color-primer-fg-disabled: #555555;
+  --color-primer-fg-disabled: #838383;
   --color-primer-border-active: #E5FE40;
 
   /* Timeline / labels */
@@ -158,7 +158,7 @@ main {
 
 /* Counter pill above comments ("N Comments") */
 .gsc-comments-count {
-  color: #888888;
+  color: #a8a8a8;
   font-family: 'Clash Display', sans-serif !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -189,7 +189,7 @@ main {
   font-size: 0.78rem !important;
   margin: 0 !important;
   padding: 0.25rem 0 !important;
-  color: #555555 !important;
+  color: #838383 !important;
 }
 .gsc-reactions-count + .gsc-reactions-menu,
 .gsc-reactions h4 {

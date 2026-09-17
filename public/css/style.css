@@ -9,8 +9,14 @@
   --surface: #121212;
   --surface2: #1a1a1a;
   --text: #fff;
-  --text2: #888;
-  --text3: #555;
+  /* WCAG AA: --text3 is used for small meta text on --bg, --surface and
+     --surface2. #838383 is the darkest grey that still reaches 4.5:1 on
+     the lightest of those (--surface2 #1a1a1a → 4.59:1; 5.44:1 on --bg).
+     The old #555 only reached 2.3–2.8:1. --text2 moved up with it
+     (#888 → #a8a8a8, 7.3–8.7:1) so the text > text2 > text3 hierarchy
+     stays clearly visible. */
+  --text2: #a8a8a8;
+  --text3: #838383;
   --border: #333;
   --accent: #E5FE40;
   --danger: #ff4444;
@@ -44,6 +50,18 @@
   background: var(--accent);
   color: var(--bg);
   text-shadow: none;
+}
+
+/* Keyboard focus ring for the non-native controls (nav items, tag
+   chips, scope switch, sortable headers, back links, cards …) that are
+   made focusable via role + tabindex in index.html. :focus-visible
+   keeps it keyboard-only, so mouse users see no change. */
+[role="button"]:focus-visible,
+[role="link"]:focus-visible,
+[role="tab"]:focus-visible,
+th.sort-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 html, body {
