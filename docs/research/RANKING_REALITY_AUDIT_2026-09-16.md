@@ -1,11 +1,17 @@
 # Ranking reality audit — 2026-09-16
 
-Status: the unified pairwise method is implemented and tested on the branch
-`unified-pairwise-ranking` but **not deployed**. Reason: this audit originally
-recommended retracting six ARC-AGI-3 rows as a harness mix. That premise was
-checked against the source on 2026-09-17 and is **wrong** — see the correction
-in section 3. No production data was changed. Sections 0–6 describe production
-as it runs today.
+Status: **deployed on 2026-09-17.** The unified pairwise method runs in
+production, and the dense Artificial Analysis backfill of §7.4 was applied
+through the normal curation gates (five batches `2026-09-17` … `-e`, 648 rows,
+six admitted benchmarks, four new models, insert-only). An earlier version of
+this audit recommended retracting six ARC-AGI-3 rows as a harness mix; that
+premise was checked at the source and is wrong (see the correction in §3) — no
+production data was removed. Sections 0–6 describe production before the
+change.
+
+Live family order after deploy + backfill: Claude Fable 5.1 61.6 › GPT-6 Astra
+57.0 › Claude Opus 5 46.2 › Muse Spark 1.3 41.3 › GPT-5.6 Sol 39.8 › Claude
+Fable 5 38.3 › Grok 4.6 › Kimi K3 › GLM-5.3.
 
 Snapshot: `2026-09-16T21:23:33.638Z`, SHA-256
 `86ec9379e37f4d816fed45d54a4ddeb412d42783fa358dff0c7e0ad54ee5a807`
@@ -386,10 +392,8 @@ family table (Fable 5.1, Astra, Opus 5, Sol) but still a broken model table
 the family view under either formula; only the unified fit fixes both.
 
 Conclusion: SupraBench needs (1) the unified fit and (2) a curation policy that
-keeps the frontier × hard-bench block dense. The reviewable cell list for (2)
-is `docs/curation/proposals/2026-09-17-aa-dense-backfill.json`; eight of its
-"new" models are naming variants of rows we already have and must be mapped,
-not created.
+keeps the frontier × hard-bench block dense. (2) is implemented by `scripts/curation-aa-backfill.mjs` and the revised
+`docs/curation/SCHEDULED_TASK_PROMPT.md`.
 
 ## 8. Reproduction
 
