@@ -1900,8 +1900,36 @@ function supraBench() {
       this.aboutOpen = new Set(this.aboutOpen);
       this.$nextTick(() => this.renderAboutMath());
     },
+    // KaTeX (≈300 KB JS + CSS + fonts) is only needed on the About view,
+    // so it is loaded on first use instead of on every page load. The
+    // files are self-hosted under vendor/katex (see vendor/README.md);
+    // the integrity hashes are KaTeX's published SRI values for 0.16.11.
+    _loadKatex() {
+      if (window._sbKatexPromise) return window._sbKatexPromise;
+      const base = "vendor/katex/";
+      const v = "?v=0.16.11";
+      const script = (src, integrity) => new Promise((resolve, reject) => {
+        const el = document.createElement("script");
+        el.src = base + src + v;
+        el.integrity = integrity;
+        el.onload = resolve;
+        el.onerror = reject;
+        document.head.appendChild(el);
+      });
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = base + "katex.min.css" + v;
+      css.integrity = "sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+";
+      document.head.appendChild(css);
+      window._sbKatexPromise = script("katex.min.js", "sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg")
+        .then(() => script("contrib/auto-render.min.js", "sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk"))
+        .catch((e) => {
+          window._sbKatexPromise = null; // allow a retry on the next call
+          console.error("[about] KaTeX failed to load:", e);
+        });
+      return window._sbKatexPromise;
+    },
     renderAboutMath() {
-      // KaTeX auto-render is loaded via defer; wait for it if needed.
       const run = () => {
         if (typeof window.renderMathInElement !== "function") return;
         const root = document.querySelector("[x-show=\"view==='about'\"]");
@@ -1916,7 +1944,7 @@ function supraBench() {
         });
       };
       if (typeof window.renderMathInElement === "function") run();
-      else setTimeout(run, 200);
+      else this._loadKatex().then(run);
     },
 
     // ═══ TAG FILTERING ═══

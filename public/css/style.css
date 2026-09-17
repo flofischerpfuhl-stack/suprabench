@@ -2,7 +2,9 @@
    SupraBench Design System
    ══════════════════════════════════════════ */
 
-@import url('https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap');
+/* Clash Display is loaded via <link> in every HTML page (index, legal, docs,
+   404, offline). The former @import here duplicated that request and chained
+   a render-blocking fetch behind this stylesheet. */
 
 :root {
   --bg: #030303;

@@ -64,21 +64,20 @@
          entity is what makes us eligible for Google Dataset Search. -->
     <script defer src="js/structured-data.js?v=20260425-dataset"></script>
 
-    <link rel="stylesheet" href="css/style.css?v=20260917-site">
+    <link rel="stylesheet" href="css/style.css?v=20260917-a11y">
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+    <link rel="preconnect" href="https://upbeat-clam-790.convex.cloud">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
-    <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
-    <!-- Libraries are self-hosted (pinned copies, see vendor/README.md) so no visitor IP reaches a public CDN. -->
-    <link rel="stylesheet" href="vendor/katex/katex.min.css?v=0.16.11"
-          integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+">
-    <script defer src="vendor/katex/katex.min.js?v=0.16.11"
-            integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"></script>
-    <script defer src="vendor/katex/contrib/auto-render.min.js?v=0.16.11"
-            integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk"></script>
-    <script src="vendor/convex/browser.bundle.js?v=1.35.1"></script>
-    <script src="js/convex.js?v=20260418m"></script>
-    <script src="js/simulator-math.js?v=20260424-noadminmint"></script>
+    <!-- Libraries are self-hosted (pinned copies, see vendor/README.md) so no visitor IP reaches a public CDN.
+         KaTeX (About-page math) is loaded on demand by app.js → _loadKatex().
+         All scripts are deferred so they never block parsing; defer keeps document order,
+         and Alpine MUST stay after app.js (it boots as soon as it executes and needs supraBench()). -->
+    <script defer src="vendor/convex/browser.bundle.js?v=1.35.1"></script>
+    <script defer src="js/convex.js?v=20260418m"></script>
+    <script defer src="js/simulator-math.js?v=20260424-noadminmint"></script>
+    <script defer src="js/app.js?v=20260917-perf"></script>
     <script defer src="vendor/alpinejs/cdn.min.js?v=3.13.3"></script>
-    <script src="js/app.js?v=20260917-site"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
 
@@ -216,6 +215,8 @@
          Wrapped in .table-scroll so long model names + filtered-score
          column never silently clip on tablet widths (701–899px) where
          .main has overflow-x: hidden. -->
+    <!-- Perf: only the active scope's table exists in the DOM (x-if); the other one used to be rendered hidden (~2k nodes). -->
+    <template x-if="leaderboardScope === 'models'">
     <div class="table-scroll" x-show="leaderboardScope === 'models' && filteredRankedModels.length > 0">
     <table class="models-list">
         <thead>
@@ -260,6 +261,7 @@
         </tbody>
     </table>
     </div>
+    </template>
 
     <!-- ── Families Table (leaderboardScope === 'families') ──
          Same five-column shape as the models table but rows are concrete
@@ -267,6 +269,7 @@
          a row drills down: switches back to models mode with that
          family filter applied, so the user immediately sees which
          concrete member models belong to the opponent-adjusted family row. -->
+    <template x-if="leaderboardScope === 'families'">
     <div class="table-scroll" x-show="leaderboardScope === 'families' && filteredRankedFamilies.length > 0">
     <table class="models-list">
         <thead>
@@ -309,6 +312,7 @@
         </tbody>
     </table>
     </div>
+    </template>
 
     <!-- Loading skeleton — shown until the first sub update arrives.
          Avoids the ~200ms flash of "No models yet" on a cold page
@@ -1247,6 +1251,9 @@
 <!-- ═══════════════════════════════════════
      VIEW: CONTRIBUTE / SUBMIT (3 modes: Score | Bench | Model)
      ═══════════════════════════════════════ -->
+<!-- Perf: created lazily via x-if so Alpine does not initialise this
+     subtree on boot; the inner x-show is kept for the fade + selectors. -->
+<template x-if="view==='submit'">
 <div x-show="view==='submit'" x-transition.opacity>
 
     <h1 class="page-title">Contribute.</h1>
@@ -1826,11 +1833,15 @@
     </form>
 
 </div>
+</template>
 
 
 <!-- ═══════════════════════════════════════
      VIEW: ABOUT  (Q&A with collapsable answers + KaTeX)
      ═══════════════════════════════════════ -->
+<!-- Perf: created lazily via x-if so Alpine does not initialise this
+     subtree on boot; the inner x-show is kept for the fade + selectors. -->
+<template x-if="view==='about'">
 <div x-show="view==='about'" x-transition.opacity x-init="$nextTick(() => renderAboutMath())">
     <h1 class="page-title">About.</h1>
     <p class="page-desc">A community-driven, editorially honest ranking of AI models — and the math behind it.</p>
@@ -2235,6 +2246,7 @@
         </div>
     </div>
 </div>
+</template>
 
 
 <!-- ═══════════════════════════════════════
@@ -3520,7 +3532,7 @@
     <button type="button" class="cookie-notice__ok" data-sb-dismiss-cookie>Got it</button>
     <button type="button" class="cookie-notice__close" aria-label="Dismiss" data-sb-dismiss-cookie>×</button>
 </div>
-<script src="js/storage-notice.js?v=20260424-security"></script>
+<script defer src="js/storage-notice.js?v=20260424-security"></script>
 
 </body>
 </html>
