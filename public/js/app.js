@@ -329,6 +329,8 @@ function supraBench() {
     // ── Data (reactive from Convex) ──
     rankedModels: [],
     rankedFamilies: [],
+    modelNotFound: false,
+    benchNotFound: false,
     rankedBenches: [],
 
     // Per-collection "first-update-arrived" flags. Until a collection
@@ -885,7 +887,9 @@ function supraBench() {
       const { client, api } = window.sbConvex;
       try {
         this.modelDetailTab = "submissions";
+        this.modelNotFound = false;
         this.currentModel = await client.query(api.models.getBySlug, { slug: this.currentModelSlug });
+        this.modelNotFound = !this.currentModel;
         if (this.currentModel) {
           this.currentModelTagVotes = await client.query(api.tagVotes.listForEntity, {
             entityType: "model",
@@ -909,7 +913,9 @@ function supraBench() {
         this.benchDetailTab = "scores";
         this.benchDescExpanded = false;
         this.benchBreakdownExpanded = false;
+        this.benchNotFound = false;
         this.currentBench = await client.query(api.benches.getBySlug, { slug: this.currentBenchSlug });
+        this.benchNotFound = !this.currentBench;
         if (this.currentBench) {
           this.currentBenchTagVotes = await client.query(api.tagVotes.listForEntity, {
             entityType: "bench",

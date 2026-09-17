@@ -589,6 +589,27 @@ tr.clickable-row {
   color: var(--text3);
   user-select: none;
 }
+/* Mobile-only copy of the scope switch. The desktop switch lives in the
+   table <thead>, which the ≤700px card layout hides — so this bar is the
+   only way to toggle Model / Model-Family on phones. */
+.lb-scope-bar {
+  display: none;
+  font-family: var(--hd);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 0 0.85rem 0;
+}
+.lb-scope-bar .lb-scope {
+  padding: 0.35rem 0.1rem;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+@media (max-width: 700px) {
+  .lb-scope-bar { display: flex; align-items: center; gap: 0.25rem; }
+}
 
 /* ── Badges ── */
 .badge {
