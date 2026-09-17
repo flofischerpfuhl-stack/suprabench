@@ -67,16 +67,17 @@
     <link rel="stylesheet" href="css/style.css?v=20260917-site">
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
     <!-- KaTeX for math typesetting on the About page (loaded only when needed via x-init) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-          integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
-            integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-            integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/convex@1.35.1/dist/browser.bundle.js"></script>
+    <!-- Libraries are self-hosted (pinned copies, see vendor/README.md) so no visitor IP reaches a public CDN. -->
+    <link rel="stylesheet" href="vendor/katex/katex.min.css?v=0.16.11"
+          integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+">
+    <script defer src="vendor/katex/katex.min.js?v=0.16.11"
+            integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"></script>
+    <script defer src="vendor/katex/contrib/auto-render.min.js?v=0.16.11"
+            integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk"></script>
+    <script src="vendor/convex/browser.bundle.js?v=1.35.1"></script>
     <script src="js/convex.js?v=20260418m"></script>
     <script src="js/simulator-math.js?v=20260424-noadminmint"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script defer src="vendor/alpinejs/cdn.min.js?v=3.13.3"></script>
     <script src="js/app.js?v=20260917-site"></script>
 </head>
 <body x-data="supraBench()" x-init="init()" x-cloak>
@@ -1075,8 +1076,7 @@
                                             <span class="submission-card-disclose">View →</span>
                                         </div>
                                         <div class="submission-card-footer">
-                                            <div class="submitter" x-show="sub.submitterImage">
-                                                <img :src="sub.submitterImage" :alt="sub.submitterName">
+                                            <div class="submitter" x-show="sub.submitterName">
                                                 <span x-text="sub.submitterName" style="font-size:.85rem"></span>
                                             </div>
                                             <a :href="safeExternalUrl(sub.sourceUrl)" target="_blank" rel="noopener noreferrer" @click.stop style="color:var(--text2);font-size:.8rem" x-text="truncateUrl(sub.sourceUrl)"></a>
@@ -1203,8 +1203,7 @@
                     <a :href="safeExternalUrl(currentSubmission.sourceUrl)" target="_blank" rel="noopener noreferrer" style="color:var(--accent)" x-text="currentSubmission.sourceUrl">↗</a>
                 </p>
                 <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
-                    <div class="submitter" x-show="currentSubmission.submitterImage">
-                        <img :src="currentSubmission.submitterImage" :alt="currentSubmission.submitterName">
+                    <div class="submitter" x-show="currentSubmission.submitterName">
                         <span x-text="currentSubmission.submitterName"></span>
                     </div>
                     <span style="color:var(--text3);font-size:.85rem" x-text="'submitted ' + formatDate(currentSubmission.createdAt)"></span>
