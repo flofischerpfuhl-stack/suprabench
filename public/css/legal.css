@@ -143,6 +143,14 @@ html.legal-html, body.legal-body {
 .legal-container a:hover {
   color: var(--text);
 }
+/* Buttons inside legal/404/offline pages: keep the site button colours
+   (the link rule above would otherwise paint accent-yellow text on the
+   white button background). */
+.legal-container a.btn,
+.legal-container a.btn:hover {
+  color: var(--bg);
+  text-decoration: none;
+}
 
 .legal-container strong {
   color: var(--text);

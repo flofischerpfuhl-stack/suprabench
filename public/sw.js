@@ -33,7 +33,7 @@
 // + clients.claim guarantees existing tabs swap to the new SW on
 // their next request. Without a bump, users keep running the old
 // (potentially broken) SW until they clear site data.
-const CACHE_VERSION = "v1.15.2";
+const CACHE_VERSION = "v1.15.3";
 const CACHE_PREFIX = "suprabench-";
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 const PRECACHE = `${CACHE_PREFIX}precache-${CACHE_VERSION}`;
@@ -49,6 +49,7 @@ const PRECACHE_URLS = [
   "/css/style.css",
   "/js/app.js",
   "/js/convex.js",
+  "/js/offline.js",
   "/js/storage-notice.js",
   "/js/structured-data.js",
   "/site.webmanifest",
