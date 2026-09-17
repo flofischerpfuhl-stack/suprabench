@@ -126,6 +126,9 @@ Provider: Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Ireland
 When you click “Sign in with Google”, you are redirected to Google. Google’s own privacy policy applies:
 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">https://policies.google.com/privacy</a>.
 Transfers to the United States are protected by the EU–U.S. Data Privacy Framework (Art. 45 GDPR) and/or Standard Contractual Clauses (Art. 46 GDPR).
+While you are signed in, your own Google profile picture is loaded from Google’s image servers
+(lh3.googleusercontent.com) to show it in the sidebar and on your profile. Profile pictures of other
+contributors are not loaded, so visitors who are not signed in do not contact Google at all.
 </p>
 
 <h3>4.2 Convex (backend / database)</h3>
@@ -133,6 +136,8 @@ Transfers to the United States are protected by the EU–U.S. Data Privacy Frame
 Provider: Convex, Inc., 2261 Market Street #4085, San Francisco, CA 94114, USA. Convex acts as our
 data processor under Art. 28 GDPR and stores account and contribution data on our behalf. Transfers are
 safeguarded by Standard Contractual Clauses (Art. 46 GDPR).
+To display rankings, your browser connects directly to our Convex deployment (*.convex.cloud), which
+therefore sees your IP address (see Section 3.1).
 </p>
 
 <h3>4.3 Fontshare (Clash Display font)</h3>
@@ -179,6 +184,21 @@ Framework where applicable.
 <li><strong>Stripe privacy policy:</strong>
 <a href="https://stripe.com/privacy" target="_blank" rel="noopener">https://stripe.com/privacy</a>.</li>
 </ul>
+
+<h3>4.6 Cloudflare (hosting / content delivery)</h3>
+<p>
+Provider: Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, USA. All pages, scripts and
+style sheets of SupraBench are delivered through Cloudflare’s network, which processes the server access
+data described in Section 3.1 on our behalf (Art. 28 GDPR). Transfers to the United States are protected by
+the EU–U.S. Data Privacy Framework (Art. 45 GDPR) and Standard Contractual Clauses (Art. 46 GDPR).
+</p>
+
+<h3>4.7 No other content delivery networks</h3>
+<p>
+The JavaScript libraries we use (Alpine.js, KaTeX, the Convex client) are served from our own domain.
+Apart from the providers listed in this section, your browser does not contact any third-party server
+when you use SupraBench.
+</p>
 
 <h2>5. Cookies and similar technologies</h2>
 <p>
