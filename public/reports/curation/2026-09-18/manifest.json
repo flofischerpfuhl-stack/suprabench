@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-09-18",
+  "generatedAt": "2026-09-18T09:14:57.453Z",
+  "reportPath": "public/reports/curation/2026-09-18/index.html",
+  "sources": [
+    {
+      "title": "SWE-bench Verified",
+      "url": "https://www.swebench.com/verified.html",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "Humanity's Last Exam",
+      "url": "https://agi.safe.ai/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "ARC-AGI-2",
+      "url": "https://arcprize.org/arc-agi/2",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "SWE-Bench Pro",
+      "url": "https://labs.scale.com/leaderboard/swe_bench_pro_public",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "TextQuests",
+      "url": "https://textquests.ai/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "ERQA",
+      "url": "https://github.com/embodiedreasoning/ERQA",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "MindCube",
+      "url": "https://arxiv.org/abs/2506.21458",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "SpatialViz",
+      "url": "https://arxiv.org/abs/2507.07610",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "IntPhys 2",
+      "url": "https://ai.meta.com/research/publications/intphys-2-benchmarking-intuitive-physics-understanding-in-complex-synthetic-environments/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "EnigmaEval",
+      "url": "https://labs.scale.com/leaderboard/enigma_eval",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "MMMU-Pro",
+      "url": "https://mmmu-benchmark.github.io/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "AA Long Context Reasoning",
+      "url": "https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "SciCode",
+      "url": "https://scicode-bench.github.io/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "Terminal-Bench Hard",
+      "url": "https://www.tbench.ai/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "Tau2-Bench Telecom",
+      "url": "https://sierra.ai/resources/research/tau-squared-bench",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "APEX-Agents-AA",
+      "url": "https://artificialanalysis.ai/evaluations/apex-agents-aa",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "DeepSWE v1.1 leaderboard",
+      "url": "https://deepswe.datacurve.ai/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "SkateBench",
+      "url": "https://skatebench.t3.gg/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "ARC-AGI-3",
+      "url": "https://arcprize.org/competitions/2026/arc-agi-3",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "Terminal-Bench v2.1 (AA Terminus 2)",
+      "url": "https://artificialanalysis.ai/evaluations/terminalbench-v2-1",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "Agents' Last Exam v1 leaderboard",
+      "url": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "AutomationBench-AA",
+      "url": "https://artificialanalysis.ai/evaluations/automationbench-aa",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "AA-Omniscience",
+      "url": "https://artificialanalysis.ai/evaluations/omniscience",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "CritPt",
+      "url": "https://artificialanalysis.ai/evaluations/critpt",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "GDPval-AA v2",
+      "url": "https://artificialanalysis.ai/evaluations/gdpval-aa",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "Terminal-Bench 4.0",
+      "url": "https://artificialanalysis.ai/evaluations/terminalbench-4-0",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "GDP.pdf",
+      "url": "https://artificialanalysis.ai/evaluations/gdp-pdf",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "AA-Briefcase",
+      "url": "https://artificialanalysis.ai/evaluations/aa-briefcase",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "OpenAI model release sweep",
+      "url": "https://openai.com/index/safety-overview-gpt-6-astra/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "Anthropic release sweep",
+      "url": "https://www.anthropic.com/news",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "Google model release sweep",
+      "url": "https://blog.google/innovation-and-ai/technology/developers-tools/build-real-time-voice-applications-gemini-audio/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "xAI release sweep",
+      "url": "https://x.ai/news",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "DeepSeek release sweep",
+      "url": "https://www.deepseek.com/en/news/deepseek-v4-1-flash/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    },
+    {
+      "title": "Mistral release sweep",
+      "url": "https://mistral.ai/news/",
+      "accessedAt": "2026-09-18T09:14:57.453Z"
+    }
+  ],
+  "evidence": [
+    {
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "screenshotUrl": "https://agents-last-exam.org/leaderboard#leaderboard",
+      "screenshotPath": "public/reports/curation/2026-09-18/screenshots/agents-last-exam-v1-codex.png"
+    },
+    {
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "screenshotUrl": "https://deepswe.datacurve.ai/#leaderboard",
+      "screenshotPath": "public/reports/curation/2026-09-18/screenshots/deepswe-v1-1.png"
+    }
+  ],
+  "models": [],
+  "benches": [],
+  "scores": [
+    {
+      "modelName": "GPT-6 Astra (max)",
+      "benchSlug": "agents-last-exam-v1-codex",
+      "rawScore": 342,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789722897453,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.3 (xhigh)",
+      "benchSlug": "agents-last-exam-v1-codex",
+      "rawScore": 322,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789722897453,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5 (xhigh)",
+      "benchSlug": "agents-last-exam-v1-codex",
+      "rawScore": 266,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789722897453,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (max)",
+      "benchSlug": "deepswe",
+      "rawScore": 730,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789722897453,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.6 (medium)",
+      "benchSlug": "deepswe",
+      "rawScore": 670,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789722897453,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Luna (max)",
+      "benchSlug": "deepswe",
+      "rawScore": 670,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789722897453,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.2 (xhigh)",
+      "benchSlug": "deepswe",
+      "rawScore": 550,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789722897453,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.5 Flash (high)",
+      "benchSlug": "deepswe",
+      "rawScore": 360,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789722897453,
+      "operation": "insert"
+    }
+  ],
+  "learnings": [
+    "Agents' Last Exam v1 mixes several harnesses in one table; the tracked agents-last-exam-v1-codex benchmark must admit only rows whose harness is Codex and whose effort is marked Best.",
+    "DeepSWE v1.1 rounds visible percentages to whole points; do not replace precise JSON-backed production values such as 699 or 438 with rounded 700 or 440.",
+    "Do not create a secondary effort configuration from one DeepSWE cell; require that exact effort to be published on at least four tracked benchmarks."
+  ]
+}
