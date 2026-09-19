@@ -1,184 +1,122 @@
 # Scheduled task: maintain SupraBench
 
-Revised 2026-09-17. Background: `docs/research/RANKING_REALITY_AUDIT_2026-09-16.md`
-§7.4 — the ranking only reflects reality when the newest frontier releases are
-measured on the same hard, unsaturated benchmarks. Earlier runs imported "top
-rows", scattered one release over several configuration names, kept feeding
-benchmarks their publishers had stopped running, and deferred the benchmarks
-the frontier is actually measured on.
-
-Run this task in an isolated worktree of the SupraBench repository every two
-days at 06:00 Europe/Berlin. Do not depend on context from an earlier chat.
+Run in an isolated worktree of the SupraBench repository every two days at
+06:00 Europe/Berlin. Do not depend on context from an earlier chat.
 
 ## Objective
 
-Keep the production SupraBench model and benchmark data current **and dense
-where it matters**: every current frontier release should have one canonical
-configuration with results on every tracked benchmark its publisher has run it
-on. Update existing benchmarks, discover genuinely relevant new ones, publish a
-dated evidence report, apply the reviewed batch(es) to Convex, verify the
-Cloudflare D1 mirror and the public website, then preserve concrete learnings.
+Keep production data current and **dense at the frontier**: every current
+frontier model should have its configurations measured on every tracked
+benchmark the publisher has run them on. The ranking is only as good as that
+block of the matrix. Publish a dated evidence report, apply the reviewed
+batches, verify the D1 mirror and the live site, record learnings.
 
-## Required workflow
+Terms: a **model** is a release (`familyTag`, e.g. `GPT-6 Astra`); a
+**configuration** is one effort/context setting of it (a row in `models`, e.g.
+`GPT-6 Astra (xhigh)`). The manifest's `models` array creates configurations.
 
-1. Start from the latest `origin/main` in a clean isolated worktree. Read
-   `docs/curation/README.md`, the most recent dated manifest/report, and its
-   `learnings`. Run `git ls-remote origin HEAD` as an independent access check.
-   Do not reset, overwrite, or include unrelated work. If the remote changes
-   during the run, never force-push; stop safely or rebuild the run on the new
-   head.
-2. Run `npm ci` when dependencies are absent. Verify access to production
-   deployment `upbeat-clam-790` with a read-only query and run
-   `scoresWorker:verifyMirror`. Do not continue to writes if access fails or D1
-   already has unexplained drift.
-3. **Build the coverage matrix first.** Inventory production models,
-   benchmarks, scales and source URLs. Determine the **frontier set**: the 15
-   most recently released flagship models across providers (plus any release
-   from the last 90 days). For every tracked benchmark, read the **complete**
-   result table of its official source — not only the top rows. Where the page
-   embeds its data (Artificial Analysis pages carry the full matrix in the
-   `self.__next_f` payload: `initialModels` / `models` with one field per
-   evaluation), extract it from there. Produce a `frontier × benchmark` matrix
-   with three states per cell: in production / published but missing / not
-   published. Put the matrix in the report.
-4. **Spend the write budget in this order:**
-   1. published-but-missing cells of the frontier set on tracked benchmarks;
-   2. `replace` operations where the official source now shows a different
-      value than production (grader or dataset revisions), for the frontier
-      set first;
-   3. newly released models (all of their published cells at once, not one);
-   4. long-tail models.
-   At least 70 % of inserted rows must belong to the frontier set unless no
-   such cell is missing. If the 150-score batch cap is reached, create further
-   batches in the same run (`YYYY-MM-DD-b`, `-c`, …; the pipeline accepts one
-   lower-case letter as suffix), each with its own
-   manifest, dry-run and apply. Never drop verified rows because of the cap.
-5. **Canonical model identity.** Terminology: the site calls a release a
-   **model** (stored as `familyTag`) and each effort/context setting of it a
-   **configuration** (a row in the `models` table; the manifest's `models`
-   array creates configurations).
-   - One configuration name per source row. Format `<Release> (<effort>)`,
-     effort in lower case (`(max)`, `(xhigh)`, `(high)`, `(medium)`, `(low)`).
-     Provider-side wording such as "adaptive", "default fallback", "with
-     fallback" is an alias of the same configuration, not a new model — keep
-     the name already in production.
-   - Before creating a configuration, search its model (`familyTag`) for an existing configuration
-     holding the same value on the same benchmark or carrying an alias name. If
-     found, reuse it. Never create an unlabelled model (`GPT-5.6 Sol`) when the
-     source row has an effort label.
-   - All results of one source configuration go to the same production model,
-     whichever benchmark page they come from. A release must not end up with
-     its results scattered over configurations that each cover a few benchmarks.
-   - Create a secondary effort configuration only when the source publishes it
-     on at least four tracked benchmarks, and then import all of them.
-   - Provider aliases: SpaceXAI = xAI, Z AI = Zhipu AI, Kimi = Moonshot AI.
-   - List every existing duplicate/alias pair you find under "Identity cleanup
-     needed" in the report; do not merge or delete production rows yourself.
-6. Independently sweep recent releases from all major model providers, then
-   research new results for existing benchmarks and popular new benchmarks. Do
-   not let the first release or leaderboard encountered define the search
-   space. Prefer original publisher pages, official leaderboards, papers,
-   repositories and benchmark documentation. Treat third-party roundups as
-   discovery leads, not final score evidence. A vendor launch post is
-   acceptable evidence only for the vendor's own model and only when the
-   benchmark's publisher lists no row for it; it is never evidence for a
-   competitor's model. When the official publisher later lists the row, migrate
-   the source with `replace` — never insert a second row for the same
-   (model, benchmark).
-7. Open every source used for an accepted score or benchmark in the visible
-   in-app browser and capture viewport screenshots that show the benchmark
-   name, version and the table the rows come from. The screenshot
-   proves the page and table are what the manifest says; it does not have to
-   show every imported row. Store the most precise value the source publishes
-   (embedded JSON included) and record in the manifest where each value was
-   read from. Spot-check at least five imported values per source against the
-   visible table.
-8. **Benchmark admission and retirement — apply one rule to all.**
-   - Admit a benchmark when it is relevant, discriminating at the frontier,
-     documented, and its publisher scores at least 20 current models. A private
-     held-out test set is acceptable when the methodology is public (it was
-     accepted for APEX-Agents-AA, AA-LCR and AutomationBench-AA); rate its
-     reproducibility ≤ 3 instead of deferring it.
-   - The ten components of the current Artificial Analysis Intelligence Index
-     are the benchmarks on which every frontier release is measured. All ten are
-     tracked since the 2026-09-17 backfill; keep them dense for every new
-     release. Elo benchmarks are stored as raw Elo with `scaleMin 500`,
-     `scaleMax 2500` (the publisher's own index normalisation);
-     AA-Omniscience as the raw index with `scaleMin -100`, `scaleMax 100`.
-   - Flag a tracked benchmark as **stale** when its source has added no model
-     released in the last 60 days (currently Terminal-Bench Hard,
-     APEX-Agents-AA, Tau2-Bench Telecom on Artificial Analysis). Stop spending
-     budget on stale benchmarks and name the successor.
-   - A deferral must state what would unblock it. The same item may be deferred
-     at most twice; after that either admit it under the documented default or
-     list it under "Decision needed from the maintainer".
-   - Never mix incompatible protocols in one leaderboard. When a publisher runs
-     its own variant (e.g. Artificial Analysis' text-only HLE subset) the
-     benchmark name and URL must say so.
-9. **Ratings.** When rating a new benchmark, justify each of the five
-   dimensions in one line against the rubric in the About page and compare with
-   sibling benchmarks already rated; a difference of two or more points to a
-   sibling needs a stated reason. Do not upvote benchmarks.
-10. Create `public/reports/curation/YYYY-MM-DD/index.html`, `manifest.json` and
-    `screenshots/` using schema version 1. The report must contain the coverage
-    matrix, all sources, exact accepted changes, stored scale conversions,
-    deferrals with unblock conditions, identity cleanup list, screenshots,
-    validation results, post-publish checks and learnings. A no-change run
-    still gets a report and manifest.
-11. Run:
+## Workflow
 
-    ```powershell
-    npm run curation:validate -- public/reports/curation/YYYY-MM-DD
-    npm test
-    git diff --check
-    npm run curation:dry-run -- public/reports/curation/YYYY-MM-DD --deployment upbeat-clam-790
-    ```
+1. **Start clean.** Latest `origin/main` in a clean worktree; read
+   `docs/curation/README.md` and the latest manifest's `learnings`. `npm ci` if
+   needed. Verify read access to `upbeat-clam-790` and run
+   `scoresWorker:verifyMirror`; stop on access failure or unexplained drift.
+   Never reset, force-push or include unrelated work.
+2. **Read complete tables.** For every tracked benchmark, get the publisher's
+   full result table, not the default view: look for a JSON/CSV artifact, an
+   embedded payload, and "all models" / "all effort levels" toggles. Known:
+   Artificial Analysis → run `node scripts/curation-aa-backfill.mjs <date>`
+   (reads the `self.__next_f` payload, holds the name alias map — extend it);
+   DeepSWE → `/artifacts/v1.1/leaderboard-live.json`. Sweep provider release
+   channels for new models; third-party roundups are leads, not evidence.
+3. **Coverage matrix.** Frontier set = the 15 newest flagship models plus any
+   release of the last 90 days. Report a model × benchmark matrix (present /
+   published but missing / not published) and, per source, the number of
+   published cells still missing after this run. "Nothing missing" may only be
+   claimed for a source whose complete table was diffed.
+4. **Write order.** (a) missing cells for configurations that already exist,
+   frontier first — every such source row, not only the "Best" row per model;
+   (b) `replace` where the source value differs from production, including
+   production values that were rounded; (c) new models, all their published
+   cells at once; (d) long tail. Batches hold 150 scores; continue with
+   `YYYY-MM-DD-b`, `-c` … in the same run instead of dropping verified rows.
+5. **Identity.** Name configurations `<Model> (<effort>)`, effort lower case.
+   "adaptive", "with fallback", "default fallback" are aliases of an existing
+   configuration, not new ones. All results of one source configuration go to
+   one production configuration. Never create an unlabelled configuration when
+   the source states an effort. Create an additional effort configuration only
+   if it is published on at least four tracked benchmarks, then import all of
+   them. Never insert a second row for the same configuration and benchmark;
+   when the publisher later lists a row first taken from a vendor post, migrate
+   it with `replace`. A vendor post is evidence only for that vendor's own
+   model. Provider aliases: SpaceXAI = xAI, Z AI = Zhipu AI, Kimi = Moonshot AI.
+   After every run list under **Identity cleanup needed** each older row that
+   now duplicates a labelled row (same model, benchmark and value under an
+   unlabelled or differently named configuration). Do not merge or delete
+   production rows yourself.
+6. **Harness and limits — one task suite is one benchmark.**
+   - If the publisher runs all models under one uniform harness, import only
+     that harness (ARC-AGI-3: Standard, not Provider Adapter).
+   - If there is no uniform harness and the publisher ranks model + harness
+     rows in one table (Agents' Last Exam, Terminal-Bench), that table is the
+     benchmark: import each configuration's best row across harnesses and name
+     the harness in the report. Never restrict a benchmark to one vendor's
+     harness and never split a suite into per-harness benchmarks — that either
+     excludes vendors or multiplies the suite's weight.
+   - If the publisher changed resource limits, use the current default regime
+     (SWE-Bench Pro: uncapped cost, 250 turns). Keep existing rows of a retired
+     regime, add no new ones, and `replace` them when a current-regime row
+     appears.
+   - A publisher's own variant of a benchmark (e.g. a text-only subset) must be
+     named as such in benchmark name and URL.
+7. **Evidence and precision.** Open each accepted source in the visible browser
+   and screenshot benchmark name, version and the table or chart the rows come
+   from; the screenshot need not show every row. Store the most precise value
+   the source publishes and note where it was read. Spot-check five values per
+   source against the visible page.
+8. **Admission and retirement.** Admit a benchmark that is relevant,
+   discriminating at the frontier, documented, and scored by its publisher for
+   at least 20 current models. Private held-out sets are acceptable when the
+   method is public; price them in with reproducibility ≤ 3. Justify each
+   rating dimension in one line and explain any gap of two or more points to a
+   sibling benchmark; never upvote. Elo is stored raw on 500–2500,
+   AA-Omniscience raw on −100…100. Mark a benchmark **stale** when its source
+   added no model released in the last 60 days (currently Terminal-Bench Hard,
+   APEX-Agents-AA, Tau2-Bench Telecom); spend nothing on it and name the
+   successor. A deferral states what unblocks it and may recur once; then apply
+   the rules above or list it under **Decision needed**.
+9. **Publish.** Write `public/reports/curation/<runId>/index.html`,
+   `manifest.json`, `screenshots/` (schema 1) with: coverage matrix, sources,
+   accepted changes, scale conversions, deferrals, identity cleanup, decisions
+   needed, validation, learnings. A no-change run still publishes. Then per
+   batch:
 
-    Review the complete dry-run plan. Existing curated values may change only
-    through an explicit `replace` operation with newer evidence. Never apply a
-    batch containing a write that is not explained in the dated report.
-12. If every gate is clean, set `SUPRABENCH_ALLOW_APPLY=1` only for the single
-    apply command, remove it immediately afterward, then require Convex/D1
-    drift to be zero. Run the same dry-run again and require all batch rows to
-    be unchanged. Repeat steps 11–12 per additional batch.
-13. Re-run tests and credential-pattern checks. Commit only the curation code
-    or dated artifacts created by this run. Push by fast-forward to `main`, wait
-    for Cloudflare Pages, and verify the public report plus the affected model
-    and benchmark pages in the visible browser. Also check the first
-    ten rows of the Model leaderboard and state in the summary whether
-    the order changed and why.
-14. Finish with a concise run summary: report URL, commit ID,
-    created/replaced/deferred counts, **frontier coverage before → after
-    (cells filled / cells published)**, mirror counts/drift, test result, public
-    page checks, decisions needed from the maintainer. `learnings`
-    contains only items that change what the next run does; gate confirmations
-    ("example.com check passed") belong under validation.
+   ```powershell
+   npm run curation:validate -- public/reports/curation/<runId>
+   npm test
+   git diff --check
+   npm run curation:dry-run -- public/reports/curation/<runId> --deployment upbeat-clam-790
+   ```
 
-## Reading Artificial Analysis
+   Review the full plan; every write must be explained in the report. Apply
+   once with `SUPRABENCH_ALLOW_APPLY=1` set for that command only, require D1
+   drift 0, and require a repeated dry run to show all rows unchanged.
+10. **Ship and verify.** Re-run tests and the credential scan, commit only this
+    run's artifacts, fast-forward push to `main`, wait for the deployment, and
+    check the report, the affected pages and the top ten of the Model
+    leaderboard in the visible browser; say whether the order changed and why.
+11. **Summary.** Report URL, commit, inserted/replaced/deferred counts, frontier
+    coverage before → after, missing cells per source, mirror drift, tests,
+    decisions needed. `learnings` holds only what changes the next run.
 
-`node scripts/curation-aa-backfill.mjs <YYYY-MM-DD> [first-batch-letter]` reads
-the publisher's embedded result matrix, diffs it against production and writes
-ready-to-validate insert-only batches (manifest, report, screenshots). Use it
-as the first step of every run. It contains the alias map between publisher
-short names and production model names — extend that map instead of creating a
-second model for the same configuration. Review its output like any other
-batch before the dry run.
+## Safety
 
-## Safety rules
-
-- Never commit tokens, `.env*`, copied login data, deployment keys, or worker
-  secrets.
-- Never use a source screenshot that does not show the claimed benchmark and
-  table.
-- Never collapse distinct versions such as Terminal-Bench 2.1 and
-  Terminal-Bench Hard into one record.
-- Never force-push, delete production data, or silently overwrite a curated
-  score.
-- A failed access check, ambiguous evidence, failed test, non-zero D1 drift, or
-  rejected fast-forward push is a stop condition; report it without a
-  workaround.
-
-Suggested recurrence:
+- Never commit tokens, `.env*`, login data, deployment keys or worker secrets.
+- Never use a screenshot that does not show the claimed benchmark and table.
+- Never merge distinct benchmark versions (Terminal-Bench 2.1 ≠ Hard ≠ 4.0).
+- Never force-push, delete production data or silently overwrite a score.
+- Failed access check, ambiguous evidence, failed test, non-zero drift or a
+  rejected push is a stop condition: report it, no workaround.
 
 ```text
 RRULE:FREQ=DAILY;INTERVAL=2;BYHOUR=6;BYMINUTE=0
