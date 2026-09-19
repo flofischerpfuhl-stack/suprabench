@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-09-19-b",
+  "generatedAt": "2026-09-19T16:04:50.564Z",
+  "reportPath": "public/reports/curation/2026-09-19-b/index.html",
+  "sources": [
+    {
+      "title": "https://deepswe.datacurve.ai/",
+      "url": "https://deepswe.datacurve.ai/",
+      "accessedAt": "2026-09-19T16:04:44.512Z"
+    },
+    {
+      "title": "DeepSWE v1.1 leaderboard — machine-readable table",
+      "url": "https://deepswe.datacurve.ai/artifacts/v1.1/leaderboard-live.json",
+      "accessedAt": "2026-09-19T16:04:44.512Z"
+    },
+    {
+      "title": "Agents' Last Exam v1 leaderboard — machine-readable table",
+      "url": "https://agents-last-exam.org/api/demo/leaderboard",
+      "accessedAt": "2026-09-19T16:04:44.512Z"
+    }
+  ],
+  "evidence": [
+    {
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "screenshotUrl": "https://deepswe.datacurve.ai/",
+      "screenshotPath": "public/reports/curation/2026-09-19-b/screenshots/deepswedatacurveai.png"
+    }
+  ],
+  "models": [],
+  "benches": [],
+  "scores": [
+    {
+      "modelName": "Kimi K3 (max)",
+      "benchSlug": "deepswe",
+      "rawScore": 685,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833884512,
+      "operation": "replace"
+    }
+  ],
+  "learnings": [
+    "DeepSWE and Agents' Last Exam publish complete machine-readable tables (leaderboard-live.json, /api/demo/leaderboard); run `node scripts/curation-source-sync.mjs <date>` instead of reading the visible default view, which hides models, effort levels and decimals.",
+    "Agents' Last Exam has no uniform harness: the benchmark is the publisher's table, best row per (model, effort) across harnesses; runs covering under 95 % of the tasks are unfinished and skipped.",
+    "A cell is one row: when production already holds a row for a configuration and benchmark, correct it with `replace` on its existing source URL instead of inserting a second row."
+  ]
+}

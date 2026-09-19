@@ -32,6 +32,12 @@ complete result table; neither writes to the database:
   Last Exam (JSON tables; inserts missing cells of existing configurations and
   replaces rounded values with exact ones).
 
+Rows that ended up under the wrong configuration (unlabelled copies, alias
+configurations, a vendor row next to the publisher's row) are fixed with
+`migrations:applyIdentityCleanup` — explicit plan, dry run first, guarded so a
+model never loses its only row on a benchmark. Verify every move at the source
+and commit the returned archive under `docs/curation/cleanup/`.
+
 Renaming a benchmark is an explicit migration:
 `npx convex run --prod migrations:renameBench '{"slug":…,"newName":…}'`.
 

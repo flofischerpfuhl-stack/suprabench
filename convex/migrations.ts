@@ -360,3 +360,141 @@ export const renameBench = internalMutation({
     return { id: bench._id, from: { name: bench.name, slug }, to: patch };
   },
 });
+
+// ── Identity cleanup: delete duplicate rows, move rows, drop empty configs ──
+// For rows that ended up under the wrong configuration of a model (unlabelled
+// copies of a labelled row, alias configurations, a vendor-reported row next
+// to the publisher's row). Explicit plan, dry run by default, guards that make
+// information loss impossible:
+//
+//   deleteRow   the model (same familyTag + provider) must still have another
+//               row on that benchmark afterwards
+//   moveRow     target configuration belongs to the same model and has no row
+//               on that benchmark yet
+//   deleteEmptyConfiguration   configuration has no score rows left
+//
+// Every op carries `expect` (configuration name, bench slug, raw score) so a
+// stale plan fails instead of hitting the wrong row. Returns an archive of
+// everything removed or changed — commit it under docs/curation/cleanup/.
+//
+//   npx convex run --prod migrations:applyIdentityCleanup '{"dryRun":true,"ops":[…]}'
+const CLEANUP_OP = v.object({
+  op: v.union(v.literal("deleteRow"), v.literal("moveRow"), v.literal("deleteEmptyConfiguration")),
+  scoreId: v.optional(v.id("modelScores")),
+  configuration: v.string(),
+  benchSlug: v.optional(v.string()),
+  rawScore: v.optional(v.number()),
+  toConfiguration: v.optional(v.string()),
+  reason: v.string(),
+});
+
+export const applyIdentityCleanup = internalMutation({
+  args: { dryRun: v.boolean(), ops: v.array(CLEANUP_OP) },
+  handler: async (ctx, { dryRun, ops }) => {
+    if (ops.length > 100) throw new Error("Max 100 operations per call");
+    const models = await ctx.db.query("models").collect();
+    const benches = await ctx.db.query("benches").collect();
+    const modelByName = new Map(models.map((m) => [m.name, m]));
+    const benchBySlug = new Map(benches.map((b) => [b.slug, b]));
+    const sameModel = (a: any, b: any) =>
+      canonicalFamilyTag(a.name, a.familyTag) === canonicalFamilyTag(b.name, b.familyTag) &&
+      a.provider === b.provider;
+    const archive: any[] = [];
+    const touchedBenches = new Set<string>();
+    const changedScoreIds: any[] = [];
+    const deletedScoreIds: string[] = [];
+    const gone = new Set<string>(); // score ids deleted earlier in this plan
+    const moved = new Map<string, string>(); // score id → new model id
+
+    for (const [index, op] of ops.entries()) {
+      const label = `op[${index}] ${op.op} ${op.configuration}`;
+      if (op.reason.trim().length < 15) throw new Error(`${label}: reason required`);
+      const config: any = modelByName.get(op.configuration);
+      if (!config) throw new Error(`${label}: configuration not found`);
+
+      if (op.op === "deleteEmptyConfiguration") {
+        const rows = await ctx.db
+          .query("modelScores")
+          .withIndex("by_model", (q) => q.eq("modelId", config._id))
+          .collect();
+        const left = rows.filter((r) => !gone.has(r._id as string) && (moved.get(r._id as string) ?? config._id) === config._id);
+        if (left.length > 0) throw new Error(`${label}: still has ${left.length} score rows`);
+        archive.push({ op: op.op, reason: op.reason, configuration: { ...config } });
+        if (!dryRun) {
+          const ranking = await ctx.db
+            .query("modelRankings")
+            .withIndex("by_model", (q) => q.eq("modelId", config._id))
+            .first();
+          if (ranking) await ctx.db.delete(ranking._id);
+          for (const table of ["entityVotes", "tagVotes"] as const) {
+            const votes = await ctx.db
+              .query(table)
+              .withIndex("by_entity", (q: any) => q.eq("entityType", "model").eq("entityId", config._id as string))
+              .collect();
+            for (const vote of votes) await ctx.db.delete(vote._id);
+          }
+          await ctx.db.delete(config._id);
+        }
+        continue;
+      }
+
+      if (!op.scoreId || !op.benchSlug || op.rawScore === undefined) {
+        throw new Error(`${label}: scoreId, benchSlug and rawScore are required`);
+      }
+      const bench: any = benchBySlug.get(op.benchSlug);
+      if (!bench) throw new Error(`${label}: benchmark not found`);
+      const row: any = await ctx.db.get(op.scoreId);
+      if (!row || gone.has(op.scoreId as string)) throw new Error(`${label}: score row not found`);
+      if (row.modelId !== config._id || row.benchId !== bench._id || row.rawScore !== op.rawScore) {
+        throw new Error(`${label}: row does not match the expected configuration, benchmark and value`);
+      }
+      const benchRows = await ctx.db
+        .query("modelScores")
+        .withIndex("by_bench", (q) => q.eq("benchId", bench._id))
+        .collect();
+      const live = benchRows.filter((r) => !gone.has(r._id as string));
+      const ownerOf = (r: any) => moved.get(r._id as string) ?? (r.modelId as string);
+      const modelDoc = (id: string) => models.find((m) => (m._id as string) === id);
+
+      if (op.op === "deleteRow") {
+        const survivors = live.filter((r) => r._id !== row._id && sameModel(modelDoc(ownerOf(r)), config));
+        if (survivors.length === 0) {
+          throw new Error(`${label}: deleting would leave the model without a row on ${op.benchSlug}`);
+        }
+        archive.push({ op: op.op, reason: op.reason, configuration: config.name, benchSlug: op.benchSlug, row: { ...row }, keptInstead: survivors.map((r) => ({ configuration: modelDoc(ownerOf(r))?.name, rawScore: r.rawScore, sourceUrl: r.sourceUrl })) });
+        gone.add(row._id as string);
+        if (!dryRun) {
+          const votes = await ctx.db.query("votes").withIndex("by_target", (q) => q.eq("targetId", row._id as string)).collect();
+          for (const vote of votes) await ctx.db.delete(vote._id);
+          await ctx.db.delete(row._id);
+          deletedScoreIds.push(row._id as string);
+        }
+      } else {
+        const target: any = op.toConfiguration ? modelByName.get(op.toConfiguration) : undefined;
+        if (!target) throw new Error(`${label}: target configuration not found`);
+        if (target.hidden) throw new Error(`${label}: target configuration is hidden`);
+        if (!sameModel(target, config)) throw new Error(`${label}: target belongs to a different model`);
+        if (live.some((r) => ownerOf(r) === (target._id as string))) {
+          throw new Error(`${label}: ${target.name} already has a row on ${op.benchSlug}`);
+        }
+        archive.push({ op: op.op, reason: op.reason, from: config.name, to: target.name, benchSlug: op.benchSlug, row: { ...row } });
+        moved.set(row._id as string, target._id as string);
+        if (!dryRun) {
+          await ctx.db.patch(row._id, { modelId: target._id });
+          changedScoreIds.push(row._id);
+        }
+      }
+      touchedBenches.add(bench._id as string);
+    }
+
+    if (!dryRun) {
+      for (const benchId of touchedBenches) await recomputeBenchAggregatesInline(ctx, benchId as any);
+      for (const convexId of deletedScoreIds) {
+        await ctx.scheduler.runAfter(0, internal.scoresWorker.deleteScoreFromMirror, { convexId });
+      }
+      // mirrors moved rows (upsert by convex id) and rebuilds the rankings
+      await ctx.scheduler.runAfter(3000, internal.scoresWorker.mirrorScoresAndRebuild, { scoreIds: changedScoreIds });
+    }
+    return { dryRun, operations: ops.length, deleted: deletedScoreIds.length || [...gone].length, moved: moved.size, archive };
+  },
+});

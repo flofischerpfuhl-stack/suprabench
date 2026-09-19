@@ -1,0 +1,681 @@
+{
+ "appliedAt": "2026-09-19T16:04:22.488Z",
+ "deployment": "upbeat-clam-790",
+ "tool": "migrations:applyIdentityCleanup",
+ "summary": {
+  "operations": 24,
+  "rowsDeleted": 17,
+  "rowsMoved": 5
+ },
+ "archive": [
+  {
+   "benchSlug": "humanity-s-last-exam",
+   "configuration": "Kimi K3 (max)",
+   "keptInstead": [
+    {
+     "configuration": "Kimi K3 (max)",
+     "rawScore": 469,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Vendor-reported row (Moonshot GitHub) next to the publisher's own row for the same cell; the publisher row stays.",
+   "row": {
+    "_creationTime": 1785707769065.5388,
+    "_id": "k9726qkd5qe27873yenx8t8z6d8bqfds",
+    "accessedAt": 1785707537671,
+    "benchId": "k1759t15h3cbgnxk26yhhbkaw5855tj3",
+    "createdAt": 1785707769065,
+    "downvotes": 0,
+    "modelId": "kd7ehryqwe4m199f431ynscnxh8bpj9c",
+    "normalizedScore": 43.5,
+    "rawScore": 435,
+    "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "aa-long-context-reasoning",
+   "configuration": "Kimi K3 (max)",
+   "keptInstead": [
+    {
+     "configuration": "Kimi K3 (max)",
+     "rawScore": 887,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Vendor-reported row (Moonshot GitHub) next to the publisher's own row for the same cell; the publisher row stays.",
+   "row": {
+    "_creationTime": 1785707769065.5393,
+    "_id": "k973vfdvfmck3w3q085q9z212s8bqaqg",
+    "accessedAt": 1785707537671,
+    "benchId": "k17aq6cnh7yghkggtkjc5c6tb185gbxg",
+    "createdAt": 1785707769065,
+    "downvotes": 0,
+    "modelId": "kd7ehryqwe4m199f431ynscnxh8bpj9c",
+    "normalizedScore": 74.7,
+    "rawScore": 747,
+    "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "deepswe",
+   "configuration": "Kimi K3 (max)",
+   "keptInstead": [
+    {
+     "configuration": "Kimi K3 (max)",
+     "rawScore": 690,
+     "sourceUrl": "https://deepswe.datacurve.ai/"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Vendor-reported row (Moonshot GitHub) next to the publisher's own row for the same cell; the publisher row stays.",
+   "row": {
+    "_creationTime": 1785707769065.5398,
+    "_id": "k972vrwzwty0s4s4fdkp5x8vk98bqx98",
+    "accessedAt": 1785707537671,
+    "benchId": "k172ms0jaexa3qqc6m7v6xqk5x894vt4",
+    "createdAt": 1785707769065,
+    "downvotes": 0,
+    "modelId": "kd7ehryqwe4m199f431ynscnxh8bpj9c",
+    "normalizedScore": 67.5,
+    "rawScore": 675,
+    "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "scicode",
+   "configuration": "Kimi K3 (max)",
+   "keptInstead": [
+    {
+     "configuration": "Kimi K3 (max)",
+     "rawScore": 595,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/scicode"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Vendor-reported row (Moonshot GitHub) next to the publisher's own row for the same cell; the publisher row stays.",
+   "row": {
+    "_creationTime": 1785707769065.5403,
+    "_id": "k973nyh04wts3xgr473avk2rxd8bqs96",
+    "accessedAt": 1785707537671,
+    "benchId": "k171mmav9gg8f7xb4frf11m0qh85gnnb",
+    "createdAt": 1785707769065,
+    "downvotes": 0,
+    "modelId": "kd7ehryqwe4m199f431ynscnxh8bpj9c",
+    "normalizedScore": 58.7,
+    "rawScore": 587,
+    "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "mmmu-pro",
+   "configuration": "Kimi K3 (max)",
+   "keptInstead": [
+    {
+     "configuration": "Kimi K3 (max)",
+     "rawScore": 81,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Vendor-reported row (Moonshot GitHub) next to the publisher's own row for the same cell; the publisher row stays.",
+   "row": {
+    "_creationTime": 1785707769065.5408,
+    "_id": "k97b33q60tz7vhqwqp429mymzn8bpa2y",
+    "accessedAt": 1785707537671,
+    "benchId": "k176tzs1cctaq0sa9gv3xw5kg985gvwx",
+    "createdAt": 1785707769065,
+    "downvotes": 0,
+    "modelId": "kd7ehryqwe4m199f431ynscnxh8bpj9c",
+    "normalizedScore": 81.6,
+    "rawScore": 81.6,
+    "sourceUrl": "https://github.com/MoonshotAI/Kimi-K3",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "deepswe",
+   "configuration": "GPT-5.6 Sol",
+   "keptInstead": [
+    {
+     "configuration": "GPT-5.6 Sol (max)",
+     "rawScore": 727,
+     "sourceUrl": "https://deepswe.datacurve.ai/"
+    },
+    {
+     "configuration": "GPT-5.6 Sol (xhigh)",
+     "rawScore": 707,
+     "sourceUrl": "https://deepswe.datacurve.ai/"
+    },
+    {
+     "configuration": "GPT-5.6 Sol (high)",
+     "rawScore": 694,
+     "sourceUrl": "https://deepswe.datacurve.ai/"
+    },
+    {
+     "configuration": "GPT-5.6 Sol (medium)",
+     "rawScore": 611,
+     "sourceUrl": "https://deepswe.datacurve.ai/"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Same DeepSWE source row as GPT-5.6 Sol (max) (publisher lists it as [max], exact 72.7).",
+   "row": {
+    "_creationTime": 1786008480973.9421,
+    "_id": "k978abbpdnngme2scxxfmcs7518bzvwh",
+    "accessedAt": 1786008018116,
+    "benchId": "k172ms0jaexa3qqc6m7v6xqk5x894vt4",
+    "createdAt": 1786008480974,
+    "downvotes": 0,
+    "modelId": "kd73tj2hyqea3a18m4x01czpjs8bp9j0",
+    "normalizedScore": 73,
+    "rawScore": 730,
+    "sourceUrl": "https://deepswe.datacurve.ai/",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "terminal-bench-hard",
+   "configuration": "GPT-5.6 Sol",
+   "keptInstead": [
+    {
+     "configuration": "GPT-5.6 Sol (medium)",
+     "rawScore": 629,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard"
+    },
+    {
+     "configuration": "GPT-5.6 Sol (max)",
+     "rawScore": 659,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard"
+    },
+    {
+     "configuration": "GPT-5.6 Sol (xhigh)",
+     "rawScore": 614,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard"
+    },
+    {
+     "configuration": "GPT-5.6 Sol (high)",
+     "rawScore": 621,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Same Artificial Analysis row as GPT-5.6 Sol (max) (65.9).",
+   "row": {
+    "_creationTime": 1786008480973.9456,
+    "_id": "k977kcewhh624s0s9b4f29rtt98bz2jj",
+    "accessedAt": 1786008018116,
+    "benchId": "k173t5shq954jxb11s6v0z1c8x85gc2h",
+    "createdAt": 1786008480974,
+    "downvotes": 0,
+    "modelId": "kd73tj2hyqea3a18m4x01czpjs8bp9j0",
+    "normalizedScore": 65.9,
+    "rawScore": 659,
+    "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "mmmu-pro",
+   "configuration": "GPT-5.6 Sol",
+   "keptInstead": [
+    {
+     "configuration": "GPT-5.6 Sol (max)",
+     "rawScore": 83,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro"
+    },
+    {
+     "configuration": "GPT-5.6 Sol (medium)",
+     "rawScore": 81.4,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro"
+    },
+    {
+     "configuration": "GPT-5.6 Sol (high)",
+     "rawScore": 81.8,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro"
+    },
+    {
+     "configuration": "GPT-5.6 Sol (xhigh)",
+     "rawScore": 82.7,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Vendor launch-post value; Artificial Analysis publishes MMMU-Pro for the labelled Sol configurations.",
+   "row": {
+    "_creationTime": 1785706230961.0205,
+    "_id": "k971d7pm9gk74fmtz0p5196wrd8bqvnr",
+    "accessedAt": 1785707537671,
+    "benchId": "k176tzs1cctaq0sa9gv3xw5kg985gvwx",
+    "createdAt": 1785706230961,
+    "downvotes": 0,
+    "modelId": "kd73tj2hyqea3a18m4x01czpjs8bp9j0",
+    "normalizedScore": 83,
+    "rawScore": 83,
+    "sourceUrl": "https://openai.com/index/gpt-5-6/",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "arc-agi-3",
+   "from": "GPT-5.6 Sol",
+   "op": "moveRow",
+   "reason": "ARC Prize verified table (arcprize.org/results/openai-gpt-5-6) lists this value under variant Max.",
+   "row": {
+    "_creationTime": 1785706230961.022,
+    "_id": "k97d69jj7h38wcff31850pa9es8bpfgn",
+    "accessedAt": 1785705667498,
+    "benchId": "k17ds17wtmdv1wg1f3f7dw59vs8bp8s3",
+    "createdAt": 1785706230961,
+    "downvotes": 0,
+    "modelId": "kd73tj2hyqea3a18m4x01czpjs8bp9j0",
+    "normalizedScore": 7.78,
+    "rawScore": 7.78,
+    "sourceUrl": "https://openai.com/index/gpt-5-6/",
+    "upvotes": 1
+   },
+   "to": "GPT-5.6 Sol (max)"
+  },
+  {
+   "benchSlug": "arc-agi-2",
+   "from": "GPT-5.6 Sol",
+   "op": "moveRow",
+   "reason": "ARC Prize verified table (arcprize.org/results/openai-gpt-5-6) lists this value under variant Max.",
+   "row": {
+    "_creationTime": 1786008480973.95,
+    "_id": "k9786cdh20kbvcvssvpnws27ys8byd95",
+    "accessedAt": 1786008018116,
+    "benchId": "k17bpspxsc8x52a2tt0vfrf02n85ht88",
+    "createdAt": 1786008480974,
+    "downvotes": 0,
+    "modelId": "kd73tj2hyqea3a18m4x01czpjs8bp9j0",
+    "normalizedScore": 92.5,
+    "rawScore": 925,
+    "sourceUrl": "https://arcprize.org/results/openai-gpt-5-6",
+    "upvotes": 1
+   },
+   "to": "GPT-5.6 Sol (max)"
+  },
+  {
+   "benchSlug": "enigmaeval",
+   "from": "GPT-5.6 Sol",
+   "op": "moveRow",
+   "reason": "Scale's EnigmaEval leaderboard lists this row as gpt-5.6-sol-high (37.12).",
+   "row": {
+    "_creationTime": 1786008480973.948,
+    "_id": "k97cf8sa7tkfzg9hnnh4wz7evh8by0vj",
+    "accessedAt": 1786008018116,
+    "benchId": "k177ea6mtv5hszwcb59rg506r985gpdd",
+    "createdAt": 1786008480974,
+    "downvotes": 0,
+    "modelId": "kd73tj2hyqea3a18m4x01czpjs8bp9j0",
+    "normalizedScore": 37.12,
+    "rawScore": 371.2,
+    "sourceUrl": "https://labs.scale.com/leaderboard/enigma_eval",
+    "upvotes": 1
+   },
+   "to": "GPT-5.6 Sol (high)"
+  },
+  {
+   "benchSlug": "deepswe",
+   "configuration": "GPT-5.6 Terra",
+   "keptInstead": [
+    {
+     "configuration": "GPT-5.6 Terra (max)",
+     "rawScore": 696,
+     "sourceUrl": "https://deepswe.datacurve.ai/"
+    },
+    {
+     "configuration": "GPT-5.6 Terra (xhigh)",
+     "rawScore": 602,
+     "sourceUrl": "https://deepswe.datacurve.ai/"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Same DeepSWE source row as GPT-5.6 Terra (max) (exact 69.6).",
+   "row": {
+    "_creationTime": 1786008480973.9426,
+    "_id": "k97e5m2234rty22gk4sw1bkp3h8by262",
+    "accessedAt": 1786008018116,
+    "benchId": "k172ms0jaexa3qqc6m7v6xqk5x894vt4",
+    "createdAt": 1786008480974,
+    "downvotes": 0,
+    "modelId": "kd7dv7vmd40mj0w46wnyv0k2m18bqwck",
+    "normalizedScore": 70,
+    "rawScore": 700,
+    "sourceUrl": "https://deepswe.datacurve.ai/",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "apex-agents-aa",
+   "configuration": "GPT-5.6 Terra",
+   "keptInstead": [
+    {
+     "configuration": "GPT-5.6 Terra (max)",
+     "rawScore": 389,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/apex-agents-aa"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Same Artificial Analysis row as GPT-5.6 Terra (max) (38.9).",
+   "row": {
+    "_creationTime": 1786008480973.9412,
+    "_id": "k977j3sf96tgz3sca91jg3vews8bz5k6",
+    "accessedAt": 1786008018116,
+    "benchId": "k17asf3fnzqfgwm4wxa75pe9fd85heks",
+    "createdAt": 1786008480974,
+    "downvotes": 0,
+    "modelId": "kd7dv7vmd40mj0w46wnyv0k2m18bqwck",
+    "normalizedScore": 38.9,
+    "rawScore": 389,
+    "sourceUrl": "https://artificialanalysis.ai/evaluations/apex-agents-aa",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "terminal-bench-hard",
+   "configuration": "GPT-5.6 Terra",
+   "keptInstead": [
+    {
+     "configuration": "GPT-5.6 Terra (max)",
+     "rawScore": 576,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard"
+    },
+    {
+     "configuration": "GPT-5.6 Terra (xhigh)",
+     "rawScore": 629,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Same Artificial Analysis row as GPT-5.6 Terra (xhigh) (62.9).",
+   "row": {
+    "_creationTime": 1786008480973.946,
+    "_id": "k97af8d9ymxwsn9yrcwjcycg0h8by9hb",
+    "accessedAt": 1786008018116,
+    "benchId": "k173t5shq954jxb11s6v0z1c8x85gc2h",
+    "createdAt": 1786008480974,
+    "downvotes": 0,
+    "modelId": "kd7dv7vmd40mj0w46wnyv0k2m18bqwck",
+    "normalizedScore": 62.9,
+    "rawScore": 629,
+    "sourceUrl": "https://artificialanalysis.ai/evaluations/terminalbench-hard",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "mmmu-pro",
+   "configuration": "GPT-5.6 Terra",
+   "keptInstead": [
+    {
+     "configuration": "GPT-5.6 Terra (max)",
+     "rawScore": 81,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro"
+    },
+    {
+     "configuration": "GPT-5.6 Terra (xhigh)",
+     "rawScore": 79.5,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Vendor launch-post value; Artificial Analysis publishes MMMU-Pro for the labelled Terra configurations.",
+   "row": {
+    "_creationTime": 1785706230961.021,
+    "_id": "k97075ms156mjn0t1r8c9nbenh8bp0vr",
+    "accessedAt": 1785707537671,
+    "benchId": "k176tzs1cctaq0sa9gv3xw5kg985gvwx",
+    "createdAt": 1785706230961,
+    "downvotes": 0,
+    "modelId": "kd7dv7vmd40mj0w46wnyv0k2m18bqwck",
+    "normalizedScore": 80.7,
+    "rawScore": 80.7,
+    "sourceUrl": "https://openai.com/index/gpt-5-6/",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "arc-agi-3",
+   "from": "GPT-5.6 Terra",
+   "op": "moveRow",
+   "reason": "ARC Prize verified table (arcprize.org/results/openai-gpt-5-6) lists this value under variant Max.",
+   "row": {
+    "_creationTime": 1785706230961.0225,
+    "_id": "k970dksnmhvewkww6nd1hhbz1d8bqsgg",
+    "accessedAt": 1785705667498,
+    "benchId": "k17ds17wtmdv1wg1f3f7dw59vs8bp8s3",
+    "createdAt": 1785706230961,
+    "downvotes": 0,
+    "modelId": "kd7dv7vmd40mj0w46wnyv0k2m18bqwck",
+    "normalizedScore": 0.8,
+    "rawScore": 0.8,
+    "sourceUrl": "https://openai.com/index/gpt-5-6/",
+    "upvotes": 1
+   },
+   "to": "GPT-5.6 Terra (max)"
+  },
+  {
+   "benchSlug": "deepswe",
+   "configuration": "GPT-5.6 Luna",
+   "keptInstead": [
+    {
+     "configuration": "GPT-5.6 Luna (max)",
+     "rawScore": 672,
+     "sourceUrl": "https://deepswe.datacurve.ai/"
+    },
+    {
+     "configuration": "GPT-5.6 Luna (xhigh)",
+     "rawScore": 569,
+     "sourceUrl": "https://deepswe.datacurve.ai/"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Same DeepSWE source row as GPT-5.6 Luna (max) (exact 67.2).",
+   "row": {
+    "_creationTime": 1786008480973.943,
+    "_id": "k976g1x7fdjmtjrd7n7x8h37e18by3b2",
+    "accessedAt": 1786008018116,
+    "benchId": "k172ms0jaexa3qqc6m7v6xqk5x894vt4",
+    "createdAt": 1786008480974,
+    "downvotes": 0,
+    "modelId": "kd7df3v7dyxd1rfgw9cbn7f8an8bppfb",
+    "normalizedScore": 67,
+    "rawScore": 670,
+    "sourceUrl": "https://deepswe.datacurve.ai/",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "mmmu-pro",
+   "configuration": "GPT-5.6 Luna",
+   "keptInstead": [
+    {
+     "configuration": "GPT-5.6 Luna (max)",
+     "rawScore": 78.6,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro"
+    },
+    {
+     "configuration": "GPT-5.6 Luna (xhigh)",
+     "rawScore": 78.6,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/mmmu-pro"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Vendor launch-post value; Artificial Analysis publishes MMMU-Pro for the labelled Luna configurations.",
+   "row": {
+    "_creationTime": 1785706230961.0215,
+    "_id": "k975mbjqkz1zaqq80xkcnn3mq98bqa73",
+    "accessedAt": 1785707537671,
+    "benchId": "k176tzs1cctaq0sa9gv3xw5kg985gvwx",
+    "createdAt": 1785706230961,
+    "downvotes": 0,
+    "modelId": "kd7df3v7dyxd1rfgw9cbn7f8an8bppfb",
+    "normalizedScore": 78.4,
+    "rawScore": 78.4,
+    "sourceUrl": "https://openai.com/index/gpt-5-6/",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "arc-agi-3",
+   "from": "GPT-5.6 Luna",
+   "op": "moveRow",
+   "reason": "ARC Prize verified table (arcprize.org/results/openai-gpt-5-6) lists this value under variant Max.",
+   "row": {
+    "_creationTime": 1785706230961.023,
+    "_id": "k9712q60hj67gj31qwkhsz2dth8bpy5b",
+    "accessedAt": 1785705667498,
+    "benchId": "k17ds17wtmdv1wg1f3f7dw59vs8bp8s3",
+    "createdAt": 1785706230961,
+    "downvotes": 0,
+    "modelId": "kd7df3v7dyxd1rfgw9cbn7f8an8bppfb",
+    "normalizedScore": 0.18,
+    "rawScore": 0.18,
+    "sourceUrl": "https://openai.com/index/gpt-5-6/",
+    "upvotes": 1
+   },
+   "to": "GPT-5.6 Luna (max)"
+  },
+  {
+   "benchSlug": "deepswe",
+   "configuration": "Muse Spark 1.1",
+   "keptInstead": [
+    {
+     "configuration": "Muse Spark 1.1 (xhigh)",
+     "rawScore": 533,
+     "sourceUrl": "https://deepswe.datacurve.ai/"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Same DeepSWE source row as Muse Spark 1.1 (xhigh) (exact 53.3).",
+   "row": {
+    "_creationTime": 1786008480973.9446,
+    "_id": "k976sdc67r40h2gtn5vetv4c498bzdqy",
+    "accessedAt": 1786008018116,
+    "benchId": "k172ms0jaexa3qqc6m7v6xqk5x894vt4",
+    "createdAt": 1786008480974,
+    "downvotes": 0,
+    "modelId": "kd7dx2531majkjjenp3hyq7nj58bz6b5",
+    "normalizedScore": 53,
+    "rawScore": 530,
+    "sourceUrl": "https://deepswe.datacurve.ai/",
+    "upvotes": 1
+   }
+  },
+  {
+   "benchSlug": "humanity-s-last-exam",
+   "configuration": "Claude Opus 5 (adaptive max)",
+   "keptInstead": [
+    {
+     "configuration": "Claude Opus 5 (adaptive xhigh)",
+     "rawScore": 544,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam"
+    },
+    {
+     "configuration": "Claude Opus 5 (High)",
+     "rawScore": 528,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam"
+    },
+    {
+     "configuration": "Claude Opus 5 (Max)",
+     "rawScore": 549,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam"
+    },
+    {
+     "configuration": "Claude Opus 5 (xhigh)",
+     "rawScore": 544,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Alias configuration: same Artificial Analysis row as Claude Opus 5 (Max) (54.9).",
+   "row": {
+    "_creationTime": 1786008480973.9465,
+    "_id": "k97ckx159qg096t2t8a6wttk258by2ky",
+    "accessedAt": 1786180713587,
+    "benchId": "k1759t15h3cbgnxk26yhhbkaw5855tj3",
+    "createdAt": 1786008480974,
+    "downvotes": 0,
+    "modelId": "kd74smjvjyczjm04bcdd9e7e1x8bzv2c",
+    "normalizedScore": 54.9,
+    "rawScore": 549,
+    "sourceUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam",
+    "upvotes": 1
+   }
+  },
+  {
+   "configuration": {
+    "_creationTime": 1786008480973.9375,
+    "_id": "kd74smjvjyczjm04bcdd9e7e1x8bzv2c",
+    "createdAt": 1786008480974,
+    "familyTag": "Claude Opus 5",
+    "name": "Claude Opus 5 (adaptive max)",
+    "provider": "Anthropic",
+    "slug": "claude-opus-5-adaptive-max",
+    "tags": [
+     "reasoning"
+    ]
+   },
+   "op": "deleteEmptyConfiguration",
+   "reason": "Alias name of Claude Opus 5 (Max); no rows left."
+  },
+  {
+   "benchSlug": "humanity-s-last-exam",
+   "configuration": "Claude Opus 5 (adaptive xhigh)",
+   "keptInstead": [
+    {
+     "configuration": "Claude Opus 5 (High)",
+     "rawScore": 528,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam"
+    },
+    {
+     "configuration": "Claude Opus 5 (Max)",
+     "rawScore": 549,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam"
+    },
+    {
+     "configuration": "Claude Opus 5 (xhigh)",
+     "rawScore": 544,
+     "sourceUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam"
+    }
+   ],
+   "op": "deleteRow",
+   "reason": "Alias configuration: same Artificial Analysis row as Claude Opus 5 (xhigh) (54.4).",
+   "row": {
+    "_creationTime": 1786008480973.947,
+    "_id": "k973718fffyyf34wdfv3cgzv118by8pk",
+    "accessedAt": 1786180713587,
+    "benchId": "k1759t15h3cbgnxk26yhhbkaw5855tj3",
+    "createdAt": 1786008480974,
+    "downvotes": 0,
+    "modelId": "kd784xm2vtdw6dtssnr4e5ym698bzqt6",
+    "normalizedScore": 54.4,
+    "rawScore": 544,
+    "sourceUrl": "https://artificialanalysis.ai/evaluations/humanitys-last-exam",
+    "upvotes": 1
+   }
+  },
+  {
+   "configuration": {
+    "_creationTime": 1786008480973.9385,
+    "_id": "kd784xm2vtdw6dtssnr4e5ym698bzqt6",
+    "createdAt": 1786008480974,
+    "familyTag": "Claude Opus 5",
+    "name": "Claude Opus 5 (adaptive xhigh)",
+    "provider": "Anthropic",
+    "slug": "claude-opus-5-adaptive-xhigh",
+    "tags": [
+     "reasoning"
+    ]
+   },
+   "op": "deleteEmptyConfiguration",
+   "reason": "Alias name of Claude Opus 5 (xhigh); no rows left."
+  }
+ ]
+}
