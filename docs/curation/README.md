@@ -21,6 +21,20 @@ The manifest uses `schemaVersion: 1` and contains `runId`, `generatedAt`,
 `learnings`. A no-change run still publishes a report and manifest; its four
 write arrays are empty and it explains what was checked.
 
+## Generators
+
+Two scripts write ready-to-validate batches from publishers that expose their
+complete result table; neither writes to the database:
+
+- `node scripts/curation-aa-backfill.mjs <date> [letter]` — Artificial Analysis
+  (embedded page payload; holds the publisher-name → configuration alias map).
+- `node scripts/curation-source-sync.mjs <date> [letter]` — DeepSWE and Agents'
+  Last Exam (JSON tables; inserts missing cells of existing configurations and
+  replaces rounded values with exact ones).
+
+Renaming a benchmark is an explicit migration:
+`npx convex run --prod migrations:renameBench '{"slug":…,"newName":…}'`.
+
 ## Safety gates
 
 From the repository root:

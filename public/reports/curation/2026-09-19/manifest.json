@@ -1,0 +1,499 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-09-19",
+  "generatedAt": "2026-09-19T15:57:00.628Z",
+  "reportPath": "public/reports/curation/2026-09-19/index.html",
+  "sources": [
+    {
+      "title": "https://deepswe.datacurve.ai/",
+      "url": "https://deepswe.datacurve.ai/",
+      "accessedAt": "2026-09-19T15:56:46.082Z"
+    },
+    {
+      "title": "https://deepswe.datacurve.ai/artifacts/v1.1/leaderboard-live.json",
+      "url": "https://deepswe.datacurve.ai/artifacts/v1.1/leaderboard-live.json",
+      "accessedAt": "2026-09-19T15:56:46.082Z"
+    },
+    {
+      "title": "https://agents-last-exam.org/leaderboard",
+      "url": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": "2026-09-19T15:56:46.082Z"
+    },
+    {
+      "title": "DeepSWE v1.1 leaderboard — machine-readable table",
+      "url": "https://deepswe.datacurve.ai/artifacts/v1.1/leaderboard-live.json",
+      "accessedAt": "2026-09-19T15:56:46.082Z"
+    },
+    {
+      "title": "Agents' Last Exam v1 leaderboard — machine-readable table",
+      "url": "https://agents-last-exam.org/api/demo/leaderboard",
+      "accessedAt": "2026-09-19T15:56:46.082Z"
+    }
+  ],
+  "evidence": [
+    {
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "screenshotUrl": "https://deepswe.datacurve.ai/",
+      "screenshotPath": "public/reports/curation/2026-09-19/screenshots/deepswedatacurveai.png"
+    },
+    {
+      "sourceUrl": "https://deepswe.datacurve.ai/artifacts/v1.1/leaderboard-live.json",
+      "screenshotUrl": "https://deepswe.datacurve.ai/artifacts/v1.1/leaderboard-live.json",
+      "screenshotPath": "public/reports/curation/2026-09-19/screenshots/deepswedatacurveaiartifactsv11leaderboardlivejson.png"
+    },
+    {
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "screenshotUrl": "https://agents-last-exam.org/leaderboard",
+      "screenshotPath": "public/reports/curation/2026-09-19/screenshots/agentslastexamorgleaderboard.png"
+    }
+  ],
+  "models": [],
+  "benches": [],
+  "scores": [
+    {
+      "modelName": "GPT-6 Astra (xhigh)",
+      "benchSlug": "deepswe",
+      "rawScore": 741,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "Gemini 3.8 Flash (high)",
+      "benchSlug": "deepswe",
+      "rawScore": 738,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "Claude Opus 5 (Max)",
+      "benchSlug": "deepswe",
+      "rawScore": 736,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "GPT-6 Astra (high)",
+      "benchSlug": "deepswe",
+      "rawScore": 732,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (max)",
+      "benchSlug": "deepswe",
+      "rawScore": 732,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (xhigh)",
+      "benchSlug": "deepswe",
+      "rawScore": 732,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (High)",
+      "benchSlug": "deepswe",
+      "rawScore": 728,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (medium)",
+      "benchSlug": "deepswe",
+      "rawScore": 728,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (max)",
+      "benchSlug": "deepswe",
+      "rawScore": 727,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "Gemini 3.8 Flash (medium)",
+      "benchSlug": "deepswe",
+      "rawScore": 710,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (xhigh)",
+      "benchSlug": "deepswe",
+      "rawScore": 707,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Terra (max)",
+      "benchSlug": "deepswe",
+      "rawScore": 696,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (high)",
+      "benchSlug": "deepswe",
+      "rawScore": 694,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.6 (medium)",
+      "benchSlug": "deepswe",
+      "rawScore": 675,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "GPT-5.6 Luna (max)",
+      "benchSlug": "deepswe",
+      "rawScore": 672,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "Grok 4.6 (xhigh)",
+      "benchSlug": "deepswe",
+      "rawScore": 667,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "Gemini 3.7 Flash (high)",
+      "benchSlug": "deepswe",
+      "rawScore": 653,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "Grok 4.6 (high)",
+      "benchSlug": "deepswe",
+      "rawScore": 652,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.3-Flash (max)",
+      "benchSlug": "deepswe",
+      "rawScore": 634,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "DeepSeek V4 Pro (Max)",
+      "benchSlug": "deepswe",
+      "rawScore": 628,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (medium)",
+      "benchSlug": "deepswe",
+      "rawScore": 611,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Terra (xhigh)",
+      "benchSlug": "deepswe",
+      "rawScore": 602,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Qwen3.8-Max (xhigh)",
+      "benchSlug": "deepswe",
+      "rawScore": 575,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "GPT-5.6 Luna (xhigh)",
+      "benchSlug": "deepswe",
+      "rawScore": 569,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.2 (xhigh)",
+      "benchSlug": "deepswe",
+      "rawScore": 549,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "Claude Sonnet 5 (Max)",
+      "benchSlug": "deepswe",
+      "rawScore": 538,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "DeepSeek V4 Flash (Max)",
+      "benchSlug": "deepswe",
+      "rawScore": 533,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "Muse Spark 1.1 (xhigh)",
+      "benchSlug": "deepswe",
+      "rawScore": 533,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Gemini 3.5 Flash (high)",
+      "benchSlug": "deepswe",
+      "rawScore": 361,
+      "sourceUrl": "https://deepswe.datacurve.ai/",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "Gemini 3.1 Pro Preview (high)",
+      "benchSlug": "deepswe",
+      "rawScore": 117,
+      "sourceUrl": "https://deepswe.datacurve.ai/artifacts/v1.1/leaderboard-live.json",
+      "accessedAt": 1789833406082,
+      "operation": "replace"
+    },
+    {
+      "modelName": "GPT-6 Astra (xhigh)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 322,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (high)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 316,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-6 Astra (medium)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 322,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (xhigh)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 303,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Muse Spark 1.3 (max)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 296,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (High)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 316,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (max)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 296,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 5 (Max)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 309,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Qwen3.8-Max (xhigh)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 270,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (high)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 306,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Sol (medium)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 295,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Kimi K3 (max)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 283,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Luna (max)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 289,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Fable 5 (xhigh)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 257,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.6 Terra (xhigh)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 276,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 245,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.8 (max)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 270,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Claude Opus 4.8 (xhigh)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 224,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GLM-5.2 (max)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 204,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5 (medium)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 184,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "GPT-5.5 (low)",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 171,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "DeepSeek V4 Pro",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 124,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Qwen 3.6 Plus",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 86,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "Grok 4.3",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 43,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    },
+    {
+      "modelName": "MiniMax M2.7",
+      "benchSlug": "agents-last-exam-v1",
+      "rawScore": 59,
+      "sourceUrl": "https://agents-last-exam.org/leaderboard",
+      "accessedAt": 1789833406082,
+      "operation": "insert"
+    }
+  ],
+  "learnings": [
+    "DeepSWE and Agents' Last Exam publish complete machine-readable tables (leaderboard-live.json, /api/demo/leaderboard); run `node scripts/curation-source-sync.mjs <date>` instead of reading the visible default view, which hides models, effort levels and decimals.",
+    "Agents' Last Exam has no uniform harness: the benchmark is the publisher's table, best row per (model, effort) across harnesses; runs covering under 95 % of the tasks are unfinished and skipped.",
+    "A cell is one row: when production already holds a row for a configuration and benchmark, correct it with `replace` on its existing source URL instead of inserting a second row."
+  ]
+}

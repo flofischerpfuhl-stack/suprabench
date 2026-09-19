@@ -27,7 +27,10 @@ Terms: a **model** is a release (`familyTag`, e.g. `GPT-6 Astra`); a
    embedded payload, and "all models" / "all effort levels" toggles. Known:
    Artificial Analysis → run `node scripts/curation-aa-backfill.mjs <date>`
    (reads the `self.__next_f` payload, holds the name alias map — extend it);
-   DeepSWE → `/artifacts/v1.1/leaderboard-live.json`. Sweep provider release
+   DeepSWE and Agents' Last Exam → run
+   `node scripts/curation-source-sync.mjs <date> [letter]` (reads their JSON
+   tables, emits inserts and exact-value replaces). Add an adapter to that
+   script when another source turns out to have a machine-readable table. Sweep provider release
    channels for new models; third-party roundups are leads, not evidence.
 3. **Coverage matrix.** Frontier set = the 15 newest flagship models plus any
    release of the last 90 days. Report a model × benchmark matrix (present /

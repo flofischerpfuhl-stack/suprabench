@@ -11,6 +11,7 @@
 // ════════════════════════════════════════════════════════════
 
 import { internalMutation } from "./_generated/server";
+import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import {
   recomputeBenchAggregatesInline,
@@ -310,5 +311,52 @@ export const renameWaitlistTiers = internalMutation({
       total: rows.length,
       renamed: { enterprisePlus, enterprise, starter },
     };
+  },
+});
+
+// ── Rename a benchmark (name, slug, description) ────────────
+// Curation batches refuse to touch an existing benchmark whose name or
+// slug differs from the manifest, so a rename has to be explicit. Name
+// and slug are not denormalised anywhere (scores and rankings reference
+// the bench by id), so this is a single patch. Refuses to collide with
+// another benchmark's slug.
+//
+//   npx convex run --prod migrations:renameBench \
+//     '{"slug":"old-slug","newName":"New Name","newDescription":"…"}'
+export const renameBench = internalMutation({
+  args: {
+    slug: v.string(),
+    newName: v.string(),
+    newDescription: v.optional(v.string()),
+  },
+  handler: async (ctx, { slug, newName, newDescription }) => {
+    const bench = await ctx.db
+      .query("benches")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .first();
+    if (!bench) throw new Error(`Benchmark not found: ${slug}`);
+    const name = newName.trim();
+    if (!name || name.length > 120) throw new Error("Invalid benchmark name");
+    const newSlug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    if (newSlug !== slug) {
+      const clash = await ctx.db
+        .query("benches")
+        .withIndex("by_slug", (q) => q.eq("slug", newSlug))
+        .first();
+      if (clash) throw new Error(`Slug already in use: ${newSlug}`);
+    }
+    const patch: Record<string, string> = { name, slug: newSlug };
+    if (newDescription !== undefined) {
+      const description = newDescription.trim();
+      if (!description || description.length > 1000) {
+        throw new Error("Invalid benchmark description");
+      }
+      patch.description = description;
+    }
+    await ctx.db.patch(bench._id, patch);
+    return { id: bench._id, from: { name: bench.name, slug }, to: patch };
   },
 });
